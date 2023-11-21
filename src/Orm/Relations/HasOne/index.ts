@@ -32,6 +32,8 @@ export class HasOne implements HasOneRelationContract<LucidModel, LucidModel> {
   public serializeAs =
     this.options.serializeAs === undefined ? this.relationName : this.options.serializeAs
 
+  public serialize = this.options.serialize
+
   /**
    * Local key is reference to the primary key in the self table
    * @note: Available after boot is invoked

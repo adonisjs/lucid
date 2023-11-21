@@ -2864,4 +2864,63 @@ test.group('Model | HasOne | delete', (group) => {
     assert.deepEqual(bindings, rawBindings)
     assert.deepEqual(sql, rawSql)
   })
+
+  test('add hasOne with serialize', async ({ assert }) => {
+    class Profile extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public displayName: string
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @hasOne(() => Profile, {
+        serialize: (value) => {
+          if (value === null) {
+            return { type: 'profile', displayable: '---' }
+          }
+
+          return {
+            type: 'profile',
+            displayable: `${value.userId} - ${value.displayName}`,
+          }
+        },
+      })
+      public profile: HasOne<typeof Profile>
+    }
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+
+    await user.load('profile')
+
+    assert.deepEqual(user.serialize(), {
+      username: 'virk',
+      id: 1,
+      profile: { type: 'profile', displayable: '---' },
+    })
+
+    const profile = new Profile()
+    profile.displayName = 'Hvirk'
+
+    await user.related('profile').save(profile)
+    await user.load('profile')
+
+    assert.deepEqual(user.serialize(), {
+      username: 'virk',
+      id: 1,
+      profile: { type: 'profile', displayable: '1 - Hvirk' },
+    })
+  })
 })
