@@ -95,8 +95,8 @@ export type ModelAttributes<Model extends LucidRow> = Model['$columns'] extends 
         [P in keyof Model]: P extends keyof LucidRow | 'serializeExtras'
           ? never
           : Model[P] extends Function | ModelRelationTypes
-          ? never
-          : P
+            ? never
+            : P
       }[keyof Model]]: Model[Filtered]
     }
   : Model['$columns']

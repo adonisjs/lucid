@@ -57,10 +57,10 @@ export default abstract class MigrationsBase extends BaseCommand {
           ? 'migrating'
           : 'reverting'
         : file.status === 'completed'
-        ? direction === 'up'
-          ? 'migrated'
-          : 'reverted'
-        : 'error'
+          ? direction === 'up'
+            ? 'migrated'
+            : 'reverted'
+          : 'error'
 
     this.logger.logUpdate(`${arrow} ${this.colors[color](message)} ${file.file.name}`)
   }

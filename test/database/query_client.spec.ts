@@ -210,8 +210,8 @@ test.group('Query client | dual mode', (group) => {
       process.env.DB === 'sqlite' || process.env.DB === 'better_sqlite'
         ? 'DELETE FROM users;'
         : process.env.DB === 'mssql'
-        ? 'TRUNCATE table users;'
-        : 'TRUNCATE users;'
+          ? 'TRUNCATE table users;'
+          : 'TRUNCATE users;'
 
     await client.insertQuery().table('users').insert({ username: 'virk' })
     await client.rawQuery(command).exec()
@@ -357,8 +357,8 @@ test.group('Query client | write mode', (group) => {
       process.env.DB === 'sqlite' || process.env.DB === 'better_sqlite'
         ? 'DELETE FROM users;'
         : process.env.DB === 'mssql'
-        ? 'TRUNCATE table users;'
-        : 'TRUNCATE users;'
+          ? 'TRUNCATE table users;'
+          : 'TRUNCATE users;'
 
     await client.insertQuery().table('users').insert({ username: 'virk' })
     await client.rawQuery(command).exec()

@@ -95,10 +95,10 @@ export class MigrationRunner extends EventEmitter {
     return !this.booted
       ? 'pending'
       : this.error
-      ? 'error'
-      : Object.keys(this.migratedFiles).length
-      ? 'completed'
-      : 'skipped'
+        ? 'error'
+        : Object.keys(this.migratedFiles).length
+          ? 'completed'
+          : 'skipped'
   }
 
   /**

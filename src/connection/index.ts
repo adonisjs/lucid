@@ -405,8 +405,8 @@ export class Connection extends EventEmitter implements ConnectionContract {
       message: readError
         ? 'Unable to reach one of the read hosts'
         : error
-        ? 'Unable to reach the database server'
-        : 'Connection is healthy',
+          ? 'Unable to reach the database server'
+          : 'Connection is healthy',
       error: error || readError || null,
     }
   }
