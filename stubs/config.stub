@@ -1,9 +1,10 @@
 {{{
   exports({ to: app.configPath('database.ts') })
 }}}
-import env from '#start/env'
 {{#if dialect === 'sqlite'}}
 import app from '@adonisjs/core/services/app'
+{{#else}}
+import env from '#start/env'
 {{/if}}
 import { defineConfig } from '@adonisjs/lucid'
 
