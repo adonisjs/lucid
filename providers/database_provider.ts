@@ -7,6 +7,7 @@
  * file that was distributed with this source code.
  */
 
+import type { FieldContext } from '@vinejs/vine/types'
 import type { ApplicationService } from '@adonisjs/core/types'
 
 import { Database } from '../src/database/main.js'
@@ -15,12 +16,40 @@ import { QueryClient } from '../src/query_client/index.js'
 import { BaseModel } from '../src/orm/base_model/index.js'
 import type { DatabaseConfig, DbQueryEventNode } from '../src/types/database.js'
 
+/**
+ * Extending AdonisJS types
+ */
 declare module '@adonisjs/core/types' {
   export interface ContainerBindings {
     'lucid.db': Database
   }
   export interface EventsList {
     'db:query': DbQueryEventNode
+  }
+}
+
+/**
+ * Extending VineJS schema types
+ */
+declare module '@vinejs/vine' {
+  export interface VineString {
+    /**
+     * Ensure the value is unique inside the database by self
+     * executing a query.
+     *
+     * - The callback must return "true", if the value is unique (does not exist).
+     * - The callback must return "false", if the value is not unique (already exists).
+     */
+    unique(callback: (db: Database, value: string, field: FieldContext) => Promise<boolean>): this
+
+    /**
+     * Ensure the value is exists inside the database by self
+     * executing a query.
+     *
+     * - The callback must return "true", if the value exists.
+     * - The callback must return "false", if the value does not exist.
+     */
+    exists(callback: (db: Database, value: string, field: FieldContext) => Promise<boolean>): this
   }
 }
 

@@ -8,71 +8,43 @@
  */
 
 import vine, { VineString } from '@vinejs/vine'
-import type { FieldContext } from '@vinejs/vine/types'
 import type { Database } from '../database/main.js'
-
-/**
- * The callback function to check a row inside the database
- */
-type DatabaseRowChecker = (db: Database, value: string, field: FieldContext) => Promise<boolean>
-
-declare module '@vinejs/vine' {
-  export interface VineString {
-    /**
-     * Ensure the value is unique inside the database by self
-     * executing a query.
-     *
-     * - The callback must return "true", if the value is unique (does not exist).
-     * - The callback must return "false", if the value is not unique (already exists).
-     */
-    unique(callback: DatabaseRowChecker): this
-
-    /**
-     * Ensure the value is exists inside the database by self
-     * executing a query.
-     *
-     * - The callback must return "true", if the value exists.
-     * - The callback must return "false", if the value does not exist.
-     */
-    exists(callback: DatabaseRowChecker): this
-  }
-}
 
 /**
  * Defines the "unique" and "exists" validation rules with
  * VineJS.
  */
 export function defineValidationRules(db: Database) {
-  const uniqueRule = vine.createRule<DatabaseRowChecker>(
-    async (value, optionsOrCallback, field) => {
+  const uniqueRule = vine.createRule<Parameters<VineString['unique']>[0]>(
+    async (value, checker, field) => {
       if (!field.isValid) {
         return
       }
 
-      const isUnqiue = await optionsOrCallback(db, value as string, field)
+      const isUnqiue = await checker(db, value as string, field)
       if (!isUnqiue) {
         field.report('The {{ field }} has already been taken', 'database.unique', field)
       }
     }
   )
 
-  const existsRule = vine.createRule<DatabaseRowChecker>(
-    async (value, optionsOrCallback, field) => {
+  const existsRule = vine.createRule<Parameters<VineString['exists']>[0]>(
+    async (value, checker, field) => {
       if (!field.isValid) {
         return
       }
 
-      const exists = await optionsOrCallback(db, value as string, field)
+      const exists = await checker(db, value as string, field)
       if (!exists) {
         field.report('The selected {{ field }} is invalid', 'database.exists', field)
       }
     }
   )
 
-  VineString.macro('unique', function (this: VineString, optionsOrCallback) {
-    return this.use(uniqueRule(optionsOrCallback))
+  VineString.macro('unique', function (this: VineString, checker) {
+    return this.use(uniqueRule(checker))
   })
-  VineString.macro('exists', function (this: VineString, optionsOrCallback) {
-    return this.use(existsRule(optionsOrCallback))
+  VineString.macro('exists', function (this: VineString, checker) {
+    return this.use(existsRule(checker))
   })
 }
