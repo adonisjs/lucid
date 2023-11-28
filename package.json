@@ -87,6 +87,7 @@
     "@types/pluralize": "^0.0.33",
     "@types/pretty-hrtime": "^1.0.3",
     "@types/qs": "^6.9.10",
+    "@vinejs/vine": "^1.7.0",
     "better-sqlite3": "^9.1.1",
     "c8": "^8.0.1",
     "chance": "^1.1.11",

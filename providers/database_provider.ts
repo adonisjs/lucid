@@ -30,6 +30,30 @@ declare module '@adonisjs/core/types' {
 export default class DatabaseServiceProvider {
   constructor(protected app: ApplicationService) {}
 
+  /**
+   * Registers repl bindings when running the application
+   * in the REPL environment
+   */
+  protected async registerReplBindings() {
+    if (this.app.getEnvironment() === 'repl') {
+      const { defineReplBindings } = await import('../src/bindings/repl.js')
+      defineReplBindings(this.app, await this.app.container.make('repl'))
+    }
+  }
+
+  /**
+   * Registers validation rules for VineJS
+   */
+  protected async registerVineJSRules(db: Database) {
+    if (this.app.usingVineJS) {
+      const { defineValidationRules } = await import('../src/bindings/vinejs.js')
+      defineValidationRules(db)
+    }
+  }
+
+  /**
+   * Invoked by AdonisJS to register container bindings
+   */
   register() {
     this.app.container.singleton(Database, async (resolver) => {
       const config = this.app.config.get<DatabaseConfig>('database')
@@ -46,8 +70,15 @@ export default class DatabaseServiceProvider {
     this.app.container.alias('lucid.db', Database)
   }
 
+  /**
+   * Invoked by AdonisJS to extend the framework or pre-configure
+   * objects
+   */
   async boot() {
     const db = await this.app.container.make('lucid.db')
     BaseModel.$adapter = new Adapter(db)
+
+    await this.registerReplBindings()
+    await this.registerVineJSRules(db)
   }
 }
