@@ -7,6 +7,7 @@
  * file that was distributed with this source code.
  */
 
+import { mkdir } from 'node:fs/promises'
 import type Configure from '@adonisjs/core/commands/configure'
 
 /**
@@ -97,6 +98,16 @@ export async function configure(command: Configure) {
   const installNpmDriver = await command.prompt.confirm(
     `Do you want to install npm package "${pkg}"?`
   )
+
+  /**
+   * Make "tmp" directory when the selected dialect is
+   * sqlite
+   */
+  if (dialect === 'sqlite') {
+    try {
+      await mkdir(command.app.tmpPath())
+    } catch {}
+  }
 
   /**
    * Register provider

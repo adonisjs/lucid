@@ -105,4 +105,67 @@ test.group('Configure', (group) => {
     await assert.fileNotExists('.env')
     await assert.fileNotExists('start/env.ts')
   }).timeout(6000)
+
+  test('create tmp directory for sqlite dialect', async ({ fs, assert }) => {
+    const ignitor = new IgnitorFactory()
+      .withCoreProviders()
+      .withCoreConfig()
+      .create(BASE_URL, {
+        importer: (filePath) => {
+          if (filePath.startsWith('./') || filePath.startsWith('../')) {
+            return import(new URL(filePath, BASE_URL).href)
+          }
+
+          return import(filePath)
+        },
+      })
+
+    const app = ignitor.createApp('web')
+    await app.init()
+    await app.boot()
+
+    await fs.createJson('tsconfig.json', {})
+    await fs.create('adonisrc.ts', `export default defineConfig({})`)
+
+    const ace = await app.container.make('ace')
+    ace.prompt.trap('Select the database you want to use').chooseOption(0)
+    ace.prompt.trap('Do you want to install npm package "sqlite3"?').reject()
+
+    const command = await ace.create(Configure, ['../../index.js'])
+    await command.exec()
+
+    await assert.dirExists('tmp')
+  }).timeout(6000)
+
+  test('do not recreate tmp directory if it already exists', async ({ fs, assert }) => {
+    const ignitor = new IgnitorFactory()
+      .withCoreProviders()
+      .withCoreConfig()
+      .create(BASE_URL, {
+        importer: (filePath) => {
+          if (filePath.startsWith('./') || filePath.startsWith('../')) {
+            return import(new URL(filePath, BASE_URL).href)
+          }
+
+          return import(filePath)
+        },
+      })
+
+    const app = ignitor.createApp('web')
+    await app.init()
+    await app.boot()
+
+    await fs.createJson('tsconfig.json', {})
+    await fs.create('adonisrc.ts', `export default defineConfig({})`)
+    await fs.create('tmp/db.sqlite', '')
+
+    const ace = await app.container.make('ace')
+    ace.prompt.trap('Select the database you want to use').chooseOption(0)
+    ace.prompt.trap('Do you want to install npm package "sqlite3"?').reject()
+
+    const command = await ace.create(Configure, ['../../index.js'])
+    await command.exec()
+
+    await assert.fileExists('tmp/db.sqlite')
+  }).timeout(6000)
 })
