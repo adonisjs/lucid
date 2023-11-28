@@ -85,14 +85,27 @@ const DIALECTS_INFO: {
  */
 export async function configure(command: Configure) {
   const codemods = await command.createCodemods()
+  let dialect: keyof typeof DIALECTS_INFO = command.parsedFlags.db
 
   /**
    * Prompt to select the dialect to use
    */
-  const dialect =
-    (await command.prompt.choice('Select the database you want to use', DIALECTS, {
+  if (!dialect) {
+    dialect = await command.prompt.choice('Select the database you want to use', DIALECTS, {
       hint: 'You can always change it later',
-    })) || 'postgres'
+    })
+  }
+
+  /**
+   * Show error when selected dialect is not supported
+   */
+  if (!DIALECTS_INFO[dialect]) {
+    command.error(
+      `The selected database "${dialect}" is invalid. Select from one of the following
+  ${Object.keys(DIALECTS_INFO).join(', ')}`
+    )
+    return
+  }
 
   const { pkg, envVars, envValidations } = DIALECTS_INFO[dialect]
   const installNpmDriver = await command.prompt.confirm(
