@@ -192,5 +192,8 @@
     "bracketSpacing": true,
     "arrowParens": "always",
     "printWidth": 100
+  },
+  "volta": {
+    "node": "18.18.2"
   }
 }
