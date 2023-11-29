@@ -68,9 +68,9 @@ jobs:
       postgres:
         image: postgres:${{ matrix.postgres-version }}
         env:
-          POSTGRES_DB: ${{env.POSTGRES_DB}}
-          POSTGRES_USER: ${{env.POSTGRES_USER}}
-          POSTGRES_PASSWORD: ${{env.POSTGRES_PASSWORD}}
+          POSTGRES_DB: ${{env.DB_NAME}}
+          POSTGRES_USER: ${{env.PG_USER}}
+          POSTGRES_PASSWORD: ${{env.PG_PASSWORD}}
         ports:
           - 5432:5432
     steps:
@@ -94,10 +94,10 @@ jobs:
       mysql:
         image: mysql:${{ matrix.mysql.version }}
         env:
-          MYSQL_DATABASE: ${{env.MYSQL_DATABASE}}
+          MYSQL_DATABASE: ${{env.DB_NAME}}
           MYSQL_USER: ${{env.MYSQL_USER}}
           MYSQL_PASSWORD: ${{env.MYSQL_PASSWORD}}
-          MYSQL_ROOT_PASSWORD: ${{env.MYSQL_ROOT_PASSWORD}}
+          MYSQL_ROOT_PASSWORD: ${{env.MYSQL_PASSWORD}}
         ports:
           - '3306:3306'
     steps:
