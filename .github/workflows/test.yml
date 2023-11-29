@@ -4,13 +4,37 @@ on:
   - pull_request
 
 env:
-  POSTGRES_DB: lucid
-  POSTGRES_USER: ndianabasi
-  POSTGRES_PASSWORD: plainobscure
-  MYSQL_DATABASE: lucid
+  DB: pg
+  DB_NAME: lucid
+
+  MYSQL_HOST: localhost
+  MYSQL_PORT: 3306
   MYSQL_USER: ndianabasi
-  MYSQL_PASSWORD: plainobscure
-  MYSQL_ROOT_PASSWORD: plainobscure
+  MYSQL_PASSWORD: password
+
+  MYSQL_LEGACY_HOST: localhost
+  MYSQL_LEGACY_PORT: 3306
+  MYSQL_LEGACY_USER: ndianabasi
+  MYSQL_LEGACY_PASSWORD: password
+
+  MYSQL_REPLICA_1_HOST: localhost
+  MYSQL_REPLICA_1_PORT: 3306
+  MYSQL_REPLICA_1_USER: ndianabasi
+  MYSQL_REPLICA_1_PASSWORD: password
+
+  MYSQL_REPLICA_2_HOST: localhost
+  MYSQL_REPLICA_2_PORT: 3306
+  MYSQL_REPLICA_2_USER: ndianabasi
+  MYSQL_REPLICA_2_PASSWORD: password
+
+  PG_HOST: localhost
+  PG_PORT: 5432
+  PG_USER: ndianabasi
+  PG_PASSWORD: password
+
+  MSSQL_SERVER: localhost
+  MSSQL_USER: sa
+  MSSQL_PASSWORD: arandom&233password
 
 jobs:
   lint:
@@ -113,7 +137,7 @@ jobs:
       mssql:
         image: mcr.microsoft.com/mssql/server:2019-latest
         env:
-          SA_PASSWORD: 'arandom&233password'
+          SA_PASSWORD: ${{env.MSSQL_PASSWORD}}
           ACCEPT_EULA: 'Y'
         ports:
           - '1433:1433'
