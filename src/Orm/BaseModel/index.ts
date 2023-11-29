@@ -1244,7 +1244,10 @@ export class BaseModel implements LucidRow {
       let isEqual = true
 
       if (DateTime.isDateTime(value) || DateTime.isDateTime(originalValue)) {
-        isEqual = value === originalValue
+        isEqual =
+          DateTime.isDateTime(value) && DateTime.isDateTime(originalValue)
+            ? value.equals(originalValue)
+            : value === originalValue
       } else if (isObject(value) && 'isDirty' in value) {
         isEqual = !value.isDirty
       } else {

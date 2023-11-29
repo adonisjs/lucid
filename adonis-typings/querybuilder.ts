@@ -141,8 +141,12 @@ declare module '@ioc:Adonis/Lucid/Database' {
     /**
      * Key-value pair. The value can also be a subquery
      */
-    (key: string | RawQuery, value: StrictValues | ChainableContract): Builder
-    (key: string | RawQuery, operator: string, value: StrictValues | ChainableContract): Builder
+    (key: string | RawQuery, value: StrictValues | ChainableContract | null): Builder
+    (
+      key: string | RawQuery,
+      operator: string,
+      value: StrictValues | ChainableContract | null
+    ): Builder
   }
 
   /**
