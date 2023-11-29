@@ -6114,7 +6114,7 @@ test.group('Base Model | toObject', (group) => {
 })
 
 test.group('Base Model | json column/decorator', (group) => {
-  const preference = {
+  const PREFERENCE = {
     highQualityVideos: true,
     sendEmailNotifications: true,
     sendSmsNotifications: false,
@@ -6153,7 +6153,7 @@ test.group('Base Model | json column/decorator', (group) => {
       public username: string
 
       @column.json()
-      public preference: typeof preference
+      public preference: typeof PREFERENCE
     }
 
     assert.deepEqual(User.$getColumn('preference')!.meta, {
@@ -6174,7 +6174,7 @@ test.group('Base Model | json column/decorator', (group) => {
       public username: string
 
       @column.json({ replacer })
-      public preference: typeof preference
+      public preference: typeof PREFERENCE
     }
 
     assert.containsSubset(User.$getColumn('preference')!.meta, {
@@ -6195,7 +6195,7 @@ test.group('Base Model | json column/decorator', (group) => {
       public username: string
 
       @column.json({ reviver })
-      public preference: typeof preference
+      public preference: typeof PREFERENCE
     }
 
     assert.containsSubset(User.$getColumn('preference')!.meta, {
@@ -6216,7 +6216,7 @@ test.group('Base Model | json column/decorator', (group) => {
       public username: string
 
       @column.json({ space: 4 })
-      public preference: typeof preference
+      public preference: typeof PREFERENCE
     }
 
     assert.containsSubset(User.$getColumn('preference')!.meta, {
@@ -6237,7 +6237,7 @@ test.group('Base Model | json column/decorator', (group) => {
       public username: string
 
       @column.json({ nullOnParseError: true })
-      public preference: typeof preference
+      public preference: typeof PREFERENCE
     }
 
     assert.containsSubset(User.$getColumn('preference')!.meta, {
@@ -6262,7 +6262,7 @@ test.group('Base Model | json column/decorator', (group) => {
       public username: string
 
       @column.json()
-      public preference: typeof preference
+      public preference: typeof PREFERENCE
     }
 
     const user = new User()
@@ -6288,7 +6288,7 @@ test.group('Base Model | json column/decorator', (group) => {
       public username: string
 
       @column.json()
-      public preference: typeof preference | string
+      public preference: typeof PREFERENCE | string
     }
 
     const user = new User()
@@ -6316,17 +6316,17 @@ test.group('Base Model | json column/decorator', (group) => {
       public username: string
 
       @column.json()
-      public preference: typeof preference | string
+      public preference: typeof PREFERENCE | string
     }
 
     const user = new User()
     User.$adapter = adapter
     adapter.on('insert', (_: User, attributes) => {
-      assert.equal(attributes.preference, JSON.stringify(preference))
+      assert.equal(attributes.preference, JSON.stringify(PREFERENCE))
     })
 
     user.username = 'ndianabasi'
-    user.preference = preference
+    user.preference = PREFERENCE
     await user.save()
   })
 
@@ -6374,17 +6374,17 @@ test.group('Base Model | json column/decorator', (group) => {
       public username: string
 
       @column.json({ space: 'nnnn' })
-      public preference: typeof preference | string
+      public preference: typeof PREFERENCE | string
     }
 
     const user = new User()
     User.$adapter = adapter
     adapter.on('insert', (_: User, attributes) => {
-      assert.equal(attributes.preference, JSON.stringify(preference, undefined, 'nnnn'))
+      assert.equal(attributes.preference, JSON.stringify(PREFERENCE, undefined, 'nnnn'))
     })
 
     user.username = 'ndianabasi'
-    user.preference = preference
+    user.preference = PREFERENCE
     await user.save()
   })
 
@@ -6401,7 +6401,7 @@ test.group('Base Model | json column/decorator', (group) => {
       public username: string
 
       @column.json()
-      public preference: typeof preference
+      public preference: typeof PREFERENCE
     }
 
     const user = new User()
@@ -6420,6 +6420,7 @@ test.group('Base Model | json column/decorator', (group) => {
   })
 
   test('raise error when json column value cannot be parsed')
+    /** Invalid JSON strings */
     .with(['[1, 2, 3, 4, ]', "{'foo': 1}"])
     .run(async ({ assert }, jsonString) => {
       assert.plan(1)
@@ -6432,45 +6433,41 @@ test.group('Base Model | json column/decorator', (group) => {
         public username: string
 
         @column.json()
-        public preference: typeof preference | string
+        public preference: typeof PREFERENCE | string
       }
 
-      const user = new User()
-
-      user.username = 'ndianabasi'
-      user.preference = jsonString
-      await user.save()
+      const [{ id }] = await db
+        .table('users')
+        .insert({ username: 'ndianabasi', preference: jsonString })
+        .returning('id')
 
       try {
-        await User.query().where('id', user.id).firstOrFail()
+        await User.query().where('id', id).firstOrFail()
       } catch ({ message }) {
         assert.match(message, /Unexpected token/)
       }
     })
 
-  test('return null when json column value cannot be parsed')
-    .with(['[1, 2, 3, 4, ]', "{'foo': 1}"])
-    .run(async ({ assert }, jsonString) => {
-      class User extends BaseModel {
-        @column({ isPrimary: true })
-        public id: number
+  test('return null when json column value cannot be parsed', async ({ assert }) => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
 
-        @column()
-        public username: string
+      @column()
+      public username: string
 
-        @column.json({ nullOnParseError: true })
-        public preference: typeof preference | string
-      }
+      @column.json({ nullOnParseError: true })
+      public preference: typeof PREFERENCE
+    }
 
-      let user = new User()
+    const [{ id }] = await db
+      .table('users')
+      .insert({ username: 'ndianabasi', preference: /** Invalid JSON string */ "{'foo': 1}" })
+      .returning('id')
 
-      user.username = 'ndianabasi'
-      user.preference = jsonString
-      await user.save()
-
-      user = await User.query().where('id', user.id).firstOrFail()
-      assert.isNull(user.preference)
-    })
+    const user = await User.query().where('id', id).firstOrFail()
+    assert.isNull(user.preference)
+  })
 
   test('allow overriding prepare method', async ({ assert }) => {
     assert.plan(1)
@@ -6488,7 +6485,7 @@ test.group('Base Model | json column/decorator', (group) => {
       @column.json({
         prepare: () => userPreference,
       })
-      public preference: typeof preference
+      public preference: typeof PREFERENCE
     }
 
     const user = new User()
@@ -6515,17 +6512,17 @@ test.group('Base Model | json column/decorator', (group) => {
       public username: string
 
       @column.json()
-      public preference: typeof preference | string
+      public preference: typeof PREFERENCE
     }
 
     let user = new User()
 
     user.username = 'ndianabasi'
-    user.preference = preference
+    user.preference = PREFERENCE
     await user.save()
 
     user = await User.query().where('id', user.id).firstOrFail()
-    assert.deepEqual(preference, user.preference)
+    assert.deepEqual(PREFERENCE, user.preference)
   })
 
   test('should parse persisted JSON object with reviver function', async ({ assert }) => {

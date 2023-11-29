@@ -159,7 +159,13 @@ export async function setup(destroyDb: boolean = true) {
       table.integer('country_id')
       table.integer('tenant_id').nullable()
       table.string('username').unique()
-      table.json('preference').nullable()
+      /**
+       * Use a `text` column type so that we can 100% be certain of
+       * the error handling functionalities of the `json` decorator.
+       * We don't want to solely rely on the DB-level errors which is
+       * the case when `json` column type is used.
+       */
+      table.text('preference').nullable()
       table.string('email').unique()
       table.integer('points').defaultTo(0)
       table.timestamp('joined_at', { useTz: process.env.DB === 'mssql' })
@@ -658,7 +664,13 @@ export async function setupReplicaDb(connection: Knex, datatoInsert: { username:
     await connection.schema.createTable('replica_users', (table) => {
       table.increments()
       table.string('username')
-      table.json('preference').nullable()
+      /**
+       * Use a `text` column type so that we can 100% be certain of
+       * the error handling functionalities of the `json` decorator.
+       * We don't want to solely rely on the DB-level errors which is
+       * the case when `json` column type is used.
+       */
+      table.text('preference').nullable()
     })
   }
 

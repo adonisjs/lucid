@@ -10,6 +10,15 @@
 import { Exception } from '@poppinss/utils'
 import { LucidRow, LucidModel, JsonColumnDecorator } from '@ioc:Adonis/Lucid/Orm'
 
+const getErrorDescription = (modelInstance: LucidRow, attributeName: string, message?: string) => {
+  const model = modelInstance.constructor as LucidModel
+  const modelName = model.name
+
+  return `Cannot parse value for column "${modelName}.${attributeName}"${
+    message ? `: "${message}"` : ' to an object'
+  } at ${model.primaryKey}: ${modelInstance.$primaryKeyValue}`
+}
+
 /**
  * The method to prepare the JSON column before persisting it's
  * value to the database
@@ -17,16 +26,34 @@ import { LucidRow, LucidModel, JsonColumnDecorator } from '@ioc:Adonis/Lucid/Orm
 function prepareJsonColumn(value: any, attributeName: string, modelInstance: LucidRow) {
   const model = modelInstance.constructor as LucidModel
   const modelName = model.name
+  const column = model.$getColumn(attributeName)
 
   /**
    * Return string or missing values as it is.
    */
   if (typeof value === 'string') {
-    return value
+    // Attempt to parse the string to ensure it's valid JSON string
+    try {
+      JSON.parse(value, column?.meta?.reviver)
+      return value
+    } catch (error) {
+      if (error instanceof SyntaxError) {
+        throw new Exception(
+          getErrorDescription(modelInstance, attributeName, error.message),
+          500,
+          'E_INVALID_JSON_COLUMN_VALUE'
+        )
+      }
+
+      throw new Exception(
+        getErrorDescription(modelInstance, attributeName),
+        500,
+        'E_INVALID_JSON_COLUMN_VALUE'
+      )
+    }
   }
 
   try {
-    const column = model.$getColumn(attributeName)
     return JSON.stringify(value, column?.meta.replacer, column?.meta.space)
   } catch (error) {
     if (error instanceof TypeError) {
@@ -50,19 +77,12 @@ function prepareJsonColumn(value: any, attributeName: string, modelInstance: Luc
  */
 function consumeJsonColumn(value: any, attributeName: string, modelInstance: LucidRow) {
   const model = modelInstance.constructor as LucidModel
-  const modelName = model.name
   const column = model.$getColumn(attributeName)
 
-  const getErrorDescription = (message?: string) => {
-    return `Cannot parse value for column "${modelName}.${attributeName}"${
-      message ? `: "${message}"` : ' to an object'
-    } at ${model.primaryKey}: ${modelInstance.$primaryKeyValue}`
-  }
-
   /**
-   * Bypass null columns
+   * Bypass null & non-string columns
    */
-  if (!value && typeof value !== 'string') {
+  if (!value || typeof value === 'object') {
     return value
   }
 
@@ -71,17 +91,25 @@ function consumeJsonColumn(value: any, attributeName: string, modelInstance: Luc
    */
   if (typeof value === 'string') {
     try {
-      return JSON.parse(value, column?.meta.reviver)
+      return JSON.parse(value, column?.meta?.reviver)
     } catch (error) {
-      if (column?.meta.nullOnParseError) {
+      if (column?.meta?.nullOnParseError) {
         return null
       }
 
       if (error instanceof SyntaxError) {
-        throw new Exception(getErrorDescription(error.message), 500, 'E_INVALID_JSON_COLUMN_VALUE')
+        throw new Exception(
+          getErrorDescription(modelInstance, attributeName, error.message),
+          500,
+          'E_INVALID_JSON_COLUMN_VALUE'
+        )
       }
 
-      throw new Exception(getErrorDescription(), 500, 'E_INVALID_JSON_COLUMN_VALUE')
+      throw new Exception(
+        getErrorDescription(modelInstance, attributeName),
+        500,
+        'E_INVALID_JSON_COLUMN_VALUE'
+      )
     }
   }
 
@@ -92,7 +120,11 @@ function consumeJsonColumn(value: any, attributeName: string, modelInstance: Luc
   /**
    * Any another value cannot be parsed
    */
-  throw new Exception(getErrorDescription(), 500, 'E_INVALID_JSON_COLUMN_VALUE')
+  throw new Exception(
+    getErrorDescription(modelInstance, attributeName),
+    500,
+    'E_INVALID_JSON_COLUMN_VALUE'
+  )
 }
 
 /**
