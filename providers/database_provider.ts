@@ -110,4 +110,12 @@ export default class DatabaseServiceProvider {
     await this.registerReplBindings()
     await this.registerVineJSRules(db)
   }
+
+  /**
+   * Gracefully close connections during shutdown
+   */
+  async shutdown() {
+    const db = await this.app.container.make('lucid.db')
+    await db.manager.closeAll()
+  }
 }
