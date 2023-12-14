@@ -17,8 +17,6 @@ import { RawQueryBuilder } from './raw.js'
 import { RawBuilder } from '../static_builder/raw.js'
 import { ReferenceBuilder } from '../static_builder/reference.js'
 
-const WRAPPING_METHODS = ['where', 'orWhere', 'whereNot', 'orWhereNot']
-
 /**
  * The chainable query builder to consturct SQL queries for selecting, updating and
  * deleting records.
@@ -48,13 +46,6 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Returns the wrapping method for a given where method
    */
   private getWrappingMethod(method: string) {
-    if (WRAPPING_METHODS.includes(method)) {
-      return {
-        method: 'where',
-        wrappingMethod: method,
-      }
-    }
-
     if (method.startsWith('or')) {
       return {
         method: method,
@@ -82,12 +73,14 @@ export abstract class Chainable extends Macroable implements ChainableContract {
     }
 
     this.whereStack.forEach((collection) => {
-      const firstItem = collection.shift()
-      const wrapper = this.getWrappingMethod(firstItem.method)
-      ;(this.knexQuery as any)[wrapper.wrappingMethod]((subquery: any) => {
-        subquery[wrapper.method](...firstItem.args)
-        collection.forEach(({ method, args }) => subquery[method](...args))
-      })
+      if (collection.length) {
+        const firstItem = collection.shift()
+        const wrapper = this.getWrappingMethod(firstItem.method)
+        ;(this.knexQuery as any)[wrapper.wrappingMethod]((subquery: any) => {
+          subquery[wrapper.method](...firstItem.args)
+          collection.forEach(({ method, args }) => subquery[method](...args))
+        })
+      }
     })
   }
 

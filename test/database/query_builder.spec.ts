@@ -1121,8 +1121,8 @@ test.group('Query Builder | whereNot', (group) => {
 
     const { sql: knexSql, bindings: knexBindings } = connection
       .client!.from('users')
-      .whereNot((query) => query.where('username', 'virk'))
-      .whereNot((query) => query.where('email', 'virk'))
+      .where((query) => query.whereNot('username', 'virk'))
+      .where((query) => query.whereNot('email', 'virk'))
       .toSQL()
 
     assert.equal(sql, knexSql)
@@ -1140,8 +1140,8 @@ test.group('Query Builder | whereNot', (group) => {
 
     const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
       .client!.from('users')
-      .whereNot((query) => query.where('my_username', 'virk'))
-      .whereNot((query) => query.where('my_email', 'virk'))
+      .where((query) => query.whereNot('my_username', 'virk'))
+      .where((query) => query.whereNot('my_email', 'virk'))
       .toSQL()
 
     assert.equal(resolverSql, knexResolverSql)
@@ -1234,7 +1234,7 @@ test.group('Query Builder | whereNot', (group) => {
 
     const { sql: knexSql, bindings: knexBindings } = connection
       .client!.from('users')
-      .whereNot((builder) => builder.where((s) => s.where('username', 'virk')))
+      .where((builder) => builder.whereNot((s) => s.where('username', 'virk')))
       .where((builder) => builder.whereNotNull('deleted_at'))
       .toSQL()
 
@@ -1253,7 +1253,7 @@ test.group('Query Builder | whereNot', (group) => {
 
     const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
       .client!.from('users')
-      .whereNot((builder) => builder.where((s) => s.where('my_username', 'virk')))
+      .where((builder) => builder.whereNot((s) => s.where('my_username', 'virk')))
       .where((builder) => builder.whereNotNull('my_deleted_at'))
       .toSQL()
 
@@ -1311,8 +1311,8 @@ test.group('Query Builder | whereNot', (group) => {
 
     const { sql: knexSql, bindings: knexBindings } = connection
       .client!.from('users')
-      .whereNot((q) => q.where('age', '>', 22))
-      .whereNot((q) => q.where('age', '<', 18))
+      .where((q) => q.whereNot('age', '>', 22))
+      .where((q) => q.whereNot('age', '<', 18))
       .toSQL()
 
     assert.equal(sql, knexSql)
@@ -1330,8 +1330,8 @@ test.group('Query Builder | whereNot', (group) => {
 
     const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
       .client!.from('users')
-      .whereNot((q) => q.where('my_age', '>', 22))
-      .whereNot((q) => q.where('my_age', '<', 18))
+      .where((q) => q.whereNot('my_age', '>', 22))
+      .where((q) => q.whereNot('my_age', '<', 18))
       .toSQL()
 
     assert.equal(resolverSql, knexResolverSql)
@@ -1477,8 +1477,8 @@ test.group('Query Builder | whereNot', (group) => {
 
     const { sql: knexSql, bindings: knexBindings } = connection
       .client!.from('users')
-      .whereNot((q) => q.where('age', '>', 22))
-      .orWhereNot((q) => q.where('age', 18))
+      .where((q) => q.whereNot('age', '>', 22))
+      .orWhere((q) => q.whereNot('age', 18))
       .toSQL()
 
     assert.equal(sql, knexSql)
@@ -1496,8 +1496,8 @@ test.group('Query Builder | whereNot', (group) => {
 
     const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
       .client!.from('users')
-      .whereNot((q) => q.where('my_age', '>', 22))
-      .orWhereNot((q) => q.where('my_age', 18))
+      .where((q) => q.whereNot('my_age', '>', 22))
+      .orWhere((q) => q.whereNot('my_age', 18))
       .toSQL()
 
     assert.equal(resolverSql, knexResolverSql)
@@ -1553,6 +1553,33 @@ test.group('Query Builder | whereNot', (group) => {
 
     assert.equal(resolverSql, knexResolverSql)
     assert.deepEqual(resolverBindings, knexResolverBindings)
+
+    await connection.disconnect()
+  })
+
+  test('wrap where and whereNot clause', async ({ assert }) => {
+    const connection = new Connection('primary', getConfig(), logger)
+    connection.connect()
+
+    let db = getQueryBuilder(getQueryClient(connection))
+    const { sql, bindings } = db
+      .from('users')
+      .whereNot('points', '<', 50)
+      .where('age', 18)
+      .wrapExisting()
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection
+      .client!.from('users')
+      .where((query) => {
+        query.whereNot('points', '<', 50).where('age', 18)
+      })
+      .toSQL()
+
+    console.log(sql, knexSql)
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
 
     await connection.disconnect()
   })
