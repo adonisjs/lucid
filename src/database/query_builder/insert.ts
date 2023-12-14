@@ -180,7 +180,13 @@ export class InsertQueryBuilder extends Macroable implements InsertQueryBuilderC
   }
 
   /**
-   * Run query inside the given transaction
+   * @deprecated
+   * Do not use this method. Instead create a query using the
+   * transaction client directly.
+   *
+   * ```ts
+   * trx.insertQuery()
+   * ```
    */
   useTransaction(transaction: TransactionClientContract) {
     this.knexQuery.transacting(transaction.knexClient)

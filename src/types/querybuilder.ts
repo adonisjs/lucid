@@ -895,6 +895,15 @@ export interface InsertQueryBuilderContract<Result = any>
 export interface ExcutableQueryBuilderContract<Result> extends Promise<Result> {
   debug(debug: boolean): this
   timeout(time: number, options?: { cancel: boolean }): this
+  /**
+   * @deprecated
+   * Do not use this method. Instead create a query with options.client
+   *
+   * ```ts
+   * Model.query({ client: trx })
+   * Database.query({ client: trx })
+   * ```
+   */
   useTransaction(trx: TransactionClientContract): this
   reporterData(data: any): this
   toQuery(): string

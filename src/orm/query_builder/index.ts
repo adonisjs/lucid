@@ -742,7 +742,12 @@ export class ModelQueryBuilder
   }
 
   /**
-   * Run query inside the given transaction
+   * @deprecated
+   * Do not use this method. Instead create a query with options.client
+   *
+   * ```ts
+   * Model.query({ client: trx })
+   * ```
    */
   useTransaction(transaction: TransactionClientContract) {
     this.knexQuery.transacting(transaction.knexClient)

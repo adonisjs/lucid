@@ -88,7 +88,13 @@ export class RawQueryBuilder implements RawQueryBuilderContract {
   }
 
   /**
-   * Run query inside the given transaction
+   * @deprecated
+   * Do not use this method. Instead create a query using the
+   * transaction client directly.
+   *
+   * ```ts
+   * trx.rawQuery()
+   * ```
    */
   useTransaction(transaction: TransactionClientContract) {
     this.knexQuery.transacting(transaction.knexClient)

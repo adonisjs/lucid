@@ -268,7 +268,13 @@ export class DatabaseQueryBuilder extends Chainable implements DatabaseQueryBuil
   }
 
   /**
-   * Run query inside the given transaction
+   * @deprecated
+   * Do not use this method. Instead create a query using the
+   * transaction client directly.
+   *
+   * ```ts
+   * trx.query()
+   * ```
    */
   useTransaction(transaction: TransactionClientContract): this {
     this.knexQuery.transacting(transaction.knexClient)
