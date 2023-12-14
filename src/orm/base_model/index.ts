@@ -1734,9 +1734,12 @@ class BaseModelImpl implements LucidRow {
       preloader.load(relationName, callback)
     }
 
+    const queryClient = Model.$adapter.modelClient(this)
+
     await preloader
       .sideload(this.$sideloaded)
-      .processAllForOne(this, Model.$adapter.modelClient(this))
+      .debug(queryClient.debug)
+      .processAllForOne(this, queryClient)
   }
 
   /**
