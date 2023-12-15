@@ -416,6 +416,7 @@ export type MysqlConfig = SharedConfigNode & {
  */
 type PostgresConnectionNode = {
   ssl?: boolean | ConnectionOptions
+  connectionString?: string
 }
 export type PostgreConfig = SharedConfigNode & {
   client: 'pg' | 'postgres' | 'postgresql'
