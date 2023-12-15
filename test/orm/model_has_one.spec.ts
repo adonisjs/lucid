@@ -199,7 +199,7 @@ test.group('Model | HasOne | Options', (group) => {
     assert.equal(User.$getRelation('profile')!['foreignKey'], 'userUid')
   })
 
-  test('clone relationship instance with options', async ({ fs, assert }) => {
+  test('clone relationship instance with options during inheritance', async ({ fs, assert }) => {
     const app = new AppFactory().create(fs.baseUrl, () => {})
     await app.init()
     const db = getDb()

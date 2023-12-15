@@ -305,7 +305,7 @@ test.group('Model | ManyToMany | Options', (group) => {
     assert.equal(User.$getRelation('skills')!['pivotRelatedForeignKey'], 'skill_uid')
   })
 
-  test('clone relationship instance with options', async ({ fs, assert }) => {
+  test('clone relationship instance with options during inheritance', async ({ fs, assert }) => {
     const app = new AppFactory().create(fs.baseUrl, () => {})
     await app.init()
     const db = getDb()

@@ -272,7 +272,7 @@ test.group('Model | Has Many Through | Options', (group) => {
     assert.equal(relation['throughForeignKeyColumnName'], 'user_uid')
   })
 
-  test('clone relationship instance with options', async ({ fs, assert }) => {
+  test('clone relationship instance with options during inheritance', async ({ fs, assert }) => {
     const app = new AppFactory().create(fs.baseUrl, () => {})
     await app.init()
     const db = getDb()

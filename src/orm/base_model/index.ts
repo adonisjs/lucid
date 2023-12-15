@@ -580,7 +580,6 @@ class BaseModelImpl implements LucidRow {
       const relations = new Map<string, RelationshipsContract>()
       value.forEach((relation, key) => {
         const relationClone = relation.clone(this)
-        relationClone.boot()
         relations.set(key, relationClone)
       })
       return relations
