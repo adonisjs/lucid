@@ -67,7 +67,7 @@ export default class DbWipe extends BaseCommand {
   /**
    * Drop all views (if asked for and supported)
    */
-  private async performDropViews(client: QueryClientContract) {
+  private async performDropViews(client: QueryClientContract, schemas: string[]) {
     if (!this.dropViews) {
       return
     }
@@ -76,22 +76,22 @@ export default class DbWipe extends BaseCommand {
       this.logger.warning(`Dropping views is not supported by "${client.dialect.name}"`)
     }
 
-    await client.dropAllViews()
+    await client.dropAllViews(schemas)
     this.logger.success('Dropped views successfully')
   }
 
   /**
    * Drop all tables
    */
-  private async performDropTables(client: QueryClientContract) {
-    await client.dropAllTables()
+  private async performDropTables(client: QueryClientContract, schemas: string[]) {
+    await client.dropAllTables(schemas)
     this.logger.success('Dropped tables successfully')
   }
 
   /**
    * Drop all types (if asked for and supported)
    */
-  private async performDropTypes(client: QueryClientContract) {
+  private async performDropTypes(client: QueryClientContract, schemas: string[]) {
     if (!this.dropTypes) {
       return
     }
@@ -100,7 +100,7 @@ export default class DbWipe extends BaseCommand {
       this.logger.warning(`Dropping types is not supported by "${client.dialect.name}"`)
     }
 
-    await client.dropAllTypes()
+    await client.dropAllTypes(schemas)
     this.logger.success('Dropped types successfully')
   }
 
@@ -132,15 +132,21 @@ export default class DbWipe extends BaseCommand {
     /**
      * Invalid database connection
      */
-    if (!db.manager.has(this.connection)) {
+    const managerConnection = db.manager.get(this.connection)
+    if (!managerConnection) {
       this.printNotAValidConnection(this.connection)
       this.exitCode = 1
       return
     }
 
-    await this.performDropViews(connection)
-    await this.performDropTables(connection)
-    await this.performDropTypes(connection)
+    let schemas: string[] = ['public']
+    if ('searchPath' in managerConnection.config && managerConnection.config.searchPath) {
+      schemas = managerConnection.config.searchPath
+    }
+
+    await this.performDropViews(connection, schemas)
+    await this.performDropTables(connection, schemas)
+    await this.performDropTypes(connection, schemas)
   }
 
   /**
