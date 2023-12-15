@@ -2506,7 +2506,7 @@ test.group('Base Model | toJSON', (group) => {
     const user = new User()
     user.username = 'virk'
 
-    assert.deepEqual(user.toJSON(), { username: 'virk', fullName: 'VIRK' })
+    assert.deepEqual(user.toJSON(), { username: 'virk', full_name: 'VIRK' })
   })
 
   test('do not add computed property when it returns undefined', async ({ fs, assert }) => {
@@ -2585,7 +2585,7 @@ test.group('Base Model | toJSON', (group) => {
 
     assert.deepEqual(user.toJSON(), {
       username: 'virk',
-      fullName: 'VIRK',
+      full_name: 'VIRK',
       meta: {
         postsCount: 10,
       },
@@ -2623,7 +2623,7 @@ test.group('Base Model | toJSON', (group) => {
 
     assert.deepEqual(user.toJSON(), {
       username: 'virk',
-      fullName: 'VIRK',
+      full_name: 'VIRK',
       posts: {
         count: 10,
       },
@@ -7612,7 +7612,7 @@ test.group('Base model | inheritance', (group) => {
           'fullName',
           {
             meta: undefined,
-            serializeAs: 'fullName',
+            serializeAs: 'full_name',
           },
         ],
         [
@@ -7638,7 +7638,7 @@ test.group('Base model | inheritance', (group) => {
           'fullName',
           {
             meta: undefined,
-            serializeAs: 'fullName',
+            serializeAs: 'full_name',
           },
         ],
       ])
@@ -7733,7 +7733,7 @@ test.group('Base model | inheritance', (group) => {
           'fullName',
           {
             meta: undefined,
-            serializeAs: 'fullName',
+            serializeAs: 'full_name',
           },
         ],
       ])

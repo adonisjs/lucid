@@ -347,7 +347,10 @@ class BaseModelImpl implements LucidRow {
    */
   static $addComputed(name: string, options: Partial<ComputedOptions>) {
     const computed: ComputedOptions = {
-      serializeAs: options.serializeAs || name,
+      serializeAs:
+        options.serializeAs !== undefined
+          ? options.serializeAs
+          : this.namingStrategy.serializedName(this, name),
       meta: options.meta,
     }
     this.$computedDefinitions.set(name, computed)
