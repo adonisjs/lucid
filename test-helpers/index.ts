@@ -117,7 +117,6 @@ export function getConfig(): ConnectionConfig {
           user: process.env.PG_USER as string,
           password: process.env.PG_PASSWORD as string,
         },
-        searchPath: ['custom', 'public'],
         debug: !!process.env.DEBUG,
         useNullAsDefault: true,
       }
