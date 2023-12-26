@@ -7,161 +7,59 @@
  * file that was distributed with this source code.
  */
 
-import { mkdir } from 'node:fs/promises'
+import string from '@poppinss/utils/string'
+import { presetLucid, DIALECTS } from '@adonisjs/presets/lucid'
 import type Configure from '@adonisjs/core/commands/configure'
-
-/**
- * We only allow configuring the one's thoroughly tested
- * inside the Lucid codebase. Knex supports more and one
- * can reference knex docs to configure additional
- * dialects.
- */
-const DIALECTS = ['sqlite', 'mysql', 'postgres', 'mssql'] as const
-const DIALECTS_INFO: {
-  [K in (typeof DIALECTS)[number]]: {
-    envVars?: Record<string, number | string>
-    envValidations?: Record<string, string>
-    pkg: string
-  }
-} = {
-  sqlite: {
-    pkg: 'sqlite3',
-  },
-  mysql: {
-    pkg: 'mysql2',
-    envVars: {
-      DB_HOST: '127.0.0.1',
-      DB_PORT: 3306,
-      DB_USER: 'root',
-      DB_PASSWORD: '',
-      DB_DATABASE: '',
-    },
-    envValidations: {
-      DB_HOST: `Env.schema.string({ format: 'host' })`,
-      DB_PORT: `Env.schema.number()`,
-      DB_USER: 'Env.schema.string()',
-      DB_PASSWORD: 'Env.schema.string.optional()',
-      DB_DATABASE: 'Env.schema.string()',
-    },
-  },
-  postgres: {
-    envVars: {
-      DB_HOST: '127.0.0.1',
-      DB_PORT: 5432,
-      DB_USER: 'postgres',
-      DB_PASSWORD: '',
-      DB_DATABASE: '',
-    },
-    envValidations: {
-      DB_HOST: `Env.schema.string({ format: 'host' })`,
-      DB_PORT: `Env.schema.number()`,
-      DB_USER: 'Env.schema.string()',
-      DB_PASSWORD: 'Env.schema.string.optional()',
-      DB_DATABASE: 'Env.schema.string()',
-    },
-    pkg: 'pg',
-  },
-  mssql: {
-    envVars: {
-      DB_HOST: '127.0.0.1',
-      DB_PORT: 1433,
-      DB_USER: 'sa',
-      DB_PASSWORD: '',
-      DB_DATABASE: '',
-    },
-    envValidations: {
-      DB_HOST: `Env.schema.string({ format: 'host' })`,
-      DB_PORT: `Env.schema.number()`,
-      DB_USER: 'Env.schema.string()',
-      DB_PASSWORD: 'Env.schema.string.optional()',
-      DB_DATABASE: 'Env.schema.string()',
-    },
-    pkg: 'tedious',
-  },
-}
 
 /**
  * Configures the package
  */
 export async function configure(command: Configure) {
-  const codemods = await command.createCodemods()
-  let dialect: keyof typeof DIALECTS_INFO = command.parsedFlags.db
+  let dialect: string | undefined = command.parsedFlags.db
+  let shouldInstallPackages: boolean | undefined = command.parsedFlags.install
 
   /**
-   * Prompt to select the dialect to use
+   * Prompt to select the dialect when --db flag
+   * is not used.
    */
-  if (!dialect) {
-    dialect = await command.prompt.choice('Select the database you want to use', DIALECTS, {
-      hint: 'You can always change it later',
-    })
+  if (dialect === undefined) {
+    dialect = await command.prompt.choice(
+      'Select the database you want to use',
+      Object.keys(DIALECTS),
+      {
+        validate(value) {
+          return !!value
+        },
+      }
+    )
   }
 
   /**
    * Show error when selected dialect is not supported
    */
-  if (!DIALECTS_INFO[dialect]) {
+  if (dialect! in DIALECTS === false) {
     command.error(
-      `The selected database "${dialect}" is invalid. Select from one of the following
-  ${Object.keys(DIALECTS_INFO).join(', ')}`
+      `The selected database "${dialect}" is invalid. Select one from: ${string.sentence(
+        Object.keys(DIALECTS)
+      )}`
     )
+    command.exitCode = 1
     return
   }
 
-  const { pkg, envVars, envValidations } = DIALECTS_INFO[dialect]
-  const installNpmDriver = await command.prompt.confirm(
-    `Do you want to install npm package "${pkg}"?`
-  )
-
   /**
-   * Make "tmp" directory when the selected dialect is
-   * sqlite
+   * Prompt when `install` or `--no-install` flags are
+   * not used
    */
-  if (dialect === 'sqlite') {
-    try {
-      await mkdir(command.app.tmpPath())
-    } catch {}
+  if (shouldInstallPackages === undefined) {
+    shouldInstallPackages = await command.prompt.confirm(
+      'Do you want to install additional packages required by "@adonisjs/lucid"?'
+    )
   }
 
-  /**
-   * Register provider
-   */
-  await codemods.updateRcFile((rcFile) => {
-    rcFile.addCommand('@adonisjs/lucid/commands')
-    rcFile.addProvider('@adonisjs/lucid/database_provider')
+  const codemods = await command.createCodemods()
+  await presetLucid(codemods, command.app, {
+    dialect: dialect as keyof typeof DIALECTS,
+    installPackages: !!shouldInstallPackages,
   })
-
-  /**
-   * Define environment variables
-   */
-  if (envVars) {
-    codemods.defineEnvVariables(envVars)
-  }
-
-  /**
-   * Define environment validations
-   */
-  if (envValidations) {
-    codemods.defineEnvValidations({
-      variables: envValidations,
-      leadingComment: 'Variables for configuring database connection',
-    })
-  }
-
-  /**
-   * Publish config
-   */
-  await command.publishStub('config.stub', { dialect: dialect })
-
-  /**
-   * Install package or show steps to install package
-   */
-  if (installNpmDriver) {
-    await command.installPackages([
-      { name: pkg, isDevDependency: false },
-      { name: 'luxon', isDevDependency: false },
-      { name: '@types/luxon', isDevDependency: true },
-    ])
-  } else {
-    command.listPackagesToInstall([{ name: pkg, isDevDependency: false }])
-  }
 }
