@@ -20,6 +20,8 @@ test.group('Configure', (group) => {
     context.fs.basePath = fileURLToPath(BASE_URL)
   })
 
+  group.each.disableTimeout()
+
   test('create config file and register provider', async ({ fs, assert }) => {
     const ignitor = new IgnitorFactory()
       .withCoreProviders()
@@ -45,7 +47,9 @@ test.group('Configure', (group) => {
 
     const ace = await app.container.make('ace')
     ace.prompt.trap('Select the database you want to use').chooseOption(2)
-    ace.prompt.trap('Do you want to install npm package "pg"?').reject()
+    ace.prompt
+      .trap('Do you want to install additional packages required by "@adonisjs/lucid"?')
+      .reject()
 
     const command = await ace.create(Configure, ['../../index.js'])
     await command.exec()
@@ -67,7 +71,7 @@ test.group('Configure', (group) => {
     await assert.fileContains('start/env.ts', 'DB_USER: Env.schema.string()')
     await assert.fileContains('start/env.ts', 'DB_PASSWORD: Env.schema.string.optional()')
     await assert.fileContains('start/env.ts', 'DB_DATABASE: Env.schema.string()')
-  }).timeout(6000)
+  })
 
   test('do not define env vars for sqlite dialect', async ({ fs, assert }) => {
     const ignitor = new IgnitorFactory()
@@ -92,7 +96,7 @@ test.group('Configure', (group) => {
 
     const ace = await app.container.make('ace')
     ace.prompt.trap('Select the database you want to use').chooseOption(0)
-    ace.prompt.trap('Do you want to install npm package "sqlite3"?').reject()
+    ace.prompt.trap('Do you want to install additional packages required by "@adonisjs/lucid"?')
 
     const command = await ace.create(Configure, ['../../index.js'])
     await command.exec()
@@ -104,7 +108,7 @@ test.group('Configure', (group) => {
 
     await assert.fileNotExists('.env')
     await assert.fileNotExists('start/env.ts')
-  }).timeout(6000)
+  })
 
   test('create tmp directory for sqlite dialect', async ({ fs, assert }) => {
     const ignitor = new IgnitorFactory()
@@ -129,13 +133,13 @@ test.group('Configure', (group) => {
 
     const ace = await app.container.make('ace')
     ace.prompt.trap('Select the database you want to use').chooseOption(0)
-    ace.prompt.trap('Do you want to install npm package "sqlite3"?').reject()
+    ace.prompt.trap('Do you want to install additional packages required by "@adonisjs/lucid"?')
 
     const command = await ace.create(Configure, ['../../index.js'])
     await command.exec()
 
     await assert.dirExists('tmp')
-  }).timeout(6000)
+  })
 
   test('do not recreate tmp directory if it already exists', async ({ fs, assert }) => {
     const ignitor = new IgnitorFactory()
@@ -161,11 +165,11 @@ test.group('Configure', (group) => {
 
     const ace = await app.container.make('ace')
     ace.prompt.trap('Select the database you want to use').chooseOption(0)
-    ace.prompt.trap('Do you want to install npm package "sqlite3"?').reject()
+    ace.prompt.trap('Do you want to install additional packages required by "@adonisjs/lucid"?')
 
     const command = await ace.create(Configure, ['../../index.js'])
     await command.exec()
 
     await assert.fileExists('tmp/db.sqlite')
-  }).timeout(6000)
+  })
 })
