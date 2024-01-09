@@ -60,6 +60,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
     readonly supportsAdvisoryLocks: boolean
     readonly supportsViews: boolean
     readonly supportsTypes: boolean
+    readonly supportsDomains: boolean
     readonly supportsReturningStatement: boolean
 
     getAllTables(schemas?: string[]): Promise<string[]>
@@ -70,6 +71,9 @@ declare module '@ioc:Adonis/Lucid/Database' {
 
     getAllTypes(schemas?: string[]): Promise<string[]>
     dropAllTypes(schemas?: string[]): Promise<void>
+
+    getAllDomains(schemas?: string[]): Promise<string[]>
+    dropAllDomains(schemas?: string[]): Promise<void>
 
     truncate(table: string, cascade?: boolean): Promise<void>
 
@@ -209,6 +213,11 @@ declare module '@ioc:Adonis/Lucid/Database' {
     getAllTypes(schemas?: string[]): Promise<string[]>
 
     /**
+     * Returns an array of all domain names
+     */
+    getAllDomains(schemas?: string[]): Promise<string[]>
+
+    /**
      * Drop all tables inside database
      */
     dropAllTables(schemas?: string[]): Promise<void>
@@ -222,6 +231,11 @@ declare module '@ioc:Adonis/Lucid/Database' {
      * Drop all types inside the database
      */
     dropAllTypes(schemas?: string[]): Promise<void>
+
+    /**
+     * Drop all domains inside the database
+     */
+    dropAllDomains(schemas?: string[]): Promise<void>
 
     /**
      * Same as `query()`, but also selects the table for the query. The `from` method

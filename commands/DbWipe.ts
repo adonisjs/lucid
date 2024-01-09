@@ -37,6 +37,12 @@ export default class DbWipe extends BaseCommand {
   public dropTypes: boolean
 
   /**
+   * Drop all domains in database
+   */
+  @flags.boolean({ description: 'Drop all domains (Postgres only)' })
+  public dropDomains: boolean
+
+  /**
    * Force command execution in production
    */
   @flags.boolean({ description: 'Explicitly force command to run in production' })
@@ -111,6 +117,22 @@ export default class DbWipe extends BaseCommand {
   }
 
   /**
+   * Drop all domains (if asked for and supported)
+   */
+  private async performDropDomains(client: QueryClientContract) {
+    if (!this.dropDomains) {
+      return
+    }
+
+    if (!client.dialect.supportsDomains) {
+      this.logger.warning(`Dropping domains is not supported by "${client.dialect.name}"`)
+    }
+
+    await client.dropAllDomains()
+    this.logger.success('Dropped domains successfully')
+  }
+
+  /**
    * Run as a subcommand. Never close database connections or exit
    * process inside this method
    */
@@ -147,6 +169,7 @@ export default class DbWipe extends BaseCommand {
     await this.performDropViews(connection)
     await this.performDropTables(connection)
     await this.performDropTypes(connection)
+    await this.performDropDomains(connection)
   }
 
   /**

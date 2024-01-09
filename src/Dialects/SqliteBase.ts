@@ -16,6 +16,7 @@ export abstract class BaseSqliteDialect implements DialectContract {
   public readonly supportsAdvisoryLocks = false
   public readonly supportsViews = true
   public readonly supportsTypes = false
+  public readonly supportsDomains = false
   public readonly supportsReturningStatement = false
 
   /**
@@ -70,6 +71,13 @@ export abstract class BaseSqliteDialect implements DialectContract {
   }
 
   /**
+   * Returns an array of all domains names
+   */
+  public async getAllDomains(): Promise<string[]> {
+    throw new Error("Sqlite doesn't support domains")
+  }
+
+  /**
    * Truncate SQLITE tables
    */
   public async truncate(table: string) {
@@ -107,6 +115,13 @@ export abstract class BaseSqliteDialect implements DialectContract {
    */
   public async dropAllTypes(): Promise<void> {
     throw new Error("Sqlite doesn't support types")
+  }
+
+  /**
+   * Drop all custom domains inside the database
+   */
+  public async dropAllDomains(): Promise<void> {
+    throw new Error("Sqlite doesn't support domains")
   }
 
   /**

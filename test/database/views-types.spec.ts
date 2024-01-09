@@ -10,7 +10,7 @@ import { fs, getConfig, setup, cleanup, setupApplication } from '../../test-help
 
 let app: ApplicationContract
 
-test.group('Query client | Views and types', (group) => {
+test.group('Query client | Views, types and domains', (group) => {
   group.setup(async () => {
     app = await setupApplication()
     await setup()
@@ -102,6 +102,35 @@ test.group('Query client | Views and types', (group) => {
       const types = await client.getAllTypes()
 
       assert.equal(types.length, 0)
+      await connection.disconnect()
+    })
+
+    test('Get all domains', async ({ assert }) => {
+      await fs.fsExtra.ensureDir(join(fs.basePath, 'temp'))
+      const connection = new Connection('primary', getConfig(), app.logger)
+      connection.connect()
+      const client = new QueryClient('dual', connection, app.container.use('Adonis/Core/Event'))
+
+      await client.rawQuery(`CREATE DOMAIN "email_domain" AS VARCHAR(255)`)
+      const domains = await client.getAllDomains(['public'])
+
+      assert.isTrue(domains.includes('email_domain'))
+
+      await client.dropAllDomains()
+      await connection.disconnect()
+    })
+
+    test('Drop all domains', async ({ assert }) => {
+      await fs.fsExtra.ensureDir(join(fs.basePath, 'temp'))
+      const connection = new Connection('primary', getConfig(), app.logger)
+      connection.connect()
+      const client = new QueryClient('dual', connection, app.container.use('Adonis/Core/Event'))
+
+      await client.rawQuery(`CREATE DOMAIN "email_domain" AS VARCHAR(255)`)
+      await client.dropAllDomains()
+      const domains = await client.getAllDomains()
+
+      assert.isFalse(domains.includes('email_domain'))
       await connection.disconnect()
     })
   }
