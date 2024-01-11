@@ -7,42 +7,40 @@
  * file that was distributed with this source code.
  */
 
-/// <reference path="../../adonis-typings/index.ts" />
-
+import { sep } from 'node:path'
 import { test } from '@japa/runner'
-import { join, sep } from 'path'
-import { ApplicationContract } from '@ioc:Adonis/Core/Application'
+import { AppFactory } from '@adonisjs/core/factories/app'
 
 import {
   setup,
-  cleanup,
   getDb,
   resetTables,
   getMigrator,
-  setupApplication,
-  fs,
-} from '../../test-helpers'
-
-let db: ReturnType<typeof getDb>
-let app: ApplicationContract
+  cleanup as cleanupTables,
+} from '../../test-helpers/index.js'
+import * as errors from '../../src/errors.js'
 
 test.group('Migrator', (group) => {
   group.each.setup(async () => {
-    app = await setupApplication()
-    db = getDb(app)
     await setup()
   })
 
   group.each.teardown(async () => {
     await resetTables()
-    await db.manager.closeAll()
-    await cleanup()
-    await cleanup(['adonis_schema', 'adonis_schema_versions', 'schema_users', 'schema_accounts'])
-    await fs.cleanup()
+    await cleanupTables()
+    await cleanupTables([
+      'adonis_schema',
+      'adonis_schema_versions',
+      'schema_users',
+      'schema_accounts',
+    ])
   })
 
-  test('create the schema table when there are no migrations', async ({ assert }) => {
-    await fs.fsExtra.ensureDir(join(fs.basePath, 'database/migrations'))
+  test('create the schema table when there are no migrations', async ({ fs, assert, cleanup }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    cleanup(() => db.manager.closeAll())
 
     const migrator = getMigrator(db, app, {
       direction: 'up',
@@ -56,12 +54,17 @@ test.group('Migrator', (group) => {
     assert.equal(migrator.status, 'skipped')
   })
 
-  test('migrate database using schema files', async ({ assert }) => {
-    await fs.add(
-      'database/migrations/users.ts',
+  test('migrate database using schema files', async ({ fs, assert, cleanup }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    cleanup(() => db.manager.closeAll())
+
+    await fs.create(
+      'database/migrations/users_v1.ts',
       `
-      import { Schema } from '../../../../src/Schema'
-      module.exports = class User extends Schema {
+      import { BaseSchema as Schema } from '../../../../src/schema/main.js'
+      export default class User extends Schema {
         public async up () {
           this.schema.createTable('schema_users', (table) => {
             table.increments()
@@ -89,27 +92,32 @@ test.group('Migrator', (group) => {
     })
 
     assert.lengthOf(migrated, 1)
-    assert.equal(migrated[0].name, 'database/migrations/users')
+    assert.equal(migrated[0].name, 'database/migrations/users_v1')
     assert.equal(migrated[0].batch, 1)
     assert.isTrue(hasUsersTable)
     assert.deepEqual(migratedFiles, [
       {
         status: 'completed',
-        file: 'database/migrations/users',
+        file: 'database/migrations/users_v1',
         queries: [],
       },
     ])
     assert.equal(migrator.status, 'completed')
   })
 
-  test('do not migrate when schema up action fails', async ({ assert }) => {
+  test('do not migrate when schema up action fails', async ({ fs, assert, cleanup }) => {
     assert.plan(8)
 
-    await fs.add(
-      'database/migrations/users.ts',
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    cleanup(() => db.manager.closeAll())
+
+    await fs.create(
+      'database/migrations/users_v2.ts',
       `
-      import { Schema } from '../../../../src/Schema'
-      module.exports = class User extends Schema {
+      import { BaseSchema as Schema } from '../../../../src/schema/main.js'
+      export default class User extends Schema {
         public async up () {
           this.schema.createTable('schema_users', (table) => {
             table.increments()
@@ -120,11 +128,11 @@ test.group('Migrator', (group) => {
     `
     )
 
-    await fs.add(
-      'database/migrations/accounts.ts',
+    await fs.create(
+      'database/migrations/accounts_v2.ts',
       `
-      import { Schema } from '../../../../src/Schema'
-      module.exports = class Accounts extends Schema {
+      import { BaseSchema as Schema } from '../../../../src/schema/main.js'
+      export default class extends Schema {
         public async up () {
           this.schema.createTable('schema_accounts', (table) => {
             table.increments()
@@ -153,19 +161,19 @@ test.group('Migrator', (group) => {
     })
 
     assert.lengthOf(migrated, 1)
-    assert.equal(migrated[0].name, 'database/migrations/accounts')
+    assert.equal(migrated[0].name, 'database/migrations/accounts_v2')
     assert.equal(migrated[0].batch, 1)
     assert.isFalse(hasUsersTable, 'Has users table')
     assert.isTrue(hasAccountsTable, 'Has accounts table')
     assert.deepEqual(migratedFiles, [
       {
         status: 'completed',
-        file: 'database/migrations/accounts',
+        file: 'database/migrations/accounts_v2',
         queries: [],
       },
       {
         status: 'error',
-        file: 'database/migrations/users',
+        file: 'database/migrations/users_v2',
         queries: [],
       },
     ])
@@ -174,12 +182,17 @@ test.group('Migrator', (group) => {
     assert.equal(migrator.error!.message, 'table.badMethod is not a function')
   })
 
-  test('do not migrate when dryRun is true', async ({ assert }) => {
-    await fs.add(
-      'database/migrations/users.ts',
+  test('do not migrate when dryRun is true', async ({ fs, assert, cleanup }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    cleanup(() => db.manager.closeAll())
+
+    await fs.create(
+      'database/migrations/users_v3.ts',
       `
-      import { Schema } from '../../../../src/Schema'
-      module.exports = class User extends Schema {
+      import { BaseSchema as Schema } from '../../../../src/schema/main.js'
+      export default class extends Schema {
         public async up () {
           this.schema.createTable('schema_users', (table) => {
             table.increments()
@@ -189,11 +202,11 @@ test.group('Migrator', (group) => {
     `
     )
 
-    await fs.add(
-      'database/migrations/accounts.ts',
+    await fs.create(
+      'database/migrations/accounts_v3.ts',
       `
-      import { Schema } from '../../../../src/Schema'
-      module.exports = class Accounts extends Schema {
+      import { BaseSchema as Schema } from '../../../../src/schema/main.js'
+      export default class extends Schema {
         public async up () {
           this.schema.createTable('schema_accounts', (table) => {
             table.increments()
@@ -229,7 +242,7 @@ test.group('Migrator', (group) => {
     assert.deepEqual(migratedFiles, [
       {
         status: 'completed',
-        file: 'database/migrations/accounts',
+        file: 'database/migrations/accounts_v3',
         queries: [
           db
             .connection()
@@ -241,7 +254,7 @@ test.group('Migrator', (group) => {
       },
       {
         status: 'completed',
-        file: 'database/migrations/users',
+        file: 'database/migrations/users_v3',
         queries: [
           db
             .connection()
@@ -256,12 +269,17 @@ test.group('Migrator', (group) => {
     assert.equal(migrator.status, 'completed')
   })
 
-  test('catch and report errors in dryRun', async ({ assert }) => {
-    await fs.add(
-      'database/migrations/users.ts',
+  test('catch and report errors in dryRun', async ({ fs, assert, cleanup }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    cleanup(() => db.manager.closeAll())
+
+    await fs.create(
+      'database/migrations/users_v4.ts',
       `
-      import { Schema } from '../../../../src/Schema'
-      module.exports = class User extends Schema {
+      import { BaseSchema as Schema } from '../../../../src/schema/main.js'
+      export default class extends Schema {
         public async up () {
           this.schema.createTable('schema_users', (table) => {
             table.increments()
@@ -271,11 +289,11 @@ test.group('Migrator', (group) => {
     `
     )
 
-    await fs.add(
-      'database/migrations/accounts.ts',
+    await fs.create(
+      'database/migrations/accounts_v4.ts',
       `
-      import { Schema } from '../../../../src/Schema'
-      module.exports = class Accounts extends Schema {
+      import { BaseSchema as Schema } from '../../../../src/schema/main.js'
+      export default class extends Schema {
         public async up () {
           this.schema.createTable('schema_accounts', (table) => {
             table.increments()
@@ -312,12 +330,12 @@ test.group('Migrator', (group) => {
     assert.deepEqual(migratedFiles, [
       {
         status: 'error',
-        file: 'database/migrations/accounts',
+        file: 'database/migrations/accounts_v4',
         queries: [],
       },
       {
         status: 'pending',
-        file: 'database/migrations/users',
+        file: 'database/migrations/users_v4',
         queries: [],
       },
     ])
@@ -325,12 +343,17 @@ test.group('Migrator', (group) => {
     assert.equal(migrator.status, 'error')
   })
 
-  test('do not migrate a schema file twice', async ({ assert }) => {
-    await fs.add(
-      'database/migrations/accounts.ts',
+  test('do not migrate a schema file twice', async ({ fs, assert, cleanup }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    cleanup(() => db.manager.closeAll())
+
+    await fs.create(
+      'database/migrations/accounts_v5.ts',
       `
-      import { Schema } from '../../../../src/Schema'
-      module.exports = class Accounts extends Schema {
+      import { BaseSchema as Schema } from '../../../../src/schema/main.js'
+      export default class extends Schema {
         public async up () {
           this.schema.createTable('schema_accounts', (table) => {
             table.increments()
@@ -343,11 +366,11 @@ test.group('Migrator', (group) => {
     const migrator = getMigrator(db, app, { direction: 'up', connectionName: 'primary' })
     await migrator.run()
 
-    await fs.add(
-      'database/migrations/users.ts',
+    await fs.create(
+      'database/migrations/users_v5.ts',
       `
-      import { Schema } from '../../../../src/Schema'
-      module.exports = class User extends Schema {
+      import { BaseSchema as Schema } from '../../../../src/schema/main.js'
+      export default class extends Schema {
         public async up () {
           this.schema.createTable('schema_users', (table) => {
             table.increments()
@@ -370,22 +393,27 @@ test.group('Migrator', (group) => {
     const hasAccountsTable = await db.connection().schema.hasTable('schema_accounts')
 
     assert.lengthOf(migrated, 2)
-    assert.equal(migrated[0].name, 'database/migrations/accounts')
+    assert.equal(migrated[0].name, 'database/migrations/accounts_v5')
     assert.equal(migrated[0].batch, 1)
 
-    assert.equal(migrated[1].name, 'database/migrations/users')
+    assert.equal(migrated[1].name, 'database/migrations/users_v5')
     assert.equal(migrated[1].batch, 2)
 
     assert.isTrue(hasAccountsTable, 'Has accounts table')
     assert.isTrue(hasUsersTable, 'Has users table')
   })
 
-  test('rollback database using schema files to a given batch', async ({ assert }) => {
-    await fs.add(
-      'database/migrations/users.ts',
+  test('rollback database using schema files to a given batch', async ({ fs, assert, cleanup }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    cleanup(() => db.manager.closeAll())
+
+    await fs.create(
+      'database/migrations/users_v6.ts',
       `
-      import { Schema } from '../../../../src/Schema'
-      module.exports = class User extends Schema {
+      import { BaseSchema as Schema } from '../../../../src/schema/main.js'
+      export default class extends Schema {
         public async up () {
           this.schema.createTable('schema_users', (table) => {
             table.increments()
@@ -402,11 +430,11 @@ test.group('Migrator', (group) => {
     const migrator = getMigrator(db, app, { direction: 'up', connectionName: 'primary' })
     await migrator.run()
 
-    await fs.add(
-      'database/migrations/accounts.ts',
+    await fs.create(
+      'database/migrations/accounts_v6.ts',
       `
-      import { Schema } from '../../../../src/Schema'
-      module.exports = class User extends Schema {
+      import { BaseSchema as Schema } from '../../../../src/schema/main.js'
+      export default class extends Schema {
         public async up () {
           this.schema.createTable('schema_accounts', (table) => {
             table.increments()
@@ -447,18 +475,23 @@ test.group('Migrator', (group) => {
     assert.deepEqual(migratedFiles, [
       {
         status: 'completed',
-        file: 'database/migrations/accounts',
+        file: 'database/migrations/accounts_v6',
         queries: [],
       },
     ])
   })
 
-  test('rollback database to the latest batch', async ({ assert }) => {
-    await fs.add(
-      'database/migrations/users.ts',
+  test('rollback database to the latest batch', async ({ fs, assert, cleanup }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    cleanup(() => db.manager.closeAll())
+
+    await fs.create(
+      'database/migrations/users_v7.ts',
       `
-      import { Schema } from '../../../../src/Schema'
-      module.exports = class User extends Schema {
+      import { BaseSchema as Schema } from '../../../../src/schema/main.js'
+      export default class extends Schema {
         public async up () {
           this.schema.createTable('schema_users', (table) => {
             table.increments()
@@ -475,11 +508,11 @@ test.group('Migrator', (group) => {
     const migrator = getMigrator(db, app, { direction: 'up', connectionName: 'primary' })
     await migrator.run()
 
-    await fs.add(
-      'database/migrations/accounts.ts',
+    await fs.create(
+      'database/migrations/accounts_v7.ts',
       `
-      import { Schema } from '../../../../src/Schema'
-      module.exports = class User extends Schema {
+      import { BaseSchema as Schema } from '../../../../src/schema/main.js'
+      export default class extends Schema {
         public async up () {
           this.schema.createTable('schema_accounts', (table) => {
             table.increments()
@@ -516,18 +549,23 @@ test.group('Migrator', (group) => {
     assert.deepEqual(migratedFiles, [
       {
         status: 'completed',
-        file: 'database/migrations/accounts',
+        file: 'database/migrations/accounts_v7',
         queries: [],
       },
     ])
   })
 
-  test('rollback all down to batch 0', async ({ assert }) => {
-    await fs.add(
-      'database/migrations/users.ts',
+  test('rollback all down to batch 0', async ({ fs, assert, cleanup }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    cleanup(() => db.manager.closeAll())
+
+    await fs.create(
+      'database/migrations/users_v8.ts',
       `
-      import { Schema } from '../../../../src/Schema'
-      module.exports = class User extends Schema {
+      import { BaseSchema as Schema } from '../../../../src/schema/main.js'
+      export default class extends Schema {
         public async up () {
           this.schema.createTable('schema_users', (table) => {
             table.increments()
@@ -544,11 +582,11 @@ test.group('Migrator', (group) => {
     const migrator = getMigrator(db, app, { direction: 'up', connectionName: 'primary' })
     await migrator.run()
 
-    await fs.add(
-      'database/migrations/accounts.ts',
+    await fs.create(
+      'database/migrations/accounts_v8.ts',
       `
-      import { Schema } from '../../../../src/Schema'
-      module.exports = class User extends Schema {
+      import { BaseSchema as Schema } from '../../../../src/schema/main.js'
+      export default class extends Schema {
         public async up () {
           this.schema.createTable('schema_accounts', (table) => {
             table.increments()
@@ -591,23 +629,28 @@ test.group('Migrator', (group) => {
     assert.deepEqual(migratedFiles, [
       {
         status: 'completed',
-        file: 'database/migrations/accounts',
+        file: 'database/migrations/accounts_v8',
         queries: [],
       },
       {
         status: 'completed',
-        file: 'database/migrations/users',
+        file: 'database/migrations/users_v8',
         queries: [],
       },
     ])
   })
 
-  test('rollback multiple times must be a noop', async ({ assert }) => {
-    await fs.add(
-      'database/migrations/users.ts',
+  test('rollback multiple times must be a noop', async ({ fs, assert, cleanup }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    cleanup(() => db.manager.closeAll())
+
+    await fs.create(
+      'database/migrations/users_v9.ts',
       `
-      import { Schema } from '../../../../src/Schema'
-      module.exports = class User extends Schema {
+      import { BaseSchema as Schema } from '../../../../src/schema/main.js'
+      export default class extends Schema {
         public async up () {
           this.schema.createTable('schema_users', (table) => {
             table.increments()
@@ -624,11 +667,11 @@ test.group('Migrator', (group) => {
     const migrator = getMigrator(db, app, { direction: 'up', connectionName: 'primary' })
     await migrator.run()
 
-    await fs.add(
-      'database/migrations/accounts.ts',
+    await fs.create(
+      'database/migrations/accounts_v9.ts',
       `
-      import { Schema } from '../../../../src/Schema'
-      module.exports = class User extends Schema {
+      import { BaseSchema as Schema } from '../../../../src/schema/main.js'
+      export default class extends Schema {
         public async up () {
           this.schema.createTable('schema_accounts', (table) => {
             table.increments()
@@ -688,24 +731,29 @@ test.group('Migrator', (group) => {
     assert.deepEqual(migrator2Files, [
       {
         status: 'completed',
-        file: 'database/migrations/accounts',
+        file: 'database/migrations/accounts_v9',
         queries: [],
       },
       {
         status: 'completed',
-        file: 'database/migrations/users',
+        file: 'database/migrations/users_v9',
         queries: [],
       },
     ])
     assert.deepEqual(migrator3Files, [])
   })
 
-  test('do not rollback in dryRun', async ({ assert }) => {
-    await fs.add(
-      'database/migrations/users.ts',
+  test('do not rollback in dryRun', async ({ fs, assert, cleanup }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    cleanup(() => db.manager.closeAll())
+
+    await fs.create(
+      'database/migrations/users_v10.ts',
       `
-      import { Schema } from '../../../../src/Schema'
-      module.exports = class User extends Schema {
+      import { BaseSchema as Schema } from '../../../../src/schema/main.js'
+      export default class extends Schema {
         public async up () {
           this.schema.createTable('schema_users', (table) => {
             table.increments()
@@ -722,11 +770,11 @@ test.group('Migrator', (group) => {
     const migrator = getMigrator(db, app, { direction: 'up', connectionName: 'primary' })
     await migrator.run()
 
-    await fs.add(
-      'database/migrations/accounts.ts',
+    await fs.create(
+      'database/migrations/accounts_v10.ts',
       `
-      import { Schema } from '../../../../src/Schema'
-      module.exports = class User extends Schema {
+      import { BaseSchema as Schema } from '../../../../src/schema/main.js'
+      export default class extends Schema {
         public async up () {
           this.schema.createTable('schema_accounts', (table) => {
             table.increments()
@@ -770,25 +818,30 @@ test.group('Migrator', (group) => {
     assert.deepEqual(migrator2Files, [
       {
         status: 'completed',
-        file: 'database/migrations/accounts',
+        file: 'database/migrations/accounts_v10',
         queries: [db.connection().schema.dropTable('schema_accounts').toQuery()],
       },
       {
         status: 'completed',
-        file: 'database/migrations/users',
+        file: 'database/migrations/users_v10',
         queries: [db.connection().schema.dropTable('schema_users').toQuery()],
       },
     ])
   })
 
-  test('do not rollback when a schema file goes missing', async ({ assert }) => {
-    assert.plan(4)
+  test('do not rollback when a schema file goes missing', async ({ fs, assert, cleanup }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    cleanup(() => db.manager.closeAll())
 
-    await fs.add(
-      'database/migrations/users.ts',
+    assert.plan(5)
+
+    await fs.create(
+      'database/migrations/users_v11.ts',
       `
-      import { Schema } from '../../../../src/Schema'
-      module.exports = class User extends Schema {
+      import { BaseSchema as Schema } from '../../../../src/schema/main.js'
+      export default class extends Schema {
         public async up () {
           this.schema.createTable('schema_users', (table) => {
             table.increments()
@@ -802,11 +855,11 @@ test.group('Migrator', (group) => {
     `
     )
 
-    await fs.add(
-      'database/migrations/accounts.ts',
+    await fs.create(
+      'database/migrations/accounts_v11.ts',
       `
-      import { Schema } from '../../../../src/Schema'
-      module.exports = class User extends Schema {
+      import { BaseSchema as Schema } from '../../../../src/schema/main.js'
+      export default class extends Schema {
         public async up () {
           this.schema.createTable('schema_accounts', (table) => {
             table.increments()
@@ -823,7 +876,7 @@ test.group('Migrator', (group) => {
     const migrator = getMigrator(db, app, { direction: 'up', connectionName: 'primary' })
     await migrator.run()
 
-    await fs.remove('database/migrations/accounts.ts')
+    await fs.remove('database/migrations/accounts_v11.ts')
 
     const migrator1 = getMigrator(db, app, {
       batch: 0,
@@ -840,18 +893,24 @@ test.group('Migrator', (group) => {
     assert.lengthOf(migrated, 2)
     assert.isTrue(hasUsersTable)
     assert.isTrue(hasAccountsTable)
+    assert.instanceOf(migrator1.error, errors.E_MISSING_SCHEMA_FILES)
     assert.equal(
       migrator1.error!.message,
-      'E_MISSING_SCHEMA_FILES: Cannot perform rollback. Schema file {database/migrations/accounts} is missing'
+      'Cannot perform rollback. Schema file "database/migrations/accounts_v11" is missing'
     )
   })
 
-  test('get list of migrated files', async ({ assert }) => {
-    await fs.add(
-      'database/migrations/users.ts',
+  test('get list of migrated files', async ({ fs, assert, cleanup }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    cleanup(() => db.manager.closeAll())
+
+    await fs.create(
+      'database/migrations/users_v12.ts',
       `
-      import { Schema } from '../../../../src/Schema'
-      module.exports = class User extends Schema {
+      import { BaseSchema as Schema } from '../../../../src/schema/main.js'
+      export default class extends Schema {
         public async up () {
           this.schema.createTable('schema_users', (table) => {
             table.increments()
@@ -865,11 +924,11 @@ test.group('Migrator', (group) => {
     `
     )
 
-    await fs.add(
-      'database/migrations/accounts.ts',
+    await fs.create(
+      'database/migrations/accounts_v12.ts',
       `
-      import { Schema } from '../../../../src/Schema'
-      module.exports = class User extends Schema {
+      import { BaseSchema as Schema } from '../../../../src/schema/main.js'
+      export default class extends Schema {
         public async up () {
           this.schema.createTable('schema_accounts', (table) => {
             table.increments()
@@ -888,19 +947,24 @@ test.group('Migrator', (group) => {
     const files = await migrator.getList()
 
     assert.lengthOf(files, 2)
-    assert.equal(files[0].name, 'database/migrations/accounts')
+    assert.equal(files[0].name, 'database/migrations/accounts_v12')
     assert.equal(files[0].batch, 1)
 
-    assert.equal(files[1].name, 'database/migrations/users')
+    assert.equal(files[1].name, 'database/migrations/users_v12')
     assert.equal(files[1].batch, 1)
   })
 
-  test('skip upcoming migrations after failure', async ({ assert }) => {
-    await fs.add(
-      'database/migrations/users.ts',
+  test('skip upcoming migrations after failure', async ({ fs, assert, cleanup }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    cleanup(() => db.manager.closeAll())
+
+    await fs.create(
+      'database/migrations/users_v13.ts',
       `
-      import { Schema } from '../../../../src/Schema'
-      module.exports = class User extends Schema {
+      import { BaseSchema as Schema } from '../../../../src/schema/main.js'
+      export default class extends Schema {
         public async up () {
           this.schema.createTable('schema_users', (table) => {
             table.increments()
@@ -910,11 +974,11 @@ test.group('Migrator', (group) => {
     `
     )
 
-    await fs.add(
-      'database/migrations/accounts.ts',
+    await fs.create(
+      'database/migrations/accounts_v13.ts',
       `
-      import { Schema } from '../../../../src/Schema'
-      module.exports = class Accounts extends Schema {
+      import { BaseSchema as Schema } from '../../../../src/schema/main.js'
+      export default class extends Schema {
         public async up () {
           this.schema.createTable('schema_accounts', (table) => {
             table.increments()
@@ -953,12 +1017,12 @@ test.group('Migrator', (group) => {
     assert.deepEqual(migratedFiles, [
       {
         status: 'error',
-        file: 'database/migrations/accounts',
+        file: 'database/migrations/accounts_v13',
         queries: [],
       },
       {
         status: 'pending',
-        file: 'database/migrations/users',
+        file: 'database/migrations/users_v13',
         queries: [],
       },
     ])
@@ -966,17 +1030,22 @@ test.group('Migrator', (group) => {
     assert.equal(migrator.status, 'error')
   })
 
-  test('use a natural sort to order files when configured', async ({ assert }) => {
+  test('use a natural sort to order files when configured', async ({ fs, assert, cleanup }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    cleanup(() => db.manager.closeAll())
+
     const originalConfig = Object.assign({}, db.getRawConnection('primary')!.config)
 
     db.getRawConnection('primary')!.config.migrations = {
       naturalSort: true,
     }
 
-    await fs.add(
+    await fs.create(
       'database/migrations/12_users.ts',
       `
-      import { Schema } from '../../../../../src/Schema'
+      import { BaseSchema as Schema } from '../../../../../src/Schema'
       module.exports = class User extends Schema {
         public async up () {
           this.schema.createTable('schema_users', (table) => {
@@ -990,10 +1059,10 @@ test.group('Migrator', (group) => {
     `
     )
 
-    await fs.add(
+    await fs.create(
       'database/migrations/1_accounts.ts',
       `
-      import { Schema } from '../../../../../src/Schema'
+      import { BaseSchema as Schema } from '../../../../../src/Schema'
       module.exports = class User extends Schema {
         public async up () {
           this.schema.createTable('schema_accounts', (table) => {
@@ -1018,17 +1087,26 @@ test.group('Migrator', (group) => {
     assert.equal(files[1].name, `database${sep}migrations${sep}12_users`)
   })
 
-  test('use a natural sort to order nested files when configured', async ({ assert }) => {
+  test('use a natural sort to order nested files when configured', async ({
+    fs,
+    assert,
+    cleanup,
+  }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    cleanup(() => db.manager.closeAll())
+
     const originalConfig = Object.assign({}, db.getRawConnection('primary')!.config)
 
     db.getRawConnection('primary')!.config.migrations = {
       naturalSort: true,
     }
 
-    await fs.add(
+    await fs.create(
       'database/migrations/1/12_users.ts',
       `
-      import { Schema } from '../../../../../src/Schema'
+      import { BaseSchema as Schema } from '../../../../../src/Schema'
       module.exports = class User extends Schema {
         public async up () {
           this.schema.createTable('schema_users', (table) => {
@@ -1042,10 +1120,10 @@ test.group('Migrator', (group) => {
     `
     )
 
-    await fs.add(
+    await fs.create(
       'database/migrations/12/1_accounts.ts',
       `
-      import { Schema } from '../../../../../src/Schema'
+      import { BaseSchema as Schema } from '../../../../../src/Schema'
       module.exports = class User extends Schema {
         public async up () {
           this.schema.createTable('schema_accounts', (table) => {
@@ -1070,19 +1148,27 @@ test.group('Migrator', (group) => {
     assert.equal(files[1].name, `database${sep}migrations${sep}12${sep}1_accounts`)
   })
 
-  test('raise exception when rollbacks in production are disabled', async ({ assert }) => {
-    app.nodeEnvironment = 'production'
+  test('raise exception when rollbacks in production are disabled', async ({
+    fs,
+    assert,
+    cleanup,
+  }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    cleanup(() => db.manager.closeAll())
+
     const originalConfig = Object.assign({}, db.getRawConnection('primary')!.config)
 
     db.getRawConnection('primary')!.config.migrations = {
       disableRollbacksInProduction: true,
     }
 
-    await fs.add(
-      'database/migrations/users.ts',
+    await fs.create(
+      'database/migrations/users_v14.ts',
       `
-      import { Schema } from '../../../../src/Schema'
-      module.exports = class User extends Schema {
+      import { BaseSchema as Schema } from '../../../../src/schema/main.js'
+      export default class extends Schema {
         public async up () {
           this.schema.createTable('schema_users', (table) => {
             table.increments()
@@ -1097,13 +1183,14 @@ test.group('Migrator', (group) => {
     )
 
     const migrator = getMigrator(db, app, { direction: 'up', connectionName: 'primary' })
+    migrator.isInProduction = true
     await migrator.run()
 
-    await fs.add(
-      'database/migrations/accounts.ts',
+    await fs.create(
+      'database/migrations/accounts_v14.ts',
       `
-      import { Schema } from '../../../../src/Schema'
-      module.exports = class User extends Schema {
+      import { BaseSchema as Schema } from '../../../../src/schema/main.js'
+      export default class extends Schema {
         public async up () {
           this.schema.createTable('schema_accounts', (table) => {
             table.increments()
@@ -1118,9 +1205,11 @@ test.group('Migrator', (group) => {
     )
 
     const migrator1 = getMigrator(db, app, { direction: 'up', connectionName: 'primary' })
+    migrator1.isInProduction = true
     await migrator1.run()
 
     const migrator2 = getMigrator(db, app, { direction: 'down', connectionName: 'primary' })
+    migrator2.isInProduction = true
     await migrator2.run()
 
     assert.equal(
@@ -1140,12 +1229,17 @@ test.group('Migrator', (group) => {
     delete process.env.NODE_ENV
   })
 
-  test('upgrade old migration file name to new', async ({ assert }) => {
-    await fs.add(
-      'database/migrations/users.ts',
+  test('upgrade old migration file name to new', async ({ fs, assert, cleanup }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    cleanup(() => db.manager.closeAll())
+
+    await fs.create(
+      'database/migrations/users_v15.ts',
       `
-      import { Schema } from '../../../../src/Schema'
-      module.exports = class User extends Schema {
+      import { BaseSchema as Schema } from '../../../../src/schema/main.js'
+      export default class extends Schema {
         public async up () {
           this.schema.createTable('schema_users', (table) => {
             table.increments()
@@ -1170,7 +1264,7 @@ test.group('Migrator', (group) => {
     }
 
     await db.connection().table('adonis_schema').insert({
-      name: 'database\\migrations\\users',
+      name: 'database\\migrations\\users_v15',
       batch: 1,
     })
 
@@ -1191,19 +1285,24 @@ test.group('Migrator', (group) => {
 
     assert.lengthOf(migrated, 1)
     assert.deepEqual(latestVersion, [{ version: 2 }])
-    assert.equal(migrated[0].name, 'database/migrations/users')
+    assert.equal(migrated[0].name, 'database/migrations/users_v15')
     assert.equal(migrated[0].batch, 1)
     assert.isFalse(hasUsersTable)
     assert.deepEqual(migratedFiles, [])
     assert.equal(migrator.status, 'skipped')
   })
 
-  test('upgrade file names also in dryRun', async ({ assert }) => {
-    await fs.add(
-      'database/migrations/users.ts',
+  test('upgrade file names also in dryRun', async ({ fs, assert, cleanup }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    cleanup(() => db.manager.closeAll())
+
+    await fs.create(
+      'database/migrations/users_v16.ts',
       `
-      import { Schema } from '../../../../src/Schema'
-      module.exports = class User extends Schema {
+      import { BaseSchema as Schema } from '../../../../src/schema/main.js'
+      export default class extends Schema {
         public async up () {
           this.schema.createTable('schema_users', (table) => {
             table.increments()
@@ -1229,7 +1328,7 @@ test.group('Migrator', (group) => {
     }
 
     await db.connection().table('adonis_schema').insert({
-      name: 'database\\migrations\\users',
+      name: 'database\\migrations\\users_v16',
       batch: 1,
     })
 
@@ -1250,7 +1349,7 @@ test.group('Migrator', (group) => {
 
     assert.lengthOf(migrated, 1)
     assert.deepEqual(latestVersion, [{ version: 2 }])
-    assert.equal(migrated[0].name, 'database/migrations/users')
+    assert.equal(migrated[0].name, 'database/migrations/users_v16')
     assert.equal(migrated[0].batch, 1)
     assert.isFalse(hasUsersTable)
     assert.deepEqual(migratedFiles, [])

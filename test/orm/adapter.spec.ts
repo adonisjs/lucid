@@ -7,50 +7,36 @@
  * file that was distributed with this source code.
  */
 
-/// <reference path="../../adonis-typings/index.ts" />
-
 import { test } from '@japa/runner'
-import { ApplicationContract } from '@ioc:Adonis/Core/Application'
+import { column } from '../../src/orm/decorators/index.js'
 
-import { column } from '../../src/Orm/Decorators'
-
-import {
-  setup,
-  cleanup,
-  getDb,
-  getBaseModel,
-  ormAdapter,
-  setupApplication,
-  fs,
-} from '../../test-helpers'
-
-let db: ReturnType<typeof getDb>
-let BaseModel: ReturnType<typeof getBaseModel>
-let app: ApplicationContract
+import { setup, cleanup, getDb, getBaseModel, ormAdapter } from '../../test-helpers/index.js'
+import { AppFactory } from '@adonisjs/core/factories/app'
 
 test.group('Adapter', (group) => {
   group.each.setup(async () => {
-    app = await setupApplication()
-    db = getDb(app)
-    BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
   group.each.teardown(async () => {
-    await db.manager.closeAll()
     await cleanup()
-    await fs.cleanup()
   })
 
-  test('make insert call using a model', async ({ assert }) => {
+  test('make insert call using a model', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter)
+
     class User extends BaseModel {
-      public static $table = 'users'
+      static$table = 'users'
 
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
     }
 
     User.boot()
@@ -65,15 +51,21 @@ test.group('Adapter', (group) => {
     assert.isTrue(user.$isPersisted)
   })
 
-  test('make update call using a model', async ({ assert }) => {
+  test('make update call using a model', async ({ assert, fs }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter)
+
     class User extends BaseModel {
-      public static $table = 'users'
+      static$table = 'users'
 
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
     }
     User.boot()
 
@@ -93,15 +85,21 @@ test.group('Adapter', (group) => {
     await user.save()
   })
 
-  test('make delete call using a model', async ({ assert }) => {
+  test('make delete call using a model', async ({ assert, fs }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter)
+
     class User extends BaseModel {
-      public static $table = 'users'
+      static$table = 'users'
 
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
     }
     User.boot()
 
@@ -121,15 +119,21 @@ test.group('Adapter', (group) => {
     assert.lengthOf(users, 0)
   })
 
-  test('get array of model instances using the all call', async ({ assert }) => {
+  test('get array of model instances using the all call', async ({ assert, fs }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter)
+
     class User extends BaseModel {
-      public static $table = 'users'
+      static$table = 'users'
 
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
     }
     User.boot()
 
@@ -151,15 +155,21 @@ test.group('Adapter', (group) => {
     assert.deepEqual(users[1].$attributes, { id: 1, username: 'virk' })
   })
 
-  test('use transaction client set on the model for the insert', async ({ assert }) => {
+  test('use transaction client set on the model for the insert', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter)
+
     class User extends BaseModel {
-      public static $table = 'users'
+      static$table = 'users'
 
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
     }
 
     User.boot()
@@ -181,15 +191,21 @@ test.group('Adapter', (group) => {
     assert.isTrue(user.$isPersisted)
   })
 
-  test('do not insert when transaction rollbacks', async ({ assert }) => {
+  test('do not insert when transaction rollbacks', async ({ assert, fs }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter)
+
     class User extends BaseModel {
-      public static $table = 'users'
+      static$table = 'users'
 
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
     }
 
     User.boot()
@@ -211,15 +227,21 @@ test.group('Adapter', (group) => {
     assert.isTrue(user.$isPersisted)
   })
 
-  test('cleanup old trx event listeners when transaction is updated', async ({ assert }) => {
+  test('cleanup old trx event listeners when transaction is updated', async ({ assert, fs }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter)
+
     class User extends BaseModel {
-      public static $table = 'users'
+      static$table = 'users'
 
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
     }
 
     User.boot()
@@ -236,15 +258,21 @@ test.group('Adapter', (group) => {
     await trx.rollback()
   })
 
-  test('use transaction client set on the model for the update', async ({ assert }) => {
+  test('use transaction client set on the model for the update', async ({ assert, fs }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter)
+
     class User extends BaseModel {
-      public static $table = 'users'
+      static$table = 'users'
 
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
     }
     User.boot()
 
@@ -268,15 +296,21 @@ test.group('Adapter', (group) => {
     assert.equal(users[0].username, 'virk')
   })
 
-  test('use transaction client set on the model for the delete', async ({ assert }) => {
+  test('use transaction client set on the model for the delete', async ({ assert, fs }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter)
+
     class User extends BaseModel {
-      public static $table = 'users'
+      static$table = 'users'
 
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
     }
     User.boot()
 
@@ -301,15 +335,22 @@ test.group('Adapter', (group) => {
 
   test('set primary key value when colun name is different from attribute name', async ({
     assert,
+    fs,
   }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter)
+
     class User extends BaseModel {
-      public static $table = 'users'
+      static$table = 'users'
 
       @column({ isPrimary: true, columnName: 'id' })
-      public userId: number
+      declare userId: number
 
       @column()
-      public username: string
+      declare username: string
     }
 
     User.boot()

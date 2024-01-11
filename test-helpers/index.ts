@@ -7,49 +7,50 @@
  * file that was distributed with this source code.
  */
 
-/// <reference path="../adonis-typings/index.ts" />
-
 import dotenv from 'dotenv'
-import { join } from 'path'
 import { Chance } from 'chance'
+import { join } from 'node:path'
 import knex, { Knex } from 'knex'
-import { Filesystem } from '@poppinss/dev-utils'
-import { Application } from '@adonisjs/core/build/standalone'
+import { fileURLToPath } from 'node:url'
+import { getActiveTest } from '@japa/runner'
+import { Logger } from '@adonisjs/core/logger'
+import { Emitter } from '@adonisjs/core/events'
+import { Application } from '@adonisjs/core/app'
+import { AppFactory } from '@adonisjs/core/factories/app'
 
 import {
+  DatabaseConfig,
   ConnectionConfig,
-  DatabaseContract,
   ConnectionContract,
   QueryClientContract,
+} from '../src/types/database.js'
+
+import {
   RawQueryBuilderContract,
   InsertQueryBuilderContract,
   DatabaseQueryBuilderContract,
-} from '@ioc:Adonis/Lucid/Database'
+} from '../src/types/querybuilder.js'
 
-import { ApplicationContract } from '@ioc:Adonis/Core/Application'
-import { SchemaConstructorContract } from '@ioc:Adonis/Lucid/Schema'
-import { MigratorContract, MigratorOptions } from '@ioc:Adonis/Lucid/Migrator'
-import { LucidRow, LucidModel, AdapterContract } from '@ioc:Adonis/Lucid/Orm'
+import { BaseSchema } from '../src/schema/main.js'
+import { Database } from '../src/database/main.js'
+import { Adapter } from '../src/orm/adapter/index.js'
+import { BaseModel } from '../src/orm/base_model/index.js'
+import { QueryClient } from '../src/query_client/index.js'
+import { MigratorOptions } from '../src/types/migrator.js'
+import { MigrationRunner } from '../src/migration/runner.js'
+import { RawQueryBuilder } from '../src/database/query_builder/raw.js'
+import { InsertQueryBuilder } from '../src/database/query_builder/insert.js'
+import { LucidRow, LucidModel, AdapterContract } from '../src/types/model.js'
+import { DatabaseQueryBuilder } from '../src/database/query_builder/database.js'
 
-import {
-  DefineCallback,
-  FactoryModelContract,
-  FactoryManagerContract,
-} from '@ioc:Adonis/Lucid/Factory'
-
-import { Schema } from '../src/Schema'
-import { Migrator } from '../src/Migrator'
-import { Adapter } from '../src/Orm/Adapter'
-import { Database } from '../src/Database/index'
-import { QueryClient } from '../src/QueryClient'
-import { BaseModel } from '../src/Orm/BaseModel'
-import { FactoryModel } from '../src/Factory/FactoryModel'
-import { RawQueryBuilder } from '../src/Database/QueryBuilder/Raw'
-import { InsertQueryBuilder } from '../src/Database/QueryBuilder/Insert'
-import { DatabaseQueryBuilder } from '../src/Database/QueryBuilder/Database'
-
-export const fs = new Filesystem(join(__dirname, 'tmp'))
 dotenv.config()
+export const APP_ROOT = new URL('./tmp', import.meta.url)
+export const SQLITE_BASE_PATH = fileURLToPath(APP_ROOT)
+
+const app = new AppFactory().create(APP_ROOT, () => {})
+export const emitter = new Emitter<any>(app)
+export const logger = new Logger({})
+export const createEmitter = () => new Emitter<any>(app)
 
 /**
  * Returns config based upon DB set in environment variables
@@ -60,7 +61,7 @@ export function getConfig(): ConnectionConfig {
       return {
         client: 'sqlite3',
         connection: {
-          filename: join(fs.basePath, 'db.sqlite'),
+          filename: join(SQLITE_BASE_PATH, 'db.sqlite'),
         },
         useNullAsDefault: true,
         debug: !!process.env.DEBUG,
@@ -69,7 +70,7 @@ export function getConfig(): ConnectionConfig {
       return {
         client: 'better-sqlite3',
         connection: {
-          filename: join(fs.basePath, 'better-sqlite-db.sqlite'),
+          filename: join(SQLITE_BASE_PATH, 'better-sqlite-db.sqlite'),
         },
         useNullAsDefault: true,
         debug: !!process.env.DEBUG,
@@ -86,7 +87,7 @@ export function getConfig(): ConnectionConfig {
         connection: {
           host: process.env.MYSQL_HOST as string,
           port: Number(process.env.MYSQL_PORT),
-          database: process.env.DB_NAME as string,
+          database: process.env.MYSQL_DATABASE as string,
           user: process.env.MYSQL_USER as string,
           password: process.env.MYSQL_PASSWORD as string,
         },
@@ -97,11 +98,11 @@ export function getConfig(): ConnectionConfig {
       return {
         client: 'mysql2',
         connection: {
-          host: process.env.MYSQL_LEGACY_HOST as string,
-          port: Number(process.env.MYSQL_LEGACY_PORT),
-          database: process.env.DB_NAME as string,
-          user: process.env.MYSQL_LEGACY_USER as string,
-          password: process.env.MYSQL_LEGACY_PASSWORD as string,
+          host: process.env.LEGACY_MYSQL_HOST as string,
+          port: Number(process.env.LEGACY_MYSQL_PORT),
+          database: process.env.LEGACY_MYSQL_DATABASE as string,
+          user: process.env.LEGACY_MYSQL_USER as string,
+          password: process.env.LEGACY_MYSQL_PASSWORD as string,
         },
         debug: !!process.env.DEBUG,
         useNullAsDefault: true,
@@ -112,7 +113,7 @@ export function getConfig(): ConnectionConfig {
         connection: {
           host: process.env.PG_HOST as string,
           port: Number(process.env.PG_PORT),
-          database: process.env.DB_NAME as string,
+          database: process.env.PG_DATABASE as string,
           user: process.env.PG_USER as string,
           password: process.env.PG_PASSWORD as string,
         },
@@ -123,8 +124,9 @@ export function getConfig(): ConnectionConfig {
       return {
         client: 'mssql',
         connection: {
+          server: process.env.MSSQL_HOST as string,
+          port: Number(process.env.MSSQL_PORT! as string),
           user: process.env.MSSQL_USER as string,
-          server: process.env.MSSQL_SERVER as string,
           password: process.env.MSSQL_PASSWORD as string,
           database: 'master',
           options: {
@@ -146,11 +148,7 @@ export function getConfig(): ConnectionConfig {
  * Does base setup by creating databases
  */
 export async function setup(destroyDb: boolean = true) {
-  if (['sqlite', 'better_sqlite'].includes(process.env.DB!)) {
-    await fs.ensureRoot()
-  }
-
-  const db = knex(Object.assign({}, getConfig(), { debug: false }))
+  const db = knex.knex(Object.assign({}, getConfig(), { debug: false }))
 
   const hasUsersTable = await db.schema.hasTable('users')
   if (!hasUsersTable) {
@@ -300,7 +298,7 @@ export async function setup(destroyDb: boolean = true) {
  * Does cleanup removes database
  */
 export async function cleanup(customTables?: string[]) {
-  const db = knex(Object.assign({}, getConfig(), { debug: false }))
+  const db = knex.knex(Object.assign({}, getConfig(), { debug: false }))
 
   if (customTables) {
     for (let table of customTables) {
@@ -332,7 +330,7 @@ export async function cleanup(customTables?: string[]) {
  * Reset database tables
  */
 export async function resetTables() {
-  const db = knex(Object.assign({}, getConfig(), { debug: false }))
+  const db = knex.knex(Object.assign({}, getConfig(), { debug: false }))
   await db.table('users').truncate()
   await db.table('uuid_users').truncate()
   await db.table('follows').truncate()
@@ -354,14 +352,10 @@ export async function resetTables() {
  */
 export function getQueryClient(
   connection: ConnectionContract,
-  application: ApplicationContract,
+  eventEmitter?: Emitter<any>,
   mode?: 'read' | 'write' | 'dual'
 ): QueryClientContract {
-  return new QueryClient(
-    mode || 'dual',
-    connection,
-    application.container.use('Adonis/Core/Event')
-  ) as QueryClientContract
+  return new QueryClient(mode || 'dual', connection, eventEmitter || emitter) as QueryClientContract
 }
 
 /**
@@ -398,8 +392,8 @@ export function getInsertBuilder(client: QueryClientContract) {
 /**
  * Returns the database instance
  */
-export function getDb(application: ApplicationContract) {
-  const config = {
+export function getDb(eventEmitter?: Emitter<any>, config?: DatabaseConfig) {
+  const defaultConfig = {
     connection: 'primary',
     connections: {
       primary: getConfig(),
@@ -407,48 +401,35 @@ export function getDb(application: ApplicationContract) {
     },
   }
 
-  return new Database(
-    config,
-    application.container.use('Adonis/Core/Logger'),
-    application.container.use('Adonis/Core/Profiler'),
-    application.container.use('Adonis/Core/Event')
-  ) as DatabaseContract
+  const db = new Database(config || defaultConfig, logger, eventEmitter || createEmitter())
+  const test = getActiveTest()
+  test?.cleanup(() => {
+    return db.manager.closeAll()
+  })
+
+  return db
 }
 
 /**
  * Returns the orm adapter
  */
-export function ormAdapter(db: DatabaseContract) {
+export function ormAdapter(db: Database) {
   return new Adapter(db)
 }
 
 /**
  * Returns the base model with the adapter attached to it
  */
-export function getBaseModel(adapter: AdapterContract, application: ApplicationContract) {
+export function getBaseModel(adapter: AdapterContract) {
   BaseModel.$adapter = adapter
-  BaseModel.$container = application.container
-  return BaseModel as LucidModel
-}
-
-/**
- * Returns the factory model
- */
-export function getFactoryModel() {
-  return FactoryModel as {
-    new <Model extends LucidModel>(
-      model: Model,
-      callback: DefineCallback<Model>,
-      manager: FactoryManagerContract
-    ): FactoryModelContract<Model>
-  }
+  return BaseModel
 }
 
 /**
  * Fake adapter implementation
  */
 export class FakeAdapter implements AdapterContract {
-  public operations: any[] = []
+  operations: any[] = []
 
   private _handlers: any = {
     insert: null,
@@ -469,7 +450,7 @@ export class FakeAdapter implements AdapterContract {
     }
   }
 
-  public query(): any {
+  query(): any {
     return {
       client: {
         dialect: {
@@ -479,44 +460,44 @@ export class FakeAdapter implements AdapterContract {
     }
   }
 
-  public on(action: 'insert', handler: (model: LucidRow, attributes: any) => void): void
-  public on(action: 'update', handler: (model: LucidRow, attributes: any) => void): void
-  public on(action: 'delete', handler: (model: LucidRow) => void): void
-  public on(action: 'refresh', handler: (model: LucidRow) => void): void
-  public on(action: 'find', handler: (model: LucidModel, options?: any) => void): void
-  public on(action: 'findAll', handler: (model: LucidModel, options?: any) => void): void
-  public on(
-    action: string,
+  on(action: 'insert', handler: (model: LucidRow, attributes: any) => void): void
+  on(action: 'update', handler: (model: LucidRow, attributes: any) => void): void
+  on(action: 'delete', handler: (model: LucidRow) => void): void
+  on(action: 'refresh', handler: (model: LucidRow) => void): void
+  on(action: 'find', handler: (model: LucidModel, options?: any) => void): void
+  on(action: 'findAll', handler: (model: LucidModel, options?: any) => void): void
+  on(
+    action: 'insert' | 'update' | 'delete' | 'refresh' | 'find' | 'findAll',
     handler: ((model: LucidRow, attributes?: any) => void) | ((model: LucidModel) => void)
   ): void {
     this._handlers[action] = handler
   }
 
-  public modelClient(): any {}
+  modelClient(): any {}
 
-  public modelConstructorClient(): any {}
+  modelConstructorClient(): any {}
 
-  public async insert(instance: LucidRow, attributes: any) {
+  async insert(instance: LucidRow, attributes: any) {
     this.operations.push({ type: 'insert', instance, attributes })
     return this._invokeHandler('insert', instance, attributes)
   }
 
-  public async refresh(instance: LucidRow) {
+  async refresh(instance: LucidRow) {
     this.operations.push({ type: 'refresh', instance })
     return this._invokeHandler('refresh', instance)
   }
 
-  public async delete(instance: LucidRow) {
+  async delete(instance: LucidRow) {
     this.operations.push({ type: 'delete', instance })
     return this._invokeHandler('delete', instance)
   }
 
-  public async update(instance: LucidRow, attributes: any) {
+  async update(instance: LucidRow, attributes: any) {
     this.operations.push({ type: 'update', instance, attributes })
     return this._invokeHandler('update', instance, attributes)
   }
 
-  public async find(model: LucidModel, key: string, value: any, options?: any) {
+  async find(model: LucidModel, key: string, value: any, options?: any) {
     const payload: any = { type: 'find', model, key, value }
     if (options) {
       payload.options = options
@@ -526,7 +507,7 @@ export class FakeAdapter implements AdapterContract {
     return this._invokeHandler('find', model, options)
   }
 
-  public async findAll(model: LucidModel, options?: any) {
+  async findAll(model: LucidModel, options?: any) {
     const payload: any = { type: 'findAll', model }
     if (options) {
       payload.options = options
@@ -543,7 +524,7 @@ export class FakeAdapter implements AdapterContract {
 export function mapToObj<T extends any>(collection: Map<any, any>): T {
   let obj = {} as T
   collection.forEach((value, key) => {
-    obj[key] = value
+    ;(obj as any)[key] = value
   })
   return obj
 }
@@ -552,18 +533,14 @@ export function mapToObj<T extends any>(collection: Map<any, any>): T {
  * Returns the base schema class typed to it's interface
  */
 export function getBaseSchema() {
-  return Schema as SchemaConstructorContract
+  return BaseSchema
 }
 
 /**
  * Returns instance of migrator
  */
-export function getMigrator(
-  db: DatabaseContract,
-  app: ApplicationContract,
-  config: MigratorOptions
-) {
-  return new Migrator(db, app, config) as MigratorContract
+export function getMigrator(db: Database, application: Application<any>, config: MigratorOptions) {
+  return new MigrationRunner(db, application, config)
 }
 
 /**
@@ -597,58 +574,6 @@ export function getPosts(count: number, userId: number) {
       title: chance.sentence({ words: 5 }),
     }
   })
-}
-
-/**
- * Setup application
- */
-export async function setupApplication(
-  dbConfig?: any,
-  additionalProviders?: string[],
-  environment: 'web' | 'repl' | 'test' = 'test'
-) {
-  await fs.add('.env', '')
-  await fs.add(
-    'config/app.ts',
-    `
-    export const appKey = 'averylong32charsrandomsecretkey',
-    export const http = {
-      cookie: {},
-      trustProxy: () => true,
-    }
-  `
-  )
-
-  await fs.add(
-    'config/database.ts',
-    `
-    const dbConfig = ${JSON.stringify(dbConfig, null, 2)}
-    export default dbConfig
-  `
-  )
-
-  const app = new Application(fs.basePath, environment, {
-    aliases: {
-      App: './app',
-    },
-    providers: ['@adonisjs/core', '@adonisjs/repl'].concat(additionalProviders || []),
-  })
-
-  await app.setup()
-  await app.registerProviders()
-  await app.bootProviders()
-
-  if (process.env.DEBUG) {
-    app.container.use('Adonis/Core/Event').on('db:query', (query) => {
-      console.log({
-        model: query.model,
-        sql: query.sql,
-        bindings: query.bindings,
-      })
-    })
-  }
-
-  return app
 }
 
 export async function setupReplicaDb(connection: Knex, datatoInsert: { username: string }[]) {
