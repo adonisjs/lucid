@@ -3787,7 +3787,7 @@ if (process.env.DB !== 'mysql_legacy') {
       User.boot()
 
       const users = await User.query().preload('posts', (query) => {
-        query.groupLimit(2).groupOrderBy('created_at', 'asc')
+        query.groupLimit(2).groupOrderBy('created_at', 'desc')
       })
       assert.lengthOf(users, 2)
 
