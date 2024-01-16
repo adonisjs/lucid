@@ -7,10 +7,8 @@
  * file that was distributed with this source code.
  */
 
-/// <reference path="../adonis-typings/index.ts" />
-
 import { test } from '@japa/runner'
-import { syncDiff } from '../src/utils'
+import { syncDiff } from '../src/utils/index.js'
 
 test.group('Utils | syncDiff', () => {
   test('return ids to be added', ({ assert }) => {

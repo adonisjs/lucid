@@ -8,28 +8,36 @@
  */
 
 import { test } from '@japa/runner'
-import { ApplicationContract } from '@ioc:Adonis/Core/Application'
-import { setup, cleanup, getDb, getBaseSchema, setupApplication, fs } from '../../test-helpers'
-
-let db: ReturnType<typeof getDb>
-let app: ApplicationContract
+import {
+  setup,
+  getDb,
+  getBaseSchema,
+  createEmitter,
+  cleanup as cleanupTables,
+} from '../../test-helpers/index.js'
+import { AppFactory } from '@adonisjs/core/factories/app'
 
 test.group('Schema', (group) => {
   group.each.setup(async () => {
-    app = await setupApplication()
-    db = getDb(app)
     await setup()
   })
 
   group.each.teardown(async () => {
-    await db.manager.closeAll()
-    await cleanup()
-    await fs.cleanup()
+    await cleanupTables()
   })
 
-  test('get schema queries defined inside the up method in dry run', async ({ assert }) => {
+  test('get schema queries defined inside the up method in dry run', async ({
+    fs,
+    cleanup,
+    assert,
+  }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    cleanup(() => db.manager.closeAll())
+
     class UsersSchema extends getBaseSchema() {
-      public up() {
+      async up() {
         this.schema.createTable('users', (table) => {
           table.increments('id')
           table.string('username')
@@ -51,9 +59,18 @@ test.group('Schema', (group) => {
     assert.deepEqual(queries, [knexSchema])
   })
 
-  test('get schema queries defined inside the down method in dry run', async ({ assert }) => {
+  test('get schema queries defined inside the down method in dry run', async ({
+    fs,
+    cleanup,
+    assert,
+  }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    cleanup(() => db.manager.closeAll())
+
     class UsersSchema extends getBaseSchema() {
-      public down() {
+      async down() {
         this.schema.dropTable('users')
       }
     }
@@ -65,9 +82,14 @@ test.group('Schema', (group) => {
     assert.deepEqual(queries, [knexSchema])
   })
 
-  test('get knex raw query builder using now method', async ({ assert }) => {
+  test('get knex raw query builder using now method', async ({ fs, cleanup, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    cleanup(() => db.manager.closeAll())
+
     class UsersSchema extends getBaseSchema() {
-      public up() {
+      async up() {
         this.schema.createTable('users', (table) => {
           table.increments('id')
           table.string('username')
@@ -79,11 +101,15 @@ test.group('Schema', (group) => {
     assert.equal(schema.now().toQuery(), 'CURRENT_TIMESTAMP')
   })
 
-  test('do not execute defer calls in dry run', async ({ assert }) => {
+  test('do not execute defer calls in dry run', async ({ fs, cleanup, assert }) => {
     assert.plan(1)
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    cleanup(() => db.manager.closeAll())
 
     class UsersSchema extends getBaseSchema() {
-      public up() {
+      async up() {
         assert.isTrue(true)
         this.defer(() => {
           throw new Error('Not expected to be invoked')
@@ -95,9 +121,14 @@ test.group('Schema', (group) => {
     await schema.execUp()
   })
 
-  test('execute up method queries on a given connection', async ({ assert }) => {
+  test('execute up method queries on a given connection', async ({ fs, cleanup, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    cleanup(() => db.manager.closeAll())
+
     class UsersSchema extends getBaseSchema() {
-      public up() {
+      async up() {
         this.schema.createTable('schema_users', (table) => {
           table.increments('id')
           table.string('username')
@@ -130,9 +161,18 @@ test.group('Schema', (group) => {
     assert.isTrue(hasAccounts)
   })
 
-  test('execute up method deferred actions in correct sequence', async ({ assert }) => {
+  test('execute up method deferred actions in correct sequence', async ({
+    fs,
+    cleanup,
+    assert,
+  }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    cleanup(() => db.manager.closeAll())
+
     class UsersSchema extends getBaseSchema() {
-      public up() {
+      async up() {
         this.schema.createTable('schema_users', (table) => {
           table.increments('id')
           table.string('username')
@@ -166,9 +206,14 @@ test.group('Schema', (group) => {
     await db.connection().schema.dropTable('schema_users')
   })
 
-  test('execute down method queries on a given connection', async ({ assert }) => {
+  test('execute down method queries on a given connection', async ({ assert, fs, cleanup }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    cleanup(() => db.manager.closeAll())
+
     class UsersSchema extends getBaseSchema() {
-      public up() {
+      async up() {
         this.schema.createTable('schema_users', (table) => {
           table.increments('id')
           table.string('username')
@@ -180,7 +225,7 @@ test.group('Schema', (group) => {
         })
       }
 
-      public down() {
+      async down() {
         if (this.db.dialect.name !== 'sqlite3') {
           this.schema.table('schema_accounts', (table) => {
             table.dropForeign(['user_id'])
@@ -212,9 +257,14 @@ test.group('Schema', (group) => {
     assert.isFalse(hasAccounts)
   })
 
-  test('use now helper to define default timestamp', async ({ assert }) => {
+  test('use now helper to define default timestamp', async ({ assert, fs, cleanup }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    cleanup(() => db.manager.closeAll())
+
     class UsersSchema extends getBaseSchema() {
-      public up() {
+      async up() {
         this.schema.createTable('users', (table) => {
           table.increments('id')
           table.timestamp('created_at').defaultTo(this.now())
@@ -236,11 +286,21 @@ test.group('Schema', (group) => {
     assert.deepEqual(queries, [knexSchema])
   })
 
-  test('emit db:query event when schema instructions are executed', async ({ assert }) => {
+  test('emit db:query event when schema instructions are executed', async ({
+    assert,
+    fs,
+    cleanup,
+  }) => {
     assert.plan(10)
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+
+    const emitter = createEmitter()
+    const db = getDb(emitter)
+    cleanup(() => db.manager.closeAll())
 
     class UsersSchema extends getBaseSchema() {
-      public up() {
+      async up() {
         this.schema.createTable('schema_users', (table) => {
           table.increments('id')
           table.string('username')
@@ -257,7 +317,7 @@ test.group('Schema', (group) => {
     trx.debug = true
     const schema = new UsersSchema(trx, 'users.ts', false)
 
-    app.container.use('Adonis/Core/Event').on('db:query', (query) => {
+    emitter.on('db:query', (query) => {
       assert.property(query, 'sql')
       assert.isTrue(query.inTransaction)
       assert.equal(query.connection, 'primary')
@@ -276,9 +336,15 @@ test.group('Schema', (group) => {
     await db.connection().schema.dropTable('schema_users')
   })
 
-  test('do not emit db:query debugging is turned off', async () => {
+  test('do not emit db:query debugging is turned off', async ({ fs, cleanup }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const emitter = createEmitter()
+    const db = getDb(emitter)
+    cleanup(() => db.manager.closeAll())
+
     class UsersSchema extends getBaseSchema() {
-      public up() {
+      async up() {
         this.schema.createTable('schema_users', (table) => {
           table.increments('id')
           table.string('username')
@@ -295,7 +361,7 @@ test.group('Schema', (group) => {
     trx.debug = false
 
     const schema = new UsersSchema(trx, 'users.ts', false)
-    app.container.use('Adonis/Core/Event').on('db:query', () => {
+    emitter.on('db:query', () => {
       throw new Error('Never expected to reach here')
     })
 
@@ -310,13 +376,18 @@ test.group('Schema', (group) => {
     await db.connection().schema.dropTable('schema_users')
   })
 
-  test('emit db:query when enabled on the schema', async ({ assert }) => {
+  test('emit db:query when enabled on the schema', async ({ assert, fs, cleanup }) => {
     assert.plan(10)
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const emitter = createEmitter()
+    const db = getDb(emitter)
+    cleanup(() => db.manager.closeAll())
 
     class UsersSchema extends getBaseSchema() {
-      public debug = true
+      debug = true
 
-      public up() {
+      async up() {
         this.schema.createTable('schema_users', (table) => {
           table.increments('id')
           table.string('username')
@@ -332,7 +403,7 @@ test.group('Schema', (group) => {
     const trx = await db.transaction()
     const schema = new UsersSchema(trx, 'users.ts', false)
 
-    app.container.use('Adonis/Core/Event').on('db:query', (query) => {
+    emitter.on('db:query', (query) => {
       assert.property(query, 'sql')
       assert.isTrue(query.inTransaction)
       assert.equal(query.connection, 'primary')
@@ -351,9 +422,14 @@ test.group('Schema', (group) => {
     await db.connection().schema.dropTable('schema_users')
   })
 
-  test('define index predicate as knex query', async ({ assert }) => {
+  test('define index predicate as knex query', async ({ assert, fs, cleanup }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    cleanup(() => db.manager.closeAll())
+
     class UsersSchema extends getBaseSchema() {
-      public up() {
+      async up() {
         this.schema.createTable('users', (table) => {
           table.increments('id')
           table.index(['name', 'last_name'], 'idx_name_last_name', {
