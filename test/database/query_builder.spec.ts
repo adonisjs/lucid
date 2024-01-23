@@ -10312,14 +10312,14 @@ test.group('Query Builder | paginate', (group) => {
 
     assert.deepEqual(users.getMeta(), {
       total: 18,
-      per_page: 5,
-      current_page: 1,
-      last_page: 4,
-      first_page: 1,
-      first_page_url: '/users?page=1',
-      last_page_url: '/users?page=4',
-      next_page_url: '/users?page=2',
-      previous_page_url: null,
+      perPage: 5,
+      currentPage: 1,
+      lastPage: 4,
+      firstPage: 1,
+      firstPageUrl: '/users?page=1',
+      lastPageUrl: '/users?page=4',
+      nextPageUrl: '/users?page=2',
+      previousPageUrl: null,
     })
 
     await connection.disconnect()
@@ -10347,14 +10347,14 @@ test.group('Query Builder | paginate', (group) => {
     assert.isTrue(users.hasTotal)
     assert.deepEqual(users.getMeta(), {
       total: 18,
-      per_page: 5,
-      current_page: 1,
-      last_page: 4,
-      first_page: 1,
-      first_page_url: '/users?page=1',
-      last_page_url: '/users?page=4',
-      next_page_url: '/users?page=2',
-      previous_page_url: null,
+      perPage: 5,
+      currentPage: 1,
+      lastPage: 4,
+      firstPage: 1,
+      firstPageUrl: '/users?page=1',
+      lastPageUrl: '/users?page=4',
+      nextPageUrl: '/users?page=2',
+      previousPageUrl: null,
     })
 
     await connection.disconnect()
@@ -10381,14 +10381,14 @@ test.group('Query Builder | paginate', (group) => {
     assert.isTrue(users.hasTotal)
     assert.deepEqual(users.getMeta(), {
       total: 18,
-      per_page: 5,
-      current_page: 1,
-      last_page: 4,
-      first_page: 1,
-      first_page_url: '/users?page=1',
-      last_page_url: '/users?page=4',
-      next_page_url: '/users?page=2',
-      previous_page_url: null,
+      perPage: 5,
+      currentPage: 1,
+      lastPage: 4,
+      firstPage: 1,
+      firstPageUrl: '/users?page=1',
+      lastPageUrl: '/users?page=4',
+      nextPageUrl: '/users?page=2',
+      previousPageUrl: null,
     })
 
     await connection.disconnect()
@@ -10416,14 +10416,14 @@ test.group('Query Builder | paginate', (group) => {
 
     assert.deepEqual(users.getMeta(), {
       total: 18,
-      per_page: 5,
-      current_page: 4,
-      last_page: 4,
-      first_page: 1,
-      first_page_url: '/users?page=1',
-      last_page_url: '/users?page=4',
-      next_page_url: null,
-      previous_page_url: '/users?page=3',
+      perPage: 5,
+      currentPage: 4,
+      lastPage: 4,
+      firstPage: 1,
+      firstPageUrl: '/users?page=1',
+      lastPageUrl: '/users?page=4',
+      nextPageUrl: null,
+      previousPageUrl: '/users?page=3',
     })
 
     await connection.disconnect()
@@ -10456,14 +10456,14 @@ test.group('Query Builder | paginate', (group) => {
     assert.isTrue(users.hasTotal)
     assert.deepEqual(users.getMeta(), {
       total: 18,
-      per_page: 5,
-      current_page: 1,
-      last_page: 4,
-      first_page: 1,
-      first_page_url: '/users?page=1',
-      last_page_url: '/users?page=4',
-      next_page_url: '/users?page=2',
-      previous_page_url: null,
+      perPage: 5,
+      currentPage: 1,
+      lastPage: 4,
+      firstPage: 1,
+      firstPageUrl: '/users?page=1',
+      lastPageUrl: '/users?page=4',
+      nextPageUrl: '/users?page=2',
+      previousPageUrl: null,
     })
 
     await connection.disconnect()
@@ -10498,14 +10498,14 @@ test.group('Query Builder | paginate', (group) => {
     assert.isTrue(results.hasTotal)
     assert.deepEqual(results.getMeta(), {
       total: 2,
-      per_page: 1,
-      current_page: 1,
-      last_page: 2,
-      first_page: 1,
-      first_page_url: '/users-country-ids?page=1',
-      last_page_url: '/users-country-ids?page=2',
-      next_page_url: '/users-country-ids?page=2',
-      previous_page_url: null,
+      perPage: 1,
+      currentPage: 1,
+      lastPage: 2,
+      firstPage: 1,
+      firstPageUrl: '/users-country-ids?page=1',
+      lastPageUrl: '/users-country-ids?page=2',
+      nextPageUrl: '/users-country-ids?page=2',
+      previousPageUrl: null,
     })
 
     await connection.disconnect()
@@ -10640,14 +10640,14 @@ test.group('Query Builder | paginate', (group) => {
 
     assert.deepEqual(users.getMeta(), {
       total: 1,
-      per_page: 5,
-      current_page: 1,
-      last_page: 1,
-      first_page: 1,
-      first_page_url: '/users?page=1',
-      last_page_url: '/users?page=1',
-      next_page_url: null,
-      previous_page_url: null,
+      perPage: 5,
+      currentPage: 1,
+      lastPage: 1,
+      firstPage: 1,
+      firstPageUrl: '/users?page=1',
+      lastPageUrl: '/users?page=1',
+      nextPageUrl: null,
+      previousPageUrl: null,
     })
 
     await connection.disconnect()

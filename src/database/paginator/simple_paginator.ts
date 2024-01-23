@@ -8,8 +8,8 @@
  */
 
 import { stringify } from 'qs'
+import { CamelCaseNamingStrategy } from '../../orm/naming_strategies/camel_case.js'
 import { SimplePaginatorContract, SimplePaginatorMetaKeys } from '../../types/querybuilder.js'
-import { SnakeCaseNamingStrategy } from '../../orm/naming_strategies/snake_case.js'
 
 /**
  * Simple paginator works with the data set provided by the standard
@@ -25,7 +25,7 @@ export class SimplePaginator extends Array implements SimplePaginatorContract<an
    */
   static namingStrategy: {
     paginationMetaKeys(): SimplePaginatorMetaKeys
-  } = new SnakeCaseNamingStrategy()
+  } = new CamelCaseNamingStrategy()
 
   /**
    * Can be defined at per instance level as well
