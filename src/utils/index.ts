@@ -7,23 +7,14 @@
  * file that was distributed with this source code.
  */
 
-/// <reference path="../../adonis-typings/index.ts" />
-
 import slash from 'slash'
-import { join, extname } from 'path'
-import { Exception, esmRequire } from '@poppinss/utils'
-import { fsReadAll, resolveDir } from '@poppinss/utils/build/helpers'
-import {
-  LucidRow,
-  ModelObject,
-  CherryPickFields,
-  RelationshipsContract,
-} from '@ioc:Adonis/Lucid/Orm'
-import {
-  FileNode,
-  QueryClientContract,
-  TransactionClientContract,
-} from '@ioc:Adonis/Lucid/Database'
+import { join, extname } from 'node:path'
+import { Exception, fsReadAll, isScriptFile } from '@poppinss/utils'
+import { RelationshipsContract } from '../types/relations.js'
+import { LucidRow, ModelObject, CherryPickFields } from '../types/model.js'
+import { FileNode, QueryClientContract, TransactionClientContract } from '../types/database.js'
+import { fileURLToPath, pathToFileURL } from 'node:url'
+import * as errors from '../errors.js'
 
 /**
  * Ensure that relation is defined
@@ -33,7 +24,7 @@ export function ensureRelation<T extends RelationshipsContract>(
   relation?: T
 ): relation is T {
   if (!relation) {
-    throw new Exception(`Cannot process unregistered relationship ${name}`, 500)
+    throw new Exception(`Cannot process unregistered relationship ${name}`, { status: 500 })
   }
 
   return true
@@ -67,11 +58,9 @@ export function collectValues(payload: any[], key: string, missingCallback: () =
  */
 export function ensureRelationIsBooted(relation: RelationshipsContract) {
   if (!relation.booted) {
-    throw new Exception(
+    throw new errors.E_RUNTIME_EXCEPTION([
       'Relationship is not booted. Make sure to call boot first',
-      500,
-      'E_RUNTIME_EXCEPTION'
-    )
+    ])
   }
 }
 
@@ -88,7 +77,7 @@ export function getValue(
   return ensureValue(model, key, () => {
     throw new Exception(
       `Cannot ${action} "${relation.relationName}", value of "${relation.model.name}.${key}" is undefined`,
-      500
+      { status: 500 }
     )
   })
 }
@@ -192,7 +181,7 @@ export function getDDLMethod(sql: string) {
 }
 
 /**
- * Normalizes the cherry picking object to always be an object with
+ * Normalizes the cherry-picking object to always be an object with
  * `pick` and `omit` properties
  */
 export function normalizeCherryPickObject(fields: CherryPickFields) {
@@ -212,54 +201,56 @@ export function normalizeCherryPickObject(fields: CherryPickFields) {
 /**
  * Sources files from a given directory
  */
-export function sourceFiles(
-  fromLocation: string,
+export async function sourceFiles(
+  fromLocation: URL,
   directory: string,
   naturalSort: boolean
 ): Promise<{ directory: string; files: FileNode<unknown>[] }> {
-  return new Promise((resolve, reject) => {
-    const absDirectoryPath = resolveDir(fromLocation, directory)
-    let files = fsReadAll(absDirectoryPath)
-
-    /**
-     * Sort files
-     */
-    if (naturalSort) {
-      files = files.sort((a, b) =>
-        a!.localeCompare(b!, undefined, { numeric: true, sensitivity: 'base' })
-      )
-    } else {
-      files = files.sort()
-    }
-
-    try {
-      resolve({
-        directory,
-        files: files.map((file: string) => {
-          const name = join(directory, file.replace(RegExp(`${extname(file)}$`), ''))
-
-          return {
-            /**
-             * Absolute path to the file. Needed to ready the schema source
-             */
-            absPath: join(absDirectoryPath, file),
-
-            /**
-             * Normalizing name to always have unix slashes.
-             */
-            name: slash(name),
-
-            /**
-             * Import schema file
-             */
-            getSource() {
-              return esmRequire(this.absPath)
-            },
-          }
-        }),
-      })
-    } catch (error) {
-      reject(error)
-    }
+  const absDirectoryPath = fileURLToPath(new URL(directory, fromLocation))
+  let files = await fsReadAll(absDirectoryPath, {
+    filter: isScriptFile,
+    ignoreMissingRoot: true,
   })
+
+  /**
+   * Sort files
+   */
+  if (naturalSort) {
+    files = files.sort((a: string, b: string) =>
+      a!.localeCompare(b!, undefined, { numeric: true, sensitivity: 'base' })
+    )
+  } else {
+    files = files.sort()
+  }
+
+  return {
+    directory,
+    files: files.map((file: string) => {
+      const name = join(directory, file.replace(RegExp(`${extname(file)}$`), ''))
+
+      return {
+        /**
+         * Absolute path to the file. Needed to ready the schema source
+         */
+        absPath: join(absDirectoryPath, file),
+
+        /**
+         * Normalizing name to always have unix slashes.
+         */
+        name: slash(name),
+
+        /**
+         * Import schema file
+         */
+        async getSource() {
+          const exports = await import(pathToFileURL(this.absPath).href)
+          if (!exports.default) {
+            throw new Error(`Missing default export from "${this.name}" schema file`)
+          }
+
+          return exports.default
+        },
+      }
+    }),
+  }
 }

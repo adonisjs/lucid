@@ -7,48 +7,32 @@
  * file that was distributed with this source code.
  */
 
-/// <reference path="../../../adonis-typings/index.ts" />
-
 import 'reflect-metadata'
 import { test } from '@japa/runner'
-import { Kernel } from '@adonisjs/core/build/standalone'
-import { ApplicationContract } from '@ioc:Adonis/Core/Application'
+import { ListLoader } from '@adonisjs/core/ace'
+import { AceFactory } from '@adonisjs/core/factories'
 
-import DbSeed from '../../../commands/DbSeed'
-import { Migrator } from '../../../src/Migrator'
-import Reset from '../../../commands/Migration/Reset'
-import Migrate from '../../../commands/Migration/Run'
-import Refresh from '../../../commands/Migration/Refresh'
-import Rollback from '../../../commands/Migration/Rollback'
-import { fs, setup, cleanup, getDb, setupApplication } from '../../../test-helpers'
-
-let db: ReturnType<typeof getDb>
-let app: ApplicationContract
+import DbSeed from '../../../commands/db_seed.js'
+import Reset from '../../../commands/migration/reset.js'
+import Migrate from '../../../commands/migration/run.js'
+import Refresh from '../../../commands/migration/refresh.js'
+import Rollback from '../../../commands/migration/rollback.js'
+import { cleanup, getDb } from '../../../test-helpers/index.js'
 
 test.group('migration:refresh', (group) => {
   group.each.setup(async () => {
-    app = await setupApplication()
-    await setup()
-    return () => fs.cleanup()
-  })
-
-  group.each.setup(async () => {
-    db = getDb(app)
-    app.container.bind('Adonis/Lucid/Database', () => db)
-    app.container.bind('Adonis/Lucid/Migrator', () => Migrator)
     return async () => {
       await cleanup()
       await cleanup(['adonis_schema', 'adonis_schema_versions', 'schema_users', 'schema_accounts'])
-      await db.manager.closeAll(true)
     }
   })
 
-  test('rollback to batch 0 and migrate database', async ({ assert }) => {
-    await fs.add(
-      'database/migrations/users.ts',
+  test('rollback to batch 0 and migrate database', async ({ fs, assert }) => {
+    await fs.create(
+      'database/migrations/refresh_cmd_users.ts',
       `
-        import { Schema } from '../../../../src/Schema'
-        module.exports = class User extends Schema {
+        import { BaseSchema as Schema } from '../../../../src/schema/main.js'
+        export default class User extends Schema {
           public async up () {
             this.schema.createTable('schema_users', (table) => {
               table.increments()
@@ -62,11 +46,11 @@ test.group('migration:refresh', (group) => {
       `
     )
 
-    await fs.add(
-      'database/migrations/posts.ts',
+    await fs.create(
+      'database/migrations/refresh_cmd_posts.ts',
       `
-        import { Schema } from '../../../../src/Schema'
-        module.exports = class Account extends Schema {
+        import { BaseSchema as Schema } from '../../../../src/schema/main.js'
+        export default class Account extends Schema {
           public async up () {
             this.schema.createTable('schema_accounts', (table) => {
               table.increments()
@@ -80,11 +64,19 @@ test.group('migration:refresh', (group) => {
       `
     )
 
-    const kernel = new Kernel(app).mockConsoleOutput()
-    kernel.register([Migrate, Rollback, Reset, Refresh])
+    const db = getDb()
+    const ace = await new AceFactory().make(fs.baseUrl, { importer: () => {} })
+    await ace.app.init()
+    ace.app.container.singleton('lucid.db', () => db)
+    ace.ui.switchMode('raw')
 
-    await kernel.exec('migration:run', [])
-    await kernel.exec('migration:refresh', [])
+    ace.addLoader(new ListLoader([Reset, DbSeed, Migrate, Rollback]))
+
+    const migrate = await ace.create(Migrate, [])
+    await migrate.exec()
+
+    const refresh = await ace.create(Refresh, [])
+    await refresh.exec()
 
     const migrated = await db.connection().from('adonis_schema').select('*')
     const hasUsersTable = await db.connection().schema.hasTable('schema_users')
@@ -95,9 +87,9 @@ test.group('migration:refresh', (group) => {
     assert.isTrue(hasAccountsTable)
   })
 
-  test('run seeders when --seed flag is passed', async ({ assert }) => {
-    await fs.add(
-      'database/seeders/user.ts',
+  test('run seeders when --seed flag is passed', async ({ fs, assert }) => {
+    await fs.create(
+      'database/seeders/refres_cmd_user.ts',
       `export default class UserSeeder {
         public async run () {
           process.env.EXEC_USER_SEEDER = 'true'
@@ -105,11 +97,11 @@ test.group('migration:refresh', (group) => {
       }`
     )
 
-    await fs.add(
-      'database/migrations/users.ts',
+    await fs.create(
+      'database/migrations/refres_cmd_users_v1.ts',
       `
-        import { Schema } from '../../../../src/Schema'
-        module.exports = class User extends Schema {
+        import { BaseSchema as Schema } from '../../../../src/schema/main.js'
+        export default class User extends Schema {
           public async up () {
             this.schema.createTable('schema_users', (table) => {
               table.increments()
@@ -123,11 +115,11 @@ test.group('migration:refresh', (group) => {
       `
     )
 
-    await fs.add(
+    await fs.create(
       'database/migrations/posts.ts',
       `
-        import { Schema } from '../../../../src/Schema'
-        module.exports = class Account extends Schema {
+        import { BaseSchema as Schema } from '../../../../src/schema/main.js'
+        export default class Account extends Schema {
           public async up () {
             this.schema.createTable('schema_accounts', (table) => {
               table.increments()
@@ -141,11 +133,19 @@ test.group('migration:refresh', (group) => {
       `
     )
 
-    const kernel = new Kernel(app).mockConsoleOutput()
-    kernel.register([Migrate, Rollback, Reset, Refresh, DbSeed])
+    const db = getDb()
+    const ace = await new AceFactory().make(fs.baseUrl, { importer: () => {} })
+    await ace.app.init()
+    ace.app.container.singleton('lucid.db', () => db)
+    ace.ui.switchMode('raw')
 
-    await kernel.exec('migration:run', [])
-    await kernel.exec('migration:refresh', ['--seed'])
+    ace.addLoader(new ListLoader([Reset, DbSeed, Migrate, Rollback]))
+
+    const migrate = await ace.create(Migrate, [])
+    await migrate.exec()
+
+    const refresh = await ace.create(Refresh, ['--seed'])
+    await refresh.exec()
 
     assert.equal(process.env.EXEC_USER_SEEDER, 'true')
     delete process.env.EXEC_USER_SEEDER

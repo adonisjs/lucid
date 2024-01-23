@@ -1,0 +1,20 @@
+{{{
+  exports({
+    to: app.makePath(migration.folder, entity.path, migration.fileName)
+  })
+}}}
+import { BaseSchema } from '@adonisjs/lucid/schema'
+
+export default class extends BaseSchema {
+  protected tableName = '{{ migration.tableName }}'
+
+  async up() {
+    this.schema.alterTable(this.tableName, (table) => {
+    })
+  }
+
+  async down() {
+    this.schema.alterTable(this.tableName, (table) => {
+    })
+  }
+}

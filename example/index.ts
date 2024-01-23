@@ -1,13 +1,9 @@
 import { DateTime } from 'luxon'
-import {
-  BaseModel,
-  HasOne,
-  hasOne,
-  scope,
-  column,
-  ModelQueryBuilderContract,
-} from '@ioc:Adonis/Lucid/Orm'
-import Factory from '@ioc:Adonis/Lucid/Factory'
+import { BaseModel, scope } from '../src/orm/base_model/index.js'
+import { column, hasOne } from '../src/orm/decorators/index.js'
+import { HasOne } from '../src/types/relations.js'
+import { ModelQueryBuilderContract } from '../src/types/model.js'
+import factory from '../src/factories/main.js'
 
 enum ProfileTypes {
   TWITTER = 'TWITTER',
@@ -16,19 +12,19 @@ enum ProfileTypes {
 type Builder = ModelQueryBuilderContract<typeof User>
 
 class Profile extends BaseModel {
-  public id: string
-  public userId: string
-  public user: HasOne<typeof User>
+  declare id: string
+  declare userId: string
+  declare user: HasOne<typeof User>
 
-  public type: ProfileTypes
+  declare type: ProfileTypes
 
   @column.dateTime()
-  public createdAt?: DateTime
+  declare createdAt?: DateTime
 }
 
 export class User extends BaseModel {
-  public id: string
-  public username: string
+  declare id: string
+  declare username: string
 
   @hasOne(() => Profile, {
     onQuery: (builder) => {
@@ -37,12 +33,12 @@ export class User extends BaseModel {
       }
     },
   })
-  public profile: HasOne<typeof Profile>
+  declare profile: HasOne<typeof Profile>
 
-  public static active = scope((builder: Builder) => {
+  static active = scope((builder: Builder) => {
     builder.apply((scopes) => scopes.country('India'))
   })
-  public static country = scope((builder, _country: string) => {
+  static country = scope((builder, _country: string) => {
     builder.whereIn('', [])
   })
 }
@@ -54,13 +50,13 @@ User.create({ id: '1', username: 'virk' })
 User.create({ id: '1', username: 'virk' })
 User.create({ id: '1' })
 
-const F = Factory.define(User, ({ faker }) => {
+const F = factory.define(User, ({ faker }) => {
   return {
     username: faker.internet.userName(),
   }
 })
 
-const P = Factory.define(Profile, () => {
+const P = factory.define(Profile, () => {
   return {}
 })
 
