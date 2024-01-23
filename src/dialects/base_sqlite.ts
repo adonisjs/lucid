@@ -10,12 +10,12 @@
 import type { DialectContract, QueryClientContract, SharedConfigNode } from '../types/database.js'
 
 export abstract class BaseSqliteDialect implements DialectContract {
-  public abstract readonly name: 'sqlite3' | 'better-sqlite3'
-  public readonly supportsAdvisoryLocks = false
-  public readonly supportsViews = true
-  public readonly supportsTypes = false
-  public readonly supportsDomains = false
-  public readonly supportsReturningStatement = false
+  abstract readonly name: 'sqlite3' | 'better-sqlite3'
+  readonly supportsAdvisoryLocks = false
+  readonly supportsViews = true
+  readonly supportsTypes = false
+  readonly supportsDomains = false
+  readonly supportsReturningStatement = false
 
   /**
    * Reference to the database version. Knex.js fetches the version after
@@ -76,7 +76,7 @@ export abstract class BaseSqliteDialect implements DialectContract {
   /**
    * Returns an array of all domains names
    */
-  public async getAllDomains(): Promise<string[]> {
+  async getAllDomains(): Promise<string[]> {
     throw new Error("Sqlite doesn't support domains")
   }
 
@@ -123,7 +123,7 @@ export abstract class BaseSqliteDialect implements DialectContract {
   /**
    * Drop all custom domains inside the database
    */
-  public async dropAllDomains(): Promise<void> {
+  async dropAllDomains(): Promise<void> {
     throw new Error("Sqlite doesn't support domains")
   }
 

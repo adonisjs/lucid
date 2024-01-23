@@ -127,7 +127,7 @@ export class TransactionClient extends EventEmitter implements TransactionClient
   /**
    * Returns an array of all domains names
    */
-  public async getAllDomains(schemas?: string[]): Promise<string[]> {
+  async getAllDomains(schemas?: string[]): Promise<string[]> {
     return this.dialect.getAllDomains(schemas)
   }
 
@@ -155,7 +155,7 @@ export class TransactionClient extends EventEmitter implements TransactionClient
   /**
    * Drop all domains inside the database
    */
-  public async dropAllDomains(schemas?: string[]): Promise<void> {
+  async dropAllDomains(schemas?: string[]): Promise<void> {
     return this.dialect.dropAllDomains(schemas || ['public'])
   }
 

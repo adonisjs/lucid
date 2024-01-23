@@ -11,12 +11,12 @@ import { RawBuilder } from '../database/static_builder/raw.js'
 import { DialectContract, SharedConfigNode, QueryClientContract } from '../types/database.js'
 
 export class MssqlDialect implements DialectContract {
-  public readonly name = 'mssql'
-  public readonly supportsAdvisoryLocks = false
-  public readonly supportsViews = false
-  public readonly supportsTypes = false
-  public readonly supportsDomains = false
-  public readonly supportsReturningStatement = true
+  readonly name = 'mssql'
+  readonly supportsAdvisoryLocks = false
+  readonly supportsViews = false
+  readonly supportsTypes = false
+  readonly supportsDomains = false
+  readonly supportsReturningStatement = true
 
   /**
    * Reference to the database version. Knex.js fetches the version after
@@ -100,13 +100,13 @@ export class MssqlDialect implements DialectContract {
     )
   }
 
-  public async getAllDomains(): Promise<string[]> {
+  async getAllDomains(): Promise<string[]> {
     throw new Error(
       '"getAllDomains" method not implemented is not implemented for mssql. Create a PR to add the feature'
     )
   }
 
-  public async dropAllViews(): Promise<void> {
+  async dropAllViews(): Promise<void> {
     throw new Error(
       '"dropAllViews" method not implemented is not implemented for mssql. Create a PR to add the feature'
     )
@@ -118,13 +118,13 @@ export class MssqlDialect implements DialectContract {
     )
   }
 
-  public async dropAllDomains(): Promise<void> {
+  async dropAllDomains(): Promise<void> {
     throw new Error(
       '"dropAllDomains" method not implemented is not implemented for mssql. Create a PR to add the feature'
     )
   }
 
-  public getAdvisoryLock(): Promise<boolean> {
+  getAdvisoryLock(): Promise<boolean> {
     throw new Error(
       'Support for advisory locks is not implemented for mssql. Create a PR to add the feature'
     )

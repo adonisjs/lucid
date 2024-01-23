@@ -103,10 +103,9 @@ test.group('Query client | Views, types and domains', (group) => {
     })
 
     test('Get all domains', async ({ assert }) => {
-      await fs.fsExtra.ensureDir(join(fs.basePath, 'temp'))
-      const connection = new Connection('primary', getConfig(), app.logger)
+      const connection = new Connection('primary', getConfig(), logger)
       connection.connect()
-      const client = new QueryClient('dual', connection, app.container.use('Adonis/Core/Event'))
+      const client = new QueryClient('dual', connection, createEmitter())
 
       await client.rawQuery(`CREATE DOMAIN "email_domain" AS VARCHAR(255)`)
       const domains = await client.getAllDomains(['public'])
@@ -118,10 +117,9 @@ test.group('Query client | Views, types and domains', (group) => {
     })
 
     test('Drop all domains', async ({ assert }) => {
-      await fs.fsExtra.ensureDir(join(fs.basePath, 'temp'))
-      const connection = new Connection('primary', getConfig(), app.logger)
+      const connection = new Connection('primary', getConfig(), logger)
       connection.connect()
-      const client = new QueryClient('dual', connection, app.container.use('Adonis/Core/Event'))
+      const client = new QueryClient('dual', connection, createEmitter())
 
       await client.rawQuery(`CREATE DOMAIN "email_domain" AS VARCHAR(255)`)
       await client.dropAllDomains()

@@ -10,12 +10,12 @@
 import { DialectContract, SharedConfigNode, QueryClientContract } from '../types/database.js'
 
 export class RedshiftDialect implements DialectContract {
-  public readonly name = 'redshift'
-  public readonly supportsAdvisoryLocks = false
-  public readonly supportsViews = true
-  public readonly supportsTypes = true
-  public readonly supportsDomains = true
-  public readonly supportsReturningStatement = true
+  readonly name = 'redshift'
+  readonly supportsAdvisoryLocks = false
+  readonly supportsViews = true
+  readonly supportsTypes = true
+  readonly supportsDomains = true
+  readonly supportsReturningStatement = true
 
   /**
    * Reference to the database version. Knex.js fetches the version after
@@ -89,7 +89,7 @@ export class RedshiftDialect implements DialectContract {
    *
    * NOTE: ASSUMING FEATURE PARITY WITH POSTGRESQL HERE (NOT TESTED)
    */
-  public async getAllDomains(_schemas: string[]) {
+  async getAllDomains(_schemas: string[]) {
     const domains = await this.client
       .query()
       .select('pg_type.typname')
@@ -161,7 +161,7 @@ export class RedshiftDialect implements DialectContract {
    *
    * NOTE: ASSUMING FEATURE PARITY WITH POSTGRESQL HERE (NOT TESTED)
    */
-  public async dropAllDomains(schemas: string[]) {
+  async dropAllDomains(schemas: string[]) {
     const domains = await this.getAllDomains(schemas)
     if (!domains.length) return
 

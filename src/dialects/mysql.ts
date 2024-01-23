@@ -11,12 +11,12 @@ import { RawBuilder } from '../database/static_builder/raw.js'
 import { DialectContract, SharedConfigNode, QueryClientContract } from '../types/database.js'
 
 export class MysqlDialect implements DialectContract {
-  public readonly name = 'mysql'
-  public readonly supportsAdvisoryLocks = true
-  public readonly supportsViews = true
-  public readonly supportsTypes = false
-  public readonly supportsDomains = false
-  public readonly supportsReturningStatement = false
+  readonly name = 'mysql'
+  readonly supportsAdvisoryLocks = true
+  readonly supportsViews = true
+  readonly supportsTypes = false
+  readonly supportsDomains = false
+  readonly supportsReturningStatement = false
 
   /**
    * Reference to the database version. Knex.js fetches the version after
@@ -100,7 +100,7 @@ export class MysqlDialect implements DialectContract {
   /**
    * Returns an array of all domain names
    */
-  public async getAllDomains(): Promise<string[]> {
+  async getAllDomains(): Promise<string[]> {
     throw new Error("MySQL doesn't support domains")
   }
 
@@ -160,7 +160,7 @@ export class MysqlDialect implements DialectContract {
   /**
    * Drop all domains inside the database
    */
-  public async dropAllDomains(): Promise<void> {
+  async dropAllDomains(): Promise<void> {
     throw new Error("MySQL doesn't support domains")
   }
 

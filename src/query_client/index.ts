@@ -163,7 +163,7 @@ export class QueryClient implements QueryClientContract {
   /**
    * Returns an array of all domain names
    */
-  public async getAllDomains(schemas?: string[]): Promise<string[]> {
+  async getAllDomains(schemas?: string[]): Promise<string[]> {
     return this.dialect.getAllDomains(schemas)
   }
 
@@ -191,7 +191,7 @@ export class QueryClient implements QueryClientContract {
   /**
    * Drop all custom domains inside the database
    */
-  public async dropAllDomains(schemas?: string[]): Promise<void> {
+  async dropAllDomains(schemas?: string[]): Promise<void> {
     return this.dialect.dropAllDomains(schemas || ['public'])
   }
 

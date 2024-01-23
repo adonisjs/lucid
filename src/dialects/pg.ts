@@ -10,12 +10,12 @@
 import { DialectContract, SharedConfigNode, QueryClientContract } from '../types/database.js'
 
 export class PgDialect implements DialectContract {
-  public readonly name = 'postgres'
-  public readonly supportsAdvisoryLocks = true
-  public readonly supportsViews = true
-  public readonly supportsTypes = true
-  public readonly supportsDomains = true
-  public readonly supportsReturningStatement = true
+  readonly name = 'postgres'
+  readonly supportsAdvisoryLocks = true
+  readonly supportsViews = true
+  readonly supportsTypes = true
+  readonly supportsDomains = true
+  readonly supportsReturningStatement = true
 
   /**
    * Reference to the database version. Knex.js fetches the version after
@@ -81,7 +81,7 @@ export class PgDialect implements DialectContract {
   /**
    * Returns an array of all domain names
    */
-  public async getAllDomains(_schemas: string[]) {
+  async getAllDomains(_schemas: string[]) {
     const domains = await this.client
       .query()
       .select('pg_type.typname')
@@ -145,7 +145,7 @@ export class PgDialect implements DialectContract {
   /**
    * Drop all domains inside the database
    */
-  public async dropAllDomains(schemas: string[]) {
+  async dropAllDomains(schemas: string[]) {
     const domains = await this.getAllDomains(schemas)
     if (!domains.length) return
 

@@ -55,7 +55,7 @@ export default class Refresh extends BaseCommand {
    * Drop all domains in database
    */
   @flags.boolean({ description: 'Drop all domains (Postgres only)' })
-  public dropDomains: boolean
+  declare dropDomains: boolean
 
   /**
    * Disable advisory locks
