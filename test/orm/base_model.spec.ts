@@ -249,7 +249,7 @@ test.group('Base model | boot', (group) => {
     }
 
     User.boot()
-    assert.deepEqual(User.$keys.attributesToSerialized.get('userName'), 'user_name')
+    assert.deepEqual(User.$keys.attributesToSerialized.get('userName'), 'userName')
   })
 
   test('resolve attribute name from column name', async ({ fs, assert }) => {
@@ -289,7 +289,7 @@ test.group('Base model | boot', (group) => {
     }
 
     User.boot()
-    assert.deepEqual(User.$keys.columnsToSerialized.get('user_name'), 'user_name')
+    assert.deepEqual(User.$keys.columnsToSerialized.get('user_name'), 'userName')
   })
 
   test('resolve attribute name from serializeAs name', async ({ fs, assert }) => {
@@ -309,7 +309,7 @@ test.group('Base model | boot', (group) => {
     }
 
     User.boot()
-    assert.deepEqual(User.$keys.serializedToAttributes.get('user_name'), 'userName')
+    assert.deepEqual(User.$keys.serializedToAttributes.get('userName'), 'userName')
   })
 
   test('resolve column name from serializeAs name', async ({ fs, assert }) => {
@@ -329,7 +329,7 @@ test.group('Base model | boot', (group) => {
     }
 
     User.boot()
-    assert.deepEqual(User.$keys.serializedToColumns.get('user_name'), 'user_name')
+    assert.deepEqual(User.$keys.serializedToColumns.get('userName'), 'user_name')
   })
 })
 
@@ -2113,7 +2113,7 @@ test.group('Base Model | serializeRelations', () => {
     assert.deepEqual(user.serializeRelations(), {
       profile: {
         username: 'virk',
-        user_id: 1,
+        userId: 1,
       },
     })
   })
@@ -2150,7 +2150,7 @@ test.group('Base Model | serializeRelations', () => {
     assert.deepEqual(user.serializeRelations(), {
       userProfile: {
         username: 'virk',
-        user_id: 1,
+        userId: 1,
       },
     })
   })
@@ -2322,12 +2322,12 @@ test.group('Base Model | serializeRelations', () => {
     assert.deepEqual(
       user.serializeRelations({
         profile: {
-          fields: ['user_id'],
+          fields: ['userId'],
         },
       }),
       {
         profile: {
-          user_id: 1,
+          userId: 1,
         },
       }
     )
@@ -2371,7 +2371,7 @@ test.group('Base Model | serializeRelations', () => {
       }),
       {
         profile: {
-          user_id: 1,
+          userId: 1,
           username: 'virk',
         },
       }
@@ -2506,7 +2506,7 @@ test.group('Base Model | toJSON', (group) => {
     const user = new User()
     user.username = 'virk'
 
-    assert.deepEqual(user.toJSON(), { username: 'virk', full_name: 'VIRK' })
+    assert.deepEqual(user.toJSON(), { username: 'virk', fullName: 'VIRK' })
   })
 
   test('do not add computed property when it returns undefined', async ({ fs, assert }) => {
@@ -2585,7 +2585,7 @@ test.group('Base Model | toJSON', (group) => {
 
     assert.deepEqual(user.toJSON(), {
       username: 'virk',
-      full_name: 'VIRK',
+      fullName: 'VIRK',
       meta: {
         postsCount: 10,
       },
@@ -2623,7 +2623,7 @@ test.group('Base Model | toJSON', (group) => {
 
     assert.deepEqual(user.toJSON(), {
       username: 'virk',
-      full_name: 'VIRK',
+      fullName: 'VIRK',
       posts: {
         count: 10,
       },
@@ -6191,7 +6191,7 @@ test.group('Base Model | date', (group) => {
       created_at: DateTime.local().toISODate(),
     })
     const user = await User.find(1)
-    assert.match(user!.toJSON().created_at, /\d{4}-\d{2}-\d{2}/)
+    assert.match(user!.toJSON().createdAt, /\d{4}-\d{2}-\d{2}/)
   })
 
   test('do not attempt to serialize, when already a string', async ({ fs, assert }) => {
@@ -6223,7 +6223,7 @@ test.group('Base Model | date', (group) => {
       created_at: DateTime.local().toISODate(),
     })
     const user = await User.find(1)
-    assert.equal(user!.toJSON().created_at, DateTime.local().minus({ days: 1 }).toISODate())
+    assert.equal(user!.toJSON().createdAt, DateTime.local().minus({ days: 1 }).toISODate())
   })
 })
 
@@ -6667,7 +6667,7 @@ test.group('Base Model | datetime', (group) => {
 
     const user = await User.find(1)
     assert.match(
-      user!.toJSON().joined_at,
+      user!.toJSON().joinedAt,
       /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}(\+|\-)\d{2}:\d{2}/
     )
   })
@@ -6705,7 +6705,7 @@ test.group('Base Model | datetime', (group) => {
       })
 
     const user = await User.find(1)
-    assert.equal(user!.toJSON().joined_at, DateTime.local().minus({ days: 1 }).toISODate())
+    assert.equal(user!.toJSON().joinedAt, DateTime.local().minus({ days: 1 }).toISODate())
   })
 
   test('force update when enabledForceUpdate method is called', async ({ fs, assert }) => {
@@ -6822,14 +6822,14 @@ test.group('Base Model | paginate', (group) => {
     assert.isTrue(users.hasTotal)
     assert.deepEqual(users.getMeta(), {
       total: 18,
-      per_page: 5,
-      current_page: 1,
-      last_page: 4,
-      first_page: 1,
-      first_page_url: '/users?page=1',
-      last_page_url: '/users?page=4',
-      next_page_url: '/users?page=2',
-      previous_page_url: null,
+      perPage: 5,
+      currentPage: 1,
+      lastPage: 4,
+      firstPage: 1,
+      firstPageUrl: '/users?page=1',
+      lastPageUrl: '/users?page=4',
+      nextPageUrl: '/users?page=2',
+      previousPageUrl: null,
     })
   })
 
@@ -6867,14 +6867,14 @@ test.group('Base Model | paginate', (group) => {
     })
     assert.deepEqual(meta, {
       total: 18,
-      per_page: 5,
-      current_page: 1,
-      last_page: 4,
-      first_page: 1,
-      first_page_url: '/users?page=1',
-      last_page_url: '/users?page=4',
-      next_page_url: '/users?page=2',
-      previous_page_url: null,
+      perPage: 5,
+      currentPage: 1,
+      lastPage: 4,
+      firstPage: 1,
+      firstPageUrl: '/users?page=1',
+      lastPageUrl: '/users?page=4',
+      nextPageUrl: '/users?page=2',
+      previousPageUrl: null,
     })
   })
 
@@ -6915,14 +6915,14 @@ test.group('Base Model | paginate', (group) => {
     assert.isTrue(users.hasTotal)
     assert.deepEqual(users.getMeta(), {
       total: 18,
-      per_page: 5,
-      current_page: 1,
-      last_page: 4,
-      first_page: 1,
-      first_page_url: '/users?page=1',
-      last_page_url: '/users?page=4',
-      next_page_url: '/users?page=2',
-      previous_page_url: null,
+      perPage: 5,
+      currentPage: 1,
+      lastPage: 4,
+      firstPage: 1,
+      firstPageUrl: '/users?page=1',
+      lastPageUrl: '/users?page=4',
+      nextPageUrl: '/users?page=2',
+      previousPageUrl: null,
     })
   })
 
@@ -7030,14 +7030,14 @@ test.group('Base Model | paginate', (group) => {
     assert.isTrue(users.hasTotal)
     assert.deepEqual(users.getMeta(), {
       total: 1,
-      per_page: 5,
-      current_page: 1,
-      last_page: 1,
-      first_page: 1,
-      first_page_url: '/users?page=1',
-      last_page_url: '/users?page=1',
-      next_page_url: null,
-      previous_page_url: null,
+      perPage: 5,
+      currentPage: 1,
+      lastPage: 1,
+      firstPage: 1,
+      firstPageUrl: '/users?page=1',
+      lastPageUrl: '/users?page=1',
+      nextPageUrl: null,
+      previousPageUrl: null,
     })
   })
 })
@@ -7493,7 +7493,7 @@ test.group('Base model | inheritance', (group) => {
             meta: undefined,
             prepare: undefined,
             serialize: undefined,
-            serializeAs: 'user_id',
+            serializeAs: 'userId',
           },
         ],
         [
@@ -7533,7 +7533,7 @@ test.group('Base model | inheritance', (group) => {
             meta: undefined,
             prepare: undefined,
             serialize: undefined,
-            serializeAs: 'user_id',
+            serializeAs: 'userId',
           },
         ],
       ])
@@ -7612,7 +7612,7 @@ test.group('Base model | inheritance', (group) => {
           'fullName',
           {
             meta: undefined,
-            serializeAs: 'full_name',
+            serializeAs: 'fullName',
           },
         ],
         [
@@ -7638,7 +7638,7 @@ test.group('Base model | inheritance', (group) => {
           'fullName',
           {
             meta: undefined,
-            serializeAs: 'full_name',
+            serializeAs: 'fullName',
           },
         ],
       ])
@@ -7733,7 +7733,7 @@ test.group('Base model | inheritance', (group) => {
           'fullName',
           {
             meta: undefined,
-            serializeAs: 'full_name',
+            serializeAs: 'fullName',
           },
         ],
       ])

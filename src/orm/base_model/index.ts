@@ -46,14 +46,17 @@ import {
   ManyToManyRelationOptions,
 } from '../../types/relations.js'
 
-import { ModelKeys } from '../model_keys/index.js'
+import * as errors from '../../errors.js'
 import { Preloader } from '../preloader/index.js'
-import { HasOne } from '../relations/has_one/index.js'
 import { proxyHandler } from './proxy_handler.js'
+import { ModelKeys } from '../model_keys/index.js'
+import { HasOne } from '../relations/has_one/index.js'
 import { HasMany } from '../relations/has_many/index.js'
 import { BelongsTo } from '../relations/belongs_to/index.js'
 import { ManyToMany } from '../relations/many_to_many/index.js'
 import { HasManyThrough } from '../relations/has_many_through/index.js'
+import { CamelCaseNamingStrategy } from '../naming_strategies/camel_case.js'
+import { LazyLoadAggregates } from '../relations/aggregates_loader/lazy_load.js'
 import {
   isObject,
   collectValues,
@@ -61,9 +64,6 @@ import {
   managedTransaction,
   normalizeCherryPickObject,
 } from '../../utils/index.js'
-import { SnakeCaseNamingStrategy } from '../naming_strategies/snake_case.js'
-import { LazyLoadAggregates } from '../relations/aggregates_loader/lazy_load.js'
-import * as errors from '../../errors.js'
 
 const MANY_RELATIONS = ['hasMany', 'manyToMany', 'hasManyThrough']
 const DATE_TIME_TYPES = {
@@ -99,7 +99,7 @@ class BaseModelImpl implements LucidRow {
   /**
    * Naming strategy for model properties
    */
-  static namingStrategy = new SnakeCaseNamingStrategy()
+  static namingStrategy = new CamelCaseNamingStrategy()
 
   /**
    * Primary key is required to build relationships across models
