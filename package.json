@@ -85,7 +85,6 @@
     "@types/chance": "^1.1.6",
     "@types/luxon": "^3.4.2",
     "@types/node": "^20.11.5",
-    "@types/pluralize": "^0.0.33",
     "@types/pretty-hrtime": "^1.0.3",
     "@types/qs": "^6.9.11",
     "@vinejs/vine": "^1.7.0",
