@@ -7385,14 +7385,14 @@ test.group('Model | ManyToMany | pagination', (group) => {
     assert.isTrue(skills.hasTotal)
     assert.deepEqual(skills.getMeta(), {
       total: 2,
-      per_page: 1,
-      current_page: 1,
-      last_page: 2,
-      first_page: 1,
-      first_page_url: '/skills?page=1',
-      last_page_url: '/skills?page=2',
-      next_page_url: '/skills?page=2',
-      previous_page_url: null,
+      perPage: 1,
+      currentPage: 1,
+      lastPage: 2,
+      firstPage: 1,
+      firstPageUrl: '/skills?page=1',
+      lastPageUrl: '/skills?page=2',
+      nextPageUrl: '/skills?page=2',
+      previousPageUrl: null,
     })
   })
 

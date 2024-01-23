@@ -5291,14 +5291,14 @@ test.group('Model | HasMany | paginate', (group) => {
     assert.isTrue(posts.hasTotal)
     assert.deepEqual(posts.getMeta(), {
       total: 18,
-      per_page: 5,
-      current_page: 1,
-      last_page: 4,
-      first_page: 1,
-      first_page_url: '/posts?page=1',
-      last_page_url: '/posts?page=4',
-      next_page_url: '/posts?page=2',
-      previous_page_url: null,
+      perPage: 5,
+      currentPage: 1,
+      lastPage: 4,
+      firstPage: 1,
+      firstPageUrl: '/posts?page=1',
+      lastPageUrl: '/posts?page=4',
+      nextPageUrl: '/posts?page=2',
+      previousPageUrl: null,
     })
   })
 

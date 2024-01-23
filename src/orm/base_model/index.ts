@@ -64,6 +64,7 @@ import {
 import { SnakeCaseNamingStrategy } from '../naming_strategies/snake_case.js'
 import { LazyLoadAggregates } from '../relations/aggregates_loader/lazy_load.js'
 import * as errors from '../../errors.js'
+import { CamelCaseNamingStrategy } from '../naming_strategies/camel_case.js'
 
 const MANY_RELATIONS = ['hasMany', 'manyToMany', 'hasManyThrough']
 const DATE_TIME_TYPES = {
@@ -99,7 +100,7 @@ class BaseModelImpl implements LucidRow {
   /**
    * Naming strategy for model properties
    */
-  static namingStrategy = new SnakeCaseNamingStrategy()
+  static namingStrategy = new CamelCaseNamingStrategy()
 
   /**
    * Primary key is required to build relationships across models
