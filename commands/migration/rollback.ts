@@ -17,7 +17,7 @@ import { CommandOptions } from '@adonisjs/core/types/ace'
  * The command is meant to migrate the database by executing migrations
  * in `down` direction.
  */
-export default class Migrate extends MigrationsBase {
+export default class Rollback extends MigrationsBase {
   static commandName = 'migration:rollback'
   static description = 'Rollback migrations to a specific batch number'
   static options: CommandOptions = {
