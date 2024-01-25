@@ -92,7 +92,7 @@ export default class DatabaseServiceProvider {
    */
   protected async registerTestUtils(db: Database) {
     if (this.app.getEnvironment() === 'test') {
-      const { TestUtils } = await import('@adonisjs/core')
+      const { TestUtils } = await import('@adonisjs/core/test_utils')
       const ace = await this.app.container.make('ace')
 
       TestUtils.macro('db', function (this: typeof ace, connectionName?: string) {
