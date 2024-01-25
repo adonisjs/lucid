@@ -14,6 +14,7 @@ import { Database } from '../src/database/main.js'
 import { Adapter } from '../src/orm/adapter/index.js'
 import { QueryClient } from '../src/query_client/index.js'
 import { BaseModel } from '../src/orm/base_model/index.js'
+import { DatabaseTestUtils } from '../src/test_utils/database.js'
 import type { DatabaseConfig, DbQueryEventNode } from '../src/types/database.js'
 
 /**
@@ -25,6 +26,12 @@ declare module '@adonisjs/core/types' {
   }
   export interface EventsList {
     'db:query': DbQueryEventNode
+  }
+}
+
+declare module '@adonisjs/core' {
+  export interface TestUtils {
+    db(connectionName?: string): DatabaseTestUtils
   }
 }
 
@@ -81,6 +88,20 @@ export default class DatabaseServiceProvider {
   }
 
   /**
+   * Register TestUtils database macro
+   */
+  protected async registerTestUtils(db: Database) {
+    if (this.app.getEnvironment() === 'test') {
+      const { TestUtils } = await import('@adonisjs/core')
+      const ace = await this.app.container.make('ace')
+
+      TestUtils.macro('db', function (this: typeof ace, connectionName?: string) {
+        return new DatabaseTestUtils(ace, db, connectionName)
+      })
+    }
+  }
+
+  /**
    * Invoked by AdonisJS to register container bindings
    */
   register() {
@@ -107,6 +128,7 @@ export default class DatabaseServiceProvider {
     const db = await this.app.container.make('lucid.db')
     BaseModel.$adapter = new Adapter(db)
 
+    await this.registerTestUtils(db)
     await this.registerReplBindings()
     await this.registerVineJSRules(db)
   }
