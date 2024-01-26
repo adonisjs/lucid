@@ -90,13 +90,12 @@ export default class DatabaseServiceProvider {
   /**
    * Register TestUtils database macro
    */
-  protected async registerTestUtils(db: Database) {
+  protected async registerTestUtils() {
     this.app.container.resolving('testUtils', async () => {
       const { TestUtils } = await import('@adonisjs/core/test_utils')
-      const ace = await this.app.container.make('ace')
 
       TestUtils.macro('db', (connectionName?: string) => {
-        return new DatabaseTestUtils(ace, db, connectionName)
+        return new DatabaseTestUtils(this.app, connectionName)
       })
     })
   }
@@ -128,7 +127,7 @@ export default class DatabaseServiceProvider {
     const db = await this.app.container.make('lucid.db')
     BaseModel.$adapter = new Adapter(db)
 
-    await this.registerTestUtils(db)
+    await this.registerTestUtils()
     await this.registerReplBindings()
     await this.registerVineJSRules(db)
   }

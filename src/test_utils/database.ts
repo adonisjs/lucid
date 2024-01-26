@@ -7,9 +7,7 @@
  * file that was distributed with this source code.
  */
 
-import type { Kernel } from '@adonisjs/core/ace'
-
-import type { Database } from '../database/main.js'
+import { ApplicationService } from '@adonisjs/core/types'
 
 /**
  * Database test utils are meant to be used during testing to
@@ -17,8 +15,7 @@ import type { Database } from '../database/main.js'
  */
 export class DatabaseTestUtils {
   constructor(
-    protected kernel: Kernel,
-    protected db: Database,
+    protected app: ApplicationService,
     protected connectionName?: string
   ) {}
 
@@ -30,7 +27,8 @@ export class DatabaseTestUtils {
       args.push(`--connection=${this.connectionName}`)
     }
 
-    const command = await this.kernel.exec(commandName, args)
+    const ace = await this.app.container.make('ace')
+    const command = await ace.exec(commandName, args)
     if (!command.exitCode) return
 
     if (command.error) {
@@ -72,7 +70,9 @@ export class DatabaseTestUtils {
    * Testing hook for creating a global transaction
    */
   async withGlobalTransaction() {
-    await this.db.beginGlobalTransaction(this.connectionName)
-    return () => this.db.rollbackGlobalTransaction(this.connectionName)
+    const db = await this.app.container.make('lucid.db')
+
+    await db.beginGlobalTransaction(this.connectionName)
+    return () => db.rollbackGlobalTransaction(this.connectionName)
   }
 }

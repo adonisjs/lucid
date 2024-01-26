@@ -16,14 +16,14 @@ import { getDb } from '../test-helpers/index.js'
 import Migrate from '../commands/migration/run.js'
 import DbTruncate from '../commands/db_truncate.js'
 import Rollback from '../commands/migration/rollback.js'
+import { AppFactory } from '@adonisjs/core/factories/app'
+import { ApplicationService } from '@adonisjs/core/types'
 import { DatabaseTestUtils } from '../src/test_utils/database.js'
 
 test.group('Database Test Utils', () => {
   test('truncate() should run migration:run and db:truncate commands', async ({ fs, assert }) => {
     let migrationRun = false
     let truncateRun = false
-
-    const ace = await new AceFactory().make(fs.baseUrl, { importer: () => {} })
 
     class FakeMigrate extends Migrate {
       override async run() {
@@ -37,9 +37,16 @@ test.group('Database Test Utils', () => {
       }
     }
 
+    const ace = await new AceFactory().make(fs.baseUrl, { importer: () => {} })
     ace.addLoader(new ListLoader([FakeMigrate, FakeDbTruncate]))
 
-    const dbTestUtils = new DatabaseTestUtils(ace, getDb())
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+
+    app.container.bind('lucid.db', () => getDb())
+    app.container.bind('ace', () => ace)
+
+    const dbTestUtils = new DatabaseTestUtils(app as ApplicationService)
     const truncate = await dbTestUtils.truncate()
 
     await truncate()
@@ -50,8 +57,6 @@ test.group('Database Test Utils', () => {
 
   test('truncate() with custom connectionName', async ({ fs, assert }) => {
     assert.plan(2)
-
-    const ace = await new AceFactory().make(fs.baseUrl, { importer: () => {} })
 
     class FakeMigrate extends Migrate {
       override async run() {
@@ -65,9 +70,16 @@ test.group('Database Test Utils', () => {
       }
     }
 
+    const ace = await new AceFactory().make(fs.baseUrl, { importer: () => {} })
     ace.addLoader(new ListLoader([FakeMigrate, FakeDbTruncate]))
 
-    const dbTestUtils = new DatabaseTestUtils(ace, getDb(), 'secondary')
+    const app = new AppFactory().create(fs.baseUrl, () => {}) as ApplicationService
+    await app.init()
+
+    app.container.bind('lucid.db', () => getDb())
+    app.container.bind('ace', () => ace)
+
+    const dbTestUtils = new DatabaseTestUtils(app, 'secondary')
     const truncate = await dbTestUtils.truncate()
 
     await truncate()
@@ -76,24 +88,27 @@ test.group('Database Test Utils', () => {
   test('seed() should run db:seed command', async ({ fs, assert }) => {
     assert.plan(1)
 
-    const ace = await new AceFactory().make(fs.baseUrl, { importer: () => {} })
-
     class FakeDbSeed extends DbSeed {
       override async run() {
         assert.isTrue(true)
       }
     }
 
+    const ace = await new AceFactory().make(fs.baseUrl, { importer: () => {} })
     ace.addLoader(new ListLoader([FakeDbSeed]))
 
-    const dbTestUtils = new DatabaseTestUtils(ace, getDb())
+    const app = new AppFactory().create(fs.baseUrl, () => {}) as ApplicationService
+    await app.init()
+
+    app.container.bind('lucid.db', () => getDb())
+    app.container.bind('ace', () => ace)
+
+    const dbTestUtils = new DatabaseTestUtils(app)
     await dbTestUtils.seed()
   })
 
   test('seed() with custom connectionName', async ({ fs, assert }) => {
     assert.plan(1)
-
-    const ace = await new AceFactory().make(fs.baseUrl, { importer: () => {} })
 
     class FakeDbSeed extends DbSeed {
       override async run() {
@@ -101,9 +116,16 @@ test.group('Database Test Utils', () => {
       }
     }
 
+    const ace = await new AceFactory().make(fs.baseUrl, { importer: () => {} })
     ace.addLoader(new ListLoader([FakeDbSeed]))
 
-    const dbTestUtils = new DatabaseTestUtils(ace, getDb(), 'secondary')
+    const app = new AppFactory().create(fs.baseUrl, () => {}) as ApplicationService
+    await app.init()
+
+    app.container.bind('lucid.db', () => getDb())
+    app.container.bind('ace', () => ace)
+
+    const dbTestUtils = new DatabaseTestUtils(app, 'secondary')
     await dbTestUtils.seed()
   })
 
@@ -113,8 +135,6 @@ test.group('Database Test Utils', () => {
   }) => {
     let migrationRun = false
     let rollbackRun = false
-
-    const ace = await new AceFactory().make(fs.baseUrl, { importer: () => {} })
 
     class FakeMigrate extends Migrate {
       override async run() {
@@ -128,9 +148,16 @@ test.group('Database Test Utils', () => {
       }
     }
 
+    const ace = await new AceFactory().make(fs.baseUrl, { importer: () => {} })
     ace.addLoader(new ListLoader([FakeMigrate, FakeMigrationRollback]))
 
-    const dbTestUtils = new DatabaseTestUtils(ace, getDb())
+    const app = new AppFactory().create(fs.baseUrl, () => {}) as ApplicationService
+    await app.init()
+
+    app.container.bind('lucid.db', () => getDb())
+    app.container.bind('ace', () => ace)
+
+    const dbTestUtils = new DatabaseTestUtils(app)
     const rollback = await dbTestUtils.migrate()
 
     await rollback()
@@ -141,8 +168,6 @@ test.group('Database Test Utils', () => {
 
   test('migrate() with custom connectionName', async ({ fs, assert }) => {
     assert.plan(2)
-
-    const ace = await new AceFactory().make(fs.baseUrl, { importer: () => {} })
 
     class FakeMigrate extends Migrate {
       override async run() {
@@ -156,32 +181,42 @@ test.group('Database Test Utils', () => {
       }
     }
 
+    const ace = await new AceFactory().make(fs.baseUrl, { importer: () => {} })
     ace.addLoader(new ListLoader([FakeMigrate, FakeMigrationRollback]))
 
-    const dbTestUtils = new DatabaseTestUtils(ace, getDb(), 'secondary')
+    const app = new AppFactory().create(fs.baseUrl, () => {}) as ApplicationService
+    await app.init()
+
+    app.container.bind('lucid.db', () => getDb())
+    app.container.bind('ace', () => ace)
+
+    const dbTestUtils = new DatabaseTestUtils(app, 'secondary')
     const rollback = await dbTestUtils.migrate()
 
     await rollback()
   })
 
   test('should throw error when command has an exitCode = 1', async ({ fs }) => {
-    const ace = await new AceFactory().make(fs.baseUrl, { importer: () => {} })
-
     class FakeMigrate extends Migrate {
       override async run() {
         this.exitCode = 1
       }
     }
 
+    const ace = await new AceFactory().make(fs.baseUrl, { importer: () => {} })
     ace.addLoader(new ListLoader([FakeMigrate]))
 
-    const dbTestUtils = new DatabaseTestUtils(ace, getDb())
+    const app = new AppFactory().create(fs.baseUrl, () => {}) as ApplicationService
+    await app.init()
+
+    app.container.bind('lucid.db', () => getDb())
+    app.container.bind('ace', () => ace)
+
+    const dbTestUtils = new DatabaseTestUtils(app)
     await dbTestUtils.migrate()
   }).throws('"migration:run" failed')
 
   test('should re-use command.error message if available', async ({ fs }) => {
-    const ace = await new AceFactory().make(fs.baseUrl, { importer: () => {} })
-
     class FakeMigrate extends Migrate {
       override async run() {
         this.exitCode = 1
@@ -189,16 +224,30 @@ test.group('Database Test Utils', () => {
       }
     }
 
+    const ace = await new AceFactory().make(fs.baseUrl, { importer: () => {} })
     ace.addLoader(new ListLoader([FakeMigrate]))
 
-    const dbTestUtils = new DatabaseTestUtils(ace, getDb())
+    const app = new AppFactory().create(fs.baseUrl, () => {}) as ApplicationService
+    await app.init()
+
+    app.container.bind('lucid.db', () => getDb())
+    app.container.bind('ace', () => ace)
+
+    const dbTestUtils = new DatabaseTestUtils(app)
     await dbTestUtils.migrate()
   }).throws('Custom error message')
 
   test('withGlobalTransaction should wrap and rollback a transaction', async ({ fs, assert }) => {
     const db = getDb()
     const ace = await new AceFactory().make(fs.baseUrl, { importer: () => {} })
-    const dbTestUtils = new DatabaseTestUtils(ace, db)
+
+    const app = new AppFactory().create(fs.baseUrl, () => {}) as ApplicationService
+    await app.init()
+
+    app.container.bind('lucid.db', () => db)
+    app.container.bind('ace', () => ace)
+
+    const dbTestUtils = new DatabaseTestUtils(app)
     const rollback = await dbTestUtils.withGlobalTransaction()
 
     assert.isDefined(db.connectionGlobalTransactions.get(db.primaryConnectionName))
