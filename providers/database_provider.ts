@@ -29,7 +29,7 @@ declare module '@adonisjs/core/types' {
   }
 }
 
-declare module '@adonisjs/core' {
+declare module '@adonisjs/core/test_utils' {
   export interface TestUtils {
     db(connectionName?: string): DatabaseTestUtils
   }
@@ -91,14 +91,14 @@ export default class DatabaseServiceProvider {
    * Register TestUtils database macro
    */
   protected async registerTestUtils(db: Database) {
-    if (this.app.getEnvironment() === 'test') {
+    this.app.container.resolving('testUtils', async () => {
       const { TestUtils } = await import('@adonisjs/core/test_utils')
       const ace = await this.app.container.make('ace')
 
-      TestUtils.macro('db', function (this: typeof ace, connectionName?: string) {
+      TestUtils.macro('db', (connectionName?: string) => {
         return new DatabaseTestUtils(ace, db, connectionName)
       })
-    }
+    })
   }
 
   /**
