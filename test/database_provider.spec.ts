@@ -113,9 +113,7 @@ test.group('Database Provider', () => {
 
     const testUtils = await app.container.make('testUtils')
 
-    // @ts-expect-error
     assert.isDefined(testUtils.db)
-    // @ts-expect-error
     assert.isFunction(testUtils.db)
   })
 })
