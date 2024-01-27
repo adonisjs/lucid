@@ -4888,6 +4888,68 @@ test.group('Base Model | fetch', (group) => {
     assert.lengthOf(usersList, 1)
     assert.equal(usersList[0].points, 2)
   })
+
+  test('updateOrCreateMany should work with DateTime', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+
+    const BaseModel = getBaseModel(adapter)
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+
+      @column()
+      declare username: string
+
+      @column()
+      declare email: string
+
+      @column.dateTime()
+      declare createdAt: DateTime
+    }
+
+    const createdAt1 = DateTime.now().minus({ days: 2 }).startOf('second')
+    const createdAt2 = DateTime.now().minus({ days: 1 }).startOf('second')
+
+    await User.createMany([
+      {
+        username: 'virk1',
+        email: 'virk+1@adonisjs.com',
+        createdAt: createdAt1,
+      },
+      {
+        username: 'virk2',
+        email: 'virk+2@adonisjs.com',
+        createdAt: createdAt2,
+      },
+    ])
+
+    const users = await User.updateOrCreateMany('createdAt', [
+      {
+        username: 'virk3',
+        email: 'virk+3@adonisjs.com',
+        createdAt: createdAt1,
+      },
+      {
+        username: 'nikk',
+        email: 'nikk@adonisjs.com',
+        createdAt: DateTime.now(),
+      },
+    ])
+
+    assert.lengthOf(users, 2)
+    assert.isTrue(users[0].$isPersisted)
+    assert.isFalse(users[0].$isLocal)
+
+    assert.isTrue(users[1].$isPersisted)
+    assert.isTrue(users[1].$isLocal)
+
+    const usersList = await db.query().from('users')
+    assert.lengthOf(usersList, 3)
+  })
 })
 
 test.group('Base Model | hooks', (group) => {

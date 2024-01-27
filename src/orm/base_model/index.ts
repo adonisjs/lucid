@@ -8,7 +8,6 @@
  */
 
 import { DateTime } from 'luxon'
-import equal from 'fast-deep-equal'
 import Hooks from '@poppinss/hooks'
 import lodash from '@poppinss/utils/lodash'
 import { Exception, defineStaticProperty } from '@poppinss/utils'
@@ -63,6 +62,8 @@ import {
   ensureRelation,
   managedTransaction,
   normalizeCherryPickObject,
+  transformDateValue,
+  compareValues,
 } from '../../utils/index.js'
 
 const MANY_RELATIONS = ['hasMany', 'manyToMany', 'hasManyThrough']
@@ -207,9 +208,13 @@ class BaseModelImpl implements LucidRow {
      * array
      */
     return rowObjects.map((rowObject: any) => {
-      const existingRow = existingRows.find((one: any) => {
-        /* eslint-disable-next-line eqeqeq */
-        return keys.every((key) => one[key] == rowObject[key])
+      const existingRow = existingRows.find((row: any) => {
+        return keys.every((key) => {
+          const objectValue = rowObject[key]
+          const rowValue = row[key]
+
+          return compareValues(rowValue, objectValue)
+        })
       })
 
       /**
@@ -852,6 +857,8 @@ class BaseModelImpl implements LucidRow {
     payload: any,
     options?: ModelAssignOptions
   ): Promise<any[]> {
+    const client = this.$adapter.modelConstructorClient(this as LucidModel, options)
+
     uniqueKeys = Array.isArray(uniqueKeys) ? uniqueKeys : [uniqueKeys]
     const uniquenessPair: { key: string; value: string[] }[] = uniqueKeys.map(
       (uniqueKey: string) => {
@@ -861,7 +868,7 @@ class BaseModelImpl implements LucidRow {
             throw new Exception(
               `Value for the "${uniqueKey}" is null or undefined inside "fetchOrNewUpMany" payload`
             )
-          }),
+          }).map((value) => transformDateValue(value, client.dialect)),
         }
       }
     )
@@ -896,6 +903,8 @@ class BaseModelImpl implements LucidRow {
     payload: any,
     options?: ModelAssignOptions
   ): Promise<any[]> {
+    const client = this.$adapter.modelConstructorClient(this as LucidModel, options)
+
     uniqueKeys = Array.isArray(uniqueKeys) ? uniqueKeys : [uniqueKeys]
     const uniquenessPair: { key: string; value: string[] }[] = uniqueKeys.map(
       (uniqueKey: string) => {
@@ -905,7 +914,7 @@ class BaseModelImpl implements LucidRow {
             throw new Exception(
               `Value for the "${uniqueKey}" is null or undefined inside "fetchOrCreateMany" payload`
             )
-          }),
+          }).map((value) => transformDateValue(value, client.dialect)),
         }
       }
     )
@@ -960,6 +969,8 @@ class BaseModelImpl implements LucidRow {
     payload: any,
     options?: ModelAssignOptions
   ): Promise<any> {
+    const client = this.$adapter.modelConstructorClient(this as LucidModel, options)
+
     uniqueKeys = Array.isArray(uniqueKeys) ? uniqueKeys : [uniqueKeys]
     const uniquenessPair: { key: string; value: string[] }[] = uniqueKeys.map(
       (uniqueKey: string) => {
@@ -969,12 +980,10 @@ class BaseModelImpl implements LucidRow {
             throw new Exception(
               `Value for the "${uniqueKey}" is null or undefined inside "updateOrCreateMany" payload`
             )
-          }),
+          }).map((value) => transformDateValue(value, client.dialect)),
         }
       }
     )
-
-    const client = this.$adapter.modelConstructorClient(this as LucidModel, options)
 
     return managedTransaction(client, async (trx) => {
       /**
@@ -1287,15 +1296,10 @@ class BaseModelImpl implements LucidRow {
       const originalValue = this.$original[key]
       let isEqual = true
 
-      if (DateTime.isDateTime(value) || DateTime.isDateTime(originalValue)) {
-        isEqual =
-          DateTime.isDateTime(value) && DateTime.isDateTime(originalValue)
-            ? value.equals(originalValue)
-            : value === originalValue
-      } else if (isObject(value) && 'isDirty' in value) {
+      if (isObject(value) && 'isDirty' in value) {
         isEqual = !value.isDirty
       } else {
-        isEqual = equal(originalValue, value)
+        isEqual = compareValues(originalValue, value)
       }
 
       if (!isEqual) {
