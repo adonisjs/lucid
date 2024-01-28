@@ -28,6 +28,7 @@
     "./seeders": "./build/src/seeders/main.js",
     "./services/*": "./build/services/*.js",
     "./types/*": "./build/src/types/*.js",
+    "./migration": "./build/src/migration/main.js",
     "./database_provider": "./build/providers/database_provider.js"
   },
   "scripts": {
