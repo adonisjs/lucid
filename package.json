@@ -40,6 +40,7 @@
     "test:mssql": "DB=mssql node --enable-source-maps --loader=ts-node/esm ./bin/test.js",
     "test:pg": "DB=pg node --enable-source-maps --loader=ts-node/esm ./bin/test.js",
     "test:docker": "npm run test:mysql && npm run test:mysql_legacy && npm run test:pg && npm run test:mssql",
+    "quick:test": "DB=sqlite node --enable-source-maps --loader=ts-node/esm ./bin/test.js",
     "lint": "eslint . --ext=.ts",
     "clean": "del-cli build",
     "compile": "npm run lint && npm run clean && tsc",
@@ -73,7 +74,7 @@
   },
   "devDependencies": {
     "@adonisjs/assembler": "^7.1.0",
-    "@adonisjs/core": "^6.2.1",
+    "@adonisjs/core": "^6.2.2",
     "@adonisjs/eslint-config": "^1.2.1",
     "@adonisjs/prettier-config": "^1.2.1",
     "@adonisjs/tsconfig": "^1.2.1",
@@ -113,7 +114,7 @@
   },
   "peerDependencies": {
     "@adonisjs/assembler": "^7.0.0",
-    "@adonisjs/core": "^6.2.0",
+    "@adonisjs/core": "^6.2.2",
     "luxon": "^3.4.4"
   },
   "peerDependenciesMeta": {

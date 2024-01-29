@@ -81,4 +81,39 @@ test.group('Database Provider', () => {
 
     assert.isFalse(db.manager.isConnected('sqlite'))
   })
+
+  test('register testUtils.db() binding', async ({ assert }) => {
+    const ignitor = new IgnitorFactory()
+      .merge({
+        rcFileContents: {
+          providers: [() => import('../providers/database_provider.js')],
+        },
+      })
+      .withCoreConfig()
+      .withCoreProviders()
+      .merge({
+        config: {
+          database: defineConfig({
+            connection: 'sqlite',
+            connections: {
+              sqlite: {
+                client: 'sqlite',
+                connection: { filename: new URL('./tmp/database.sqlite', import.meta.url).href },
+                migrations: { naturalSort: true, paths: ['database/migrations'] },
+              },
+            },
+          }),
+        },
+      })
+      .create(BASE_URL, { importer: IMPORTER })
+
+    const app = ignitor.createApp('web')
+    await app.init()
+    await app.boot()
+
+    const testUtils = await app.container.make('testUtils')
+
+    assert.isDefined(testUtils.db)
+    assert.isFunction(testUtils.db)
+  })
 })
