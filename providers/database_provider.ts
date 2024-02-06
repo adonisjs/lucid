@@ -39,7 +39,7 @@ declare module '@adonisjs/core/test_utils' {
  * Extending VineJS schema types
  */
 declare module '@vinejs/vine' {
-  export interface VineString {
+  interface VineLucidBindings {
     /**
      * Ensure the value is unique inside the database by self
      * executing a query.
@@ -58,6 +58,10 @@ declare module '@vinejs/vine' {
      */
     exists(callback: (db: Database, value: string, field: FieldContext) => Promise<boolean>): this
   }
+
+  interface VineNumber extends VineLucidBindings {}
+
+  interface VineString extends VineLucidBindings {}
 }
 
 /**
