@@ -83,16 +83,12 @@ export abstract class BaseSqliteDialect implements DialectContract {
    * Drop all tables inside the database
    */
   async dropAllTables() {
-    await this.client.rawQuery('PRAGMA writable_schema = 1;')
-    await this.client
-      .knexQuery()
-      .delete()
-      .from('sqlite_master')
-      .whereIn('type', ['table', 'index', 'trigger'])
-      .whereNotIn('name', this.config.wipe?.ignoreTables || [])
+    const tables = await this.getAllTables()
+    const promises = tables
+      .filter((table) => !this.config.wipe?.ignoreTables?.includes(table))
+      .map((table) => this.client.rawQuery(`DROP TABLE ${table};`))
 
-    await this.client.rawQuery('PRAGMA writable_schema = 0;')
-    await this.client.rawQuery('VACUUM;')
+    await Promise.all(promises)
   }
 
   /**

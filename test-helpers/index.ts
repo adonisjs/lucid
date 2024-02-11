@@ -74,12 +74,6 @@ export function getConfig(): ConnectionConfig {
         },
         useNullAsDefault: true,
         debug: !!process.env.DEBUG,
-        pool: {
-          afterCreate(connection, done) {
-            connection.unsafeMode(true)
-            done()
-          },
-        },
       }
     case 'mysql':
       return {
