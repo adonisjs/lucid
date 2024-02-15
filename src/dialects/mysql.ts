@@ -15,6 +15,7 @@ export class MysqlDialect implements DialectContract {
   readonly supportsAdvisoryLocks = true
   readonly supportsViews = true
   readonly supportsTypes = false
+  readonly supportsDomains = false
   readonly supportsReturningStatement = false
 
   /**
@@ -97,6 +98,13 @@ export class MysqlDialect implements DialectContract {
   }
 
   /**
+   * Returns an array of all domain names
+   */
+  async getAllDomains(): Promise<string[]> {
+    throw new Error("MySQL doesn't support domains")
+  }
+
+  /**
    * Drop all tables inside the database
    */
   async dropAllTables() {
@@ -147,6 +155,13 @@ export class MysqlDialect implements DialectContract {
    */
   async dropAllTypes(): Promise<void> {
     throw new Error("MySQL doesn't support types")
+  }
+
+  /**
+   * Drop all domains inside the database
+   */
+  async dropAllDomains(): Promise<void> {
+    throw new Error("MySQL doesn't support domains")
   }
 
   /**

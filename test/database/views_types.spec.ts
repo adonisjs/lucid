@@ -13,7 +13,7 @@ import { Connection } from '../../src/connection/index.js'
 import { QueryClient } from '../../src/query_client/index.js'
 import { getConfig, setup, cleanup, logger, createEmitter } from '../../test-helpers/index.js'
 
-test.group('Query client | Views and types', (group) => {
+test.group('Query client | Views, types and domains', (group) => {
   group.setup(async () => {
     await setup()
   })
@@ -99,6 +99,33 @@ test.group('Query client | Views and types', (group) => {
       const types = await client.getAllTypes()
 
       assert.equal(types.length, 0)
+      await connection.disconnect()
+    })
+
+    test('Get all domains', async ({ assert }) => {
+      const connection = new Connection('primary', getConfig(), logger)
+      connection.connect()
+      const client = new QueryClient('dual', connection, createEmitter())
+
+      await client.rawQuery(`CREATE DOMAIN "email_domain" AS VARCHAR(255)`)
+      const domains = await client.getAllDomains(['public'])
+
+      assert.isTrue(domains.includes('email_domain'))
+
+      await client.dropAllDomains()
+      await connection.disconnect()
+    })
+
+    test('Drop all domains', async ({ assert }) => {
+      const connection = new Connection('primary', getConfig(), logger)
+      connection.connect()
+      const client = new QueryClient('dual', connection, createEmitter())
+
+      await client.rawQuery(`CREATE DOMAIN "email_domain" AS VARCHAR(255)`)
+      await client.dropAllDomains()
+      const domains = await client.getAllDomains()
+
+      assert.isFalse(domains.includes('email_domain'))
       await connection.disconnect()
     })
   }

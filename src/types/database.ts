@@ -62,6 +62,7 @@ export interface DialectContract {
   readonly supportsAdvisoryLocks: boolean
   readonly supportsViews: boolean
   readonly supportsTypes: boolean
+  readonly supportsDomains: boolean
   readonly supportsReturningStatement: boolean
 
   getAllTables(schemas?: string[]): Promise<string[]>
@@ -72,6 +73,9 @@ export interface DialectContract {
 
   getAllTypes(schemas?: string[]): Promise<string[]>
   dropAllTypes(schemas?: string[]): Promise<void>
+
+  getAllDomains(schemas?: string[]): Promise<string[]>
+  dropAllDomains(schemas?: string[]): Promise<void>
 
   truncate(table: string, cascade?: boolean): Promise<void>
 
@@ -203,6 +207,11 @@ export interface QueryClientContract {
   getAllTypes(schemas?: string[]): Promise<string[]>
 
   /**
+   * Returns an array of all domain names
+   */
+  getAllDomains(schemas?: string[]): Promise<string[]>
+
+  /**
    * Drop all tables inside database
    */
   dropAllTables(schemas?: string[]): Promise<void>
@@ -216,6 +225,11 @@ export interface QueryClientContract {
    * Drop all types inside the database
    */
   dropAllTypes(schemas?: string[]): Promise<void>
+
+  /**
+   * Drop all domains inside the database
+   */
+  dropAllDomains(schemas?: string[]): Promise<void>
 
   /**
    * Same as `query()`, but also selects the table for the query. The `from` method

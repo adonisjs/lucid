@@ -15,6 +15,7 @@ export class MssqlDialect implements DialectContract {
   readonly supportsAdvisoryLocks = false
   readonly supportsViews = false
   readonly supportsTypes = false
+  readonly supportsDomains = false
   readonly supportsReturningStatement = true
 
   /**
@@ -99,6 +100,12 @@ export class MssqlDialect implements DialectContract {
     )
   }
 
+  async getAllDomains(): Promise<string[]> {
+    throw new Error(
+      '"getAllDomains" method not implemented is not implemented for mssql. Create a PR to add the feature'
+    )
+  }
+
   async dropAllViews(): Promise<void> {
     throw new Error(
       '"dropAllViews" method not implemented is not implemented for mssql. Create a PR to add the feature'
@@ -108,6 +115,12 @@ export class MssqlDialect implements DialectContract {
   async dropAllTypes(): Promise<void> {
     throw new Error(
       '"dropAllTypes" method not implemented is not implemented for mssql. Create a PR to add the feature'
+    )
+  }
+
+  async dropAllDomains(): Promise<void> {
+    throw new Error(
+      '"dropAllDomains" method not implemented is not implemented for mssql. Create a PR to add the feature'
     )
   }
 

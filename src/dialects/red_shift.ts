@@ -14,6 +14,7 @@ export class RedshiftDialect implements DialectContract {
   readonly supportsAdvisoryLocks = false
   readonly supportsViews = true
   readonly supportsTypes = true
+  readonly supportsDomains = true
   readonly supportsReturningStatement = true
 
   /**
@@ -84,6 +85,23 @@ export class RedshiftDialect implements DialectContract {
   }
 
   /**
+   * Returns an array of all domain names
+   *
+   * NOTE: ASSUMING FEATURE PARITY WITH POSTGRESQL HERE (NOT TESTED)
+   */
+  async getAllDomains(_schemas: string[]) {
+    const domains = await this.client
+      .query()
+      .select('pg_type.typname')
+      .distinct()
+      .from('pg_type')
+      .innerJoin('pg_namespace', 'pg_namespace.oid', 'pg_type.typnamespace')
+      .where('pg_type.typtype', 'd')
+
+    return domains.map(({ typname }) => typname)
+  }
+
+  /**
    * Truncate redshift table with option to cascade and restart identity.
    *
    * NOTE: ASSUMING FEATURE PARITY WITH POSTGRESQL HERE (NOT TESTED)
@@ -136,6 +154,29 @@ export class RedshiftDialect implements DialectContract {
     if (!types.length) return
 
     await this.client.rawQuery(`DROP type ${types.join(',')};`)
+  }
+
+  /**
+   * Drop all domains inside the database
+   *
+   * NOTE: ASSUMING FEATURE PARITY WITH POSTGRESQL HERE (NOT TESTED)
+   */
+  async dropAllDomains(schemas: string[]) {
+    const domains = await this.getAllDomains(schemas)
+    if (!domains.length) return
+
+    // Don't drop built-in domains
+    // https://www.postgresql.org/docs/current/infoschema-datatypes.html
+    const builtInDomains = [
+      'cardinal_number',
+      'character_data',
+      'sql_identifier',
+      'time_stamp',
+      'yes_or_no',
+    ]
+    const domainsToDrop = domains.filter((domain) => !builtInDomains.includes(domain))
+
+    await this.client.rawQuery(`DROP DOMAIN "${domainsToDrop.join('", "')}" CASCADE;`)
   }
 
   /**
