@@ -121,8 +121,10 @@ test.group('Query client | drop tables', (group) => {
       table.integer('temp_users_id').unsigned().references('id').inTable('temp_users')
     })
 
-    await connection.client?.table('temp_users').insert({ id: 1 })
-    await connection.client?.table('temp_posts').insert({ id: 1, temp_users_id: 1 })
+    await connection.client?.table('temp_users').insert({})
+    await connection.client
+      ?.table('temp_posts')
+      .insert({ temp_users_id: await connection.client?.table('temp_users').select('id').first() })
 
     const client = new QueryClient('dual', connection, createEmitter())
     await client.dialect.dropAllTables(['public'])
