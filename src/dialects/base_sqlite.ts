@@ -84,11 +84,31 @@ export abstract class BaseSqliteDialect implements DialectContract {
    */
   async dropAllTables() {
     const tables = await this.getAllTables()
+
+    /**
+     * Check for foreign key pragma and turn it off if enabled
+     * so that we can drop tables without any issues
+     */
+    const pragma = await this.client.rawQuery('PRAGMA foreign_keys;')
+    if (pragma[0].foreign_keys === 1) {
+      await this.client.rawQuery('PRAGMA foreign_keys = OFF;')
+    }
+
+    /**
+     * Drop all tables
+     */
     const promises = tables
       .filter((table) => !this.config.wipe?.ignoreTables?.includes(table))
       .map((table) => this.client.rawQuery(`DROP TABLE ${table};`))
 
     await Promise.all(promises)
+
+    /**
+     * Restore foreign key pragma to it's original value
+     */
+    if (pragma[0].foreign_keys === 1) {
+      await this.client.rawQuery('PRAGMA foreign_keys = ON;')
+    }
   }
 
   /**
