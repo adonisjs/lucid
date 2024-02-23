@@ -107,4 +107,59 @@ test.group('Query client | drop tables', (group) => {
 
     await connection.disconnect()
   })
+
+  test('drop tables with foreign keys constraint', async ({ assert }) => {
+    const connection = new Connection('primary', getConfig(), logger)
+    connection.connect()
+
+    await connection.client!.schema.createTableIfNotExists('temp_users', (table) => {
+      table.increments('id')
+    })
+
+    await connection.client!.schema.createTableIfNotExists('temp_posts', (table) => {
+      table.increments('id')
+      table.integer('temp_users_id').unsigned().references('id').inTable('temp_users')
+    })
+
+    await connection.client?.table('temp_users').insert({})
+    const user = await connection.client?.table('temp_users').select('id').first()
+    await connection.client?.table('temp_posts').insert({ temp_users_id: user!.id })
+
+    const client = new QueryClient('dual', connection, createEmitter())
+    await client.dialect.dropAllTables(['public'])
+
+    assert.isFalse(await connection.client!.schema.hasTable('temp_users'))
+    assert.isFalse(await connection.client!.schema.hasTable('temp_posts'))
+
+    await connection.disconnect()
+  })
+
+  if (['better-sqlite', 'sqlite'].includes(process.env.DB!)) {
+    test('drop tables when PRAGMA foreign_keys is enabled', async ({ assert }) => {
+      const connection = new Connection('primary', getConfig(), logger)
+      connection.connect()
+
+      await connection.client!.schema.createTable('temp_posts', (table) => {
+        table.increments('id')
+      })
+
+      await connection.client!.schema.createTableIfNotExists('temp_users', (table) => {
+        table.increments('id')
+        table.integer('temp_posts_id').unsigned().references('id').inTable('temp_posts')
+      })
+
+      await connection.client?.table('temp_posts').insert({ id: 1 })
+      await connection.client?.table('temp_users').insert({ id: 1, temp_posts_id: 1 })
+
+      const client = new QueryClient('dual', connection, createEmitter())
+
+      await client.rawQuery('PRAGMA foreign_keys = ON;')
+      await client.dialect.dropAllTables(['public'])
+
+      assert.isFalse(await connection.client!.schema.hasTable('temp_users'))
+      assert.isFalse(await connection.client!.schema.hasTable('temp_posts'))
+
+      await connection.disconnect()
+    })
+  }
 })
