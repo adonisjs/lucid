@@ -7936,6 +7936,10 @@ test.group('Base Model | lockForUpdate', (group) => {
     await cleanupTables()
   })
 
+  group.each.teardown(async () => {
+    await resetTables()
+  })
+
   test('lock model row for update', async ({ fs, assert }) => {
     const app = new AppFactory().create(fs.baseUrl, () => {})
     await app.init()
