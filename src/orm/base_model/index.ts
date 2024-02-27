@@ -1846,6 +1846,30 @@ class BaseModelImpl implements LucidRow {
   }
 
   /**
+   * The lockForUpdate method re-fetches the model instance from
+   * the database and locks the row to perform an update. The
+   * provided callback receives a fresh user instance and should
+   * use that to perform an update.
+   */
+  async lockForUpdate<T>(callback: (user: this) => Promise<T> | T): Promise<T> {
+    const Model = this.constructor as LucidModel
+    const queryClient = Model.$adapter.modelClient(this)
+
+    return managedTransaction<T>(queryClient, async (trx) => {
+      const user = await Model.query({ client: trx })
+        .forUpdate()
+        .where(Model.primaryKey, this.$primaryKeyValue)
+        .first()
+
+      if (!user) {
+        throw new errors.E_MODEL_DELETED()
+      }
+
+      return callback(user as this)
+    })
+  }
+
+  /**
    * Perform delete by issuing a delete request on the adapter
    */
   async delete() {

@@ -7926,3 +7926,127 @@ test.group('Base model | inheritance', (group) => {
     assert.isFalse(MyBaseModel.$hooks.has('before:create', hook2))
   })
 })
+
+test.group('Base Model | lockForUpdate', (group) => {
+  group.setup(async () => {
+    await setup()
+  })
+
+  group.teardown(async () => {
+    await cleanupTables()
+  })
+
+  test('lock model row for update', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+
+    const BaseModel = getBaseModel(adapter)
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+
+      @column()
+      declare username: string
+
+      @column()
+      declare email: string
+
+      @column()
+      declare points: number
+    }
+
+    const user = await User.create({ email: 'foo@bar.com', username: 'virk', points: 0 })
+    await Promise.all([
+      user.lockForUpdate(async (freshUser) => {
+        freshUser.points = freshUser.points + 1
+        await freshUser.save()
+      }),
+      user.lockForUpdate(async (freshUser) => {
+        freshUser.points = freshUser.points + 1
+        await freshUser.save()
+      }),
+    ])
+
+    await user.refresh()
+    assert.equal(user.points, 2)
+  })
+
+  test('re-use initial model transaction', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+
+    const BaseModel = getBaseModel(adapter)
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+
+      @column()
+      declare username: string
+
+      @column()
+      declare email: string
+
+      @column()
+      declare points: number
+    }
+
+    const user = await User.create({ email: 'foo@bar.com', username: 'virk', points: 0 })
+    const trx = await db.transaction()
+    user.useTransaction(trx)
+
+    await Promise.all([
+      user.lockForUpdate(async (freshUser) => {
+        freshUser.points = freshUser.points + 1
+        await freshUser.save()
+      }),
+      user.lockForUpdate(async (freshUser) => {
+        freshUser.points = freshUser.points + 1
+        await freshUser.save()
+      }),
+    ])
+
+    assert.isFalse(trx.isCompleted)
+    await trx.rollback()
+
+    await user.refresh()
+    assert.equal(user.points, 0)
+  })
+
+  test('throw error when row is missing', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+
+    const BaseModel = getBaseModel(adapter)
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+
+      @column()
+      declare username: string
+
+      @column()
+      declare email: string
+
+      @column()
+      declare points: number
+    }
+
+    const user = await User.create({ email: 'foo@bar.com', username: 'virk', points: 0 })
+    await user.delete()
+    await assert.rejects(() =>
+      user.lockForUpdate(async (freshUser) => {
+        freshUser.points = freshUser.points + 1
+        await freshUser.save()
+      })
+    )
+  })
+})

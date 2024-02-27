@@ -619,7 +619,23 @@ export interface LucidRow {
    * Actions to perform on the instance
    */
   save(): Promise<this>
+
+  /**
+   * The lockForUpdate method re-fetches the model instance from
+   * the database and locks the row to perform an update. The
+   * provided callback receives a fresh user instance and should
+   * use that to perform an update.
+   */
+  lockForUpdate<T>(callback: (user: this) => Promise<T> | T): Promise<T>
+
+  /**
+   * Perform delete by issuing a delete request on the adapter
+   */
   delete(): Promise<void>
+
+  /**
+   * Reload/Refresh the model instance
+   */
   refresh(): Promise<this>
 
   /**
