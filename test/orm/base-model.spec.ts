@@ -6083,6 +6083,94 @@ test.group('Base Model | toObject', (group) => {
       $extras: {},
     })
   })
+
+  // TODO: I'm not really checking the author, so can probably just remove...
+  test('add preloaded belongsTo relationship to toObject result', async ({ assert }) => {
+    class Category extends BaseModel {
+      @column()
+      public name: string
+
+      @column()
+      public parentId: number
+
+      @belongsTo(() => Category)
+      public parent: BelongsTo<typeof Category>
+    }
+
+    class Post extends BaseModel {
+      @column()
+      public title: string
+
+      @column()
+      public userId: number
+
+      @belongsTo(() => User)
+      public author: BelongsTo<typeof User>
+
+      @hasOne(() => Category)
+      public category: HasOne<typeof Category>
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @hasMany(() => Post)
+      public posts: HasMany<typeof Post>
+    }
+
+    const user = new User()
+    user.username = 'virk'
+
+    const category = new Category()
+    category.name = 'Tutorials'
+
+    const subCategory = new Category()
+    subCategory.name = 'Lucid'
+
+    const post = new Post()
+    post.title = 'Adonis 101'
+
+    // user.$setRelated('posts', [post])
+    post.$setRelated('author', user)
+    subCategory.$setRelated('parent', category)
+    post.$setRelated('category', subCategory)
+
+    assert.deepEqual(subCategory.toObject(), {
+      name: 'Lucid',
+      parent: {
+        name: 'Tutorials',
+        $extras: {},
+      },
+      $extras: {},
+    })
+
+    assert.deepEqual(category.toObject(), {
+      name: 'Tutorials',
+      parent: null,
+      $extras: {},
+    })
+
+    // assert.deepEqual(post.toObject(), {
+    //   title: 'Adonis 101',
+    //   author: {
+    //     username: 'virk',
+    //     $extras: {},
+    //   },
+    //   category: {
+    //     name: 'Lucid',
+    //     parent: {
+    //       name: 'Tutorials',
+    //       $extras: {},
+    //     },
+    //     $extras: {},
+    //   },
+    //   $extras: {},
+    // })
+  }).pin()
 })
 
 test.group('Base model | inheritance', (group) => {
