@@ -6084,7 +6084,6 @@ test.group('Base Model | toObject', (group) => {
     })
   })
 
-  // TODO: I'm not really checking the author, so can probably just remove...
   test('add preloaded belongsTo relationship to toObject result', async ({ assert }) => {
     class Category extends BaseModel {
       @column({ isPrimary: true })
@@ -6103,9 +6102,6 @@ test.group('Base Model | toObject', (group) => {
     class Post extends BaseModel {
       @column()
       public title: string
-
-      @column()
-      public userId: number
 
       @hasOne(() => Category)
       public category: HasOne<typeof Category>
