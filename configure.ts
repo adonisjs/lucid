@@ -38,7 +38,7 @@ export async function configure(command: Configure) {
    * Show error when selected dialect is not supported
    */
   if (dialect! in DIALECTS === false) {
-    command.error(
+    command.logger.error(
       `The selected database "${dialect}" is invalid. Select one from: ${string.sentence(
         Object.keys(DIALECTS)
       )}`
