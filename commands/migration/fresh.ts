@@ -73,7 +73,7 @@ export default class Refresh extends BaseCommand {
     }
 
     if (this.connection) {
-      args.push(`--connection="${this.connection}"`)
+      args.push(`--connection=${this.connection}`)
     }
 
     if (this.disableLocks) {
@@ -127,7 +127,7 @@ export default class Refresh extends BaseCommand {
   private async runDbSeed() {
     const args: string[] = []
     if (this.connection) {
-      args.push(`--connection="${this.connection}"`)
+      args.push(`--connection=${this.connection}`)
     }
 
     const dbSeed = await this.kernel.exec('db:seed', args)

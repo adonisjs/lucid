@@ -55,7 +55,7 @@ export default class Reset extends BaseCommand {
     }
 
     if (this.connection) {
-      args.push(`--connection="${this.connection}"`)
+      args.push(`--connection=${this.connection}`)
     }
 
     if (this.dryRun) {
