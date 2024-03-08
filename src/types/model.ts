@@ -996,6 +996,23 @@ export interface LucidModel {
   ): Promise<InstanceType<T>>
 
   /**
+   * Find multiple models instance using a key/value pair
+   */
+  findManyBy<T extends LucidModel>(
+    clause: Record<string, unknown>,
+    options?: ModelAdapterOptions
+  ): Promise<InstanceType<T>[]>
+
+  /**
+   * Find multiple models instance using a key/value pair
+   */
+  findManyBy<T extends LucidModel>(
+    key: string,
+    value: any,
+    options?: ModelAdapterOptions
+  ): Promise<InstanceType<T>[]>
+
+  /**
    * Same as `query().first()`
    */
   first<T extends LucidModel>(

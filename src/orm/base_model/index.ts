@@ -722,6 +722,29 @@ class BaseModelImpl implements LucidRow {
   }
 
   /**
+   * Find multiple models instance using a key/value pair
+   */
+  // @ts-expect-error - Return type should be inferred when used in a model
+  static findManyBy(clause: Record<string, unknown>, options?: ModelAdapterOptions)
+  // @ts-expect-error - Return type should be inferred when used in a model
+  static findManyBy(key: string, value: any[], options?: ModelAdapterOptions)
+  static findManyBy(
+    key: string | Record<string, unknown>,
+    value?: any[] | ModelAdapterOptions,
+    options?: ModelAdapterOptions
+  ) {
+    if (typeof key === 'object') {
+      return this.query(value as ModelAdapterOptions).where(key)
+    }
+
+    if (value === undefined) {
+      throw new Exception('"findManyBy" expects a value. Received undefined')
+    }
+
+    return this.query(options).where(key, value)
+  }
+
+  /**
    * Same as `query().first()`
    */
   static async first(options?: ModelAdapterOptions) {

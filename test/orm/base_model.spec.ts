@@ -3780,6 +3780,66 @@ test.group('Base Model | fetch', (group) => {
     assert.equal(users[1].$primaryKeyValue, 1)
   })
 
+  test('find many using a clause', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+
+    const BaseModel = getBaseModel(adapter)
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+
+      @column()
+      declare username: string
+
+      @column()
+      declare email: string
+    }
+
+    await db
+      .insertQuery()
+      .table('users')
+      .multiInsert([{ username: 'virk' }, { username: 'nikk' }])
+
+    const users = await User.findManyBy({ points: 0 })
+    assert.lengthOf(users, 2)
+    assert.equal(users[0].$primaryKeyValue, 1)
+    assert.equal(users[1].$primaryKeyValue, 2)
+  })
+
+  test('find many using a key/value pair', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+
+    const BaseModel = getBaseModel(adapter)
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+
+      @column()
+      declare username: string
+
+      @column()
+      declare email: string
+    }
+
+    await db
+      .insertQuery()
+      .table('users')
+      .multiInsert([{ username: 'virk' }, { username: 'nikk' }])
+
+    const users = await User.findManyBy('points', 0)
+    assert.lengthOf(users, 2)
+    assert.equal(users[0].$primaryKeyValue, 1)
+    assert.equal(users[1].$primaryKeyValue, 2)
+  })
+
   test('return the existing row when search criteria matches', async ({ fs, assert }) => {
     const app = new AppFactory().create(fs.baseUrl, () => {})
     await app.init()
