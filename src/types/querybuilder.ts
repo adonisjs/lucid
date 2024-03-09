@@ -651,6 +651,7 @@ export interface ChainableContract {
 
   orderBy: OrderBy<this>
   orderByRaw: RawQueryFn<this>
+  orderByRandom: (seed?: string) => this
 
   union: Union<this>
   unionAll: UnionAll<this>
