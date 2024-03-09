@@ -282,6 +282,27 @@ export class DatabaseQueryBuilder extends Chainable implements DatabaseQueryBuil
   }
 
   /**
+   * Order results by random value.
+   */
+  orderByRandom(seed = '') {
+    switch (this.client.dialect.name) {
+      case 'sqlite3':
+      case 'better-sqlite3':
+      case 'postgres':
+      case 'redshift':
+        return this.orderByRaw('RANDOM()')
+      case 'mysql':
+        return this.orderByRaw(`RAND(${seed})`)
+      case 'mssql':
+        return this.orderByRaw('NEWID()')
+      case 'oracledb':
+        return this.orderByRaw('dbms_random.value')
+      default:
+        throw new Error(`Cannot order by random for the given dialect ${this.client.dialect.name}`)
+    }
+  }
+
+  /**
    * Executes the query
    */
   async exec(): Promise<any> {
