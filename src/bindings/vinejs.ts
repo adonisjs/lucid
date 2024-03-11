@@ -9,7 +9,7 @@
 
 import vine, { VineNumber, VineString } from '@vinejs/vine'
 import type { Database } from '../database/main.js'
-import { DatabaseQueryBuilderContract } from '../types/querybuilder.js'
+import type { DatabaseQueryBuilderContract } from '../types/querybuilder.js'
 import type { FieldContext } from '@vinejs/vine/types'
 
 /**
