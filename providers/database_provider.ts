@@ -48,23 +48,21 @@ declare module '@vinejs/vine' {
      * - The callback must return "true", if the value is unique (does not exist).
      * - The callback must return "false", if the value is not unique (already exists).
      */
-    uniqueRaw(
-      callback: (db: Database, value: string, field: FieldContext) => Promise<boolean>
-    ): this
+    unique(callback: (db: Database, value: string, field: FieldContext) => Promise<boolean>): this
 
     /**
      * Ensure the value is unique inside the database by table and column name.
      * Optionally, you can define a filter to narrow down the query.
      */
-    unique(
-      table: string,
-      column?: string,
+    unique(options: {
+      table: string
+      column?: string
       filter?: (
         db: DatabaseQueryBuilderContract,
         value: unknown,
         field: FieldContext
       ) => Promise<void>
-    ): this
+    }): this
 
     /**
      * Ensure the value is exists inside the database by self
