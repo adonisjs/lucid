@@ -1984,8 +1984,8 @@ class BaseModelImpl implements LucidRow {
       result[relation.serializeAs] = Array.isArray(value)
         ? value.map((one) => one.serialize(relationOptions))
         : value === null
-        ? null
-        : value.serialize(relationOptions)
+          ? null
+          : value.serialize(relationOptions)
 
       return result
     }, {})
