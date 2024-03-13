@@ -564,6 +564,7 @@ export type ConnectionConfig =
  */
 export type DatabaseConfig = {
   connection: string
+  prettyPrintDebugQueries?: boolean
   connections: { [key: string]: ConnectionConfig }
 }
 

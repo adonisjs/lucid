@@ -57,7 +57,7 @@ export class Database extends Macroable {
   prettyPrint = prettyPrint
 
   constructor(
-    private config: DatabaseConfig,
+    public config: DatabaseConfig,
     private logger: Logger,
     private emitter: Emitter<any>
   ) {
