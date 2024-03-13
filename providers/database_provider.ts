@@ -16,7 +16,6 @@ import { QueryClient } from '../src/query_client/index.js'
 import { BaseModel } from '../src/orm/base_model/index.js'
 import { DatabaseTestUtils } from '../src/test_utils/database.js'
 import type { DatabaseConfig, DbQueryEventNode } from '../src/types/database.js'
-import { emit } from 'node:process'
 
 /**
  * Extending AdonisJS types
