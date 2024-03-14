@@ -640,6 +640,182 @@ test.group('Migrator', (group) => {
     ])
   })
 
+  test('rollback database using schema files to a given step', async ({ fs, assert, cleanup }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    cleanup(() => db.manager.closeAll())
+
+    await fs.create(
+      'database/migrations/0_users_v6.ts',
+      `
+      import { BaseSchema as Schema } from '../../../../src/schema/main.js'
+      export default class extends Schema {
+        public async up () {
+          this.schema.createTable('schema_users', (table) => {
+            table.increments()
+          })
+        }
+
+        public async down () {
+          this.schema.dropTable('schema_users')
+        }
+      }
+    `
+    )
+
+    await fs.create(
+      'database/migrations/1_accounts_v6.ts',
+      `
+      import { BaseSchema as Schema } from '../../../../src/schema/main.js'
+      export default class extends Schema {
+        public async up () {
+          this.schema.createTable('schema_accounts', (table) => {
+            table.increments()
+          })
+        }
+
+        public async down () {
+          this.schema.dropTable('schema_accounts')
+        }
+      }
+    `
+    )
+
+    const migrator = getMigrator(db, app, { direction: 'up', connectionName: 'primary' })
+    await migrator.run()
+
+    const migrator1 = getMigrator(db, app, {
+      direction: 'down',
+      step: 1,
+      connectionName: 'primary',
+    })
+    await migrator1.run()
+
+    const migrated = await db.connection().from('adonis_schema').select('*')
+    const hasUsersTable = await db.connection().schema.hasTable('schema_users')
+    const hasAccountsTable = await db.connection().schema.hasTable('schema_accounts')
+    const migratedFiles = Object.keys(migrator1.migratedFiles).map((file) => {
+      return {
+        status: migrator1.migratedFiles[file].status,
+        file: file,
+        queries: migrator1.migratedFiles[file].queries,
+      }
+    })
+
+    assert.lengthOf(migrated, 1)
+    assert.isFalse(hasUsersTable)
+    assert.isTrue(hasAccountsTable)
+    assert.deepEqual(migratedFiles, [
+      {
+        status: 'pending',
+        file: 'database/migrations/1_accounts_v6',
+        queries: [],
+      },
+      {
+        status: 'completed',
+        file: 'database/migrations/0_users_v6',
+        queries: [],
+      },
+    ])
+  })
+
+  test('negative numbers specified by the step option must rollback all the migrated files to the current batch', async ({
+    fs,
+    assert,
+    cleanup,
+  }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    cleanup(() => db.manager.closeAll())
+
+    await fs.create(
+      'database/migrations/0_users_v6.ts',
+      `
+      import { BaseSchema as Schema } from '../../../../src/schema/main.js'
+      export default class extends Schema {
+        public async up () {
+          this.schema.createTable('schema_users', (table) => {
+            table.increments()
+          })
+        }
+
+        public async down () {
+          this.schema.dropTable('schema_users')
+        }
+      }
+    `
+    )
+
+    const migrator = getMigrator(db, app, { direction: 'up', connectionName: 'primary' })
+    await migrator.run()
+
+    await fs.create(
+      'database/migrations/1_accounts_v6.ts',
+      `
+      import { BaseSchema as Schema } from '../../../../src/schema/main.js'
+      export default class extends Schema {
+        public async up () {
+          this.schema.createTable('schema_accounts', (table) => {
+            table.increments()
+          })
+        }
+
+        public async down () {
+          this.schema.dropTable('schema_accounts')
+        }
+      }
+    `
+    )
+
+    await fs.create(
+      'database/migrations/2_roles_v6.ts',
+      `
+      import { BaseSchema as Schema } from '../../../../src/schema/main.js'
+      export default class extends Schema {
+        public async up () {
+          this.schema.createTable('schema_roles', (table) => {
+            table.increments()
+          })
+        }
+
+        public async down () {
+          this.schema.dropTable('schema_roles')
+        }
+      }
+    `
+    )
+
+    const migrator1 = getMigrator(db, app, { direction: 'up', connectionName: 'primary' })
+    await migrator.run()
+
+    const migrator2 = getMigrator(db, app, {
+      direction: 'down',
+      step: -1,
+      connectionName: 'primary',
+    })
+    await migrator2.run()
+
+    const migrated = await db.connection().from('adonis_schema').select('*')
+    const hasUsersTable = await db.connection().schema.hasTable('schema_users')
+    const hasAccountsTable = await db.connection().schema.hasTable('schema_accounts')
+    const hasRolesTable = await db.connection().schema.hasTable('schema_roles')
+    const migratedFiles = Object.keys(migrator1.migratedFiles).map((file) => {
+      return {
+        status: migrator2.migratedFiles[file].status,
+        file: file,
+        queries: migrator2.migratedFiles[file].queries,
+      }
+    })
+
+    assert.lengthOf(migrated, 0)
+    assert.isFalse(hasUsersTable)
+    assert.isFalse(hasAccountsTable)
+    assert.isFalse(hasRolesTable)
+    assert.deepEqual(migratedFiles, [])
+  })
+
   test('rollback multiple times must be a noop', async ({ fs, assert, cleanup }) => {
     const app = new AppFactory().create(fs.baseUrl, () => {})
     await app.init()

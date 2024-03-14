@@ -53,6 +53,14 @@ export default class Rollback extends MigrationsBase {
   declare batch: number
 
   /**
+   * Define custom step, instead of rolling back to the latest batch
+   */
+  @flags.number({
+    description: 'The number of migrations to be reverted',
+  })
+  declare step: number
+
+  /**
    * Display migrations result in one compact single-line output
    */
   @flags.boolean({ description: 'A compact single-line output' })
@@ -74,6 +82,7 @@ export default class Rollback extends MigrationsBase {
       direction: 'down',
       connectionName: this.connection,
       batch: this.batch,
+      step: this.step,
       dryRun: this.dryRun,
       disableLocks: this.disableLocks,
     })
