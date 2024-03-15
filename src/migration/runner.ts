@@ -467,7 +467,7 @@ export class MigrationRunner extends EventEmitter {
   /**
    * Migrate down (aka rollback)
    */
-  private async runDown(batch?: number) {
+  private async runDown(batch?: number, step?: number) {
     if (this.isInProduction && this.migrationsConfig.disableRollbacksInProduction) {
       throw new Error(
         'Rollback in production environment is disabled. Check "config/database" file for options.'
@@ -480,6 +480,12 @@ export class MigrationRunner extends EventEmitter {
 
     const existing = await this.getMigratedFilesTillBatch(batch)
     const collected = await this.migrationSource.getMigrations()
+
+    if (step === undefined || step <= 0) {
+      step = 0
+    } else {
+      batch = (await this.getLatestBatch()) - 1
+    }
 
     /**
      * Finding schema files for migrations to rollback. We do not perform
@@ -499,7 +505,7 @@ export class MigrationRunner extends EventEmitter {
       }
     })
 
-    const filesToMigrate = Object.keys(this.migratedFiles)
+    const filesToMigrate = Object.keys(this.migratedFiles).slice(-step)
     for (let name of filesToMigrate) {
       await this.executeMigration(this.migratedFiles[name].file)
     }
@@ -583,7 +589,7 @@ export class MigrationRunner extends EventEmitter {
       if (this.direction === 'up') {
         await this.runUp()
       } else if (this.options.direction === 'down') {
-        await this.runDown(this.options.batch)
+        await this.runDown(this.options.batch, this.options.step)
       }
     } catch (error) {
       this.error = error
