@@ -6083,6 +6083,67 @@ test.group('Base Model | toObject', (group) => {
       $extras: {},
     })
   })
+
+  test('add preloaded belongsTo relationship to toObject result', async ({ assert }) => {
+    class Category extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public name: string
+
+      @column()
+      public parentId: number | null
+
+      @belongsTo(() => Category)
+      public parent: BelongsTo<typeof Category>
+    }
+
+    class Post extends BaseModel {
+      @column()
+      public title: string
+
+      @hasOne(() => Category)
+      public category: HasOne<typeof Category>
+    }
+
+    const category = new Category()
+    category.name = 'Tutorials'
+    category.id = 1
+    category.parentId = null
+
+    const subCategory = new Category()
+    subCategory.name = 'Lucid'
+    subCategory.id = 2
+    category.parentId = category.id
+
+    const post = new Post()
+    post.title = 'Adonis 101'
+
+    subCategory.$setRelated('parent', category)
+    post.$setRelated('category', subCategory)
+
+    assert.deepEqual(subCategory.toObject(), {
+      name: 'Lucid',
+      id: 2,
+      parentId: 1,
+      parent: {
+        name: 'Tutorials',
+        id: 1,
+        parentId: null,
+        $extras: {},
+      },
+      $extras: {},
+    })
+
+    assert.deepEqual(category.toObject(), {
+      name: 'Tutorials',
+      id: 1,
+      parentId: null,
+      parent: null,
+      $extras: {},
+    })
+  })
 })
 
 test.group('Base model | inheritance', (group) => {
