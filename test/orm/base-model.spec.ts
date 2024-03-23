@@ -6143,7 +6143,7 @@ test.group('Base Model | toObject', (group) => {
       parent: null,
       $extras: {},
     })
-  }).pin()
+  })
 })
 
 test.group('Base model | inheritance', (group) => {
