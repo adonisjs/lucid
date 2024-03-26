@@ -29,7 +29,8 @@
     "./services/*": "./build/services/*.js",
     "./types/*": "./build/src/types/*.js",
     "./migration": "./build/src/migration/main.js",
-    "./database_provider": "./build/providers/database_provider.js"
+    "./database_provider": "./build/providers/database_provider.js",
+    "./utils": "./build/src/utils/index.js"
   },
   "scripts": {
     "pretest": "npm run lint",
