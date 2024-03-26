@@ -703,7 +703,21 @@ class BaseModelImpl implements LucidRow {
   /**
    * Find model instance using a key/value pair
    */
-  static async findBy(key: string, value: any, options?: ModelAdapterOptions) {
+  // @ts-expect-error - Return type should be inferred when used in a model
+  static findBy(clause: Record<string, unknown>, options?: ModelAdapterOptions)
+  // @ts-expect-error - Return type should be inferred when used in a model
+  static findBy(key: string, value: any, options?: ModelAdapterOptions)
+  static async findBy(
+    key: string | Record<string, unknown>,
+    value?: any | ModelAdapterOptions,
+    options?: ModelAdapterOptions
+  ) {
+    if (typeof key === 'object') {
+      return this.query(value as ModelAdapterOptions)
+        .where(key)
+        .first()
+    }
+
     if (value === undefined) {
       throw new Exception('"findBy" expects a value. Received undefined')
     }
@@ -714,10 +728,25 @@ class BaseModelImpl implements LucidRow {
   /**
    * Find model instance using a key/value pair
    */
-  static async findByOrFail(key: string, value: any, options?: ModelAdapterOptions) {
+  // @ts-expect-error - Return type should be inferred when used in a model
+  static findByOrFail(clause: Record<string, unknown>, options?: ModelAdapterOptions)
+  // @ts-expect-error - Return type should be inferred when used in a model
+  static findByOrFail(key: string, value: any, options?: ModelAdapterOptions)
+  static async findByOrFail(
+    key: string | Record<string, unknown>,
+    value?: any | ModelAdapterOptions,
+    options?: ModelAdapterOptions
+  ) {
+    if (typeof key === 'object') {
+      return this.query(value as ModelAdapterOptions)
+        .where(key)
+        .firstOrFail()
+    }
+
     if (value === undefined) {
       throw new Exception('"findByOrFail" expects a value. Received undefined')
     }
+
     return this.query(options).where(key, value).firstOrFail()
   }
 
