@@ -999,6 +999,7 @@ export interface LucidModel {
    * Find multiple models instance using a key/value pair
    */
   findManyBy<T extends LucidModel>(
+    this: T,
     clause: Record<string, unknown>,
     options?: ModelAdapterOptions
   ): Promise<InstanceType<T>[]>
@@ -1007,6 +1008,7 @@ export interface LucidModel {
    * Find multiple models instance using a key/value pair
    */
   findManyBy<T extends LucidModel>(
+    this: T,
     key: string,
     value: any,
     options?: ModelAdapterOptions
