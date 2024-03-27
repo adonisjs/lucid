@@ -16,6 +16,7 @@ import { QueryClient } from '../src/query_client/index.js'
 import { BaseModel } from '../src/orm/base_model/index.js'
 import { DatabaseTestUtils } from '../src/test_utils/database.js'
 import type { DatabaseConfig, DbQueryEventNode } from '../src/types/database.js'
+import { DatabaseQueryBuilderContract } from '../src/types/querybuilder.js'
 
 /**
  * Extending AdonisJS types
@@ -48,6 +49,20 @@ declare module '@vinejs/vine' {
      * - The callback must return "false", if the value is not unique (already exists).
      */
     unique(callback: (db: Database, value: string, field: FieldContext) => Promise<boolean>): this
+
+    /**
+     * Ensure the value is unique inside the database by table and column name.
+     * Optionally, you can define a filter to narrow down the query.
+     */
+    unique(options: {
+      table: string
+      column?: string
+      filter?: (
+        db: DatabaseQueryBuilderContract,
+        value: unknown,
+        field: FieldContext
+      ) => Promise<void>
+    }): this
 
     /**
      * Ensure the value is exists inside the database by self
