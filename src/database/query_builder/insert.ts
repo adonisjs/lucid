@@ -17,6 +17,7 @@ import { RawQueryBuilder } from './raw.js'
 import { RawBuilder } from '../static_builder/raw.js'
 import { QueryRunner } from '../../query_runner/index.js'
 import { ReferenceBuilder } from '../static_builder/reference.js'
+import { DateTime } from 'luxon'
 
 /**
  * Exposes the API for performing SQL inserts
@@ -69,6 +70,10 @@ export class InsertQueryBuilder extends Macroable implements InsertQueryBuilderC
   protected transformValue(value: any) {
     if (value instanceof ReferenceBuilder) {
       return value.toKnex(this.knexQuery.client)
+    }
+
+    if (DateTime.isDateTime(value)) {
+      return value.toJSDate()
     }
 
     return this.transformRaw(value)

@@ -207,9 +207,18 @@ class BaseModelImpl implements LucidRow {
      * array
      */
     return rowObjects.map((rowObject: any) => {
-      const existingRow = existingRows.find((one: any) => {
-        /* eslint-disable-next-line eqeqeq */
-        return keys.every((key) => one[key] == rowObject[key])
+      const existingRow = existingRows.find((row: any) => {
+        return keys.every((key) => {
+          const objectValue = rowObject[key]
+          const rowValue = row[key]
+
+          if (DateTime.isDateTime(rowValue) && DateTime.isDateTime(objectValue)) {
+            return rowValue.equals(objectValue)
+          }
+
+          /* eslint-disable-next-line eqeqeq */
+          return rowValue == objectValue
+        })
       })
 
       /**

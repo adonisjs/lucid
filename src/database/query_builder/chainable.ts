@@ -16,6 +16,7 @@ import { isObject } from '../../utils/index.js'
 import { RawQueryBuilder } from './raw.js'
 import { RawBuilder } from '../static_builder/raw.js'
 import { ReferenceBuilder } from '../static_builder/reference.js'
+import { DateTime } from 'luxon'
 
 /**
  * The chainable query builder to consturct SQL queries for selecting, updating and
@@ -241,6 +242,10 @@ export abstract class Chainable extends Macroable implements ChainableContract {
 
     if (typeof value === 'function') {
       return this.transformCallback(value)
+    }
+
+    if (DateTime.isDateTime(value)) {
+      return value.toJSDate()
     }
 
     return this.transformRaw(value)
