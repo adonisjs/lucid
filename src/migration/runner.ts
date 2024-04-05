@@ -482,7 +482,7 @@ export class MigrationRunner extends EventEmitter {
     const collected = await this.migrationSource.getMigrations()
 
     if (step === undefined || step <= 0) {
-      step = 0
+      step = collected.length
     } else {
       batch = (await this.getLatestBatch()) - 1
     }
@@ -505,7 +505,8 @@ export class MigrationRunner extends EventEmitter {
       }
     })
 
-    const filesToMigrate = Object.keys(this.migratedFiles).slice(-step)
+    this.migratedFiles = Object.fromEntries(Object.entries(this.migratedFiles).slice(0, step))
+    const filesToMigrate = Object.keys(this.migratedFiles)
     for (let name of filesToMigrate) {
       await this.executeMigration(this.migratedFiles[name].file)
     }

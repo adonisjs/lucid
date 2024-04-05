@@ -704,17 +704,12 @@ test.group('Migrator', (group) => {
     })
 
     assert.lengthOf(migrated, 1)
-    assert.isFalse(hasUsersTable)
-    assert.isTrue(hasAccountsTable)
+    assert.isTrue(hasUsersTable)
+    assert.isFalse(hasAccountsTable)
     assert.deepEqual(migratedFiles, [
       {
-        status: 'pending',
-        file: 'database/migrations/1_accounts_v6',
-        queries: [],
-      },
-      {
         status: 'completed',
-        file: 'database/migrations/0_users_v6',
+        file: 'database/migrations/1_accounts_v6',
         queries: [],
       },
     ])
