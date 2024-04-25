@@ -21,8 +21,8 @@ export function defineValidationRules(db: Database) {
         return
       }
 
-      const isUnqiue = await checker(db, value as string, field)
-      if (!isUnqiue) {
+      const isUnique = await checker(db, value as string, field)
+      if (!isUnique) {
         field.report('The {{ field }} has already been taken', 'database.unique', field)
       }
     }

@@ -159,7 +159,7 @@ export class ConnectionManager implements ConnectionManagerContract {
 
     /**
      * Move the current connection to the orphan connections. We need
-     * to keep a seperate track of old connections to make sure
+     * to keep a separate track of old connections to make sure
      * they cleanup after some time
      */
     if (connection.connection) {

@@ -62,7 +62,7 @@ export class BelongsToQueryBuilder extends BaseQueryBuilder {
   }
 
   /**
-   * The profiler data for belongsTo relatioship
+   * The profiler data for belongsTo relationship
    */
   protected profilerData() {
     return {
@@ -92,7 +92,7 @@ export class BelongsToQueryBuilder extends BaseQueryBuilder {
     const queryAction = this.queryAction()
 
     /**
-     * Eager query contraints
+     * Eager query constraints
      */
     if (Array.isArray(this.parent)) {
       const foreignKeyValues = this.parent

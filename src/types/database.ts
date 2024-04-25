@@ -95,7 +95,7 @@ export interface TransactionFn {
 }
 
 /**
- * Shape of the query client, that is used to retrive instances
+ * Shape of the query client, that is used to retrieve instances
  * of query builder
  */
 export interface QueryClientContract {
@@ -117,13 +117,13 @@ export interface QueryClientContract {
   readonly mode: 'dual' | 'write' | 'read'
 
   /**
-   * The name of the connnection from which the client
+   * The name of the connection from which the client
    * was originated
    */
   readonly connectionName: string
 
   /**
-   * Is debug enabled on the connnection or not. Also opens up the API to
+   * Is debug enabled on the connection or not. Also opens up the API to
    * disable debug for a given client
    */
   debug: boolean
