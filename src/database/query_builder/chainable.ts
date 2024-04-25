@@ -18,7 +18,7 @@ import { RawBuilder } from '../static_builder/raw.js'
 import { ReferenceBuilder } from '../static_builder/reference.js'
 
 /**
- * The chainable query builder to consturct SQL queries for selecting, updating and
+ * The chainable query builder to construct SQL queries for selecting, updating and
  * deleting records.
  *
  * The API internally uses the knex query builder. However, many of methods may have

@@ -61,7 +61,7 @@ export default class DbWipe extends BaseCommand {
   /**
    * Prompts to take consent when wiping the database in production
    */
-  private async takeProductionConstent(): Promise<boolean> {
+  private async takeProductionConsent(): Promise<boolean> {
     const question = 'You are in production environment. Want to continue wiping the database?'
     try {
       return await this.prompt.confirm(question)
@@ -141,7 +141,7 @@ export default class DbWipe extends BaseCommand {
      */
     let continueWipe = !this.app.inProduction || this.force
     if (!continueWipe) {
-      continueWipe = await this.takeProductionConstent()
+      continueWipe = await this.takeProductionConsent()
     }
 
     /**

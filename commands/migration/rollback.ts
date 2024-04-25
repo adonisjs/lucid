@@ -35,7 +35,7 @@ export default class Rollback extends MigrationsBase {
   /**
    * Force run migrations in production
    */
-  @flags.boolean({ description: 'Explictly force to run migrations in production' })
+  @flags.boolean({ description: 'Explicitly force to run migrations in production' })
   declare force: boolean
 
   /**
@@ -102,7 +102,7 @@ export default class Rollback extends MigrationsBase {
      */
     let continueMigrations = !this.app.inProduction || this.force
     if (!continueMigrations) {
-      continueMigrations = await this.takeProductionConstent()
+      continueMigrations = await this.takeProductionConsent()
     }
 
     /**
