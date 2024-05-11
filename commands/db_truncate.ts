@@ -59,7 +59,9 @@ export default class DbTruncate extends BaseCommand {
     let tables = await client.getAllTables(schemas)
     tables = tables.filter((table) => !['adonis_schema', 'adonis_schema_versions'].includes(table))
 
-    await Promise.all(tables.map((table) => client.truncate(table, true)))
+    for (const table of tables) {
+      await client.truncate(table, true)
+    }
     this.logger.success('Truncated tables successfully')
   }
 
