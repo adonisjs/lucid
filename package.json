@@ -114,8 +114,8 @@
     "typescript": "^5.4.5"
   },
   "peerDependencies": {
-    "@adonisjs/assembler": "^7.0.0",
-    "@adonisjs/core": "^6.2.2",
+    "@adonisjs/assembler": "^7.7.0",
+    "@adonisjs/core": "^6.10.1",
     "luxon": "^3.4.4"
   },
   "peerDependenciesMeta": {
