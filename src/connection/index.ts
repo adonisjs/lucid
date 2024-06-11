@@ -389,26 +389,4 @@ export class Connection extends EventEmitter implements ConnectionContract {
       }
     }
   }
-
-  /**
-   * Returns the healthcheck report for the connection
-   */
-  async getReport(): Promise<HealthCheckResult> {
-    const error = await this.checkWriteHost()
-    let readError: Error | undefined
-
-    if (!error && this.hasReadWriteReplicas) {
-      readError = await this.checkReadHosts()
-    }
-
-    return {
-      connection: this.name,
-      message: readError
-        ? 'Unable to reach one of the read hosts'
-        : error
-          ? 'Unable to reach the database server'
-          : 'Connection is healthy',
-      error: error || readError || null,
-    }
-  }
 }

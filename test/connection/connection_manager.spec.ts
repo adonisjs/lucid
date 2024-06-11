@@ -7,7 +7,6 @@
  * file that was distributed with this source code.
  */
 
-import { join } from 'node:path'
 import { test } from '@japa/runner'
 
 import { Connection } from '../../src/connection/index.js'
@@ -19,7 +18,6 @@ import {
   mapToObj,
   logger,
   createEmitter,
-  SQLITE_BASE_PATH,
 } from '../../test-helpers/index.js'
 
 test.group('ConnectionManager', (group) => {
@@ -188,53 +186,4 @@ test.group('ConnectionManager', (group) => {
     manager.patch('primary', getConfig())
     manager.connect('primary')
   }).waitForDone()
-
-  test('get health check report for connections that has enabled health checks', async ({
-    assert,
-  }) => {
-    const manager = new ConnectionManager(logger, createEmitter())
-    manager.add('primary', Object.assign({}, getConfig(), { healthCheck: true }))
-    manager.add('secondary', Object.assign({}, getConfig(), { healthCheck: true }))
-    manager.add('secondary-copy', Object.assign({}, getConfig(), { healthCheck: false }))
-
-    const report = await manager.report()
-    assert.equal(report.health.healthy, true)
-    assert.equal(report.health.message, 'All connections are healthy')
-    assert.lengthOf(report.meta, 2)
-    assert.deepEqual(
-      report.meta.map((node: any) => node.connection),
-      ['primary', 'secondary']
-    )
-
-    await manager.closeAll()
-  })
-
-  test('get health check report when one of the connection is unhealthy', async ({ assert }) => {
-    const manager = new ConnectionManager(logger, createEmitter())
-    manager.add('primary', Object.assign({}, getConfig(), { healthCheck: true }))
-    manager.add(
-      'secondary',
-      Object.assign({}, getConfig(), {
-        healthCheck: true,
-        connection: ['sqlite', 'better_sqlite'].includes(process.env.DB!)
-          ? {
-              filename: join(SQLITE_BASE_PATH, 'nested', 'db.sqlite'),
-            }
-          : {
-              host: 'bad-host',
-            },
-      })
-    )
-    manager.add('secondary-copy', Object.assign({}, getConfig(), { healthCheck: false }))
-
-    const report = await manager.report()
-    assert.equal(report.health.healthy, false)
-    assert.equal(report.health.message, 'One or more connections are not healthy')
-    assert.lengthOf(report.meta, 2)
-    assert.deepEqual(
-      report.meta.map((node: any) => node.connection),
-      ['primary', 'secondary']
-    )
-    await manager.closeAll()
-  }).timeout(0)
 })

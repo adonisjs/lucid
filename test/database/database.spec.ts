@@ -153,19 +153,6 @@ test.group('Database', (group) => {
     assert.isDefined(result)
     await db.manager.closeAll()
   })
-
-  test('set hasHealthChecks enabled flag to true, when one ore more connections are using health checks', async ({
-    assert,
-  }) => {
-    const config = {
-      connection: 'primary',
-      connections: { primary: Object.assign({}, getConfig(), { healthCheck: true }) },
-    }
-
-    const db = new Database(config, logger, createEmitter())
-    assert.isTrue(db.hasHealthChecksEnabled)
-    await db.manager.closeAll()
-  })
 })
 
 test.group('Database | global transaction', (group) => {
