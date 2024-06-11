@@ -12,15 +12,16 @@ import type { Pool } from 'tarn'
 import type { EventEmitter } from 'node:events'
 import type { ConnectionOptions } from 'node:tls'
 import type { Emitter } from '@adonisjs/core/events'
+import type { HealthCheckResult } from '@adonisjs/core/types/health'
 import { LucidModel, ModelQueryBuilderContract } from './model.js'
 import {
-  DatabaseQueryBuilderContract,
   FromTable,
-  InsertQueryBuilderContract,
-  RawBuilderContract,
   RawQueryBindings,
+  RawBuilderContract,
   RawQueryBuilderContract,
   ReferenceBuilderContract,
+  InsertQueryBuilderContract,
+  DatabaseQueryBuilderContract,
 } from './querybuilder.js'
 
 /**
@@ -310,15 +311,6 @@ type SharedConnectionNode = {
 }
 
 /**
- * Shape of the report node for the database connection report
- */
-export type ReportNode = {
-  connection: string
-  message: string
-  error: any
-}
-
-/**
  * Migrations config
  */
 export type MigratorConfig = {
@@ -344,7 +336,6 @@ export type SharedConfigNode = {
   debug?: boolean
   asyncStackTraces?: boolean
   revision?: number
-  healthCheck?: boolean
   migrations?: MigratorConfig
   seeders?: SeedersConfig
   wipe?: { ignoreTables?: string[] }
@@ -638,11 +629,6 @@ export interface ConnectionManagerContract {
    * re-add it using the `add` method
    */
   release(connectionName: string): Promise<void>
-
-  /**
-   * Returns the health check report for registered connections
-   */
-  report(): Promise<any & { meta: ReportNode[] }>
 }
 
 /**
@@ -712,7 +698,7 @@ export interface ConnectionContract extends EventEmitter {
   /**
    * Returns the connection report
    */
-  getReport(): Promise<ReportNode>
+  getReport(): Promise<HealthCheckResult>
 }
 
 /**

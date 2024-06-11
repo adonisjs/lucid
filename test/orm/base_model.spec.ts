@@ -6029,7 +6029,7 @@ test.group('Base Model | date', (group) => {
     User.$adapter = adapter
 
     adapter.on('insert', (model: LucidRow, _: any) => {
-      assert.instanceOf((model as User).dob, DateTime)
+      assert.instanceOf((model as User).dob, DateTime as any)
     })
 
     user.username = 'virk'
@@ -6066,7 +6066,7 @@ test.group('Base Model | date', (group) => {
     User.$adapter = adapter
 
     adapter.on('insert', (model: LucidRow, _: any) => {
-      assert.instanceOf((model as User).dob, DateTime)
+      assert.instanceOf((model as User).dob, DateTime as any)
       assert.isUndefined((model as User).createdAt)
     })
 
@@ -6097,7 +6097,7 @@ test.group('Base Model | date', (group) => {
     const user = new User()
     User.$adapter = adapter
     adapter.on('update', (model: LucidRow) => {
-      assert.instanceOf((model as User).updatedAt, DateTime)
+      assert.instanceOf((model as User).updatedAt, DateTime as any)
     })
 
     user.username = 'virk'
@@ -6320,7 +6320,7 @@ test.group('Base Model | date', (group) => {
 
     await db.insertQuery().table('users').insert({ username: 'virk' })
     const user = await User.find(1)
-    assert.instanceOf(user!.createdAt, DateTime)
+    assert.instanceOf(user!.createdAt, DateTime as any)
   })
 
   test('ignore null or empty values during fetch', async ({ fs, assert }) => {
@@ -6520,7 +6520,7 @@ test.group('Base Model | datetime', (group) => {
     const user = new User()
     user.username = 'virk'
     await user.save()
-    assert.instanceOf(user.joinedAt, DateTime)
+    assert.instanceOf(user.joinedAt, DateTime as any)
 
     const createdUser = await db.from('users').select('*').first()
 
@@ -6688,7 +6688,7 @@ test.group('Base Model | datetime', (group) => {
 
     await db.insertQuery().table('users').insert({ username: 'virk' })
     const user = await User.find(1)
-    assert.instanceOf(user!.createdAt, DateTime)
+    assert.instanceOf(user!.createdAt, DateTime as any)
   })
 
   test('ignore null or empty values during fetch', async ({ fs, assert }) => {

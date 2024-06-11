@@ -12,9 +12,10 @@ import knex, { Knex } from 'knex'
 import { EventEmitter } from 'node:events'
 import { patchKnex } from 'knex-dynamic-connection'
 import type { Logger } from '@adonisjs/core/logger'
+import { HealthCheckResult } from '@adonisjs/core/types/health'
 // @ts-expect-error
 import { resolveClientNameWithAliases } from 'knex/lib/util/helpers.js'
-import { ConnectionConfig, ConnectionContract, ReportNode } from '../types/database.js'
+import { ConnectionConfig, ConnectionContract } from '../types/database.js'
 
 import { Logger as ConnectionLogger } from './logger.js'
 import * as errors from '../errors.js'
@@ -392,7 +393,7 @@ export class Connection extends EventEmitter implements ConnectionContract {
   /**
    * Returns the healthcheck report for the connection
    */
-  async getReport(): Promise<ReportNode> {
+  async getReport(): Promise<HealthCheckResult> {
     const error = await this.checkWriteHost()
     let readError: Error | undefined
 

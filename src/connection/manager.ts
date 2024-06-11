@@ -11,7 +11,6 @@ import type { Emitter } from '@adonisjs/core/events'
 import type { Logger } from '@adonisjs/core/logger'
 
 import {
-  ReportNode,
   ConnectionNode,
   ConnectionConfig,
   ConnectionContract,
@@ -242,33 +241,6 @@ export class ConnectionManager implements ConnectionManagerContract {
       await this.close(connectionName, true)
     } else {
       this.connections.delete(connectionName)
-    }
-  }
-
-  /**
-   * Returns the report for all the connections marked for healthChecks.
-   */
-  async report(): Promise<any & { meta: ReportNode[] }> {
-    const reports = await Promise.all(
-      Array.from(this.connections.keys())
-        .filter((one) => this.get(one)!.config.healthCheck)
-        .map((one) => {
-          this.connect(one)
-          return this.get(one)!.connection!.getReport()
-        })
-    )
-
-    const healthy = !reports.find((report) => !!report.error)
-
-    return {
-      displayName: 'Database',
-      health: {
-        healthy,
-        message: healthy
-          ? 'All connections are healthy'
-          : 'One or more connections are not healthy',
-      },
-      meta: reports,
     }
   }
 }
