@@ -231,8 +231,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    */
   protected transformValue(value: any) {
     if (value instanceof Chainable) {
-      value.applyWhere()
-      return value.knexQuery
+      return value.toKnex()
     }
 
     if (value instanceof ReferenceBuilder) {
@@ -2073,5 +2072,13 @@ export abstract class Chainable extends Macroable implements ChainableContract {
     }
 
     return this
+  }
+
+  /**
+   * Applies statements and returns knex query
+   */
+  toKnex() {
+    this.applyWhere()
+    return this.knexQuery
   }
 }
