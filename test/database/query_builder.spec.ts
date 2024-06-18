@@ -27,7 +27,7 @@ import {
 } from '../../test-helpers/index.js'
 import { QueryClient } from '../../src/query_client/index.js'
 
-if (!['better-sqlite', 'sqlite', 'libsql'].includes(process.env.DB!)) {
+if (!['better_sqlite', 'sqlite', 'libsql'].includes(process.env.DB!)) {
   test.group('Query Builder | client', (group) => {
     group.setup(async () => {
       await setup()

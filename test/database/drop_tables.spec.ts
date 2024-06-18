@@ -134,7 +134,7 @@ test.group('Query client | drop tables', (group) => {
     await connection.disconnect()
   })
 
-  if (['better-sqlite', 'sqlite', 'libsql'].includes(process.env.DB!)) {
+  if (['better_sqlite', 'sqlite', 'libsql'].includes(process.env.DB!)) {
     test('drop tables when PRAGMA foreign_keys is enabled', async ({ assert }) => {
       const connection = new Connection('primary', getConfig(), logger)
       connection.connect()
