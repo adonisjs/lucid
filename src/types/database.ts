@@ -55,6 +55,7 @@ export interface DialectContract {
     | 'postgres'
     | 'redshift'
     | 'sqlite3'
+    | 'libsql'
     | 'better-sqlite3'
   readonly dateTimeFormat: string
 
@@ -372,6 +373,24 @@ export type SqliteConfig = SharedConfigNode & {
 }
 
 /**
+ * The LibSQL specific config options are taken directly from the
+ * driver. https://github.com/mapbox/node-sqlite3/wiki/API#new-sqlite3databasefilename-mode-callback
+ *
+ * LibSQL dialect is a drop-in replacement for SQLite and hence the config
+ * options are same
+ */
+export type LibSQLConfig = SharedConfigNode & {
+  client: 'libsql'
+  connection: {
+    filename: string
+    flags?: string[]
+    debug?: boolean
+    mode?: any
+  }
+  replicas?: never
+}
+
+/**
  * The MYSQL specific config options are taken directly from the
  * driver. https://www.npmjs.com/package/mysql#connection-options
  *
@@ -543,6 +562,7 @@ export type MssqlConfig = SharedConfigNode & {
  */
 export type ConnectionConfig =
   | SqliteConfig
+  | LibSQLConfig
   | MysqlConfig
   | PostgreConfig
   | OracleConfig
@@ -638,6 +658,10 @@ export interface ConnectionContract extends EventEmitter {
   client?: Knex
   readClient?: Knex
 
+  /**
+   * @deprecated
+   * @see clientName
+   */
   readonly dialectName:
     | 'mssql'
     | 'mysql'
@@ -646,6 +670,19 @@ export interface ConnectionContract extends EventEmitter {
     | 'postgres'
     | 'redshift'
     | 'sqlite3'
+    | 'libsql'
+    | 'better-sqlite3'
+
+  readonly clientName:
+    | 'mssql'
+    | 'mysql'
+    | 'mysql2'
+    | 'oracledb'
+    | 'postgres'
+    | 'redshift'
+    | 'sqlite3'
+    | 'libsql'
+    | 'better-sqlite3'
 
   /**
    * Property to find if explicit read/write is enabled

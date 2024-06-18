@@ -10,7 +10,7 @@
 import type { DialectContract, QueryClientContract, SharedConfigNode } from '../types/database.js'
 
 export abstract class BaseSqliteDialect implements DialectContract {
-  abstract readonly name: 'sqlite3' | 'better-sqlite3'
+  abstract readonly name: 'sqlite3' | 'better-sqlite3' | 'libsql'
   readonly supportsAdvisoryLocks = false
   readonly supportsViews = true
   readonly supportsTypes = false

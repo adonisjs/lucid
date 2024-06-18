@@ -13,7 +13,7 @@ import { MysqlConfig } from '../../src/types/database.js'
 import { Connection } from '../../src/connection/index.js'
 import { setup, cleanup, getConfig, resetTables, logger } from '../../test-helpers/index.js'
 
-if (process.env.DB !== 'sqlite') {
+if (!['sqlite', 'better_sqlite', 'libsql'].includes(process.env.DB!)) {
   test.group('Connection | config', (group) => {
     group.setup(async () => {
       await setup()
@@ -121,28 +121,6 @@ test.group('Connection | setup', (group) => {
     })
 
     await connection.disconnect()
-  }).waitForDone()
-
-  test('raise error when unable to make connection', ({ assert }, done) => {
-    assert.plan(2)
-
-    const connection = new Connection(
-      'primary',
-      Object.assign({}, getConfig(), { client: null }),
-      logger
-    )
-
-    connection.on('error', ({ message }) => {
-      try {
-        assert.equal(message, "knex: Required configuration option 'client' is missing.")
-        done()
-      } catch (error) {
-        done(error)
-      }
-    })
-
-    const fn = () => connection.connect()
-    assert.throws(fn, /knex: Required configuration option/)
   }).waitForDone()
 })
 

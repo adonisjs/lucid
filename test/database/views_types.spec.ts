@@ -23,7 +23,7 @@ test.group('Query client | Views, types and domains', (group) => {
     await cleanup()
   })
 
-  if (['sqlite', 'mysql', 'pg'].includes(process.env.DB!)) {
+  if (['sqlite', 'mysql', 'pg', 'libsql'].includes(process.env.DB!)) {
     test('Get all views', async ({ assert }) => {
       const connection = new Connection('primary', getConfig(), logger)
       connection.connect()

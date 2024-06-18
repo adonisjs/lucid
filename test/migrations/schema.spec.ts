@@ -226,12 +226,9 @@ test.group('Schema', (group) => {
       }
 
       async down() {
-        if (this.db.dialect.name !== 'sqlite3') {
-          this.schema.table('schema_accounts', (table) => {
-            table.dropForeign(['user_id'])
-          })
-        }
-
+        this.schema.table('schema_accounts', (table) => {
+          table.dropForeign(['user_id'])
+        })
         this.schema.dropTable('schema_users')
         this.schema.dropTable('schema_accounts')
       }

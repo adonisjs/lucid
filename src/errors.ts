@@ -72,3 +72,12 @@ export const E_UNDEFINED_RELATIONSHIP = createError(
 )
 
 export const E_RUNTIME_EXCEPTION = createError('%s', 'E_RUNTIME_EXCEPTION', 500)
+
+/**
+ * The client is not supported by Lucid
+ */
+export const E_UNSUPPORTED_CLIENT = createError<[string]>(
+  'Unsupported client "%s"',
+  'E_UNSUPPORTED_CLIENT',
+  500
+)

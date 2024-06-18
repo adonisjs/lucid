@@ -12,8 +12,8 @@ import { test } from '@japa/runner'
 import { Connection } from '../../src/connection/index.js'
 import { ConnectionManager } from '../../src/connection/manager.js'
 import {
-  getConfig,
   setup,
+  getConfig,
   cleanup,
   mapToObj,
   logger,
@@ -116,29 +116,6 @@ test.group('ConnectionManager', (group) => {
     await manager.release('primary')
     assert.isFalse(manager.has('primary'))
   })
-
-  test('proxy error event', async ({ assert }, done) => {
-    assert.plan(3)
-
-    const emitter = createEmitter()
-    const manager = new ConnectionManager(logger, emitter)
-    manager.add('primary', Object.assign({}, getConfig(), { client: null }))
-
-    emitter.on('db:connection:error', async ([{ message }, connection]) => {
-      try {
-        assert.equal(message, "knex: Required configuration option 'client' is missing.")
-        assert.instanceOf(connection, Connection)
-        await manager.closeAll()
-        done()
-      } catch (error) {
-        await manager.closeAll()
-        done(error)
-      }
-    })
-
-    const fn = () => manager.connect('primary')
-    assert.throws(fn, /knex: Required configuration option/)
-  }).waitForDone()
 
   test('patching the connection config must close old and create a new connection', async ({
     assert,

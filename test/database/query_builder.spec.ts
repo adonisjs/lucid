@@ -27,7 +27,7 @@ import {
 } from '../../test-helpers/index.js'
 import { QueryClient } from '../../src/query_client/index.js'
 
-if (process.env.DB !== 'sqlite') {
+if (!['better-sqlite', 'sqlite', 'libsql'].includes(process.env.DB!)) {
   test.group('Query Builder | client', (group) => {
     group.setup(async () => {
       await setup()
@@ -11600,7 +11600,7 @@ test.group('Query Builder | withRecursive', (group) => {
   })
 })
 
-if (['pg', 'sqlite', 'better_sqlite'].includes(process.env.DB!)) {
+if (['pg', 'sqlite', 'better_sqlite', 'libsql'].includes(process.env.DB!)) {
   test.group('Query Builder | withMaterialized', (group) => {
     group.setup(async () => {
       await setup()

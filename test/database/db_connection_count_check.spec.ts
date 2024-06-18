@@ -29,8 +29,9 @@ test.group('Db connection count check', (group) => {
     }
 
     const db = new Database(config, logger, createEmitter())
+    const client = db.connection()
 
-    const healthCheck = new DbConnectionCountCheck(db.connection()).compute(async () => {
+    const healthCheck = new DbConnectionCountCheck(client).compute(async () => {
       return 20
     })
 
@@ -39,7 +40,7 @@ test.group('Db connection count check', (group) => {
       message: 'There are 20 active connections, which is above the threshold of 15 connections',
       status: 'error',
       meta: {
-        connection: { name: 'primary', dialect: config.connections.primary.client },
+        connection: { name: 'primary', dialect: client.dialect.name },
         connectionsCount: {
           active: 20,
           failureThreshold: 15,
@@ -58,8 +59,9 @@ test.group('Db connection count check', (group) => {
     }
 
     const db = new Database(config, logger, createEmitter())
+    const client = db.connection()
 
-    const healthCheck = new DbConnectionCountCheck(db.connection()).compute(async () => {
+    const healthCheck = new DbConnectionCountCheck(client).compute(async () => {
       return 12
     })
 
@@ -68,7 +70,7 @@ test.group('Db connection count check', (group) => {
       message: 'There are 12 active connections, which is above the threshold of 10 connections',
       status: 'warning',
       meta: {
-        connection: { name: 'primary', dialect: config.connections.primary.client },
+        connection: { name: 'primary', dialect: client.dialect.name },
         connectionsCount: {
           active: 12,
           failureThreshold: 15,
@@ -87,8 +89,9 @@ test.group('Db connection count check', (group) => {
     }
 
     const db = new Database(config, logger, createEmitter())
+    const client = db.connection()
 
-    const healthCheck = new DbConnectionCountCheck(db.connection()).compute(async () => {
+    const healthCheck = new DbConnectionCountCheck(client).compute(async () => {
       return null
     })
 
@@ -97,7 +100,7 @@ test.group('Db connection count check', (group) => {
       message: `Check skipped. Unable to get active connections for ${config.connections.primary.client} dialect`,
       status: 'ok',
       meta: {
-        connection: { name: 'primary', dialect: config.connections.primary.client },
+        connection: { name: 'primary', dialect: client.dialect.name },
       },
     })
 
@@ -111,8 +114,9 @@ test.group('Db connection count check', (group) => {
     }
 
     const db = new Database(config, logger, createEmitter())
+    const client = db.connection()
 
-    const healthCheck = new DbConnectionCountCheck(db.connection())
+    const healthCheck = new DbConnectionCountCheck(client)
 
     const result = await healthCheck.run()
     const activeConnections = result.meta?.connectionsCount.active
@@ -121,7 +125,7 @@ test.group('Db connection count check', (group) => {
       message: `There are ${activeConnections} active connections, which is under the defined thresholds`,
       status: 'ok',
       meta: {
-        connection: { name: 'primary', dialect: db.connection().dialect.name },
+        connection: { name: 'primary', dialect: client.dialect.name },
         connectionsCount: {
           active: activeConnections,
           failureThreshold: 15,
@@ -140,8 +144,9 @@ test.group('Db connection count check', (group) => {
     }
 
     const db = new Database(config, logger, createEmitter())
+    const client = db.connection()
 
-    const healthCheck = new DbConnectionCountCheck(db.connection())
+    const healthCheck = new DbConnectionCountCheck(client)
 
     const result = await healthCheck.run()
     const activeConnections = result.meta?.connectionsCount.active
@@ -150,7 +155,7 @@ test.group('Db connection count check', (group) => {
       message: `There are ${activeConnections} active connections, which is under the defined thresholds`,
       status: 'ok',
       meta: {
-        connection: { name: 'primary', dialect: db.connection().dialect.name },
+        connection: { name: 'primary', dialect: client.dialect.name },
         connectionsCount: {
           active: activeConnections,
           failureThreshold: 15,

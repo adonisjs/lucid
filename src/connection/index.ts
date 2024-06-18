@@ -14,10 +14,13 @@ import { patchKnex } from 'knex-dynamic-connection'
 import type { Logger } from '@adonisjs/core/logger'
 // @ts-expect-error
 import { resolveClientNameWithAliases } from 'knex/lib/util/helpers.js'
-import { ConnectionConfig, ConnectionContract } from '../types/database.js'
 
-import { Logger as ConnectionLogger } from './logger.js'
 import * as errors from '../errors.js'
+import { clientsNames } from '../dialects/index.js'
+// @ts-expect-error
+import LibSQLClient from '../clients/libsql.cjs'
+import { Logger as ConnectionLogger } from './logger.js'
+import type { ConnectionConfig, ConnectionContract } from '../types/database.js'
 
 /**
  * Connection class manages a given database connection. Internally it uses
@@ -38,9 +41,16 @@ export class Connection extends EventEmitter implements ConnectionContract {
   readClient?: Knex
 
   /**
-   * Connection dialect name
+   * Connection dialect name.
+   * @deprecated
+   * @see clientName
    */
   dialectName: ConnectionContract['dialectName']
+
+  /**
+   * Connection client name.
+   */
+  clientName: ConnectionContract['dialectName']
 
   /**
    * A boolean to know if connection operates on read/write
@@ -66,12 +76,18 @@ export class Connection extends EventEmitter implements ConnectionContract {
   ) {
     super()
     this.validateConfig()
-    this.dialectName = resolveClientNameWithAliases(this.config.client)
+    this.clientName = resolveClientNameWithAliases(this.config.client)
+    this.dialectName = this.clientName
+
     this.hasReadWriteReplicas = !!(
       this.config.replicas &&
       this.config.replicas.read &&
       this.config.replicas.write
     )
+
+    if (!clientsNames.includes(this.clientName)) {
+      throw new errors.E_UNSUPPORTED_CLIENT([this.clientName])
+    }
   }
 
   /**
@@ -133,6 +149,17 @@ export class Connection extends EventEmitter implements ConnectionContract {
    */
   private getWriteConfig(): Knex.Config {
     if (!this.config.replicas) {
+      /**
+       * Replacing string based libsql client with the
+       * actual implementation
+       */
+      if (this.config.client === 'libsql') {
+        return {
+          ...this.config,
+          client: LibSQLClient,
+        }
+      }
+
       return this.config
     }
 
