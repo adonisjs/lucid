@@ -12,7 +12,6 @@ import knex, { Knex } from 'knex'
 import { EventEmitter } from 'node:events'
 import { patchKnex } from 'knex-dynamic-connection'
 import type { Logger } from '@adonisjs/core/logger'
-import { HealthCheckResult } from '@adonisjs/core/types/health'
 // @ts-expect-error
 import { resolveClientNameWithAliases } from 'knex/lib/util/helpers.js'
 import { ConnectionConfig, ConnectionContract } from '../types/database.js'
@@ -254,68 +253,6 @@ export class Connection extends EventEmitter implements ConnectionContract {
 
     // @ts-ignore
     patchKnex(this.readClient, this.readConfigResolver.bind(this))
-  }
-
-  /**
-   * Checks all the read hosts by running a query on them. Stops
-   * after first error.
-   */
-  private async checkReadHosts() {
-    const configCopy = Object.assign(
-      { log: new ConnectionLogger(this.name, this.logger) },
-      this.config,
-      {
-        debug: false,
-      }
-    )
-    let error: any = null
-
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    for (let _ of this.readReplicas) {
-      configCopy.connection = this.readConfigResolver(this.config)
-      this.logger.trace({ connection: this.name }, 'spawing health check read connection')
-      const client = knex.knex(configCopy)
-
-      try {
-        if (this.dialectName === 'oracledb') {
-          await client.raw('SELECT 1 + 1 AS result FROM dual')
-        } else {
-          await client.raw('SELECT 1 + 1 AS result')
-        }
-      } catch (err) {
-        error = err
-      }
-
-      /**
-       * Cleanup client connection
-       */
-      await client.destroy()
-      this.logger.trace({ connection: this.name }, 'destroying health check read connection')
-
-      /**
-       * Return early when there is an error
-       */
-      if (error) {
-        break
-      }
-    }
-
-    return error
-  }
-
-  /**
-   * Checks for the write host
-   */
-  private async checkWriteHost() {
-    try {
-      if (this.dialectName === 'oracledb') {
-        await this.client!.raw('SELECT 1 + 1 AS result FROM dual')
-      } else {
-        await this.client!.raw('SELECT 1 + 1 AS result')
-      }
-    } catch (error) {
-      return error
-    }
   }
 
   /**

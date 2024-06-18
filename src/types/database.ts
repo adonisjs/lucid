@@ -12,7 +12,6 @@ import type { Pool } from 'tarn'
 import type { EventEmitter } from 'node:events'
 import type { ConnectionOptions } from 'node:tls'
 import type { Emitter } from '@adonisjs/core/events'
-import type { HealthCheckResult } from '@adonisjs/core/types/health'
 import { LucidModel, ModelQueryBuilderContract } from './model.js'
 import {
   FromTable,
@@ -694,11 +693,6 @@ export interface ConnectionContract extends EventEmitter {
    * Disconnect knex
    */
   disconnect(): Promise<void>
-
-  /**
-   * Returns the connection report
-   */
-  getReport(): Promise<HealthCheckResult>
 }
 
 /**

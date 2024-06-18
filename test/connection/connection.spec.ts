@@ -10,7 +10,6 @@
 import { Knex } from 'knex'
 import { test } from '@japa/runner'
 import { MysqlConfig } from '../../src/types/database.js'
-
 import { Connection } from '../../src/connection/index.js'
 import { setup, cleanup, getConfig, resetTables, logger } from '../../test-helpers/index.js'
 
@@ -164,27 +163,3 @@ if (process.env.DB === 'mysql') {
     })
   })
 }
-
-test.group('Health Checks', (group) => {
-  group.setup(async () => {
-    await setup()
-  })
-
-  group.teardown(async () => {
-    await cleanup()
-  })
-
-  test('get healthcheck report for healthy connection', async ({ assert }) => {
-    const connection = new Connection('primary', getConfig(), logger)
-    connection.connect()
-
-    const report = await connection.getReport()
-    assert.deepEqual(report, {
-      connection: 'primary',
-      message: 'Connection is healthy',
-      error: null,
-    })
-
-    await connection.disconnect()
-  })
-})
