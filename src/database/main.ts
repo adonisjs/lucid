@@ -32,6 +32,8 @@ import { ReferenceBuilder } from './static_builder/reference.js'
 import { SimplePaginator } from './paginator/simple_paginator.js'
 import { DatabaseQueryBuilder } from './query_builder/database.js'
 
+export { DbCheck } from './checks/db_check.js'
+export { DbConnectionCountCheck } from './checks/db_connection_count_check.js'
 export { DatabaseQueryBuilder, InsertQueryBuilder, SimplePaginator, QueryClient }
 
 /**
