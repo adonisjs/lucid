@@ -45,12 +45,12 @@ export class Connection extends EventEmitter implements ConnectionContract {
    * @deprecated
    * @see clientName
    */
-  dialectName: ConnectionContract['dialectName']
+  dialectName: ConnectionContract['clientName']
 
   /**
    * Connection client name.
    */
-  clientName: ConnectionContract['dialectName']
+  clientName: ConnectionContract['clientName']
 
   /**
    * A boolean to know if connection operates on read/write
