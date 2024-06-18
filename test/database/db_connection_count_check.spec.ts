@@ -97,7 +97,7 @@ test.group('Db connection count check', (group) => {
 
     const result = await healthCheck.run()
     assert.containsSubset(result, {
-      message: `Check skipped. Unable to get active connections for ${config.connections.primary.client} dialect`,
+      message: `Check skipped. Unable to get active connections for ${client.dialect.name} dialect`,
       status: 'ok',
       meta: {
         connection: { name: 'primary', dialect: client.dialect.name },
