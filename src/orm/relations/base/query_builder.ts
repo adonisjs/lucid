@@ -166,6 +166,14 @@ export abstract class BaseQueryBuilder
   }
 
   /**
+   * Return knex query
+   */
+  toKnex() {
+    this.applyConstraints()
+    return super.toKnex()
+  }
+
+  /**
    * Get query sql
    */
   toSQL() {
