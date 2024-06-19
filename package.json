@@ -73,7 +73,7 @@
     "@swc/core": "^1.6.1",
     "@types/chance": "^1.1.6",
     "@types/luxon": "^3.4.2",
-    "@types/node": "^20.14.4",
+    "@types/node": "^20.14.5",
     "@types/pretty-hrtime": "^1.0.3",
     "@types/qs": "^6.9.15",
     "@vinejs/vine": "^2.1.0",
@@ -90,7 +90,7 @@
     "husky": "^9.0.11",
     "luxon": "^3.4.4",
     "mysql2": "^3.10.1",
-    "np": "^10.0.5",
+    "np": "^10.0.6",
     "pg": "^8.12.0",
     "prettier": "^3.3.2",
     "reflect-metadata": "^0.2.2",
@@ -100,7 +100,7 @@
     "typescript": "^5.4.5"
   },
   "dependencies": {
-    "@adonisjs/presets": "^2.4.1",
+    "@adonisjs/presets": "^2.5.1",
     "@faker-js/faker": "^8.4.1",
     "@poppinss/hooks": "^7.2.3",
     "@poppinss/macroable": "^1.0.2",
