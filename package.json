@@ -100,7 +100,7 @@
     "typescript": "^5.4.5"
   },
   "dependencies": {
-    "@adonisjs/presets": "^2.5.1",
+    "@adonisjs/presets": "^2.6.1",
     "@faker-js/faker": "^8.4.1",
     "@poppinss/hooks": "^7.2.3",
     "@poppinss/macroable": "^1.0.2",
