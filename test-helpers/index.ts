@@ -33,6 +33,7 @@ import {
 
 import { BaseSchema } from '../src/schema/main.js'
 import { Database } from '../src/database/main.js'
+import LibSQLClient from '../src/clients/libsql.cjs'
 import { Adapter } from '../src/orm/adapter/index.js'
 import { BaseModel } from '../src/orm/base_model/index.js'
 import { QueryClient } from '../src/query_client/index.js'
@@ -42,9 +43,6 @@ import { RawQueryBuilder } from '../src/database/query_builder/raw.js'
 import { InsertQueryBuilder } from '../src/database/query_builder/insert.js'
 import { LucidRow, LucidModel, AdapterContract } from '../src/types/model.js'
 import { DatabaseQueryBuilder } from '../src/database/query_builder/database.js'
-
-// @ts-expect-error
-import LibSQLClient from '../src/clients/libsql.cjs'
 
 dotenv.config()
 export const APP_ROOT = new URL('./tmp', import.meta.url)
@@ -159,7 +157,7 @@ export function getKnex(config: knex.Knex.Config): knex.Knex {
       {},
       {
         ...config,
-        client: config.client === 'libsql' ? LibSQLClient : config.client,
+        client: config.client === 'libsql' ? (LibSQLClient as any) : config.client,
       },
       { debug: false }
     )

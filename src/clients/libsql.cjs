@@ -1,14 +1,15 @@
 const Sqlite3Client = require('knex/lib/dialects/sqlite3')
 
-class LibSQLClient extends Sqlite3Client {
+module.exports = class LibSQLClient extends Sqlite3Client {
   _driver() {
     return require('@libsql/sqlite3')
   }
+
+  get dialect() {
+    return 'libsql'
+  }
+
+  get driverName() {
+    return 'libsql'
+  }
 }
-
-Object.assign(LibSQLClient.prototype, {
-  dialect: 'libsql',
-  driverName: 'libsql',
-})
-
-module.exports = LibSQLClient

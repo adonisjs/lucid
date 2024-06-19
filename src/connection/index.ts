@@ -16,9 +16,8 @@ import type { Logger } from '@adonisjs/core/logger'
 import { resolveClientNameWithAliases } from 'knex/lib/util/helpers.js'
 
 import * as errors from '../errors.js'
-import { clientsNames } from '../dialects/index.js'
-// @ts-expect-error
 import LibSQLClient from '../clients/libsql.cjs'
+import { clientsNames } from '../dialects/index.js'
 import { Logger as ConnectionLogger } from './logger.js'
 import type { ConnectionConfig, ConnectionContract } from '../types/database.js'
 
@@ -156,7 +155,7 @@ export class Connection extends EventEmitter implements ConnectionContract {
       if (this.config.client === 'libsql') {
         return {
           ...this.config,
-          client: LibSQLClient,
+          client: LibSQLClient as any,
         }
       }
 
