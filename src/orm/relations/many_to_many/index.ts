@@ -62,6 +62,8 @@ export class ManyToMany implements ManyToManyRelationContract<LucidModel, LucidM
    */
   onQueryHook
 
+  declare meta?: any
+
   /**
    * Computes the created at timestamps column name
    * for the pivot table
@@ -114,6 +116,7 @@ export class ManyToMany implements ManyToManyRelationContract<LucidModel, LucidM
       this.options.serializeAs === undefined ? this.relationName : this.options.serializeAs
     this.pivotColumns = this.options.pivotColumns || []
     this.onQueryHook = this.options.onQuery
+    this.meta = this.options.meta
   }
 
   /**

@@ -48,6 +48,8 @@ export class HasOne implements HasOneRelationContract<LucidModel, LucidModel> {
    */
   onQueryHook
 
+  declare meta?: any
+
   constructor(
     public relationName: string,
     public relatedModel: () => LucidModel,
@@ -57,6 +59,7 @@ export class HasOne implements HasOneRelationContract<LucidModel, LucidModel> {
     this.onQueryHook = this.options.onQuery
     this.serializeAs =
       this.options.serializeAs === undefined ? this.relationName : this.options.serializeAs
+    this.meta = this.options.meta
   }
 
   /**
