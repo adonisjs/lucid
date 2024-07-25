@@ -106,16 +106,6 @@ export class Connection extends EventEmitter implements ConnectionContract {
   }
 
   /**
-   * Cleanup references
-   */
-  private cleanup(): void {
-    this.client = undefined
-    this.readClient = undefined
-    this.readReplicas = []
-    this.roundRobinCounter = 0
-  }
-
-  /**
    * Does cleanup by removing knex reference and removing all listeners.
    * For the same of simplicity, we get rid of both read and write
    * clients, when anyone of them disconnects.
@@ -127,7 +117,7 @@ export class Connection extends EventEmitter implements ConnectionContract {
      */
     this.pool!.on('poolDestroySuccess', () => {
       this.logger.trace({ connection: this.name }, 'pool destroyed, cleaning up resource')
-      this.cleanup()
+      this.client = undefined
       this.emit('disconnect', this)
       this.removeAllListeners()
     })
@@ -135,7 +125,9 @@ export class Connection extends EventEmitter implements ConnectionContract {
     if (this.readPool !== this.pool) {
       this.readPool!.on('poolDestroySuccess', () => {
         this.logger.trace({ connection: this.name }, 'pool destroyed, cleaning up resource')
-        this.cleanup()
+        this.roundRobinCounter = 0
+        this.readClient = undefined
+        this.readReplicas = []
         this.emit('disconnect', this)
         this.removeAllListeners()
       })
