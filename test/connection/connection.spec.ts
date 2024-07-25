@@ -144,7 +144,10 @@ test.group('Connection | setup', (group) => {
 
     const connection = new Connection('primary', config, logger)
     connection.connect()
-    connection.on('disconnect', () => {
+    connection.readPool?.on('poolDestroySuccess', () => {
+      disconnectEmitsCount++
+    })
+    connection.pool?.on('poolDestroySuccess', () => {
       disconnectEmitsCount++
     })
 

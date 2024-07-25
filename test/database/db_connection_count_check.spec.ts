@@ -22,15 +22,21 @@ test.group('Db connection count check', (group) => {
     await cleanup()
   })
 
-  test('return error when failure threshold has been crossed', async ({ assert }) => {
+  test('return error when failure threshold has been crossed', async ({
+    assert,
+    cleanup: teardown,
+  }) => {
     const config = {
       connection: 'primary',
       connections: { primary: getConfig() },
     }
 
     const db = new Database(config, logger, createEmitter())
-    const client = db.connection()
+    teardown(async () => {
+      await db.manager.closeAll()
+    })
 
+    const client = db.connection()
     const healthCheck = new DbConnectionCountCheck(client).compute(async () => {
       return 20
     })
@@ -48,19 +54,23 @@ test.group('Db connection count check', (group) => {
         },
       },
     })
-
-    await db.manager.closeAll()
   })
 
-  test('return warning when warning threshold has been crossed', async ({ assert }) => {
+  test('return warning when warning threshold has been crossed', async ({
+    assert,
+    cleanup: teardown,
+  }) => {
     const config = {
       connection: 'primary',
       connections: { primary: getConfig() },
     }
 
     const db = new Database(config, logger, createEmitter())
-    const client = db.connection()
+    teardown(async () => {
+      await db.manager.closeAll()
+    })
 
+    const client = db.connection()
     const healthCheck = new DbConnectionCountCheck(client).compute(async () => {
       return 12
     })
@@ -78,17 +88,22 @@ test.group('Db connection count check', (group) => {
         },
       },
     })
-
-    await db.manager.closeAll()
   })
 
-  test('return success when unable to compute connections count', async ({ assert }) => {
+  test('return success when unable to compute connections count', async ({
+    assert,
+    cleanup: teardown,
+  }) => {
     const config = {
       connection: 'primary',
       connections: { primary: getConfig() },
     }
 
     const db = new Database(config, logger, createEmitter())
+    teardown(async () => {
+      await db.manager.closeAll()
+    })
+
     const client = db.connection()
 
     const healthCheck = new DbConnectionCountCheck(client).compute(async () => {
@@ -103,17 +118,19 @@ test.group('Db connection count check', (group) => {
         connection: { name: 'primary', dialect: client.dialect.name },
       },
     })
-
-    await db.manager.closeAll()
   })
 
-  test('get PostgreSQL connections count', async ({ assert }) => {
+  test('get PostgreSQL connections count', async ({ assert, cleanup: teardown }) => {
     const config = {
       connection: 'primary',
       connections: { primary: getConfig() },
     }
 
     const db = new Database(config, logger, createEmitter())
+    teardown(async () => {
+      await db.manager.closeAll()
+    })
+
     const client = db.connection()
 
     const healthCheck = new DbConnectionCountCheck(client)
@@ -133,19 +150,20 @@ test.group('Db connection count check', (group) => {
         },
       },
     })
-
-    await db.manager.closeAll()
   }).skip(process.env.DB !== 'pg', 'Only for PostgreSQL')
 
-  test('get MySQL connections count', async ({ assert }) => {
+  test('get MySQL connections count', async ({ assert, cleanup: teardown }) => {
     const config = {
       connection: 'primary',
       connections: { primary: getConfig() },
     }
 
     const db = new Database(config, logger, createEmitter())
-    const client = db.connection()
+    teardown(async () => {
+      await db.manager.closeAll()
+    })
 
+    const client = db.connection()
     const healthCheck = new DbConnectionCountCheck(client)
 
     const result = await healthCheck.run()
@@ -163,7 +181,5 @@ test.group('Db connection count check', (group) => {
         },
       },
     })
-
-    await db.manager.closeAll()
   }).skip(!['mysql', 'mysql_legacy'].includes(process.env.DB!), 'Only for MySQL')
 })
