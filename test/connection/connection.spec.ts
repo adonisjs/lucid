@@ -122,6 +122,38 @@ test.group('Connection | setup', (group) => {
 
     await connection.disconnect()
   }).waitForDone()
+
+  test('cleanup read/write clients when connection is closed', async ({ assert }) => {
+    let disconnectEmitsCount = 0
+
+    const config = getConfig()
+    config.replicas! = {
+      write: {
+        connection: {
+          host: '10.0.0.1',
+        },
+      },
+      read: {
+        connection: [
+          {
+            host: '10.0.0.1',
+          },
+        ],
+      },
+    }
+
+    const connection = new Connection('primary', config, logger)
+    connection.connect()
+    connection.on('disconnect', () => {
+      disconnectEmitsCount++
+    })
+
+    await connection.disconnect()
+
+    assert.equal(disconnectEmitsCount, 2)
+    assert.isUndefined(connection.client)
+    assert.isUndefined(connection.readClient)
+  }).skip(['sqlite', 'better_sqlite', 'libsql'].includes(process.env.DB!))
 })
 
 if (process.env.DB === 'mysql') {
