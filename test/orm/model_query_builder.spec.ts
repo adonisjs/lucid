@@ -388,6 +388,51 @@ test.group('Model query builder', (group) => {
     assert.equal(clone.posts.length, posts.length)
   })
 
+  test('clone query builder with preload', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter)
+
+    class Post extends BaseModel {
+      @column()
+      declare id: number
+
+      @column()
+      declare userId: number
+
+      @column()
+      declare title: string
+    }
+    Post.boot()
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+
+      @column()
+      declare username: string
+
+      @hasMany(() => Post)
+      declare posts: HasMany<typeof Post>
+    }
+    User.boot()
+
+    const user = await User.create({ username: 'virk' })
+    await user.related('posts').createMany([{ title: 'Adonis 101' }, { title: 'Lucid 101' }])
+
+    const query = User.query()
+    const queryCloned = query.clone()
+
+    query.preload('posts')
+    const clone = await queryCloned.firstOrFail()
+    const users = await query.firstOrFail()
+
+    assert.isUndefined(clone.posts)
+    assert.lengthOf(users.posts, 2)
+  })
+
   test('apply scopes', async ({ fs, assert }) => {
     const app = new AppFactory().create(fs.baseUrl, () => {})
     await app.init()
