@@ -23,6 +23,7 @@ import {
 } from '../../test-helpers/index.js'
 import type { HasMany } from '../../src/types/relations.js'
 
+
 test.group('Model query builder', (group) => {
   group.setup(async () => {
     await setup()
@@ -530,5 +531,52 @@ test.group('Model query builder', (group) => {
 
     const users = await User.query().count('* as total')
     assert.equal(Number(users[0].$extras.total), 2)
+  })
+
+  test('apply relationship constraints when using sub query', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter)
+
+    class Post extends BaseModel {
+      @column()
+      declare userId: number | null
+
+      @column()
+      declare title: string
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+
+      @column()
+      declare username: string
+
+      @hasMany(() => Post)
+      declare posts: HasMany<typeof Post>
+    }
+
+    Post.boot()
+    User.boot()
+
+    const users = await User.createMany([
+      {
+        username: 'virk',
+      },
+      {
+        username: 'nikk',
+      },
+    ])
+
+    for (let user of users) {
+      await user.related('posts').create({ title: 'Test' })
+    }
+
+    const posts = await Post.query().whereIn('id', users[0].related('posts').query().select('id'))
+
+    assert.lengthOf(posts, 1)
   })
 })

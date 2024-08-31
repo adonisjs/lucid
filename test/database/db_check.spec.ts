@@ -22,26 +22,27 @@ test.group('Db connection check', (group) => {
     await cleanup()
   })
 
-  test('perform health check for a connection', async ({ assert }) => {
+  test('perform health check for a connection', async ({ assert, cleanup: teardown }) => {
     const config = {
       connection: 'primary',
       connections: { primary: getConfig() },
     }
 
     const db = new Database(config, logger, createEmitter())
+    teardown(async () => {
+      await db.manager.closeAll()
+    })
 
     const healthCheck = new DbCheck(db.connection())
     const result = await healthCheck.run()
     assert.containsSubset(result, {
       message: 'Successfully connected to the database server',
       status: 'ok',
-      meta: { connection: { name: 'primary', dialect: config.connections.primary.client } },
+      meta: { connection: { name: 'primary', dialect: db.connection().dialect.name } },
     })
-
-    await db.manager.closeAll()
   })
 
-  test('report error when unable to connect', async ({ assert }) => {
+  test('report error when unable to connect', async ({ assert, cleanup: teardown }) => {
     const config = {
       connection: 'primary',
       connections: {
@@ -56,16 +57,18 @@ test.group('Db connection check', (group) => {
     }
 
     const db = new Database(config, logger, createEmitter())
+    teardown(async () => {
+      await db.manager.closeAll()
+    })
 
     const healthCheck = new DbCheck(db.connection())
     const result = await healthCheck.run()
+
     assert.containsSubset(result, {
       message: 'Connection failed',
       status: 'error',
       meta: { connection: { name: 'primary', dialect: 'mysql' } },
     })
     assert.equal(result.meta?.error.code, 'ECONNREFUSED')
-
-    await db.manager.closeAll()
   })
 })

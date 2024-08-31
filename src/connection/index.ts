@@ -106,13 +106,23 @@ export class Connection extends EventEmitter implements ConnectionContract {
   }
 
   /**
-   * Cleanup references
+   * Cleans up reference for the write client and also the
+   * read client when not using replicas
    */
-  private cleanup(): void {
+  private cleanupWriteClient() {
+    if (this.client === this.readClient) {
+      this.cleanupReadClient()
+    }
     this.client = undefined
+  }
+
+  /**
+   * Cleans up reference for the read client
+   */
+  private cleanupReadClient() {
+    this.roundRobinCounter = 0
     this.readClient = undefined
     this.readReplicas = []
-    this.roundRobinCounter = 0
   }
 
   /**
@@ -127,7 +137,7 @@ export class Connection extends EventEmitter implements ConnectionContract {
      */
     this.pool!.on('poolDestroySuccess', () => {
       this.logger.trace({ connection: this.name }, 'pool destroyed, cleaning up resource')
-      this.cleanup()
+      this.cleanupWriteClient()
       this.emit('disconnect', this)
       this.removeAllListeners()
     })
@@ -135,7 +145,7 @@ export class Connection extends EventEmitter implements ConnectionContract {
     if (this.readPool !== this.pool) {
       this.readPool!.on('poolDestroySuccess', () => {
         this.logger.trace({ connection: this.name }, 'pool destroyed, cleaning up resource')
-        this.cleanup()
+        this.cleanupReadClient()
         this.emit('disconnect', this)
         this.removeAllListeners()
       })
