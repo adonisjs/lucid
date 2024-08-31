@@ -357,6 +357,7 @@ export class ModelQueryBuilder
     const clonedQuery = new ModelQueryBuilder(this.knexQuery.clone(), this.model, this.client)
     this.applyQueryFlags(clonedQuery)
 
+    clonedQuery.usePreloader(this.preloader.clone())
     clonedQuery.sideloaded = Object.assign({}, this.sideloaded)
     clonedQuery.debug(this.debugQueries)
     clonedQuery.reporterData(this.customReporterData)
