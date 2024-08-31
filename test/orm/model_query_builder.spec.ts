@@ -23,7 +23,6 @@ import {
 } from '../../test-helpers/index.js'
 import type { HasMany } from '../../src/types/relations.js'
 
-
 test.group('Model query builder', (group) => {
   group.setup(async () => {
     await setup()
