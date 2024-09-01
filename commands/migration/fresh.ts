@@ -52,6 +52,12 @@ export default class Refresh extends BaseCommand {
   declare dropTypes: boolean
 
   /**
+   * Drop all domains in database
+   */
+  @flags.boolean({ description: 'Drop all domains (Postgres only)' })
+  declare dropDomains: boolean
+
+  /**
    * Disable advisory locks
    */
   @flags.boolean({ description: 'Disable locks acquired to run migrations safely' })
@@ -67,7 +73,7 @@ export default class Refresh extends BaseCommand {
     }
 
     if (this.connection) {
-      args.push(`--connection="${this.connection}"`)
+      args.push(`--connection=${this.connection}`)
     }
 
     if (this.disableLocks) {
@@ -84,6 +90,10 @@ export default class Refresh extends BaseCommand {
     const args: string[] = this.getArgs()
     if (this.dropTypes) {
       args.push('--drop-types')
+    }
+
+    if (this.dropDomains) {
+      args.push('--drop-domains')
     }
 
     if (this.dropViews) {
@@ -117,7 +127,7 @@ export default class Refresh extends BaseCommand {
   private async runDbSeed() {
     const args: string[] = []
     if (this.connection) {
-      args.push(`--connection="${this.connection}"`)
+      args.push(`--connection=${this.connection}`)
     }
 
     const dbSeed = await this.kernel.exec('db:seed', args)

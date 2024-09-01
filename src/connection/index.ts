@@ -14,10 +14,12 @@ import { patchKnex } from 'knex-dynamic-connection'
 import type { Logger } from '@adonisjs/core/logger'
 // @ts-expect-error
 import { resolveClientNameWithAliases } from 'knex/lib/util/helpers.js'
-import { ConnectionConfig, ConnectionContract, ReportNode } from '../types/database.js'
 
-import { Logger as ConnectionLogger } from './logger.js'
 import * as errors from '../errors.js'
+import LibSQLClient from '../clients/libsql.cjs'
+import { clientsNames } from '../dialects/index.js'
+import { Logger as ConnectionLogger } from './logger.js'
+import type { ConnectionConfig, ConnectionContract } from '../types/database.js'
 
 /**
  * Connection class manages a given database connection. Internally it uses
@@ -38,9 +40,16 @@ export class Connection extends EventEmitter implements ConnectionContract {
   readClient?: Knex
 
   /**
-   * Connection dialect name
+   * Connection dialect name.
+   * @deprecated
+   * @see clientName
    */
-  dialectName: ConnectionContract['dialectName']
+  dialectName: ConnectionContract['clientName']
+
+  /**
+   * Connection client name.
+   */
+  clientName: ConnectionContract['clientName']
 
   /**
    * A boolean to know if connection operates on read/write
@@ -66,12 +75,18 @@ export class Connection extends EventEmitter implements ConnectionContract {
   ) {
     super()
     this.validateConfig()
-    this.dialectName = resolveClientNameWithAliases(this.config.client)
+    this.clientName = resolveClientNameWithAliases(this.config.client)
+    this.dialectName = this.clientName
+
     this.hasReadWriteReplicas = !!(
       this.config.replicas &&
       this.config.replicas.read &&
       this.config.replicas.write
     )
+
+    if (!clientsNames.includes(this.clientName)) {
+      throw new errors.E_UNSUPPORTED_CLIENT([this.clientName])
+    }
   }
 
   /**
@@ -91,13 +106,23 @@ export class Connection extends EventEmitter implements ConnectionContract {
   }
 
   /**
-   * Cleanup references
+   * Cleans up reference for the write client and also the
+   * read client when not using replicas
    */
-  private cleanup(): void {
+  private cleanupWriteClient() {
+    if (this.client === this.readClient) {
+      this.cleanupReadClient()
+    }
     this.client = undefined
+  }
+
+  /**
+   * Cleans up reference for the read client
+   */
+  private cleanupReadClient() {
+    this.roundRobinCounter = 0
     this.readClient = undefined
     this.readReplicas = []
-    this.roundRobinCounter = 0
   }
 
   /**
@@ -112,7 +137,7 @@ export class Connection extends EventEmitter implements ConnectionContract {
      */
     this.pool!.on('poolDestroySuccess', () => {
       this.logger.trace({ connection: this.name }, 'pool destroyed, cleaning up resource')
-      this.cleanup()
+      this.cleanupWriteClient()
       this.emit('disconnect', this)
       this.removeAllListeners()
     })
@@ -120,7 +145,7 @@ export class Connection extends EventEmitter implements ConnectionContract {
     if (this.readPool !== this.pool) {
       this.readPool!.on('poolDestroySuccess', () => {
         this.logger.trace({ connection: this.name }, 'pool destroyed, cleaning up resource')
-        this.cleanup()
+        this.cleanupReadClient()
         this.emit('disconnect', this)
         this.removeAllListeners()
       })
@@ -133,6 +158,17 @@ export class Connection extends EventEmitter implements ConnectionContract {
    */
   private getWriteConfig(): Knex.Config {
     if (!this.config.replicas) {
+      /**
+       * Replacing string based libsql client with the
+       * actual implementation
+       */
+      if (this.config.client === 'libsql') {
+        return {
+          ...this.config,
+          client: LibSQLClient as any,
+        }
+      }
+
       return this.config
     }
 
@@ -256,68 +292,6 @@ export class Connection extends EventEmitter implements ConnectionContract {
   }
 
   /**
-   * Checks all the read hosts by running a query on them. Stops
-   * after first error.
-   */
-  private async checkReadHosts() {
-    const configCopy = Object.assign(
-      { log: new ConnectionLogger(this.name, this.logger) },
-      this.config,
-      {
-        debug: false,
-      }
-    )
-    let error: any = null
-
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    for (let _ of this.readReplicas) {
-      configCopy.connection = this.readConfigResolver(this.config)
-      this.logger.trace({ connection: this.name }, 'spawing health check read connection')
-      const client = knex.knex(configCopy)
-
-      try {
-        if (this.dialectName === 'oracledb') {
-          await client.raw('SELECT 1 + 1 AS result FROM dual')
-        } else {
-          await client.raw('SELECT 1 + 1 AS result')
-        }
-      } catch (err) {
-        error = err
-      }
-
-      /**
-       * Cleanup client connection
-       */
-      await client.destroy()
-      this.logger.trace({ connection: this.name }, 'destroying health check read connection')
-
-      /**
-       * Return early when there is an error
-       */
-      if (error) {
-        break
-      }
-    }
-
-    return error
-  }
-
-  /**
-   * Checks for the write host
-   */
-  private async checkWriteHost() {
-    try {
-      if (this.dialectName === 'oracledb') {
-        await this.client!.raw('SELECT 1 + 1 AS result FROM dual')
-      } else {
-        await this.client!.raw('SELECT 1 + 1 AS result')
-      }
-    } catch (error) {
-      return error
-    }
-  }
-
-  /**
    * Returns the pool instance for the given connection
    */
   get pool(): null | Pool<any> {
@@ -386,28 +360,6 @@ export class Connection extends EventEmitter implements ConnectionContract {
       } catch (error) {
         this.emit('disconnect:error', error, this)
       }
-    }
-  }
-
-  /**
-   * Returns the healthcheck report for the connection
-   */
-  async getReport(): Promise<ReportNode> {
-    const error = await this.checkWriteHost()
-    let readError: Error | undefined
-
-    if (!error && this.hasReadWriteReplicas) {
-      readError = await this.checkReadHosts()
-    }
-
-    return {
-      connection: this.name,
-      message: readError
-        ? 'Unable to reach one of the read hosts'
-        : error
-          ? 'Unable to reach the database server'
-          : 'Connection is healthy',
-      error: error || readError || null,
     }
   }
 }

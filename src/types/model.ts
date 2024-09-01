@@ -619,7 +619,23 @@ export interface LucidRow {
    * Actions to perform on the instance
    */
   save(): Promise<this>
+
+  /**
+   * The lockForUpdate method re-fetches the model instance from
+   * the database and locks the row to perform an update. The
+   * provided callback receives a fresh user instance and should
+   * use that to perform an update.
+   */
+  lockForUpdate<T>(callback: (user: this) => Promise<T> | T): Promise<T>
+
+  /**
+   * Perform delete by issuing a delete request on the adapter
+   */
   delete(): Promise<void>
+
+  /**
+   * Reload/Refresh the model instance
+   */
   refresh(): Promise<this>
 
   /**
@@ -960,6 +976,15 @@ export interface LucidModel {
   ): Promise<InstanceType<T>>
 
   /**
+   * Find one using a clause
+   */
+  findBy<T extends LucidModel>(
+    this: T,
+    clause: Record<string, unknown>,
+    options?: ModelAdapterOptions
+  ): Promise<null | InstanceType<T>>
+
+  /**
    * Find one using a key-value pair
    */
   findBy<T extends LucidModel>(
@@ -970,6 +995,15 @@ export interface LucidModel {
   ): Promise<null | InstanceType<T>>
 
   /**
+   * Find one using a clause or fail
+   */
+  findByOrFail<T extends LucidModel>(
+    this: T,
+    clause: Record<string, unknown>,
+    options?: ModelAdapterOptions
+  ): Promise<InstanceType<T>>
+
+  /**
    * Find one using a key-value pair or fail
    */
   findByOrFail<T extends LucidModel>(
@@ -978,6 +1012,25 @@ export interface LucidModel {
     value: any,
     options?: ModelAdapterOptions
   ): Promise<InstanceType<T>>
+
+  /**
+   * Find multiple models instance using a clause
+   */
+  findManyBy<T extends LucidModel>(
+    this: T,
+    clause: Record<string, unknown>,
+    options?: ModelAdapterOptions
+  ): Promise<InstanceType<T>[]>
+
+  /**
+   * Find multiple models instance using a key/value pair
+   */
+  findManyBy<T extends LucidModel>(
+    this: T,
+    key: string,
+    value: any,
+    options?: ModelAdapterOptions
+  ): Promise<InstanceType<T>[]>
 
   /**
    * Same as `query().first()`

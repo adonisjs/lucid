@@ -14,6 +14,7 @@ import { Database } from '../src/database/main.js'
 import { Adapter } from '../src/orm/adapter/index.js'
 import { QueryClient } from '../src/query_client/index.js'
 import { BaseModel } from '../src/orm/base_model/index.js'
+import { DatabaseTestUtils } from '../src/test_utils/database.js'
 import type { DatabaseConfig, DbQueryEventNode } from '../src/types/database.js'
 
 /**
@@ -28,11 +29,17 @@ declare module '@adonisjs/core/types' {
   }
 }
 
+declare module '@adonisjs/core/test_utils' {
+  export interface TestUtils {
+    db(connectionName?: string): DatabaseTestUtils
+  }
+}
+
 /**
  * Extending VineJS schema types
  */
 declare module '@vinejs/vine' {
-  export interface VineString {
+  interface VineLucidBindings {
     /**
      * Ensure the value is unique inside the database by self
      * executing a query.
@@ -46,11 +53,15 @@ declare module '@vinejs/vine' {
      * Ensure the value is exists inside the database by self
      * executing a query.
      *
-     * - The callback must return "true", if the value exists.
-     * - The callback must return "false", if the value does not exist.
+     * - The callback must return "false", if the value exists.
+     * - The callback must return "true", if the value does not exist.
      */
     exists(callback: (db: Database, value: string, field: FieldContext) => Promise<boolean>): this
   }
+
+  interface VineNumber extends VineLucidBindings {}
+
+  interface VineString extends VineLucidBindings {}
 }
 
 /**
@@ -81,6 +92,29 @@ export default class DatabaseServiceProvider {
   }
 
   /**
+   * Register TestUtils database macro
+   */
+  protected async registerTestUtils() {
+    this.app.container.resolving('testUtils', async () => {
+      const { TestUtils } = await import('@adonisjs/core/test_utils')
+
+      TestUtils.macro('db', (connectionName?: string) => {
+        return new DatabaseTestUtils(this.app, connectionName)
+      })
+    })
+  }
+
+  /**
+   * Registeres a listener to pretty print debug queries
+   */
+  protected async prettyPrintDebugQueries(db: Database) {
+    if (db.config.prettyPrintDebugQueries) {
+      const emitter = await this.app.container.make('emitter')
+      emitter.on('db:query', db.prettyPrint)
+    }
+  }
+
+  /**
    * Invoked by AdonisJS to register container bindings
    */
   register() {
@@ -88,7 +122,8 @@ export default class DatabaseServiceProvider {
       const config = this.app.config.get<DatabaseConfig>('database')
       const emitter = await resolver.make('emitter')
       const logger = await resolver.make('logger')
-      return new Database(config, logger, emitter)
+      const db = new Database(config, logger, emitter)
+      return db
     })
 
     this.app.container.singleton(QueryClient, async (resolver) => {
@@ -107,6 +142,8 @@ export default class DatabaseServiceProvider {
     const db = await this.app.container.make('lucid.db')
     BaseModel.$adapter = new Adapter(db)
 
+    await this.prettyPrintDebugQueries(db)
+    await this.registerTestUtils()
     await this.registerReplBindings()
     await this.registerVineJSRules(db)
   }

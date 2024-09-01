@@ -12,9 +12,16 @@ import { join, extname } from 'node:path'
 import { Exception, fsReadAll, isScriptFile } from '@poppinss/utils'
 import { RelationshipsContract } from '../types/relations.js'
 import { LucidRow, ModelObject, CherryPickFields } from '../types/model.js'
-import { FileNode, QueryClientContract, TransactionClientContract } from '../types/database.js'
+import {
+  DialectContract,
+  FileNode,
+  QueryClientContract,
+  TransactionClientContract,
+} from '../types/database.js'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import * as errors from '../errors.js'
+import { DateTime } from 'luxon'
+import equal from 'fast-deep-equal'
 
 /**
  * Ensure that relation is defined
@@ -51,6 +58,30 @@ export function collectValues(payload: any[], key: string, missingCallback: () =
   return payload.map((row: any) => {
     return ensureValue(row, key, missingCallback)
   })
+}
+
+/**
+ * Transform value if it is an instance of DateTime, so it can be processed by query builder
+ */
+export function transformDateValue(value: unknown, dialect: DialectContract) {
+  if (DateTime.isDateTime(value)) {
+    return value.toFormat(dialect.dateTimeFormat)
+  }
+
+  return value
+}
+
+/**
+ * Compare two values deeply whether they are equal or not
+ */
+export function compareValues(valueA: unknown, valueB: unknown) {
+  if (DateTime.isDateTime(valueA) || DateTime.isDateTime(valueB)) {
+    return DateTime.isDateTime(valueA) && DateTime.isDateTime(valueB)
+      ? valueA.equals(valueB)
+      : valueA === valueB
+  } else {
+    return equal(valueA, valueB)
+  }
 }
 
 /**

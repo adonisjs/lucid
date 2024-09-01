@@ -33,7 +33,7 @@ export class QueryRunner {
    * Is query dialect using sqlite database or not
    */
   private isUsingSqlite() {
-    return this.client.dialect.name === 'sqlite3'
+    return ['sqlite3', 'better-sqlite3', 'libsql'].includes(this.client.dialect.name)
   }
 
   /**

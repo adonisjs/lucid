@@ -8,7 +8,6 @@
  */
 
 import { DateTime } from 'luxon'
-import equal from 'fast-deep-equal'
 import Hooks from '@poppinss/hooks'
 import lodash from '@poppinss/utils/lodash'
 import { Exception, defineStaticProperty } from '@poppinss/utils'
@@ -46,24 +45,26 @@ import {
   ManyToManyRelationOptions,
 } from '../../types/relations.js'
 
-import { ModelKeys } from '../model_keys/index.js'
+import * as errors from '../../errors.js'
 import { Preloader } from '../preloader/index.js'
-import { HasOne } from '../relations/has_one/index.js'
 import { proxyHandler } from './proxy_handler.js'
+import { ModelKeys } from '../model_keys/index.js'
+import { HasOne } from '../relations/has_one/index.js'
 import { HasMany } from '../relations/has_many/index.js'
 import { BelongsTo } from '../relations/belongs_to/index.js'
 import { ManyToMany } from '../relations/many_to_many/index.js'
 import { HasManyThrough } from '../relations/has_many_through/index.js'
+import { CamelCaseNamingStrategy } from '../naming_strategies/camel_case.js'
+import { LazyLoadAggregates } from '../relations/aggregates_loader/lazy_load.js'
 import {
   isObject,
   collectValues,
   ensureRelation,
   managedTransaction,
   normalizeCherryPickObject,
+  transformDateValue,
+  compareValues,
 } from '../../utils/index.js'
-import { SnakeCaseNamingStrategy } from '../naming_strategies/snake_case.js'
-import { LazyLoadAggregates } from '../relations/aggregates_loader/lazy_load.js'
-import * as errors from '../../errors.js'
 
 const MANY_RELATIONS = ['hasMany', 'manyToMany', 'hasManyThrough']
 const DATE_TIME_TYPES = {
@@ -99,7 +100,7 @@ class BaseModelImpl implements LucidRow {
   /**
    * Naming strategy for model properties
    */
-  static namingStrategy = new SnakeCaseNamingStrategy()
+  static namingStrategy = new CamelCaseNamingStrategy()
 
   /**
    * Primary key is required to build relationships across models
@@ -207,9 +208,13 @@ class BaseModelImpl implements LucidRow {
      * array
      */
     return rowObjects.map((rowObject: any) => {
-      const existingRow = existingRows.find((one: any) => {
-        /* eslint-disable-next-line eqeqeq */
-        return keys.every((key) => one[key] == rowObject[key])
+      const existingRow = existingRows.find((row: any) => {
+        return keys.every((key) => {
+          const objectValue = rowObject[key]
+          const rowValue = row[key]
+
+          return compareValues(rowValue, objectValue)
+        })
       })
 
       /**
@@ -703,7 +708,21 @@ class BaseModelImpl implements LucidRow {
   /**
    * Find model instance using a key/value pair
    */
-  static async findBy(key: string, value: any, options?: ModelAdapterOptions) {
+  // @ts-expect-error - Return type should be inferred when used in a model
+  static findBy(clause: Record<string, unknown>, options?: ModelAdapterOptions)
+  // @ts-expect-error - Return type should be inferred when used in a model
+  static findBy(key: string, value: any, options?: ModelAdapterOptions)
+  static async findBy(
+    key: string | Record<string, unknown>,
+    value?: any | ModelAdapterOptions,
+    options?: ModelAdapterOptions
+  ) {
+    if (typeof key === 'object') {
+      return this.query(value as ModelAdapterOptions)
+        .where(key)
+        .first()
+    }
+
     if (value === undefined) {
       throw new Exception('"findBy" expects a value. Received undefined')
     }
@@ -714,11 +733,51 @@ class BaseModelImpl implements LucidRow {
   /**
    * Find model instance using a key/value pair
    */
-  static async findByOrFail(key: string, value: any, options?: ModelAdapterOptions) {
+  // @ts-expect-error - Return type should be inferred when used in a model
+  static findByOrFail(clause: Record<string, unknown>, options?: ModelAdapterOptions)
+  // @ts-expect-error - Return type should be inferred when used in a model
+  static findByOrFail(key: string, value: any, options?: ModelAdapterOptions)
+  static async findByOrFail(
+    key: string | Record<string, unknown>,
+    value?: any | ModelAdapterOptions,
+    options?: ModelAdapterOptions
+  ) {
+    if (typeof key === 'object') {
+      return this.query(value as ModelAdapterOptions)
+        .where(key)
+        .firstOrFail()
+    }
+
     if (value === undefined) {
       throw new Exception('"findByOrFail" expects a value. Received undefined')
     }
+
     return this.query(options).where(key, value).firstOrFail()
+  }
+
+  /**
+   * Find multiple models instance using a key/value pair
+   */
+  // @ts-expect-error - Return type should be inferred when used in a model
+  static findManyBy(clause: Record<string, unknown>, options?: ModelAdapterOptions)
+  // @ts-expect-error - Return type should be inferred when used in a model
+  static findManyBy(key: string, value: any[], options?: ModelAdapterOptions)
+  static findManyBy(
+    key: string | Record<string, unknown>,
+    value?: any[] | ModelAdapterOptions,
+    options?: ModelAdapterOptions
+  ) {
+    if (typeof key === 'object') {
+      return this.query(value as ModelAdapterOptions)
+        .where(key)
+        .exec()
+    }
+
+    if (value === undefined) {
+      throw new Exception('"findManyBy" expects a value. Received undefined')
+    }
+
+    return this.query(options).where(key, value).exec()
   }
 
   /**
@@ -852,6 +911,8 @@ class BaseModelImpl implements LucidRow {
     payload: any,
     options?: ModelAssignOptions
   ): Promise<any[]> {
+    const client = this.$adapter.modelConstructorClient(this as LucidModel, options)
+
     uniqueKeys = Array.isArray(uniqueKeys) ? uniqueKeys : [uniqueKeys]
     const uniquenessPair: { key: string; value: string[] }[] = uniqueKeys.map(
       (uniqueKey: string) => {
@@ -861,7 +922,7 @@ class BaseModelImpl implements LucidRow {
             throw new Exception(
               `Value for the "${uniqueKey}" is null or undefined inside "fetchOrNewUpMany" payload`
             )
-          }),
+          }).map((value) => transformDateValue(value, client.dialect)),
         }
       }
     )
@@ -896,6 +957,8 @@ class BaseModelImpl implements LucidRow {
     payload: any,
     options?: ModelAssignOptions
   ): Promise<any[]> {
+    const client = this.$adapter.modelConstructorClient(this as LucidModel, options)
+
     uniqueKeys = Array.isArray(uniqueKeys) ? uniqueKeys : [uniqueKeys]
     const uniquenessPair: { key: string; value: string[] }[] = uniqueKeys.map(
       (uniqueKey: string) => {
@@ -905,7 +968,7 @@ class BaseModelImpl implements LucidRow {
             throw new Exception(
               `Value for the "${uniqueKey}" is null or undefined inside "fetchOrCreateMany" payload`
             )
-          }),
+          }).map((value) => transformDateValue(value, client.dialect)),
         }
       }
     )
@@ -960,6 +1023,8 @@ class BaseModelImpl implements LucidRow {
     payload: any,
     options?: ModelAssignOptions
   ): Promise<any> {
+    const client = this.$adapter.modelConstructorClient(this as LucidModel, options)
+
     uniqueKeys = Array.isArray(uniqueKeys) ? uniqueKeys : [uniqueKeys]
     const uniquenessPair: { key: string; value: string[] }[] = uniqueKeys.map(
       (uniqueKey: string) => {
@@ -969,12 +1034,10 @@ class BaseModelImpl implements LucidRow {
             throw new Exception(
               `Value for the "${uniqueKey}" is null or undefined inside "updateOrCreateMany" payload`
             )
-          }),
+          }).map((value) => transformDateValue(value, client.dialect)),
         }
       }
     )
-
-    const client = this.$adapter.modelConstructorClient(this as LucidModel, options)
 
     return managedTransaction(client, async (trx) => {
       /**
@@ -1287,15 +1350,10 @@ class BaseModelImpl implements LucidRow {
       const originalValue = this.$original[key]
       let isEqual = true
 
-      if (DateTime.isDateTime(value) || DateTime.isDateTime(originalValue)) {
-        isEqual =
-          DateTime.isDateTime(value) && DateTime.isDateTime(originalValue)
-            ? value.equals(originalValue)
-            : value === originalValue
-      } else if (isObject(value) && 'isDirty' in value) {
+      if (isObject(value) && 'isDirty' in value) {
         isEqual = !value.isDirty
       } else {
-        isEqual = equal(originalValue, value)
+        isEqual = compareValues(originalValue, value)
       }
 
       if (!isEqual) {
@@ -1843,6 +1901,30 @@ class BaseModelImpl implements LucidRow {
     await Model.$hooks.runner('after:update').run(this)
     await Model.$hooks.runner('after:save').run(this)
     return this
+  }
+
+  /**
+   * The lockForUpdate method re-fetches the model instance from
+   * the database and locks the row to perform an update. The
+   * provided callback receives a fresh user instance and should
+   * use that to perform an update.
+   */
+  async lockForUpdate<T>(callback: (user: this) => Promise<T> | T): Promise<T> {
+    const Model = this.constructor as LucidModel
+    const queryClient = Model.$adapter.modelClient(this)
+
+    return managedTransaction<T>(queryClient, async (trx) => {
+      const user = await Model.query({ client: trx })
+        .forUpdate()
+        .where(Model.primaryKey, this.$primaryKeyValue)
+        .first()
+
+      if (!user) {
+        throw new errors.E_MODEL_DELETED()
+      }
+
+      return callback(user as this)
+    })
   }
 
   /**

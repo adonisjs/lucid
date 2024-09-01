@@ -8,7 +8,7 @@
 SQL ORM for AdonisJS built on top of Knex. Comes with a db query builder, Active record ORM, migrations, seeders and model factories.
 
 ## Official Documentation
-The documentation is available on the [AdonisJS website](https://docs.adonisjs.com/guides/database/introduction)
+The documentation is available on the [Lucid website](https://lucid.adonisjs.com/docs/introduction)
 
 ## Contributing
 One of the primary goals of AdonisJS is to have a vibrant community of users and contributors who believes in the principles of the framework.
@@ -19,7 +19,7 @@ We encourage you to read the [contribution guide](https://github.com/adonisjs/.g
 Easiest way to run tests is to launch the redis cluster using docker-compose and `docker-compose.yml` file.
 
 ```sh
-docker-compose up
+docker-compose up -d
 npm run test
 ```
 

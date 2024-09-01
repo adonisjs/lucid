@@ -10,10 +10,11 @@
 import type { DialectContract, QueryClientContract, SharedConfigNode } from '../types/database.js'
 
 export abstract class BaseSqliteDialect implements DialectContract {
-  abstract readonly name: 'sqlite3' | 'better-sqlite3'
+  abstract readonly name: 'sqlite3' | 'better-sqlite3' | 'libsql'
   readonly supportsAdvisoryLocks = false
   readonly supportsViews = true
   readonly supportsTypes = false
+  readonly supportsDomains = false
   readonly supportsReturningStatement = false
 
   /**
@@ -73,6 +74,13 @@ export abstract class BaseSqliteDialect implements DialectContract {
   }
 
   /**
+   * Returns an array of all domains names
+   */
+  async getAllDomains(): Promise<string[]> {
+    throw new Error("Sqlite doesn't support domains")
+  }
+
+  /**
    * Truncate SQLITE tables
    */
   async truncate(table: string) {
@@ -83,16 +91,32 @@ export abstract class BaseSqliteDialect implements DialectContract {
    * Drop all tables inside the database
    */
   async dropAllTables() {
-    await this.client.rawQuery('PRAGMA writable_schema = 1;')
-    await this.client
-      .knexQuery()
-      .delete()
-      .from('sqlite_master')
-      .whereIn('type', ['table', 'index', 'trigger'])
-      .whereNotIn('name', this.config.wipe?.ignoreTables || [])
+    const tables = await this.getAllTables()
 
-    await this.client.rawQuery('PRAGMA writable_schema = 0;')
-    await this.client.rawQuery('VACUUM;')
+    /**
+     * Check for foreign key pragma and turn it off if enabled
+     * so that we can drop tables without any issues
+     */
+    const pragma = await this.client.rawQuery('PRAGMA foreign_keys;')
+    if (pragma[0].foreign_keys === 1) {
+      await this.client.rawQuery('PRAGMA foreign_keys = OFF;')
+    }
+
+    /**
+     * Drop all tables
+     */
+    const promises = tables
+      .filter((table) => !this.config.wipe?.ignoreTables?.includes(table))
+      .map((table) => this.client.rawQuery(`DROP TABLE ${table};`))
+
+    await Promise.all(promises)
+
+    /**
+     * Restore foreign key pragma to it's original value
+     */
+    if (pragma[0].foreign_keys === 1) {
+      await this.client.rawQuery('PRAGMA foreign_keys = ON;')
+    }
   }
 
   /**
@@ -110,6 +134,13 @@ export abstract class BaseSqliteDialect implements DialectContract {
    */
   async dropAllTypes(): Promise<void> {
     throw new Error("Sqlite doesn't support types")
+  }
+
+  /**
+   * Drop all custom domains inside the database
+   */
+  async dropAllDomains(): Promise<void> {
+    throw new Error("Sqlite doesn't support domains")
   }
 
   /**

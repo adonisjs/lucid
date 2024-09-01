@@ -14,13 +14,13 @@ import type { ConnectionOptions } from 'node:tls'
 import type { Emitter } from '@adonisjs/core/events'
 import { LucidModel, ModelQueryBuilderContract } from './model.js'
 import {
-  DatabaseQueryBuilderContract,
   FromTable,
-  InsertQueryBuilderContract,
-  RawBuilderContract,
   RawQueryBindings,
+  RawBuilderContract,
   RawQueryBuilderContract,
   ReferenceBuilderContract,
+  InsertQueryBuilderContract,
+  DatabaseQueryBuilderContract,
 } from './querybuilder.js'
 
 /**
@@ -55,6 +55,7 @@ export interface DialectContract {
     | 'postgres'
     | 'redshift'
     | 'sqlite3'
+    | 'libsql'
     | 'better-sqlite3'
   readonly dateTimeFormat: string
 
@@ -62,6 +63,7 @@ export interface DialectContract {
   readonly supportsAdvisoryLocks: boolean
   readonly supportsViews: boolean
   readonly supportsTypes: boolean
+  readonly supportsDomains: boolean
   readonly supportsReturningStatement: boolean
 
   getAllTables(schemas?: string[]): Promise<string[]>
@@ -72,6 +74,9 @@ export interface DialectContract {
 
   getAllTypes(schemas?: string[]): Promise<string[]>
   dropAllTypes(schemas?: string[]): Promise<void>
+
+  getAllDomains(schemas?: string[]): Promise<string[]>
+  dropAllDomains(schemas?: string[]): Promise<void>
 
   truncate(table: string, cascade?: boolean): Promise<void>
 
@@ -91,7 +96,7 @@ export interface TransactionFn {
 }
 
 /**
- * Shape of the query client, that is used to retrive instances
+ * Shape of the query client, that is used to retrieve instances
  * of query builder
  */
 export interface QueryClientContract {
@@ -113,13 +118,13 @@ export interface QueryClientContract {
   readonly mode: 'dual' | 'write' | 'read'
 
   /**
-   * The name of the connnection from which the client
+   * The name of the connection from which the client
    * was originated
    */
   readonly connectionName: string
 
   /**
-   * Is debug enabled on the connnection or not. Also opens up the API to
+   * Is debug enabled on the connection or not. Also opens up the API to
    * disable debug for a given client
    */
   debug: boolean
@@ -203,6 +208,11 @@ export interface QueryClientContract {
   getAllTypes(schemas?: string[]): Promise<string[]>
 
   /**
+   * Returns an array of all domain names
+   */
+  getAllDomains(schemas?: string[]): Promise<string[]>
+
+  /**
    * Drop all tables inside database
    */
   dropAllTables(schemas?: string[]): Promise<void>
@@ -216,6 +226,11 @@ export interface QueryClientContract {
    * Drop all types inside the database
    */
   dropAllTypes(schemas?: string[]): Promise<void>
+
+  /**
+   * Drop all domains inside the database
+   */
+  dropAllDomains(schemas?: string[]): Promise<void>
 
   /**
    * Same as `query()`, but also selects the table for the query. The `from` method
@@ -296,15 +311,6 @@ type SharedConnectionNode = {
 }
 
 /**
- * Shape of the report node for the database connection report
- */
-export type ReportNode = {
-  connection: string
-  message: string
-  error: any
-}
-
-/**
  * Migrations config
  */
 export type MigratorConfig = {
@@ -330,7 +336,6 @@ export type SharedConfigNode = {
   debug?: boolean
   asyncStackTraces?: boolean
   revision?: number
-  healthCheck?: boolean
   migrations?: MigratorConfig
   seeders?: SeedersConfig
   wipe?: { ignoreTables?: string[] }
@@ -358,6 +363,24 @@ export type SharedConfigNode = {
  */
 export type SqliteConfig = SharedConfigNode & {
   client: 'sqlite' | 'sqlite3' | 'better-sqlite3'
+  connection: {
+    filename: string
+    flags?: string[]
+    debug?: boolean
+    mode?: any
+  }
+  replicas?: never
+}
+
+/**
+ * The LibSQL specific config options are taken directly from the
+ * driver. https://github.com/mapbox/node-sqlite3/wiki/API#new-sqlite3databasefilename-mode-callback
+ *
+ * LibSQL dialect is a drop-in replacement for SQLite and hence the config
+ * options are same
+ */
+export type LibSQLConfig = SharedConfigNode & {
+  client: 'libsql'
   connection: {
     filename: string
     flags?: string[]
@@ -539,6 +562,7 @@ export type MssqlConfig = SharedConfigNode & {
  */
 export type ConnectionConfig =
   | SqliteConfig
+  | LibSQLConfig
   | MysqlConfig
   | PostgreConfig
   | OracleConfig
@@ -550,6 +574,7 @@ export type ConnectionConfig =
  */
 export type DatabaseConfig = {
   connection: string
+  prettyPrintDebugQueries?: boolean
   connections: { [key: string]: ConnectionConfig }
 }
 
@@ -623,11 +648,6 @@ export interface ConnectionManagerContract {
    * re-add it using the `add` method
    */
   release(connectionName: string): Promise<void>
-
-  /**
-   * Returns the health check report for registered connections
-   */
-  report(): Promise<any & { meta: ReportNode[] }>
 }
 
 /**
@@ -638,6 +658,10 @@ export interface ConnectionContract extends EventEmitter {
   client?: Knex
   readClient?: Knex
 
+  /**
+   * @deprecated
+   * @see clientName
+   */
   readonly dialectName:
     | 'mssql'
     | 'mysql'
@@ -646,6 +670,19 @@ export interface ConnectionContract extends EventEmitter {
     | 'postgres'
     | 'redshift'
     | 'sqlite3'
+    | 'libsql'
+    | 'better-sqlite3'
+
+  readonly clientName:
+    | 'mssql'
+    | 'mysql'
+    | 'mysql2'
+    | 'oracledb'
+    | 'postgres'
+    | 'redshift'
+    | 'sqlite3'
+    | 'libsql'
+    | 'better-sqlite3'
 
   /**
    * Property to find if explicit read/write is enabled
@@ -693,11 +730,6 @@ export interface ConnectionContract extends EventEmitter {
    * Disconnect knex
    */
   disconnect(): Promise<void>
-
-  /**
-   * Returns the connection report
-   */
-  getReport(): Promise<ReportNode>
 }
 
 /**

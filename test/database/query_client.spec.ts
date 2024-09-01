@@ -206,12 +206,11 @@ test.group('Query client | dual mode', (group) => {
     connection.connect()
     const client = new QueryClient('dual', connection, createEmitter())
 
-    const command =
-      process.env.DB === 'sqlite' || process.env.DB === 'better_sqlite'
-        ? 'DELETE FROM users;'
-        : process.env.DB === 'mssql'
-          ? 'TRUNCATE table users;'
-          : 'TRUNCATE users;'
+    const command = ['better_sqlite', 'sqlite', 'libsql'].includes(process.env.DB!)
+      ? 'DELETE FROM users;'
+      : process.env.DB === 'mssql'
+        ? 'TRUNCATE table users;'
+        : 'TRUNCATE users;'
 
     await client.insertQuery().table('users').insert({ username: 'virk' })
     await client.rawQuery(command).exec()
@@ -353,12 +352,11 @@ test.group('Query client | write mode', (group) => {
     connection.connect()
     const client = new QueryClient('write', connection, createEmitter())
 
-    const command =
-      process.env.DB === 'sqlite' || process.env.DB === 'better_sqlite'
-        ? 'DELETE FROM users;'
-        : process.env.DB === 'mssql'
-          ? 'TRUNCATE table users;'
-          : 'TRUNCATE users;'
+    const command = ['better_sqlite', 'sqlite', 'libsql'].includes(process.env.DB!)
+      ? 'DELETE FROM users;'
+      : process.env.DB === 'mssql'
+        ? 'TRUNCATE table users;'
+        : 'TRUNCATE users;'
 
     await client.insertQuery().table('users').insert({ username: 'virk' })
     await client.rawQuery(command).exec()
@@ -388,7 +386,7 @@ test.group('Query client | write mode', (group) => {
   })
 })
 
-if (!['sqlite', 'mssql', 'better_sqlite'].includes(process.env.DB as string)) {
+if (!['sqlite', 'mssql', 'better_sqlite', 'libsql'].includes(process.env.DB!)) {
   test.group('Query client | advisory locks', (group) => {
     group.setup(async () => {
       await setup()
@@ -419,11 +417,6 @@ if (!['sqlite', 'mssql', 'better_sqlite'].includes(process.env.DB as string)) {
       connection.connect()
 
       const client = new QueryClient('dual', connection, createEmitter())
-      if (client.dialect.name === 'sqlite3') {
-        await connection.disconnect()
-        return
-      }
-
       await client.dialect.getAdvisoryLock(1)
       const released = await client.dialect.releaseAdvisoryLock(1)
       assert.isTrue(released)

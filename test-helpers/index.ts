@@ -33,6 +33,7 @@ import {
 
 import { BaseSchema } from '../src/schema/main.js'
 import { Database } from '../src/database/main.js'
+import LibSQLClient from '../src/clients/libsql.cjs'
 import { Adapter } from '../src/orm/adapter/index.js'
 import { BaseModel } from '../src/orm/base_model/index.js'
 import { QueryClient } from '../src/query_client/index.js'
@@ -66,6 +67,15 @@ export function getConfig(): ConnectionConfig {
         useNullAsDefault: true,
         debug: !!process.env.DEBUG,
       }
+    case 'libsql':
+      return {
+        client: 'libsql',
+        connection: {
+          filename: `file:${join(SQLITE_BASE_PATH, 'libsql.db')}`,
+        },
+        useNullAsDefault: true,
+        debug: !!process.env.DEBUG,
+      }
     case 'better_sqlite':
       return {
         client: 'better-sqlite3',
@@ -74,12 +84,6 @@ export function getConfig(): ConnectionConfig {
         },
         useNullAsDefault: true,
         debug: !!process.env.DEBUG,
-        pool: {
-          afterCreate(connection, done) {
-            connection.unsafeMode(true)
-            done()
-          },
-        },
       }
     case 'mysql':
       return {
@@ -145,10 +149,26 @@ export function getConfig(): ConnectionConfig {
 }
 
 /**
+ * Returns an instance of knex for testing
+ */
+export function getKnex(config: knex.Knex.Config): knex.Knex {
+  return knex.knex(
+    Object.assign(
+      {},
+      {
+        ...config,
+        client: config.client === 'libsql' ? (LibSQLClient as any) : config.client,
+      },
+      { debug: false }
+    )
+  )
+}
+
+/**
  * Does base setup by creating databases
  */
 export async function setup(destroyDb: boolean = true) {
-  const db = knex.knex(Object.assign({}, getConfig(), { debug: false }))
+  const db = getKnex(Object.assign({}, getConfig(), { debug: false }))
 
   const hasUsersTable = await db.schema.hasTable('users')
   if (!hasUsersTable) {
@@ -298,7 +318,7 @@ export async function setup(destroyDb: boolean = true) {
  * Does cleanup removes database
  */
 export async function cleanup(customTables?: string[]) {
-  const db = knex.knex(Object.assign({}, getConfig(), { debug: false }))
+  const db = getKnex(Object.assign({}, getConfig(), { debug: false }))
 
   if (customTables) {
     for (let table of customTables) {
@@ -330,7 +350,7 @@ export async function cleanup(customTables?: string[]) {
  * Reset database tables
  */
 export async function resetTables() {
-  const db = knex.knex(Object.assign({}, getConfig(), { debug: false }))
+  const db = getKnex(Object.assign({}, getConfig(), { debug: false }))
   await db.table('users').truncate()
   await db.table('uuid_users').truncate()
   await db.table('follows').truncate()

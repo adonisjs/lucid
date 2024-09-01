@@ -343,6 +343,7 @@ export interface OrderBy<Builder extends ChainableContract> {
     columns: {
       column: string | ChainableContract | RawBuilderContract | RawQuery
       order?: 'asc' | 'desc'
+      nulls?: 'first' | 'last'
     }[]
   ): Builder
 }

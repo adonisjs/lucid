@@ -249,7 +249,7 @@ test.group('Base model | boot', (group) => {
     }
 
     User.boot()
-    assert.deepEqual(User.$keys.attributesToSerialized.get('userName'), 'user_name')
+    assert.deepEqual(User.$keys.attributesToSerialized.get('userName'), 'userName')
   })
 
   test('resolve attribute name from column name', async ({ fs, assert }) => {
@@ -289,7 +289,7 @@ test.group('Base model | boot', (group) => {
     }
 
     User.boot()
-    assert.deepEqual(User.$keys.columnsToSerialized.get('user_name'), 'user_name')
+    assert.deepEqual(User.$keys.columnsToSerialized.get('user_name'), 'userName')
   })
 
   test('resolve attribute name from serializeAs name', async ({ fs, assert }) => {
@@ -309,7 +309,7 @@ test.group('Base model | boot', (group) => {
     }
 
     User.boot()
-    assert.deepEqual(User.$keys.serializedToAttributes.get('user_name'), 'userName')
+    assert.deepEqual(User.$keys.serializedToAttributes.get('userName'), 'userName')
   })
 
   test('resolve column name from serializeAs name', async ({ fs, assert }) => {
@@ -329,7 +329,7 @@ test.group('Base model | boot', (group) => {
     }
 
     User.boot()
-    assert.deepEqual(User.$keys.serializedToColumns.get('user_name'), 'user_name')
+    assert.deepEqual(User.$keys.serializedToColumns.get('userName'), 'user_name')
   })
 })
 
@@ -2113,7 +2113,7 @@ test.group('Base Model | serializeRelations', () => {
     assert.deepEqual(user.serializeRelations(), {
       profile: {
         username: 'virk',
-        user_id: 1,
+        userId: 1,
       },
     })
   })
@@ -2150,7 +2150,7 @@ test.group('Base Model | serializeRelations', () => {
     assert.deepEqual(user.serializeRelations(), {
       userProfile: {
         username: 'virk',
-        user_id: 1,
+        userId: 1,
       },
     })
   })
@@ -2322,12 +2322,12 @@ test.group('Base Model | serializeRelations', () => {
     assert.deepEqual(
       user.serializeRelations({
         profile: {
-          fields: ['user_id'],
+          fields: ['userId'],
         },
       }),
       {
         profile: {
-          user_id: 1,
+          userId: 1,
         },
       }
     )
@@ -2371,7 +2371,7 @@ test.group('Base Model | serializeRelations', () => {
       }),
       {
         profile: {
-          user_id: 1,
+          userId: 1,
           username: 'virk',
         },
       }
@@ -2506,7 +2506,7 @@ test.group('Base Model | toJSON', (group) => {
     const user = new User()
     user.username = 'virk'
 
-    assert.deepEqual(user.toJSON(), { username: 'virk', full_name: 'VIRK' })
+    assert.deepEqual(user.toJSON(), { username: 'virk', fullName: 'VIRK' })
   })
 
   test('do not add computed property when it returns undefined', async ({ fs, assert }) => {
@@ -2585,7 +2585,7 @@ test.group('Base Model | toJSON', (group) => {
 
     assert.deepEqual(user.toJSON(), {
       username: 'virk',
-      full_name: 'VIRK',
+      fullName: 'VIRK',
       meta: {
         postsCount: 10,
       },
@@ -2623,7 +2623,7 @@ test.group('Base Model | toJSON', (group) => {
 
     assert.deepEqual(user.toJSON(), {
       username: 'virk',
-      full_name: 'VIRK',
+      fullName: 'VIRK',
       posts: {
         count: 10,
       },
@@ -3780,6 +3780,124 @@ test.group('Base Model | fetch', (group) => {
     assert.equal(users[1].$primaryKeyValue, 1)
   })
 
+  test('findBy using a clause', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+
+    const BaseModel = getBaseModel(adapter)
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+
+      @column()
+      declare username: string
+
+      @column()
+      declare email: string
+    }
+
+    await db
+      .insertQuery()
+      .table('users')
+      .multiInsert([{ username: 'virk' }, { username: 'nikk' }])
+
+    const user = await User.findBy({ username: 'virk' })
+    assert.isDefined(user)
+    assert.equal(user?.username, 'virk')
+  })
+
+  test('findBy using a key/value pair', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+
+    const BaseModel = getBaseModel(adapter)
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+
+      @column()
+      declare username: string
+
+      @column()
+      declare email: string
+    }
+
+    await db
+      .insertQuery()
+      .table('users')
+      .multiInsert([{ username: 'virk' }, { username: 'nikk' }])
+
+    const user = await User.findBy('username', 'virk')
+    assert.isDefined(user)
+    assert.equal(user?.username, 'virk')
+  })
+
+  test('find many using a clause', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+
+    const BaseModel = getBaseModel(adapter)
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+
+      @column()
+      declare username: string
+
+      @column()
+      declare email: string
+    }
+
+    await db
+      .insertQuery()
+      .table('users')
+      .multiInsert([{ username: 'virk' }, { username: 'nikk' }])
+
+    const users = await User.findManyBy({ points: 0 })
+    assert.lengthOf(users, 2)
+    assert.equal(users[0].$primaryKeyValue, 1)
+    assert.equal(users[1].$primaryKeyValue, 2)
+  })
+
+  test('find many using a key/value pair', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+
+    const BaseModel = getBaseModel(adapter)
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+
+      @column()
+      declare username: string
+
+      @column()
+      declare email: string
+    }
+
+    await db
+      .insertQuery()
+      .table('users')
+      .multiInsert([{ username: 'virk' }, { username: 'nikk' }])
+
+    const users = await User.findManyBy('points', 0)
+    assert.lengthOf(users, 2)
+    assert.equal(users[0].$primaryKeyValue, 1)
+    assert.equal(users[1].$primaryKeyValue, 2)
+  })
+
   test('return the existing row when search criteria matches', async ({ fs, assert }) => {
     const app = new AppFactory().create(fs.baseUrl, () => {})
     await app.init()
@@ -4888,6 +5006,68 @@ test.group('Base Model | fetch', (group) => {
     assert.lengthOf(usersList, 1)
     assert.equal(usersList[0].points, 2)
   })
+
+  test('updateOrCreateMany should work with DateTime', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+
+    const BaseModel = getBaseModel(adapter)
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+
+      @column()
+      declare username: string
+
+      @column()
+      declare email: string
+
+      @column.dateTime()
+      declare createdAt: DateTime
+    }
+
+    const createdAt1 = DateTime.now().minus({ days: 2 }).startOf('second')
+    const createdAt2 = DateTime.now().minus({ days: 1 }).startOf('second')
+
+    await User.createMany([
+      {
+        username: 'virk1',
+        email: 'virk+1@adonisjs.com',
+        createdAt: createdAt1,
+      },
+      {
+        username: 'virk2',
+        email: 'virk+2@adonisjs.com',
+        createdAt: createdAt2,
+      },
+    ])
+
+    const users = await User.updateOrCreateMany('createdAt', [
+      {
+        username: 'virk3',
+        email: 'virk+3@adonisjs.com',
+        createdAt: createdAt1,
+      },
+      {
+        username: 'nikk',
+        email: 'nikk@adonisjs.com',
+        createdAt: DateTime.now(),
+      },
+    ])
+
+    assert.lengthOf(users, 2)
+    assert.isTrue(users[0].$isPersisted)
+    assert.isFalse(users[0].$isLocal)
+
+    assert.isTrue(users[1].$isPersisted)
+    assert.isTrue(users[1].$isLocal)
+
+    const usersList = await db.query().from('users')
+    assert.lengthOf(usersList, 3)
+  })
 })
 
 test.group('Base Model | hooks', (group) => {
@@ -5849,7 +6029,7 @@ test.group('Base Model | date', (group) => {
     User.$adapter = adapter
 
     adapter.on('insert', (model: LucidRow, _: any) => {
-      assert.instanceOf((model as User).dob, DateTime)
+      assert.instanceOf((model as User).dob, DateTime as any)
     })
 
     user.username = 'virk'
@@ -5886,7 +6066,7 @@ test.group('Base Model | date', (group) => {
     User.$adapter = adapter
 
     adapter.on('insert', (model: LucidRow, _: any) => {
-      assert.instanceOf((model as User).dob, DateTime)
+      assert.instanceOf((model as User).dob, DateTime as any)
       assert.isUndefined((model as User).createdAt)
     })
 
@@ -5917,7 +6097,7 @@ test.group('Base Model | date', (group) => {
     const user = new User()
     User.$adapter = adapter
     adapter.on('update', (model: LucidRow) => {
-      assert.instanceOf((model as User).updatedAt, DateTime)
+      assert.instanceOf((model as User).updatedAt, DateTime as any)
     })
 
     user.username = 'virk'
@@ -6140,7 +6320,7 @@ test.group('Base Model | date', (group) => {
 
     await db.insertQuery().table('users').insert({ username: 'virk' })
     const user = await User.find(1)
-    assert.instanceOf(user!.createdAt, DateTime)
+    assert.instanceOf(user!.createdAt, DateTime as any)
   })
 
   test('ignore null or empty values during fetch', async ({ fs, assert }) => {
@@ -6191,7 +6371,7 @@ test.group('Base Model | date', (group) => {
       created_at: DateTime.local().toISODate(),
     })
     const user = await User.find(1)
-    assert.match(user!.toJSON().created_at, /\d{4}-\d{2}-\d{2}/)
+    assert.match(user!.toJSON().createdAt, /\d{4}-\d{2}-\d{2}/)
   })
 
   test('do not attempt to serialize, when already a string', async ({ fs, assert }) => {
@@ -6223,7 +6403,7 @@ test.group('Base Model | date', (group) => {
       created_at: DateTime.local().toISODate(),
     })
     const user = await User.find(1)
-    assert.equal(user!.toJSON().created_at, DateTime.local().minus({ days: 1 }).toISODate())
+    assert.equal(user!.toJSON().createdAt, DateTime.local().minus({ days: 1 }).toISODate())
   })
 })
 
@@ -6340,7 +6520,7 @@ test.group('Base Model | datetime', (group) => {
     const user = new User()
     user.username = 'virk'
     await user.save()
-    assert.instanceOf(user.joinedAt, DateTime)
+    assert.instanceOf(user.joinedAt, DateTime as any)
 
     const createdUser = await db.from('users').select('*').first()
 
@@ -6508,7 +6688,7 @@ test.group('Base Model | datetime', (group) => {
 
     await db.insertQuery().table('users').insert({ username: 'virk' })
     const user = await User.find(1)
-    assert.instanceOf(user!.createdAt, DateTime)
+    assert.instanceOf(user!.createdAt, DateTime as any)
   })
 
   test('ignore null or empty values during fetch', async ({ fs, assert }) => {
@@ -6667,7 +6847,7 @@ test.group('Base Model | datetime', (group) => {
 
     const user = await User.find(1)
     assert.match(
-      user!.toJSON().joined_at,
+      user!.toJSON().joinedAt,
       /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}(\+|\-)\d{2}:\d{2}/
     )
   })
@@ -6705,7 +6885,7 @@ test.group('Base Model | datetime', (group) => {
       })
 
     const user = await User.find(1)
-    assert.equal(user!.toJSON().joined_at, DateTime.local().minus({ days: 1 }).toISODate())
+    assert.equal(user!.toJSON().joinedAt, DateTime.local().minus({ days: 1 }).toISODate())
   })
 
   test('force update when enabledForceUpdate method is called', async ({ fs, assert }) => {
@@ -6822,14 +7002,14 @@ test.group('Base Model | paginate', (group) => {
     assert.isTrue(users.hasTotal)
     assert.deepEqual(users.getMeta(), {
       total: 18,
-      per_page: 5,
-      current_page: 1,
-      last_page: 4,
-      first_page: 1,
-      first_page_url: '/users?page=1',
-      last_page_url: '/users?page=4',
-      next_page_url: '/users?page=2',
-      previous_page_url: null,
+      perPage: 5,
+      currentPage: 1,
+      lastPage: 4,
+      firstPage: 1,
+      firstPageUrl: '/users?page=1',
+      lastPageUrl: '/users?page=4',
+      nextPageUrl: '/users?page=2',
+      previousPageUrl: null,
     })
   })
 
@@ -6867,14 +7047,14 @@ test.group('Base Model | paginate', (group) => {
     })
     assert.deepEqual(meta, {
       total: 18,
-      per_page: 5,
-      current_page: 1,
-      last_page: 4,
-      first_page: 1,
-      first_page_url: '/users?page=1',
-      last_page_url: '/users?page=4',
-      next_page_url: '/users?page=2',
-      previous_page_url: null,
+      perPage: 5,
+      currentPage: 1,
+      lastPage: 4,
+      firstPage: 1,
+      firstPageUrl: '/users?page=1',
+      lastPageUrl: '/users?page=4',
+      nextPageUrl: '/users?page=2',
+      previousPageUrl: null,
     })
   })
 
@@ -6915,14 +7095,14 @@ test.group('Base Model | paginate', (group) => {
     assert.isTrue(users.hasTotal)
     assert.deepEqual(users.getMeta(), {
       total: 18,
-      per_page: 5,
-      current_page: 1,
-      last_page: 4,
-      first_page: 1,
-      first_page_url: '/users?page=1',
-      last_page_url: '/users?page=4',
-      next_page_url: '/users?page=2',
-      previous_page_url: null,
+      perPage: 5,
+      currentPage: 1,
+      lastPage: 4,
+      firstPage: 1,
+      firstPageUrl: '/users?page=1',
+      lastPageUrl: '/users?page=4',
+      nextPageUrl: '/users?page=2',
+      previousPageUrl: null,
     })
   })
 
@@ -7030,14 +7210,14 @@ test.group('Base Model | paginate', (group) => {
     assert.isTrue(users.hasTotal)
     assert.deepEqual(users.getMeta(), {
       total: 1,
-      per_page: 5,
-      current_page: 1,
-      last_page: 1,
-      first_page: 1,
-      first_page_url: '/users?page=1',
-      last_page_url: '/users?page=1',
-      next_page_url: null,
-      previous_page_url: null,
+      perPage: 5,
+      currentPage: 1,
+      lastPage: 1,
+      firstPage: 1,
+      firstPageUrl: '/users?page=1',
+      lastPageUrl: '/users?page=1',
+      nextPageUrl: null,
+      previousPageUrl: null,
     })
   })
 })
@@ -7493,7 +7673,7 @@ test.group('Base model | inheritance', (group) => {
             meta: undefined,
             prepare: undefined,
             serialize: undefined,
-            serializeAs: 'user_id',
+            serializeAs: 'userId',
           },
         ],
         [
@@ -7533,7 +7713,7 @@ test.group('Base model | inheritance', (group) => {
             meta: undefined,
             prepare: undefined,
             serialize: undefined,
-            serializeAs: 'user_id',
+            serializeAs: 'userId',
           },
         ],
       ])
@@ -7612,7 +7792,7 @@ test.group('Base model | inheritance', (group) => {
           'fullName',
           {
             meta: undefined,
-            serializeAs: 'full_name',
+            serializeAs: 'fullName',
           },
         ],
         [
@@ -7638,7 +7818,7 @@ test.group('Base model | inheritance', (group) => {
           'fullName',
           {
             meta: undefined,
-            serializeAs: 'full_name',
+            serializeAs: 'fullName',
           },
         ],
       ])
@@ -7733,7 +7913,7 @@ test.group('Base model | inheritance', (group) => {
           'fullName',
           {
             meta: undefined,
-            serializeAs: 'full_name',
+            serializeAs: 'fullName',
           },
         ],
       ])
@@ -7924,5 +8104,133 @@ test.group('Base model | inheritance', (group) => {
     assert.isTrue(User.$hooks.has('before:create', hook2))
     assert.isTrue(MyBaseModel.$hooks.has('before:create', hook1))
     assert.isFalse(MyBaseModel.$hooks.has('before:create', hook2))
+  })
+})
+
+test.group('Base Model | lockForUpdate', (group) => {
+  group.setup(async () => {
+    await setup()
+  })
+
+  group.teardown(async () => {
+    await cleanupTables()
+  })
+
+  group.each.teardown(async () => {
+    await resetTables()
+  })
+
+  test('lock model row for update', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+
+    const BaseModel = getBaseModel(adapter)
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+
+      @column()
+      declare username: string
+
+      @column()
+      declare email: string
+
+      @column()
+      declare points: number
+    }
+
+    const user = await User.create({ email: 'foo@bar.com', username: 'virk', points: 0 })
+    await Promise.all([
+      user.lockForUpdate(async (freshUser) => {
+        freshUser.points = freshUser.points + 1
+        await freshUser.save()
+      }),
+      user.lockForUpdate(async (freshUser) => {
+        freshUser.points = freshUser.points + 1
+        await freshUser.save()
+      }),
+    ])
+
+    await user.refresh()
+    assert.equal(user.points, 2)
+  })
+
+  test('re-use initial model transaction', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+
+    const BaseModel = getBaseModel(adapter)
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+
+      @column()
+      declare username: string
+
+      @column()
+      declare email: string
+
+      @column()
+      declare points: number
+    }
+
+    const user = await User.create({ email: 'foo@bar.com', username: 'virk', points: 0 })
+    const trx = await db.transaction()
+    user.useTransaction(trx)
+
+    await Promise.all([
+      user.lockForUpdate(async (freshUser) => {
+        freshUser.points = freshUser.points + 1
+        await freshUser.save()
+      }),
+      user.lockForUpdate(async (freshUser) => {
+        freshUser.points = freshUser.points + 1
+        await freshUser.save()
+      }),
+    ])
+
+    assert.isFalse(trx.isCompleted)
+    await trx.rollback()
+
+    await user.refresh()
+    assert.equal(user.points, 0)
+  })
+
+  test('throw error when row is missing', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+
+    const BaseModel = getBaseModel(adapter)
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+
+      @column()
+      declare username: string
+
+      @column()
+      declare email: string
+
+      @column()
+      declare points: number
+    }
+
+    const user = await User.create({ email: 'foo@bar.com', username: 'virk', points: 0 })
+    await user.delete()
+    await assert.rejects(() =>
+      user.lockForUpdate(async (freshUser) => {
+        freshUser.points = freshUser.points + 1
+        await freshUser.save()
+      })
+    )
   })
 })

@@ -19,9 +19,9 @@ import {
   TransactionClientContract,
 } from '../types/database.js'
 
-import { dialects } from '../dialects/index.js'
-import { TransactionClient } from '../transaction_client/index.js'
 import { RawBuilder } from '../database/static_builder/raw.js'
+import { clientsToDialectsMapping } from '../dialects/index.js'
+import { TransactionClient } from '../transaction_client/index.js'
 import { RawQueryBuilder } from '../database/query_builder/raw.js'
 import { InsertQueryBuilder } from '../database/query_builder/insert.js'
 import { ReferenceBuilder } from '../database/static_builder/reference.js'
@@ -72,7 +72,10 @@ export class QueryClient implements QueryClientContract {
   ) {
     this.debug = !!this.connection.config.debug
     this.connectionName = this.connection.name
-    this.dialect = new dialects[this.connection.dialectName](this, this.connection.config)
+    this.dialect = new clientsToDialectsMapping[this.connection.clientName](
+      this,
+      this.connection.config
+    )
   }
 
   /**
@@ -161,6 +164,13 @@ export class QueryClient implements QueryClientContract {
   }
 
   /**
+   * Returns an array of all domain names
+   */
+  async getAllDomains(schemas?: string[]): Promise<string[]> {
+    return this.dialect.getAllDomains(schemas)
+  }
+
+  /**
    * Drop all tables inside database
    */
   async dropAllTables(schemas?: string[] | undefined): Promise<void> {
@@ -179,6 +189,13 @@ export class QueryClient implements QueryClientContract {
    */
   async dropAllTypes(schemas?: string[] | undefined): Promise<void> {
     return this.dialect.dropAllTypes(schemas || ['public'])
+  }
+
+  /**
+   * Drop all custom domains inside the database
+   */
+  async dropAllDomains(schemas?: string[]): Promise<void> {
+    return this.dialect.dropAllDomains(schemas || ['public'])
   }
 
   /**

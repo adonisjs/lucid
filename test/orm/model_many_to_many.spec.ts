@@ -775,8 +775,8 @@ test.group('Model | ManyToMany | bulk operations', (group) => {
     assert.equal(skills[0].name, 'Programming')
     assert.equal(skills[0].$extras.pivot_user_id, 1)
     assert.equal(skills[0].$extras.pivot_skill_id, 1)
-    assert.instanceOf(skills[0].$extras.pivot_created_at, DateTime)
-    assert.instanceOf(skills[0].$extras.pivot_updated_at, DateTime)
+    assert.instanceOf(skills[0].$extras.pivot_created_at, DateTime as any)
+    assert.instanceOf(skills[0].$extras.pivot_updated_at, DateTime as any)
   })
 })
 
@@ -1337,8 +1337,8 @@ test.group('Model | ManyToMany | preload', (group) => {
     assert.equal(users[0].skills[0].name, 'Programming')
     assert.equal(users[0].skills[0].$extras.pivot_user_id, 1)
     assert.equal(users[0].skills[0].$extras.pivot_skill_id, 1)
-    assert.instanceOf(users[0].skills[0].$extras.pivot_created_at, DateTime)
-    assert.instanceOf(users[0].skills[0].$extras.pivot_updated_at, DateTime)
+    assert.instanceOf(users[0].skills[0].$extras.pivot_created_at, DateTime as any)
+    assert.instanceOf(users[0].skills[0].$extras.pivot_updated_at, DateTime as any)
   })
 
   test('preload relation for many', async ({ fs, assert }) => {
@@ -1540,8 +1540,8 @@ test.group('Model | ManyToMany | preload', (group) => {
     assert.equal(users[0].skills[0].name, 'Programming')
     assert.equal(users[0].skills[0].$extras.pivot_user_id, 1)
     assert.equal(users[0].skills[0].$extras.pivot_skill_id, 1)
-    assert.instanceOf(users[0].skills[0].$extras.pivot_created_at, DateTime)
-    assert.instanceOf(users[0].skills[0].$extras.pivot_updated_at, DateTime)
+    assert.instanceOf(users[0].skills[0].$extras.pivot_created_at, DateTime as any)
+    assert.instanceOf(users[0].skills[0].$extras.pivot_updated_at, DateTime as any)
   })
 
   test('select extra pivot columns', async ({ fs, assert }) => {
@@ -7385,14 +7385,14 @@ test.group('Model | ManyToMany | pagination', (group) => {
     assert.isTrue(skills.hasTotal)
     assert.deepEqual(skills.getMeta(), {
       total: 2,
-      per_page: 1,
-      current_page: 1,
-      last_page: 2,
-      first_page: 1,
-      first_page_url: '/skills?page=1',
-      last_page_url: '/skills?page=2',
-      next_page_url: '/skills?page=2',
-      previous_page_url: null,
+      perPage: 1,
+      currentPage: 1,
+      lastPage: 2,
+      firstPage: 1,
+      firstPageUrl: '/skills?page=1',
+      lastPageUrl: '/skills?page=2',
+      nextPageUrl: '/skills?page=2',
+      previousPageUrl: null,
     })
   })
 
