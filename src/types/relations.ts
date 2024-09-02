@@ -1070,4 +1070,5 @@ export interface PreloaderContract<Model extends LucidRow> {
 
   debug(debug: boolean): this
   sideload(values: ModelObject): this
+  clone(): PreloaderContract<Model>
 }
