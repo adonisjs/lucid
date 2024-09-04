@@ -3729,27 +3729,27 @@ if (process.env.DB !== 'mysql_legacy') {
           {
             user_id: user0.id,
             title: 'Adonis 101',
-            created_at: now,
+            created_at: now.toISO(),
           },
           {
             user_id: user0.id,
             title: 'Adonis 102',
-            created_at: now.plus({ seconds: 1 }),
+            created_at: now.plus({ seconds: 1 }).toISO(),
           },
           {
             user_id: user0.id,
             title: 'Adonis 103',
-            created_at: now.plus({ seconds: 2 }),
+            created_at: now.plus({ seconds: 2 }).toISO(),
           },
           {
             user_id: user0.id,
             title: 'Adonis 104',
-            created_at: now.plus({ seconds: 3 }),
+            created_at: now.plus({ seconds: 3 }).toISO(),
           },
           {
             user_id: user0.id,
             title: 'Adonis 105',
-            created_at: now.plus({ seconds: 4 }),
+            created_at: now.plus({ seconds: 4 }).toISO(),
           },
         ])
 
@@ -3763,34 +3763,34 @@ if (process.env.DB !== 'mysql_legacy') {
           {
             user_id: user1.id,
             title: 'Lucid 101',
-            created_at: now,
+            created_at: now.toISO(),
           },
           {
             user_id: user1.id,
             title: 'Lucid 102',
-            created_at: now.plus({ seconds: 1 }),
+            created_at: now.plus({ seconds: 1 }).toISO(),
           },
           {
             user_id: user1.id,
             title: 'Lucid 103',
-            created_at: now.plus({ seconds: 2 }),
+            created_at: now.plus({ seconds: 2 }).toISO(),
           },
           {
             user_id: user1.id,
             title: 'Lucid 104',
-            created_at: now.plus({ seconds: 3 }),
+            created_at: now.plus({ seconds: 3 }).toISO(),
           },
           {
             user_id: user1.id,
             title: 'Lucid 105',
-            created_at: now.plus({ seconds: 4 }),
+            created_at: now.plus({ seconds: 4 }).toISO(),
           },
         ])
 
       User.boot()
 
       const users = await User.query().preload('posts', (query) => {
-        query.groupLimit(2).groupOrderBy('created_at', 'desc')
+        query.groupLimit(2).groupOrderBy('created_at', 'asc')
       })
       assert.lengthOf(users, 2)
 
