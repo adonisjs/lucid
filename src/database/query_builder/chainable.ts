@@ -16,6 +16,7 @@ import { isObject } from '../../utils/index.js'
 import { RawQueryBuilder } from './raw.js'
 import { RawBuilder } from '../static_builder/raw.js'
 import { ReferenceBuilder } from '../static_builder/reference.js'
+import type { DialectContract } from '../../types/database.js'
 
 /**
  * The chainable query builder to construct SQL queries for selecting, updating and
@@ -105,6 +106,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
   constructor(
     public knexQuery: Knex.QueryBuilder,
     private queryCallback: DBQueryCallback,
+    private dialect: DialectContract,
     public keysResolver?: (columnName: string) => string
   ) {
     super()
@@ -1699,6 +1701,27 @@ export abstract class Chainable extends Macroable implements ChainableContract {
     }
 
     return this
+  }
+
+  /**
+   * Order results by random value.
+   */
+  orderByRandom(seed = '') {
+    switch (this.dialect.name) {
+      case 'sqlite3':
+      case 'better-sqlite3':
+      case 'postgres':
+      case 'redshift':
+        return this.orderByRaw('RANDOM()')
+      case 'mysql':
+        return this.orderByRaw(`RAND(${seed})`)
+      case 'mssql':
+        return this.orderByRaw('NEWID()')
+      case 'oracledb':
+        return this.orderByRaw('dbms_random.value')
+      default:
+        throw new Error(`Cannot order by random for the given dialect ${this.dialect.name}`)
+    }
   }
 
   /**

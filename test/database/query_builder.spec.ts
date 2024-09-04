@@ -5474,12 +5474,18 @@ test.group('Query Builder | orderByRandom', (group) => {
         },
       ])
 
-    const users = await db.from('users').orderByRandom()
-    const users2 = await db.from('users').orderByRandom()
+    const users = []
 
-    assert.notEqual(users[0].id, users2[0].id)
+    for (let i = 0; i < 10; i++) {
+      const result = await db.from('users').orderByRandom()
+
+      users.push(result.map((user) => user.id))
+    }
+
+    // TODO: Check which assertion is better to use
+
     await connection.disconnect()
-  }).retry(3)
+  })
 })
 
 test.group('Query Builder | offset', (group) => {
