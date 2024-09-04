@@ -1058,6 +1058,10 @@ export interface Preload<Model extends LucidRow, Builder> {
   ): Builder
 }
 
+export interface PreloadWithoutCallback<Model extends LucidRow, Builder> {
+  <Name extends ExtractModelRelations<Model>>(relation: Name): Builder
+}
+
 /**
  * Shape of the preloader to preload relationships
  */
