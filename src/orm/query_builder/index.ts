@@ -150,6 +150,7 @@ export class ModelQueryBuilder
     super(
       builder,
       customFn,
+      client.dialect,
       model.$keys.attributesToColumns.resolve.bind(model.$keys.attributesToColumns)
     )
 
@@ -642,27 +643,6 @@ export class ModelQueryBuilder
    */
   andDoesntHave(relationName: any, operator?: string, value?: any): this {
     return this.addWhereHas(relationName, 'not', operator, value)
-  }
-
-  /**
-   * Order results by random value.
-   */
-  orderByRandom(seed = '') {
-    switch (this.client.dialect.name) {
-      case 'sqlite3':
-      case 'better-sqlite3':
-      case 'postgres':
-      case 'redshift':
-        return this.orderByRaw('RANDOM()')
-      case 'mysql':
-        return this.orderByRaw(`RAND(${seed})`)
-      case 'mssql':
-        return this.orderByRaw('NEWID()')
-      case 'oracledb':
-        return this.orderByRaw('dbms_random.value')
-      default:
-        throw new Error(`Cannot order by random for the given dialect ${this.client.dialect.name}`)
-    }
   }
 
   /**

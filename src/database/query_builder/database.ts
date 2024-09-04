@@ -70,7 +70,7 @@ export class DatabaseQueryBuilder extends Chainable implements DatabaseQueryBuil
     public client: QueryClientContract,
     public keysResolver?: (columnName: string) => string
   ) {
-    super(builder, queryCallback, keysResolver)
+    super(builder, queryCallback, client.dialect, keysResolver)
     this.debugQueries = this.client.debug
   }
 
@@ -279,27 +279,6 @@ export class DatabaseQueryBuilder extends Chainable implements DatabaseQueryBuil
   useTransaction(transaction: TransactionClientContract): this {
     this.knexQuery.transacting(transaction.knexClient)
     return this
-  }
-
-  /**
-   * Order results by random value.
-   */
-  orderByRandom(seed = '') {
-    switch (this.client.dialect.name) {
-      case 'sqlite3':
-      case 'better-sqlite3':
-      case 'postgres':
-      case 'redshift':
-        return this.orderByRaw('RANDOM()')
-      case 'mysql':
-        return this.orderByRaw(`RAND(${seed})`)
-      case 'mssql':
-        return this.orderByRaw('NEWID()')
-      case 'oracledb':
-        return this.orderByRaw('dbms_random.value')
-      default:
-        throw new Error(`Cannot order by random for the given dialect ${this.client.dialect.name}`)
-    }
   }
 
   /**
