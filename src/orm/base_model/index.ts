@@ -1807,12 +1807,6 @@ class BaseModelImpl implements LucidRow {
    * already preloaded
    */
   async loadOnce(relationName: any) {
-    this.ensureIsntDeleted()
-
-    if (!this.$isPersisted) {
-      throw new Exception('Cannot lazy load relationship for an unpersisted model instance')
-    }
-
     if (!this.$preloaded[relationName]) {
       return this.load(relationName)
     }
