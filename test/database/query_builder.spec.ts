@@ -5474,15 +5474,15 @@ test.group('Query Builder | orderByRandom', (group) => {
         },
       ])
 
-    const users = []
+    const userResults: number[][] = []
 
     for (let i = 0; i < 10; i++) {
       const result = await db.from('users').orderByRandom()
 
-      users.push(result.map((user) => user.id))
+      userResults.push(result.map((user) => user.id))
     }
 
-    // TODO: Check which assertion is better to use
+    assert.isTrue(userResults.some((users) => userResults[0] !== users))
 
     await connection.disconnect()
   })
