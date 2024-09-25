@@ -150,6 +150,7 @@ export class ModelQueryBuilder
     super(
       builder,
       customFn,
+      client.dialect,
       model.$keys.attributesToColumns.resolve.bind(model.$keys.attributesToColumns)
     )
 

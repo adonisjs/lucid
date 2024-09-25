@@ -5439,6 +5439,55 @@ test.group('Query Builder | orderByRaw', (group) => {
   })
 })
 
+test.group('Query Builder | orderByRandom', (group) => {
+  group.setup(async () => {
+    await setup()
+  })
+
+  group.teardown(async () => {
+    await cleanup()
+  })
+
+  group.each.teardown(async () => {
+    await resetTables()
+  })
+
+  test('define order by random value', async ({ assert }) => {
+    const connection = new Connection('primary', getConfig(), logger)
+    connection.connect()
+
+    const db = getQueryBuilder(getQueryClient(connection))
+    await getInsertBuilder(getQueryClient(connection))
+      .table('users')
+      .multiInsert([
+        {
+          username: 'virk',
+          email: 'virk@adonisjs.com',
+        },
+        {
+          username: 'romain',
+          email: 'romain@adonisjs.com',
+        },
+        {
+          username: 'nikk',
+          email: 'nikk@adonisjs.com',
+        },
+      ])
+
+    const userResults: number[][] = []
+
+    for (let i = 0; i < 10; i++) {
+      const result = await db.from('users').orderByRandom()
+
+      userResults.push(result.map((user) => user.id))
+    }
+
+    assert.isTrue(userResults.some((users) => userResults[0] !== users))
+
+    await connection.disconnect()
+  })
+})
+
 test.group('Query Builder | offset', (group) => {
   group.setup(async () => {
     await setup()

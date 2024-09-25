@@ -70,7 +70,7 @@ export class DatabaseQueryBuilder extends Chainable implements DatabaseQueryBuil
     public client: QueryClientContract,
     public keysResolver?: (columnName: string) => string
   ) {
-    super(builder, queryCallback, keysResolver)
+    super(builder, queryCallback, client.dialect, keysResolver)
     this.debugQueries = this.client.debug
   }
 
