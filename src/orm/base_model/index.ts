@@ -1803,6 +1803,16 @@ class BaseModelImpl implements LucidRow {
   }
 
   /**
+   * Load relationships onto the instance, but only if they are not
+   * already preloaded
+   */
+  async loadOnce(relationName: any) {
+    if (!this.$preloaded[relationName]) {
+      return this.load(relationName)
+    }
+  }
+
+  /**
    * @deprecated
    */
   async preload(relationName: any, callback?: any) {

@@ -36,6 +36,7 @@ import {
   WhereHas,
   WithAggregate,
   WithCount,
+  PreloadWithoutCallback,
 } from './relations.js'
 
 /**
@@ -313,6 +314,9 @@ export type ModelAssignOptions = ModelAdapterOptions & {
 export interface LucidRowPreload<Model extends LucidRow> extends Preload<Model, Promise<void>> {
   (callback: (preloader: PreloaderContract<Model>) => void): Promise<void>
 }
+
+export interface LucidRowPreloadOnce<Model extends LucidRow>
+  extends PreloadWithoutCallback<Model, Promise<void>> {}
 
 export interface LucidRowAggregate<Model extends LucidRow> extends Preload<Model, Promise<void>> {
   (callback: (preloader: PreloaderContract<Model>) => void): Promise<void>
@@ -642,6 +646,12 @@ export interface LucidRow {
    * Load relationships onto the instance
    */
   load: LucidRowPreload<this>
+
+  /**
+   * Load relationships onto the instance, but only if they are not
+   * already preloaded
+   */
+  loadOnce: LucidRowPreloadOnce<this>
 
   /**
    * Alias for "load"
