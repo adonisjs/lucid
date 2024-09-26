@@ -7,7 +7,7 @@
  * file that was distributed with this source code.
  */
 
-import { stringify } from 'qs'
+import { stringify } from 'neoqs'
 import { CamelCaseNamingStrategy } from '../../orm/naming_strategies/camel_case.js'
 import { SimplePaginatorContract, SimplePaginatorMetaKeys } from '../../types/querybuilder.js'
 
