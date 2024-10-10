@@ -63,7 +63,7 @@ export class DatabaseTestUtils {
    */
   async migrate() {
     await this.#runCommand('migration:run', ['--compact-output'])
-    return () => this.#runCommand('migration:rollback', ['--compact-output'])
+    return () => this.#runCommand('migration:reset', ['--compact-output'])
   }
 
   /**
