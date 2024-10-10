@@ -43,7 +43,7 @@
     "test:pg": "cross-env DB=pg node --enable-source-maps --loader=ts-node/esm ./bin/test.js",
     "test:docker": "npm run test:mysql && npm run test:mysql_legacy && npm run test:pg && npm run test:mssql",
     "quick:test": "cross-env DB=sqlite node --enable-source-maps --loader=ts-node/esm ./bin/test.js",
-    "lint": "eslint . --ext=.ts",
+    "lint": "eslint",
     "clean": "del-cli build",
     "compile": "npm run lint && npm run clean && tsc",
     "postcompile": "npm run copy:templates && npm run index:commands",
