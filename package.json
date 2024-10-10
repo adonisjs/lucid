@@ -49,7 +49,7 @@
     "postcompile": "npm run copy:templates && npm run index:commands",
     "copy:templates": "copyfiles \"stubs/**/**/*.stub\" build",
     "build": "npm run compile",
-    "release": "np",
+    "release": "release-it",
     "version": "npm run build",
     "typecheck": "tsc --noEmit",
     "format": "prettier --write .",
