@@ -67,6 +67,7 @@ export type RelationOptions<
   foreignKey?: string
   serializeAs?: string | null
   onQuery?(query: Related['builder'] | Related['subQuery']): void
+  meta?: any
 }
 
 /**
@@ -87,6 +88,7 @@ export type ManyToManyRelationOptions<Related extends ModelRelations<LucidModel,
       }
   serializeAs?: string | null
   onQuery?(query: Related['builder'] | Related['subQuery']): void
+  meta?: any
 }
 
 /**
@@ -100,6 +102,7 @@ export type ThroughRelationOptions<
   throughLocalKey?: string
   throughForeignKey?: string
   throughModel: () => LucidModel
+  meta?: any
 }
 
 /**
