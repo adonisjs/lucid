@@ -40,6 +40,12 @@ export default class Reset extends BaseCommand {
   declare dryRun: boolean
 
   /**
+   * Display migrations result in one compact single-line output
+   */
+  @flags.boolean({ description: 'A compact single-line output' })
+  declare compactOutput: boolean
+
+  /**
    * Disable advisory locks
    */
   @flags.boolean({ description: 'Disable locks acquired to run migrations safely' })
@@ -52,6 +58,10 @@ export default class Reset extends BaseCommand {
     const args: string[] = ['--batch=0']
     if (this.force) {
       args.push('--force')
+    }
+
+    if (this.compactOutput) {
+      args.push('--compact-output')
     }
 
     if (this.connection) {
