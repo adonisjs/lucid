@@ -527,6 +527,7 @@ type MssqlConnectionNode = {
     appName?: string
     abortTransactionOnError?: boolean
     trustedConnection?: boolean
+    instanceName?: string
     enableArithAbort?: boolean
     isolationLevel?:
       | 'READ_UNCOMMITTED'
