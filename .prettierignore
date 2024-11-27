@@ -1,8 +1,4 @@
 build
 docs
-*.md
-config.json
-.eslintrc.json
-package.json
+coverage
 *.html
-*.txt

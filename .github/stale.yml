@@ -1,3 +1,6 @@
+---
+ignoreUnless: { { STALE_BOT } }
+---
 # Number of days of inactivity before an issue becomes stale
 daysUntilStale: 60
 
