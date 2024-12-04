@@ -13,9 +13,9 @@ import { AceFactory } from '@adonisjs/core/factories'
 
 import DbSeed from '../commands/db_seed.js'
 import { getDb } from '../test-helpers/index.js'
+import Reset from '../commands/migration/reset.js'
 import Migrate from '../commands/migration/run.js'
 import DbTruncate from '../commands/db_truncate.js'
-import Rollback from '../commands/migration/rollback.js'
 import { AppFactory } from '@adonisjs/core/factories/app'
 import { ApplicationService } from '@adonisjs/core/types'
 import { DatabaseTestUtils } from '../src/test_utils/database.js'
@@ -129,12 +129,12 @@ test.group('Database Test Utils', () => {
     await dbTestUtils.seed()
   })
 
-  test('migrate() should run migration:run and migration:rollback commands', async ({
+  test('migrate() should run migration:run and migration:reset commands', async ({
     fs,
     assert,
   }) => {
     let migrationRun = false
-    let rollbackRun = false
+    let resetRun = false
 
     class FakeMigrate extends Migrate {
       override async run() {
@@ -142,9 +142,9 @@ test.group('Database Test Utils', () => {
       }
     }
 
-    class FakeMigrationRollback extends Rollback {
+    class FakeMigrationRollback extends Reset {
       override async run() {
-        rollbackRun = true
+        resetRun = true
       }
     }
 
@@ -163,7 +163,7 @@ test.group('Database Test Utils', () => {
     await rollback()
 
     assert.isTrue(migrationRun)
-    assert.isTrue(rollbackRun)
+    assert.isTrue(resetRun)
   })
 
   test('migrate() with custom connectionName', async ({ fs, assert }) => {
@@ -175,7 +175,7 @@ test.group('Database Test Utils', () => {
       }
     }
 
-    class FakeMigrationRollback extends Rollback {
+    class FakeMigrationRollback extends Reset {
       override async run() {
         assert.equal(this.connection, 'secondary')
       }

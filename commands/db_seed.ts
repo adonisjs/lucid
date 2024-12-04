@@ -23,7 +23,7 @@ export default class DbSeed extends BaseCommand {
     startApp: true,
   }
 
-  private declare seeder: SeedsRunner
+  declare private seeder: SeedsRunner
 
   /**
    * Track if one or more seeders have failed

@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   legacy_mysql:
     platform: linux/x86_64
@@ -48,7 +46,7 @@ services:
       - $LEGACY_MYSQL_READ_REPLICA_PORT
 
   pg:
-    image: postgres:11
+    image: postgres:16
     container_name: pg
     env_file: ./.env
     environment:
@@ -61,7 +59,7 @@ services:
       - $PG_PORT
 
   pg_read_replica:
-    image: postgres:11
+    image: postgres:16
     container_name: pg_read_replica
     env_file: ./.env
     environment:

@@ -83,7 +83,7 @@ export default class Migrate extends MigrationsBase {
      */
     let continueMigrations = !this.app.inProduction || this.force
     if (!continueMigrations) {
-      continueMigrations = await this.takeProductionConstent()
+      continueMigrations = await this.takeProductionConsent()
     }
 
     /**

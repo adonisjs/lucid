@@ -22,7 +22,7 @@ export const E_UNMANAGED_DB_CONNECTION = createError<[string]>(
 )
 
 export const E_MISSING_MODEL_ATTRIBUTE = createError<[string, string, string]>(
-  '"%s" expects "%s" to exist on "%s" model, but is missing',
+  'Relation "%s" expects "%s" to exist on "%s" model, but is missing. Did you forget to define the column?',
   'E_MISSING_MODEL_ATTRIBUTE',
   500
 )
@@ -72,3 +72,12 @@ export const E_UNDEFINED_RELATIONSHIP = createError(
 )
 
 export const E_RUNTIME_EXCEPTION = createError('%s', 'E_RUNTIME_EXCEPTION', 500)
+
+/**
+ * The client is not supported by Lucid
+ */
+export const E_UNSUPPORTED_CLIENT = createError<[string]>(
+  'Unsupported client "%s"',
+  'E_UNSUPPORTED_CLIENT',
+  500
+)

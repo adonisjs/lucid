@@ -8,6 +8,7 @@
  */
 
 import { test } from '@japa/runner'
+import { DateTime } from 'luxon'
 import type { HasMany } from '../../src/types/relations.js'
 
 import { scope } from '../../src/orm/base_model/index.js'
@@ -54,7 +55,10 @@ test.group('Model | HasMany | Options', (group) => {
       User.boot()
       User.$getRelation('posts')!.boot()
     } catch ({ message }) {
-      assert.equal(message, '"User.posts" expects "id" to exist on "User" model, but is missing')
+      assert.equal(
+        message,
+        'Relation "User.posts" expects "id" to exist on "User" model, but is missing. Did you forget to define the column?'
+      )
     }
   })
 
@@ -84,7 +88,7 @@ test.group('Model | HasMany | Options', (group) => {
     } catch ({ message }) {
       assert.equal(
         message,
-        '"User.posts" expects "userId" to exist on "Post" model, but is missing'
+        'Relation "User.posts" expects "userId" to exist on "Post" model, but is missing. Did you forget to define the column?'
       )
     }
   })
@@ -3716,6 +3720,8 @@ if (process.env.DB !== 'mysql_legacy') {
 
       const [user0, user1] = await db.query().from('users')
 
+      const now = DateTime.now()
+
       /**
        * User 1
        */
@@ -3726,27 +3732,27 @@ if (process.env.DB !== 'mysql_legacy') {
           {
             user_id: user0.id,
             title: 'Adonis 101',
-            created_at: new Date(),
+            created_at: now.toISO(),
           },
           {
             user_id: user0.id,
             title: 'Adonis 102',
-            created_at: new Date(),
+            created_at: now.plus({ seconds: 1 }).toISO(),
           },
           {
             user_id: user0.id,
             title: 'Adonis 103',
-            created_at: new Date(),
+            created_at: now.plus({ seconds: 2 }).toISO(),
           },
           {
             user_id: user0.id,
             title: 'Adonis 104',
-            created_at: new Date(),
+            created_at: now.plus({ seconds: 3 }).toISO(),
           },
           {
             user_id: user0.id,
             title: 'Adonis 105',
-            created_at: new Date(),
+            created_at: now.plus({ seconds: 4 }).toISO(),
           },
         ])
 
@@ -3760,34 +3766,34 @@ if (process.env.DB !== 'mysql_legacy') {
           {
             user_id: user1.id,
             title: 'Lucid 101',
-            created_at: new Date(),
+            created_at: now.toISO(),
           },
           {
             user_id: user1.id,
             title: 'Lucid 102',
-            created_at: new Date(),
+            created_at: now.plus({ seconds: 1 }).toISO(),
           },
           {
             user_id: user1.id,
             title: 'Lucid 103',
-            created_at: new Date(),
+            created_at: now.plus({ seconds: 2 }).toISO(),
           },
           {
             user_id: user1.id,
             title: 'Lucid 104',
-            created_at: new Date(),
+            created_at: now.plus({ seconds: 3 }).toISO(),
           },
           {
             user_id: user1.id,
             title: 'Lucid 105',
-            created_at: new Date(),
+            created_at: now.plus({ seconds: 4 }).toISO(),
           },
         ])
 
       User.boot()
 
       const users = await User.query().preload('posts', (query) => {
-        query.groupLimit(2).groupOrderBy('created_at', 'desc')
+        query.groupLimit(2).groupOrderBy('created_at', 'asc')
       })
       assert.lengthOf(users, 2)
 

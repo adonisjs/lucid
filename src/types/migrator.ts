@@ -22,6 +22,7 @@ export type MigratorOptions =
   | {
       direction: 'down'
       batch?: number
+      step?: number
       connectionName?: string
       dryRun?: boolean
       disableLocks?: boolean

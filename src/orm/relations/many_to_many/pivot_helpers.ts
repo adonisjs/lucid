@@ -45,10 +45,10 @@ export class PivotHelpers {
   /**
    * Adds a where pivot condition to the query
    */
-  wherePivot(varition: 'or' | 'and' | 'not' | 'orNot', key: any, operator?: any, value?: any) {
+  wherePivot(variation: 'or' | 'and' | 'not' | 'orNot', key: any, operator?: any, value?: any) {
     let method: keyof (ManyToManyQueryBuilder | ManyToManySubQueryBuilder) = 'where'
 
-    switch (varition) {
+    switch (variation) {
       case 'or':
         method = 'orWhere'
         break
@@ -71,10 +71,10 @@ export class PivotHelpers {
   /**
    * Adds a where pivot condition to the query
    */
-  whereNullPivot(varition: 'or' | 'and' | 'not' | 'orNot', key: string) {
+  whereNullPivot(variation: 'or' | 'and' | 'not' | 'orNot', key: string) {
     let method: keyof (ManyToManyQueryBuilder | ManyToManySubQueryBuilder) = 'whereNull'
 
-    switch (varition) {
+    switch (variation) {
       case 'or':
         method = 'orWhereNull'
         break
@@ -91,10 +91,10 @@ export class PivotHelpers {
   /**
    * Adds a where pivot condition to the query
    */
-  whereInPivot(varition: 'or' | 'and' | 'not' | 'orNot', key: any, value: any) {
+  whereInPivot(variation: 'or' | 'and' | 'not' | 'orNot', key: any, value: any) {
     let method: keyof (ManyToManyQueryBuilder | ManyToManySubQueryBuilder) = 'whereIn'
 
-    switch (varition) {
+    switch (variation) {
       case 'or':
         method = 'orWhereIn'
         break

@@ -43,7 +43,7 @@ export default class DbTruncate extends BaseCommand {
   /**
    * Prompts to take consent when truncating the database in production
    */
-  private async takeProductionConstent(): Promise<boolean> {
+  private async takeProductionConsent(): Promise<boolean> {
     const question = 'You are in production environment. Want to continue truncating the database?'
     try {
       return await this.prompt.confirm(question)
@@ -78,7 +78,7 @@ export default class DbTruncate extends BaseCommand {
      */
     let continueTruncate = !this.app.inProduction || this.force
     if (!continueTruncate) {
-      continueTruncate = await this.takeProductionConstent()
+      continueTruncate = await this.takeProductionConsent()
     }
 
     /**

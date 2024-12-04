@@ -7,19 +7,17 @@
  * file that was distributed with this source code.
  */
 
-import { join } from 'node:path'
 import { test } from '@japa/runner'
 
 import { Connection } from '../../src/connection/index.js'
 import { ConnectionManager } from '../../src/connection/manager.js'
 import {
-  getConfig,
   setup,
+  getConfig,
   cleanup,
   mapToObj,
   logger,
   createEmitter,
-  SQLITE_BASE_PATH,
 } from '../../test-helpers/index.js'
 
 test.group('ConnectionManager', (group) => {
@@ -119,29 +117,6 @@ test.group('ConnectionManager', (group) => {
     assert.isFalse(manager.has('primary'))
   })
 
-  test('proxy error event', async ({ assert }, done) => {
-    assert.plan(3)
-
-    const emitter = createEmitter()
-    const manager = new ConnectionManager(logger, emitter)
-    manager.add('primary', Object.assign({}, getConfig(), { client: null }))
-
-    emitter.on('db:connection:error', async ([{ message }, connection]) => {
-      try {
-        assert.equal(message, "knex: Required configuration option 'client' is missing.")
-        assert.instanceOf(connection, Connection)
-        await manager.closeAll()
-        done()
-      } catch (error) {
-        await manager.closeAll()
-        done(error)
-      }
-    })
-
-    const fn = () => manager.connect('primary')
-    assert.throws(fn, /knex: Required configuration option/)
-  }).waitForDone()
-
   test('patching the connection config must close old and create a new connection', async ({
     assert,
   }, done) => {
@@ -188,53 +163,4 @@ test.group('ConnectionManager', (group) => {
     manager.patch('primary', getConfig())
     manager.connect('primary')
   }).waitForDone()
-
-  test('get health check report for connections that has enabled health checks', async ({
-    assert,
-  }) => {
-    const manager = new ConnectionManager(logger, createEmitter())
-    manager.add('primary', Object.assign({}, getConfig(), { healthCheck: true }))
-    manager.add('secondary', Object.assign({}, getConfig(), { healthCheck: true }))
-    manager.add('secondary-copy', Object.assign({}, getConfig(), { healthCheck: false }))
-
-    const report = await manager.report()
-    assert.equal(report.health.healthy, true)
-    assert.equal(report.health.message, 'All connections are healthy')
-    assert.lengthOf(report.meta, 2)
-    assert.deepEqual(
-      report.meta.map((node: any) => node.connection),
-      ['primary', 'secondary']
-    )
-
-    await manager.closeAll()
-  })
-
-  test('get health check report when one of the connection is unhealthy', async ({ assert }) => {
-    const manager = new ConnectionManager(logger, createEmitter())
-    manager.add('primary', Object.assign({}, getConfig(), { healthCheck: true }))
-    manager.add(
-      'secondary',
-      Object.assign({}, getConfig(), {
-        healthCheck: true,
-        connection: ['sqlite', 'better_sqlite'].includes(process.env.DB!)
-          ? {
-              filename: join(SQLITE_BASE_PATH, 'nested', 'db.sqlite'),
-            }
-          : {
-              host: 'bad-host',
-            },
-      })
-    )
-    manager.add('secondary-copy', Object.assign({}, getConfig(), { healthCheck: false }))
-
-    const report = await manager.report()
-    assert.equal(report.health.healthy, false)
-    assert.equal(report.health.message, 'One or more connections are not healthy')
-    assert.lengthOf(report.meta, 2)
-    assert.deepEqual(
-      report.meta.map((node: any) => node.connection),
-      ['primary', 'secondary']
-    )
-    await manager.closeAll()
-  }).timeout(0)
 })

@@ -53,7 +53,10 @@ test.group('Model | HasOne | Options', (group) => {
       User.boot()
       User.$getRelation('profile')!.boot()
     } catch ({ message }) {
-      assert.equal(message, '"User.profile" expects "id" to exist on "User" model, but is missing')
+      assert.equal(
+        message,
+        'Relation "User.profile" expects "id" to exist on "User" model, but is missing. Did you forget to define the column?'
+      )
     }
   })
 
@@ -83,7 +86,7 @@ test.group('Model | HasOne | Options', (group) => {
     } catch ({ message }) {
       assert.equal(
         message,
-        '"User.profile" expects "userId" to exist on "Profile" model, but is missing'
+        'Relation "User.profile" expects "userId" to exist on "Profile" model, but is missing. Did you forget to define the column?'
       )
     }
   })

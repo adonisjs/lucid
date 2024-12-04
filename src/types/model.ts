@@ -9,7 +9,12 @@
 
 import { DateTime } from 'luxon'
 import type Hooks from '@poppinss/hooks'
-import { DialectContract, QueryClientContract, TransactionClientContract } from './database.js'
+import {
+  DialectContract,
+  IsolationLevels,
+  QueryClientContract,
+  TransactionClientContract,
+} from './database.js'
 
 import {
   Update,
@@ -36,6 +41,7 @@ import {
   WhereHas,
   WithAggregate,
   WithCount,
+  PreloadWithoutCallback,
 } from './relations.js'
 
 /**
@@ -313,6 +319,9 @@ export type ModelAssignOptions = ModelAdapterOptions & {
 export interface LucidRowPreload<Model extends LucidRow> extends Preload<Model, Promise<void>> {
   (callback: (preloader: PreloaderContract<Model>) => void): Promise<void>
 }
+
+export interface LucidRowPreloadOnce<Model extends LucidRow>
+  extends PreloadWithoutCallback<Model, Promise<void>> {}
 
 export interface LucidRowAggregate<Model extends LucidRow> extends Preload<Model, Promise<void>> {
   (callback: (preloader: PreloaderContract<Model>) => void): Promise<void>
@@ -609,6 +618,8 @@ export interface LucidRow {
   fill(value: Partial<ModelAttributes<this>>, allowExtraProperties?: boolean): this
   merge(value: Partial<ModelAttributes<this>>, allowExtraProperties?: boolean): this
 
+  isDirty(fields?: keyof ModelAttributes<this> | (keyof ModelAttributes<this>)[]): boolean
+
   /**
    * Enable force update even when no attributes
    * are dirty
@@ -642,6 +653,12 @@ export interface LucidRow {
    * Load relationships onto the instance
    */
   load: LucidRowPreload<this>
+
+  /**
+   * Load relationships onto the instance, but only if they are not
+   * already preloaded
+   */
+  loadOnce: LucidRowPreloadOnce<this>
 
   /**
    * Alias for "load"
@@ -976,6 +993,15 @@ export interface LucidModel {
   ): Promise<InstanceType<T>>
 
   /**
+   * Find one using a clause
+   */
+  findBy<T extends LucidModel>(
+    this: T,
+    clause: Record<string, unknown>,
+    options?: ModelAdapterOptions
+  ): Promise<null | InstanceType<T>>
+
+  /**
    * Find one using a key-value pair
    */
   findBy<T extends LucidModel>(
@@ -986,6 +1012,15 @@ export interface LucidModel {
   ): Promise<null | InstanceType<T>>
 
   /**
+   * Find one using a clause or fail
+   */
+  findByOrFail<T extends LucidModel>(
+    this: T,
+    clause: Record<string, unknown>,
+    options?: ModelAdapterOptions
+  ): Promise<InstanceType<T>>
+
+  /**
    * Find one using a key-value pair or fail
    */
   findByOrFail<T extends LucidModel>(
@@ -994,6 +1029,25 @@ export interface LucidModel {
     value: any,
     options?: ModelAdapterOptions
   ): Promise<InstanceType<T>>
+
+  /**
+   * Find multiple models instance using a clause
+   */
+  findManyBy<T extends LucidModel>(
+    this: T,
+    clause: Record<string, unknown>,
+    options?: ModelAdapterOptions
+  ): Promise<InstanceType<T>[]>
+
+  /**
+   * Find multiple models instance using a key/value pair
+   */
+  findManyBy<T extends LucidModel>(
+    this: T,
+    key: string,
+    value: any,
+    options?: ModelAdapterOptions
+  ): Promise<InstanceType<T>[]>
 
   /**
    * Same as `query().first()`
@@ -1095,6 +1149,14 @@ export interface LucidModel {
     this: Model,
     options?: ModelAdapterOptions
   ): ModelQueryBuilderContract<Model, Result>
+
+  /**
+   * Returns transaction client from the model. It is same as
+   * calling "db.transaction"
+   */
+  transaction(
+    options?: ModelAdapterOptions & { isolationLevel?: IsolationLevels }
+  ): Promise<TransactionClientContract>
 
   /**
    * Truncate model table

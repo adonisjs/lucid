@@ -120,6 +120,16 @@ export default class DatabaseServiceProvider {
   }
 
   /**
+   * Registeres a listener to pretty print debug queries
+   */
+  protected async prettyPrintDebugQueries(db: Database) {
+    if (db.config.prettyPrintDebugQueries) {
+      const emitter = await this.app.container.make('emitter')
+      emitter.on('db:query', db.prettyPrint)
+    }
+  }
+
+  /**
    * Invoked by AdonisJS to register container bindings
    */
   register() {
@@ -127,7 +137,8 @@ export default class DatabaseServiceProvider {
       const config = this.app.config.get<DatabaseConfig>('database')
       const emitter = await resolver.make('emitter')
       const logger = await resolver.make('logger')
-      return new Database(config, logger, emitter)
+      const db = new Database(config, logger, emitter)
+      return db
     })
 
     this.app.container.singleton(QueryClient, async (resolver) => {
@@ -146,6 +157,7 @@ export default class DatabaseServiceProvider {
     const db = await this.app.container.make('lucid.db')
     BaseModel.$adapter = new Adapter(db)
 
+    await this.prettyPrintDebugQueries(db)
     await this.registerTestUtils()
     await this.registerReplBindings()
     await this.registerVineJSRules(db)

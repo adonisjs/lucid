@@ -36,7 +36,7 @@ export default abstract class MigrationsBase extends BaseCommand {
   /**
    * Prompts to take consent for running migrations in production
    */
-  protected async takeProductionConstent(): Promise<boolean> {
+  protected async takeProductionConsent(): Promise<boolean> {
     const question = 'You are in production environment. Want to continue running migrations?'
     try {
       return await this.prompt.confirm(question)

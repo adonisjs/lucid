@@ -95,7 +95,7 @@ export class HasManyQueryBuilder
     this.appliedConstraints = true
 
     /**
-     * Eager query contraints
+     * Eager query constraints
      */
     if (Array.isArray(this.parent)) {
       this.wrapExisting().whereIn(

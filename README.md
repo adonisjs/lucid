@@ -19,7 +19,7 @@ We encourage you to read the [contribution guide](https://github.com/adonisjs/.g
 Easiest way to run tests is to launch the redis cluster using docker-compose and `docker-compose.yml` file.
 
 ```sh
-docker-compose up
+docker-compose up -d
 npm run test
 ```
 

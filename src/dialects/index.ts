@@ -10,14 +10,20 @@
 import { PgDialect } from './pg.js'
 import { MysqlDialect } from './mysql.js'
 import { MssqlDialect } from './mssql.js'
+import { LibSQLDialect } from './libsql.js'
 import { SqliteDialect } from './sqlite.js'
 import { OracleDialect } from './oracle.js'
 import { RedshiftDialect } from './red_shift.js'
 import { BetterSqliteDialect } from './better_sqlite.js'
-import { DialectContract, QueryClientContract, SharedConfigNode } from '../types/database.js'
+import {
+  DialectContract,
+  SharedConfigNode,
+  QueryClientContract,
+  ConnectionContract,
+} from '../types/database.js'
 
-export const dialects: {
-  [key: string]: {
+export const clientsToDialectsMapping: {
+  [K in ConnectionContract['clientName']]: {
     new (client: QueryClientContract, config: SharedConfigNode): DialectContract
   }
 } = {
@@ -28,5 +34,10 @@ export const dialects: {
   'postgres': PgDialect,
   'redshift': RedshiftDialect,
   'sqlite3': SqliteDialect,
+  'libsql': LibSQLDialect,
   'better-sqlite3': BetterSqliteDialect,
 }
+
+export const clientsNames = Object.keys(
+  clientsToDialectsMapping
+) as ConnectionContract['clientName'][]

@@ -146,6 +146,19 @@ export class Preloader implements PreloaderContract<LucidRow> {
   }
 
   /**
+   * Clone preloader instance
+   */
+  clone() {
+    const clone = new Preloader(this.model)
+
+    clone.preloads = Object.assign({}, this.preloads)
+    clone.sideloaded = Object.assign({}, this.sideloaded)
+    clone.debugQueries = this.debugQueries
+
+    return clone
+  }
+
+  /**
    * Process of all the preloaded relationships for a single parent
    */
   async processAllForOne(parent: LucidRow, client: QueryClientContract) {

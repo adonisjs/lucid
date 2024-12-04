@@ -32,6 +32,8 @@ import { ReferenceBuilder } from './static_builder/reference.js'
 import { SimplePaginator } from './paginator/simple_paginator.js'
 import { DatabaseQueryBuilder } from './query_builder/database.js'
 
+export { DbCheck } from './checks/db_check.js'
+export { DbConnectionCountCheck } from './checks/db_connection_count_check.js'
 export { DatabaseQueryBuilder, InsertQueryBuilder, SimplePaginator, QueryClient }
 
 /**
@@ -53,11 +55,10 @@ export class Database extends Macroable {
    * A store of global transactions
    */
   connectionGlobalTransactions: Map<string, TransactionClientContract> = new Map()
-  hasHealthChecksEnabled = false
   prettyPrint = prettyPrint
 
   constructor(
-    private config: DatabaseConfig,
+    public config: DatabaseConfig,
     private logger: Logger,
     private emitter: Emitter<any>
   ) {
@@ -66,23 +67,6 @@ export class Database extends Macroable {
     this.primaryConnectionName = this.config.connection
 
     this.registerConnections()
-    this.findIfHealthChecksAreEnabled()
-  }
-
-  /**
-   * Compute whether health check is enabled or not after registering the connections.
-   * There are chances that all pre-registered connections are not using health
-   * checks but a dynamic connection is using it. We don't support that use case
-   * for now, since it complicates things a lot and forces us to register the
-   * health checker on demand.
-   */
-  private findIfHealthChecksAreEnabled() {
-    for (let [, conn] of this.manager.connections) {
-      if (conn.config.healthCheck) {
-        this.hasHealthChecksEnabled = true
-        break
-      }
-    }
   }
 
   /**
@@ -252,13 +236,6 @@ export class Database extends Macroable {
     return typeof callbackOrOptions === 'function'
       ? client.transaction(callbackOrOptions, options)
       : client.transaction(callbackOrOptions)
-  }
-
-  /**
-   * Invokes `manager.report`
-   */
-  report() {
-    return this.manager.report()
   }
 
   /**

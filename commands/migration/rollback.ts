@@ -35,7 +35,7 @@ export default class Rollback extends MigrationsBase {
   /**
    * Force run migrations in production
    */
-  @flags.boolean({ description: 'Explictly force to run migrations in production' })
+  @flags.boolean({ description: 'Explicitly force to run migrations in production' })
   declare force: boolean
 
   /**
@@ -51,6 +51,14 @@ export default class Rollback extends MigrationsBase {
     description: 'Define custom batch number for rollback. Use 0 to rollback to initial state',
   })
   declare batch: number
+
+  /**
+   * Define custom step, instead of rolling back to the latest batch
+   */
+  @flags.number({
+    description: 'The number of migrations to be reverted',
+  })
+  declare step: number
 
   /**
    * Display migrations result in one compact single-line output
@@ -74,6 +82,7 @@ export default class Rollback extends MigrationsBase {
       direction: 'down',
       connectionName: this.connection,
       batch: this.batch,
+      step: this.step,
       dryRun: this.dryRun,
       disableLocks: this.disableLocks,
     })
@@ -93,7 +102,7 @@ export default class Rollback extends MigrationsBase {
      */
     let continueMigrations = !this.app.inProduction || this.force
     if (!continueMigrations) {
-      continueMigrations = await this.takeProductionConstent()
+      continueMigrations = await this.takeProductionConsent()
     }
 
     /**

@@ -46,6 +46,12 @@ export default class Refresh extends BaseCommand {
   declare seed: boolean
 
   /**
+   * Display migrations result in one compact single-line output
+   */
+  @flags.boolean({ description: 'A compact single-line output' })
+  declare compactOutput: boolean
+
+  /**
    * Disable advisory locks
    */
   @flags.boolean({ description: 'Disable locks acquired to run migrations safely' })
@@ -58,6 +64,10 @@ export default class Refresh extends BaseCommand {
     const args: string[] = []
     if (this.force) {
       args.push('--force')
+    }
+
+    if (this.compactOutput) {
+      args.push('--compact-output')
     }
 
     if (this.connection) {

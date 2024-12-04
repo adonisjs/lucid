@@ -75,7 +75,7 @@ export class HasManyThroughQueryBuilder
     const queryAction = this.queryAction()
 
     /**
-     * Eager query contraints
+     * Eager query constraints
      */
     if (Array.isArray(this.parent)) {
       builder.whereIn(

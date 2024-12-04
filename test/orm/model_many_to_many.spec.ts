@@ -57,7 +57,10 @@ test.group('Model | ManyToMany | Options', (group) => {
       User.boot()
       User.$getRelation('skills')!.boot()
     } catch ({ message }) {
-      assert.equal(message, '"User.skills" expects "id" to exist on "User" model, but is missing')
+      assert.equal(
+        message,
+        'Relation "User.skills" expects "id" to exist on "User" model, but is missing. Did you forget to define the column?'
+      )
     }
   })
 
@@ -141,7 +144,10 @@ test.group('Model | ManyToMany | Options', (group) => {
       User.boot()
       User.$getRelation('skills')!.boot()
     } catch ({ message }) {
-      assert.equal(message, '"User.skills" expects "id" to exist on "Skill" model, but is missing')
+      assert.equal(
+        message,
+        'Relation "User.skills" expects "id" to exist on "Skill" model, but is missing. Did you forget to define the column?'
+      )
     }
   })
 
@@ -775,8 +781,8 @@ test.group('Model | ManyToMany | bulk operations', (group) => {
     assert.equal(skills[0].name, 'Programming')
     assert.equal(skills[0].$extras.pivot_user_id, 1)
     assert.equal(skills[0].$extras.pivot_skill_id, 1)
-    assert.instanceOf(skills[0].$extras.pivot_created_at, DateTime)
-    assert.instanceOf(skills[0].$extras.pivot_updated_at, DateTime)
+    assert.instanceOf(skills[0].$extras.pivot_created_at, DateTime as any)
+    assert.instanceOf(skills[0].$extras.pivot_updated_at, DateTime as any)
   })
 })
 
@@ -1337,8 +1343,8 @@ test.group('Model | ManyToMany | preload', (group) => {
     assert.equal(users[0].skills[0].name, 'Programming')
     assert.equal(users[0].skills[0].$extras.pivot_user_id, 1)
     assert.equal(users[0].skills[0].$extras.pivot_skill_id, 1)
-    assert.instanceOf(users[0].skills[0].$extras.pivot_created_at, DateTime)
-    assert.instanceOf(users[0].skills[0].$extras.pivot_updated_at, DateTime)
+    assert.instanceOf(users[0].skills[0].$extras.pivot_created_at, DateTime as any)
+    assert.instanceOf(users[0].skills[0].$extras.pivot_updated_at, DateTime as any)
   })
 
   test('preload relation for many', async ({ fs, assert }) => {
@@ -1540,8 +1546,8 @@ test.group('Model | ManyToMany | preload', (group) => {
     assert.equal(users[0].skills[0].name, 'Programming')
     assert.equal(users[0].skills[0].$extras.pivot_user_id, 1)
     assert.equal(users[0].skills[0].$extras.pivot_skill_id, 1)
-    assert.instanceOf(users[0].skills[0].$extras.pivot_created_at, DateTime)
-    assert.instanceOf(users[0].skills[0].$extras.pivot_updated_at, DateTime)
+    assert.instanceOf(users[0].skills[0].$extras.pivot_created_at, DateTime as any)
+    assert.instanceOf(users[0].skills[0].$extras.pivot_updated_at, DateTime as any)
   })
 
   test('select extra pivot columns', async ({ fs, assert }) => {

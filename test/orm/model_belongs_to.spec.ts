@@ -53,7 +53,10 @@ test.group('Model | BelongsTo | Options', (group) => {
       Profile.boot()
       Profile.$getRelation('user')!.boot()
     } catch ({ message }) {
-      assert.equal(message, '"Profile.user" expects "id" to exist on "User" model, but is missing')
+      assert.equal(
+        message,
+        'Relation "Profile.user" expects "id" to exist on "User" model, but is missing. Did you forget to define the column?'
+      )
     }
   })
 
@@ -84,7 +87,7 @@ test.group('Model | BelongsTo | Options', (group) => {
     } catch ({ message }) {
       assert.equal(
         message,
-        '"Profile.user" expects "userId" to exist on "Profile" model, but is missing'
+        'Relation "Profile.user" expects "userId" to exist on "Profile" model, but is missing. Did you forget to define the column?'
       )
     }
   })
@@ -1213,6 +1216,67 @@ test.group('Model | BelongsTo | preload', (group) => {
 
     assert.instanceOf(profile.user, User)
     assert.equal(profile.user.id, profile.userId)
+  })
+
+  test('preload once using model instance', async ({ assert, fs }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter)
+
+    let queryCount = 0
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+    }
+
+    class Profile extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+
+      @column()
+      declare userId: number
+
+      @column()
+      declare displayName: string
+
+      @belongsTo(() => User, {
+        onQuery() {
+          queryCount++
+        },
+      })
+      declare user: BelongsTo<typeof User>
+    }
+
+    await db
+      .insertQuery()
+      .table('users')
+      .insert([{ username: 'virk' }])
+
+    const users = await db.query().from('users')
+    await db
+      .insertQuery()
+      .table('profiles')
+      .insert([
+        {
+          user_id: users[0].id,
+          display_name: 'virk',
+        },
+        {
+          user_id: users[0].id,
+          display_name: 'virk',
+        },
+      ])
+
+    const profile = await Profile.findOrFail(1)
+    await profile.loadOnce('user')
+    await profile.loadOnce('user')
+
+    assert.instanceOf(profile.user, User)
+    assert.equal(profile.user.id, profile.userId)
+    assert.equal(queryCount, 1)
   })
 
   test('preload nested relations', async ({ assert, fs }) => {

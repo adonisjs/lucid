@@ -10,11 +10,10 @@
 import { Knex } from 'knex'
 import { test } from '@japa/runner'
 import { MysqlConfig } from '../../src/types/database.js'
-
 import { Connection } from '../../src/connection/index.js'
 import { setup, cleanup, getConfig, resetTables, logger } from '../../test-helpers/index.js'
 
-if (process.env.DB !== 'sqlite') {
+if (!['sqlite', 'better_sqlite', 'libsql'].includes(process.env.DB!)) {
   test.group('Connection | config', (group) => {
     group.setup(async () => {
       await setup()
@@ -124,27 +123,40 @@ test.group('Connection | setup', (group) => {
     await connection.disconnect()
   }).waitForDone()
 
-  test('raise error when unable to make connection', ({ assert }, done) => {
-    assert.plan(2)
+  test('cleanup read/write clients when connection is closed', async ({ assert }) => {
+    let disconnectEmitsCount = 0
 
-    const connection = new Connection(
-      'primary',
-      Object.assign({}, getConfig(), { client: null }),
-      logger
-    )
+    const config = getConfig()
+    config.replicas! = {
+      write: {
+        connection: {
+          host: '10.0.0.1',
+        },
+      },
+      read: {
+        connection: [
+          {
+            host: '10.0.0.1',
+          },
+        ],
+      },
+    }
 
-    connection.on('error', ({ message }) => {
-      try {
-        assert.equal(message, "knex: Required configuration option 'client' is missing.")
-        done()
-      } catch (error) {
-        done(error)
-      }
+    const connection = new Connection('primary', config, logger)
+    connection.connect()
+    connection.readPool?.on('poolDestroySuccess', () => {
+      disconnectEmitsCount++
+    })
+    connection.pool?.on('poolDestroySuccess', () => {
+      disconnectEmitsCount++
     })
 
-    const fn = () => connection.connect()
-    assert.throws(fn, /knex: Required configuration option/)
-  }).waitForDone()
+    await connection.disconnect()
+
+    assert.equal(disconnectEmitsCount, 2)
+    assert.isUndefined(connection.client)
+    assert.isUndefined(connection.readClient)
+  }).skip(['sqlite', 'better_sqlite', 'libsql'].includes(process.env.DB!))
 })
 
 if (process.env.DB === 'mysql') {
@@ -164,75 +176,3 @@ if (process.env.DB === 'mysql') {
     })
   })
 }
-
-test.group('Health Checks', (group) => {
-  group.setup(async () => {
-    await setup()
-  })
-
-  group.teardown(async () => {
-    await cleanup()
-  })
-
-  test('get healthcheck report for healthy connection', async ({ assert }) => {
-    const connection = new Connection('primary', getConfig(), logger)
-    connection.connect()
-
-    const report = await connection.getReport()
-    assert.deepEqual(report, {
-      connection: 'primary',
-      message: 'Connection is healthy',
-      error: null,
-    })
-
-    await connection.disconnect()
-  })
-
-  if (!['sqlite', 'better_sqlite'].includes(process.env.DB!)) {
-    test('get healthcheck report for un-healthy connection', async ({ assert }) => {
-      const connection = new Connection(
-        'primary',
-        Object.assign({}, getConfig(), {
-          connection: {
-            host: 'bad-host',
-          },
-        }),
-        logger
-      )
-      connection.connect()
-
-      const report = await connection.getReport()
-      assert.equal(report.message, 'Unable to reach the database server')
-      assert.exists(report.error)
-
-      await connection.disconnect()
-    }).timeout(0)
-
-    test('get healthcheck report for un-healthy read host', async ({ assert }) => {
-      const connection = new Connection(
-        'primary',
-        Object.assign({}, getConfig(), {
-          replicas: {
-            write: {
-              connection: getConfig().connection,
-            },
-            read: {
-              connection: [
-                getConfig().connection,
-                Object.assign({}, getConfig().connection, { host: 'bad-host', port: 8000 }),
-              ],
-            },
-          },
-        }),
-        logger
-      )
-      connection.connect()
-
-      const report = await connection.getReport()
-      assert.equal(report.message, 'Unable to reach one of the read hosts')
-      assert.exists(report.error)
-
-      await connection.disconnect()
-    }).timeout(0)
-  }
-})

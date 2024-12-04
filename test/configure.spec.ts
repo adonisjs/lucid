@@ -133,7 +133,42 @@ test.group('Configure', (group) => {
 
     const ace = await app.container.make('ace')
     ace.prompt.trap('Select the database you want to use').chooseOption(0)
-    ace.prompt.trap('Do you want to install additional packages required by "@adonisjs/lucid"?')
+    ace.prompt
+      .trap('Do you want to install additional packages required by "@adonisjs/lucid"?')
+      .reject()
+
+    const command = await ace.create(Configure, ['../../index.js'])
+    await command.exec()
+
+    await assert.dirExists('tmp')
+  })
+
+  test('create tmp directory for libsql dialect', async ({ fs, assert }) => {
+    const ignitor = new IgnitorFactory()
+      .withCoreProviders()
+      .withCoreConfig()
+      .create(BASE_URL, {
+        importer: (filePath) => {
+          if (filePath.startsWith('./') || filePath.startsWith('../')) {
+            return import(new URL(filePath, BASE_URL).href)
+          }
+
+          return import(filePath)
+        },
+      })
+
+    const app = ignitor.createApp('web')
+    await app.init()
+    await app.boot()
+
+    await fs.createJson('tsconfig.json', {})
+    await fs.create('adonisrc.ts', `export default defineConfig({})`)
+
+    const ace = await app.container.make('ace')
+    ace.prompt.trap('Select the database you want to use').chooseOption(1)
+    ace.prompt
+      .trap('Do you want to install additional packages required by "@adonisjs/lucid"?')
+      .reject()
 
     const command = await ace.create(Configure, ['../../index.js'])
     await command.exec()
@@ -165,7 +200,9 @@ test.group('Configure', (group) => {
 
     const ace = await app.container.make('ace')
     ace.prompt.trap('Select the database you want to use').chooseOption(0)
-    ace.prompt.trap('Do you want to install additional packages required by "@adonisjs/lucid"?')
+    ace.prompt
+      .trap('Do you want to install additional packages required by "@adonisjs/lucid"?')
+      .reject()
 
     const command = await ace.create(Configure, ['../../index.js'])
     await command.exec()

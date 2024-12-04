@@ -59,6 +59,8 @@ export class BelongsTo implements BelongsToRelationContract<LucidModel, LucidMod
    */
   onQueryHook
 
+  declare meta?: any
+
   constructor(
     public relationName: string,
     public relatedModel: () => LucidModel,
@@ -68,6 +70,7 @@ export class BelongsTo implements BelongsToRelationContract<LucidModel, LucidMod
     this.onQueryHook = this.options.onQuery
     this.serializeAs =
       this.options.serializeAs === undefined ? this.relationName : this.options.serializeAs
+    this.meta = this.options.meta
   }
 
   /**

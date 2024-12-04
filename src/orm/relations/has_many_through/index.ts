@@ -59,6 +59,8 @@ export class HasManyThrough implements HasManyThroughRelationContract<LucidModel
   declare throughForeignKey: string
   declare throughForeignKeyColumnName: string
 
+  declare meta?: any
+
   constructor(
     public relationName: string,
     public relatedModel: () => LucidModel,
@@ -75,6 +77,7 @@ export class HasManyThrough implements HasManyThroughRelationContract<LucidModel
     this.throughModel = this.options.throughModel
     this.serializeAs =
       this.options.serializeAs === undefined ? this.relationName : this.options.serializeAs
+    this.meta = this.options.meta
   }
 
   /**
