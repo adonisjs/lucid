@@ -68,8 +68,8 @@ declare module '@vinejs/vine' {
      * Ensure the value exists inside the database by self
      * executing a query.
      *
-     * - The callback must return "false", if the value exists.
-     * - The callback must return "true", if the value does not exist.
+     * - The callback must return "true", if the value exists.
+     * - The callback must return "false", if the value does not exist.
      */
     exists(callback: VineDbSearchCallback<ValueType>): this
   }
