@@ -16,6 +16,7 @@ await Env.create(new URL('../', import.meta.url), {})
 
 export const APP_ROOT = new URL('./tmp', import.meta.url)
 export const SQLITE_BASE_PATH = fileURLToPath(APP_ROOT)
+export const SUPPORTS_READ_WRITE_REPLICAS = ['pg', 'mysql'].includes(process.env.DB!)
 
 /**
  * Returns the config for constructing a new connection based

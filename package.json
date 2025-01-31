@@ -16,7 +16,11 @@
   },
   "scripts": {
     "pretest": "npm run lint",
-    "test": "c8 npm run quick:test",
+    "test": "npm run test:sqlite && npm run test:pg && npm run test:mysql",
+    "test:mysql": "DB=mysql npm run test:run",
+    "test:mssql": "DB=mssql npm run test:run",
+    "test:sqlite": "DB=sqlite npm run test:run",
+    "test:pg": "DB=pg npm run test:run",
     "lint": "eslint .",
     "format": "prettier --write .",
     "typecheck": "tsc --noEmit",
@@ -26,7 +30,8 @@
     "version": "npm run build",
     "prepublishOnly": "npm run build",
     "release": "release-it",
-    "quick:test": "DB=sqlite NODE_DEBUG=adonisjs:lucid node --import=ts-node-maintained/register/esm --enable-source-maps bin/test.ts"
+    "test:run": "node --import=ts-node-maintained/register/esm --enable-source-maps bin/test.ts",
+    "quick:test": "DB=sqlite NODE_DEBUG=adonisjs:lucid npm run test:run"
   },
   "devDependencies": {
     "@adonisjs/env": "^6.1.1",
