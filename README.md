@@ -1,4 +1,4 @@
-# <pkg-name>
+# @adonisjs/lucid
 
 <br />
 
