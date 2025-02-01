@@ -16,7 +16,7 @@ await Env.create(new URL('../', import.meta.url), {})
 
 export const APP_ROOT = new URL('./tmp', import.meta.url)
 export const SQLITE_BASE_PATH = fileURLToPath(APP_ROOT)
-export const SUPPORTS_READ_WRITE_REPLICAS = ['pg', 'mysql'].includes(process.env.DB!)
+export const SUPPORTS_READ_WRITE_REPLICAS = ['pg', 'mysql', 'mssql'].includes(process.env.DB!)
 
 /**
  * Returns the config for constructing a new connection based
@@ -51,6 +51,20 @@ export function getConnectionConfig() {
           database: process.env.PG_DATABASE as string,
           user: process.env.PG_USER as string,
           password: process.env.PG_PASSWORD as string,
+        },
+        debug: !!process.env.DEBUG,
+      })
+    case 'mssql':
+      return clients.mssql({
+        connection: {
+          server: process.env.MSSQL_HOST as string,
+          port: Number(process.env.MSSQL_PORT! as string),
+          user: process.env.MSSQL_USER as string,
+          password: process.env.MSSQL_PASSWORD as string,
+          database: 'master',
+          options: {
+            enableArithAbort: true,
+          },
         },
         debug: !!process.env.DEBUG,
       })

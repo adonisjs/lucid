@@ -71,7 +71,7 @@ test.group('Connection | config', () => {
 
     const connection = new Connection('primary', config)
     assert.deepEqual(connection.readClient!.client.config.connection, {
-      database: 'lucid',
+      database: config.connection.database,
     })
   }).skip(!SUPPORTS_READ_WRITE_REPLICAS)
 
@@ -97,7 +97,7 @@ test.group('Connection | config', () => {
      * All other properties are provided via round-robin
      */
     assert.deepEqual(connection.readClient!.client.config.connection, {
-      database: 'lucid',
+      database: config.connection.database,
     })
   }).skip(!SUPPORTS_READ_WRITE_REPLICAS)
 

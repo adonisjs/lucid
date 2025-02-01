@@ -16,7 +16,7 @@
   },
   "scripts": {
     "pretest": "npm run lint",
-    "test": "npm run test:sqlite && npm run test:pg && npm run test:mysql",
+    "test": "npm run test:sqlite && npm run test:pg && npm run test:mysql && npm run test:mssql",
     "test:mysql": "DB=mysql npm run test:run",
     "test:mssql": "DB=mssql npm run test:run",
     "test:sqlite": "DB=sqlite npm run test:run",

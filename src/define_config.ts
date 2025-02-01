@@ -7,6 +7,7 @@
  * file that was distributed with this source code.
  */
 
+import type { Knex } from 'knex'
 import type { ConnectionConfig as PGConnectionOptions } from 'pg'
 import type { ConnectionOptions as MySQL2ConnectionOptions } from 'mysql2'
 import type { Options as BetterSQLiteConnectionOptions } from 'better-sqlite3'
@@ -75,6 +76,32 @@ export const clients = {
       clientName: 'better-sqlite3',
       dialectName: 'sqlite3',
       client: 'better-sqlite3',
+      ...options,
+    } satisfies ConnectionConfig
+  },
+
+  /**
+   * Define connection options for the "tedious" client. Make sure
+   * to install the following packages first.
+   *
+   * ```sh
+   * npm i tedious
+   * ```
+   */
+  mssql(
+    options: SharedConfigOptions & {
+      connection: Knex.MsSqlConnectionConfig & {
+        /**
+         * User is supported by the Knex runtime code
+         */
+        user: string
+      }
+    }
+  ) {
+    return {
+      clientName: 'mssql',
+      dialectName: 'mssql',
+      client: 'mssql',
       ...options,
     } satisfies ConnectionConfig
   },
