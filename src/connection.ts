@@ -10,10 +10,11 @@
 import type { Pool } from 'tarn'
 import knex, { Knex } from 'knex'
 import { patchKnex } from 'knex-dynamic-connection'
+import { RuntimeException } from '@poppinss/exception'
 
 import { debug } from './debug.js'
 import * as errors from './errors.js'
-import type { ConnectionConfig, SupportedDialectNames } from './types.js'
+import type { ConnectionConfig, SupportedDialectNames } from './types/connection.js'
 
 export class Connection {
   #state: {
@@ -274,6 +275,38 @@ export class Connection {
   onCloseError(callback: (error: any, connection: Connection) => void) {
     this.#state.closeErrorCallbacks.push(callback)
     return this
+  }
+
+  /**
+   * Returns reference to the knex client to be used for
+   * making write queries.
+   *
+   * An exception is thrown when the connection has been closed
+   * and no client exists
+   */
+  getWriteClient(): Knex {
+    if (!this.client) {
+      throw new RuntimeException(
+        'Cannot access connection client. Connection has already been closed'
+      )
+    }
+    return this.client
+  }
+
+  /**
+   * Returns reference to the knex client to be used for
+   * making read queries.
+   *
+   * An exception is thrown when the connection has been closed
+   * and no client exists
+   */
+  getReadClient(): Knex {
+    if (!this.readClient) {
+      throw new RuntimeException(
+        'Cannot access connection client. Connection has already been closed'
+      )
+    }
+    return this.readClient
   }
 
   /**

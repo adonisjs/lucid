@@ -7,11 +7,13 @@
  * file that was distributed with this source code.
  */
 
-import type { Knex } from 'knex'
-import type { ConnectionConfig as PGConnectionOptions } from 'pg'
-import type { ConnectionOptions as MySQL2ConnectionOptions } from 'mysql2'
-import type { Options as BetterSQLiteConnectionOptions } from 'better-sqlite3'
-import type { ConnectionConfig, SharedConfigOptions } from './types.js'
+import type {
+  PGConfigOptions,
+  ConnectionConfig,
+  MySQL2ConfigOptions,
+  TediousConfigOptions,
+  BetterSQLiteConfigOptions,
+} from './types/connection.js'
 
 export const clients = {
   /**
@@ -22,11 +24,7 @@ export const clients = {
    * npm i mysql2
    * ```
    */
-  mysql2(
-    options: SharedConfigOptions & {
-      connection: MySQL2ConnectionOptions
-    }
-  ) {
+  mysql2(options: Omit<MySQL2ConfigOptions, 'clientName' | 'dialectName' | 'client'>) {
     return {
       clientName: 'mysql2',
       dialectName: 'mysql',
@@ -43,11 +41,7 @@ export const clients = {
    * npm i pg @types/pg
    * ```
    */
-  pg(
-    options: SharedConfigOptions & {
-      connection: PGConnectionOptions
-    }
-  ) {
+  pg(options: Omit<PGConfigOptions, 'clientName' | 'dialectName' | 'client'>) {
     return {
       clientName: 'pg',
       dialectName: 'postgres',
@@ -64,14 +58,7 @@ export const clients = {
    * npm i better-sqlite3 @types/better-sqlite3
    * ```
    */
-  betterSqlite3(
-    options: SharedConfigOptions & {
-      connection: {
-        filename: string
-        options?: BetterSQLiteConnectionOptions
-      }
-    }
-  ) {
+  betterSqlite3(options: Omit<BetterSQLiteConfigOptions, 'clientName' | 'dialectName' | 'client'>) {
     return {
       clientName: 'better-sqlite3',
       dialectName: 'sqlite3',
@@ -88,16 +75,7 @@ export const clients = {
    * npm i tedious
    * ```
    */
-  mssql(
-    options: SharedConfigOptions & {
-      connection: Knex.MsSqlConnectionConfig & {
-        /**
-         * User is supported by the Knex runtime code
-         */
-        user: string
-      }
-    }
-  ) {
+  mssql(options: Omit<TediousConfigOptions, 'clientName' | 'dialectName' | 'client'>) {
     return {
       clientName: 'mssql',
       dialectName: 'mssql',
