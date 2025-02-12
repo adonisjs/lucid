@@ -7,10 +7,74 @@
  * file that was distributed with this source code.
  */
 
+import type { Knex } from 'knex'
 import { debug } from '../debug.js'
+import { ColumnInfo } from '../types/common.js'
 import type { Connection } from '../connection.js'
 import { AbstractDialect } from './abstract_dialect.js'
 import type { PGConfigOptions } from '../types/connection.js'
+
+/**
+ * PostgreSQL types with static values. The list contains
+ * only the types we want to re-map to the "ColumnInfo.type".
+ */
+const PG_STATIC_TYPES: Record<string, ColumnInfo['type']> = {
+  'smallint': 'number',
+  'integer': 'number',
+  'bigint': 'bigInt',
+  'decimal': 'number',
+  'numeric': 'number',
+  'real': 'number',
+  'double precision': 'number',
+  'smallserial': 'number',
+  'serial': 'number',
+  'bigserial': 'bigInt',
+  'money': 'bigInt',
+  'character varying': 'string',
+  'character': 'string',
+  'bpchar': 'string',
+  'text': 'string',
+  'timestamp': 'dateTime',
+  'date': 'date',
+  'time': 'time',
+  'interval': 'string',
+  'boolean': 'boolean',
+  'cidr': 'string',
+  'inet': 'string',
+  'macaddr': 'string',
+  'macaddr8': 'string',
+  'uuid': 'string',
+}
+
+/**
+ * PostgreSQL remapping for types with attributes.
+ */
+const PG_VARYING_REMAPS = [
+  {
+    matches: 'bit',
+    type: 'bit',
+  },
+  {
+    matches: 'character',
+    type: 'character',
+  },
+  {
+    matches: 'interval',
+    type: 'interval',
+  },
+  {
+    matches: 'numeric',
+    type: 'numeric',
+  },
+  {
+    matches: 'time',
+    type: 'time',
+  },
+  {
+    matches: 'timestamp',
+    type: 'timestamp',
+  },
+]
 
 export class PgDialect extends AbstractDialect {
   #connection: Connection
@@ -115,6 +179,67 @@ export class PgDialect extends AbstractDialect {
     }
 
     return query
+  }
+
+  /**
+   * Creates the query to find all columns of a table.
+   */
+  #compileAllColumnsQuery(table: string) {
+    const knex = this.#connection.getWriteClient()
+
+    const query = knex
+      .from('pg_attribute AS a')
+      .select([
+        'a.attname AS name',
+        't.typname AS type_name',
+        knex.raw('format_type(a.atttypid, a.atttypmod) AS type'),
+        'a.attnotnull AS not_nullable',
+        't.typtype AS type_code',
+        knex.raw(`
+        CASE
+          WHEN t.typtype = 'd' THEN format_type(t.typbasetype, t.typtypmod)
+        END AS domain_type
+      `),
+        knex.raw(`
+        CASE
+          WHEN t.typtype = 'd' THEN NOT t.typnotnull
+        END AS domain_nullable
+      `),
+        knex.raw(`
+        CASE
+          WHEN t.typtype = 'e' THEN (
+            SELECT
+              array_to_json(array_agg(
+                e.enumlabel
+                ORDER BY
+                  e.enumsortorder
+              )) AS enum_value
+            FROM
+              pg_enum AS e
+            WHERE
+              a.atttypid = e.enumtypid
+          )
+        END AS enum_value
+      `),
+      ])
+      .innerJoin('pg_type as t', 't.oid', 'a.atttypid')
+      .where('a.attrelid', knex.raw(`?::regclass`, [table]))
+      .andWhere('a.attnum', '>', 0)
+      .andWhereNot('a.attisdropped', true)
+
+    return query as Knex.QueryBuilder<
+      {},
+      {
+        name: string
+        type_name: string
+        type: string
+        not_nullable: boolean
+        type_code: 'b' | 'd' | 'c' | 'e' | 'r' | 'm' | 'p'
+        domain_type: string | null
+        domain_nullable: boolean | null
+        enum_value: string[] | null
+      }[]
+    >
   }
 
   /**
@@ -232,6 +357,63 @@ export class PgDialect extends AbstractDialect {
         type,
         category,
       }
+    })
+  }
+
+  /**
+   * Returns an array of columns for a given table.
+   *
+   * @example
+   * ```ts
+   * dialect.getAllColumns('users')
+   *
+   * // Get from a specific schema
+   * dialect.getAllColumns('search.users')
+   * ```
+   */
+  async getAllColumns(table: string): Promise<ColumnInfo[]> {
+    const columns = await this.#compileAllColumnsQuery(table)
+    debug('%s: getColumns %O', this.#connection.identifier, columns)
+
+    return columns.map((column) => {
+      const columnInfo: ColumnInfo = {
+        name: column.name,
+        type: PG_STATIC_TYPES[column.type] ?? 'any',
+        dialectType: column.type,
+        nullable: !column.not_nullable,
+        optional: false,
+      }
+
+      /**
+       * Overrides when column type is an enum
+       */
+      if (column.type_code === 'e') {
+        columnInfo.type = 'enum'
+        columnInfo.enumOptions = column.enum_value ?? []
+      }
+
+      /**
+       * Overrides when column type is a domain
+       */
+      if (column.type_code === 'd') {
+        columnInfo.type = PG_STATIC_TYPES[column.domain_type!] ?? 'any'
+        if (columnInfo.nullable && !column.domain_nullable) {
+          columnInfo.nullable = false
+        }
+      }
+
+      /**
+       * Remap types when unable to map a type from the
+       * static list
+       */
+      if (columnInfo.type === 'any') {
+        const match = PG_VARYING_REMAPS.find(({ matches }) => column.type.startsWith(matches))
+        if (match) {
+          columnInfo.type = PG_STATIC_TYPES[match.type] ?? 'any'
+        }
+      }
+
+      return columnInfo
     })
   }
 

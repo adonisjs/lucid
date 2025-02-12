@@ -7,6 +7,8 @@
  * file that was distributed with this source code.
  */
 
+import type { ColumnInfo } from './common.js'
+
 /**
  * Interface to be implemented by Dialects implementation.
  */
@@ -118,6 +120,16 @@ export interface DialectContract {
       name: string
     }[]
   >
+
+  /**
+   * Should return an array of columns for a given table.
+   *
+   * @example
+   * ```ts
+   * dialect.getAllColumns('users')
+   * ```
+   */
+  getAllColumns(table: string): Promise<ColumnInfo[]>
 
   /**
    * Should return true if a view exists.

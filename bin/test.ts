@@ -22,6 +22,7 @@ configure({
     assert(),
     fileSystem({
       basePath: new URL('../tests/tmp', import.meta.url),
+      autoClean: true,
     }),
     expectTypeOf(),
     snapshot(),

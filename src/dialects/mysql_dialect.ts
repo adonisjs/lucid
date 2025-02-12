@@ -7,9 +7,41 @@
  * file that was distributed with this source code.
  */
 
+import type { Knex } from 'knex'
+
 import { debug } from '../debug.js'
 import type { Connection } from '../connection.js'
 import { AbstractDialect } from './abstract_dialect.js'
+import type { ColumnInfo } from '../types/common.js'
+
+/**
+ * MySQL types with static values. The list contains
+ * only the types we want to re-map to the "ColumnInfo.type".
+ */
+const MYSQL_STATIC_TYPES: Record<string, ColumnInfo['type']> = {
+  tinyint: 'number',
+  smallint: 'number',
+  mediumint: 'number',
+  int: 'number',
+  bigint: 'bigInt',
+  decimal: 'number',
+  numeric: 'number',
+  float: 'number',
+  double: 'number',
+  bit: 'number',
+  date: 'date',
+  time: 'time',
+  datetime: 'dateTime',
+  timestamp: 'dateTime',
+  char: 'string',
+  varchar: 'string',
+  boolean: 'boolean',
+  bool: 'boolean',
+  tinytext: 'string',
+  text: 'string',
+  mediumtext: 'string',
+  longtext: 'string',
+}
 
 export class MySQLDialect extends AbstractDialect {
   #connection: Connection
@@ -55,6 +87,44 @@ export class MySQLDialect extends AbstractDialect {
       .orderBy('table_name', 'asc')
 
     return query
+  }
+
+  /**
+   * Creates the query to find all columns of a table.
+   */
+  #compileAllColumnsQuery(tableName: string) {
+    const knex = this.#connection.getWriteClient()
+
+    const query = knex
+      .from('information_schema.columns as c')
+      .select([
+        'c.COLUMN_NAME AS name',
+        'c.DATA_TYPE AS type',
+        'c.COLUMN_TYPE as type_name',
+        'c.IS_NULLABLE AS nullable',
+        knex.raw(`
+          CASE
+            WHEN DATA_TYPE = 'enum' THEN trim(
+              LEADING 'enum'
+              FROM
+                column_type
+            )
+          END AS enum_value
+        `),
+      ])
+      .where('c.table_name', tableName)
+      .where('c.table_schema', knex.raw('database()'))
+
+    return query as Knex.QueryBuilder<
+      {},
+      {
+        name: string
+        type_name: string
+        type: string
+        nullable: string
+        enum_value: string | null
+      }[]
+    >
   }
 
   /**
@@ -113,6 +183,49 @@ export class MySQLDialect extends AbstractDialect {
         name,
         definition,
       }
+    })
+  }
+
+  /**
+   * Returns an array of columns for a given table. You can prefix
+   * the table name with a schema name to target a specific
+   * schema + table.
+   *
+   * @example
+   * ```ts
+   * dialect.getAllColumns('users')
+   *
+   * // Target a specific schema
+   * dialect.getAllColumns('users')
+   * ```
+   */
+  async getAllColumns(tableName: string): Promise<ColumnInfo[]> {
+    const columns = await this.#compileAllColumnsQuery(tableName)
+    debug('%s: getColumns %O', this.#connection.identifier, columns)
+
+    return columns.map((column) => {
+      const columnInfo: ColumnInfo = {
+        name: column.name,
+        type: MYSQL_STATIC_TYPES[column.type] ?? 'any',
+        dialectType: column.type,
+        nullable: column.nullable === 'YES',
+        optional: false,
+      }
+
+      /**
+       * Overrides when column type is an enum
+       */
+      if (column.type === 'enum') {
+        columnInfo.type = 'enum'
+        columnInfo.enumOptions = column.enum_value
+          ? column.enum_value
+              .replace(/^\(|\)$/g, '')
+              .split(',')
+              .map((item) => item.match(/'(.*)'/)![1])
+          : []
+      }
+
+      return columnInfo
     })
   }
 

@@ -253,3 +253,70 @@ test.group('SQLite Dialect | truncate', (group) => {
     assert.deepEqual(await knex.from('profiles').select('*'), [])
   })
 })
+
+test.group('SQLite Dialect | getAllColumns', (group) => {
+  group.each.setup(async (t) => {
+    await t.context.fs.mkdir('./')
+  })
+
+  test('get columns for a table', async ({ assert, cleanup }) => {
+    const config = getConnectionConfig('sqlite')
+    const connection = new Connection('primary', config)
+    cleanup(() => connection.close())
+
+    await SQLiteSetupForScanning(connection)
+    const dialect = new SQLiteDialect(connection)
+    assert.sameDeepMembers(await dialect.getAllColumns('users'), [
+      {
+        name: 'id',
+        type: 'number',
+        dialectType: 'integer',
+        nullable: false,
+        optional: false,
+      },
+      {
+        name: 'first_name',
+        type: 'string',
+        dialectType: 'varchar(255)',
+        nullable: true,
+        optional: false,
+      },
+      {
+        name: 'last_name',
+        type: 'string',
+        dialectType: 'varchar(255)',
+        nullable: true,
+        optional: false,
+      },
+      {
+        name: 'email',
+        type: 'string',
+        dialectType: 'varchar(255)',
+        nullable: true,
+        optional: false,
+      },
+      {
+        name: 'age',
+        type: 'number',
+        dialectType: 'integer',
+        nullable: false,
+        optional: false,
+      },
+      {
+        name: 'role',
+        type: 'enum',
+        dialectType: 'text',
+        nullable: true,
+        optional: false,
+        enumOptions: ['admin', 'guest'],
+      },
+      {
+        name: 'password',
+        type: 'string',
+        dialectType: 'varchar(255)',
+        nullable: true,
+        optional: false,
+      },
+    ])
+  })
+})

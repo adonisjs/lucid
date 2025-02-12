@@ -9,7 +9,75 @@
 
 import { debug } from '../debug.js'
 import type { Connection } from '../connection.js'
+import type { ColumnInfo } from '../types/common.js'
 import { AbstractDialect } from './abstract_dialect.js'
+
+/**
+ * SQLITE types with static values. The list contains
+ * only the types we want to re-map to the "ColumnInfo.type".
+ */
+const SQLITE_STATIC_TYPES: Record<string, ColumnInfo['type']> = {
+  'int': 'number',
+  'integer': 'number',
+  'tinyint': 'number',
+  'smallint': 'number',
+  'mediumint': 'number',
+  'bigint': 'bigInt',
+  'unsigned big int': 'bigInt',
+  'real': 'number',
+  'double': 'number',
+  'double precision': 'number',
+  'float': 'number',
+  'int2': 'number',
+  'int8': 'number',
+  'numeric': 'number',
+  'decimal': 'number',
+  'date': 'date',
+  'time': 'time',
+  'datetime': 'dateTime',
+  'text': 'string',
+  'clob': 'string',
+  'varchar': 'string',
+  'character': 'string',
+  'varying character': 'string',
+  'nchar': 'string',
+  'native character': 'string',
+  'nvarchar': 'string',
+}
+
+/**
+ * SQLITE remapping for types with attributes.
+ */
+const SQLITE_VARYING_REMAPS = [
+  {
+    matches: 'character',
+    type: 'character',
+  },
+  {
+    matches: 'varchar',
+    type: 'varchar',
+  },
+  {
+    matches: 'varying character',
+    type: 'varying character',
+  },
+  {
+    matches: 'nchar',
+    type: 'nchar',
+  },
+  {
+    matches: 'native character',
+    type: 'native character',
+  },
+  {
+    matches: 'nvarchar',
+    type: 'nvarchar',
+  },
+  {
+    matches: 'decimal',
+    type: 'decimal',
+  },
+]
 
 export class SQLiteDialect extends AbstractDialect {
   #connection: Connection
@@ -53,6 +121,67 @@ export class SQLiteDialect extends AbstractDialect {
       .orderBy('name', 'asc')
 
     return query
+  }
+
+  /**
+   * Returns the ENUM checks for a table by parsing the SQL
+   * expression for the table.
+   *
+   * The code is inspired by MikrORM implementation.
+   */
+  #extractEnumChecks(tableDefinitionSQL: string): Record<string, string[]> {
+    const checkConstraints = [
+      ...(tableDefinitionSQL.match(/[`["'][^`\]"']+[`\]"'] text check \(.*?\)/gi) ?? [] ?? []),
+    ]
+
+    return checkConstraints.reduce<Record<string, string[]>>((result, fragment: string) => {
+      const match = fragment.match(/[`["']([^`\]"']+)[`\]"'] text check \(.* \((.*)\)/i)
+      if (match) {
+        const columnName = match[1]
+        const options = match[2]
+          .split(',')
+          .map((item: string) => item.trim().match(/^\(?'(.*)'/)![1])
+        result[columnName] = options
+      }
+      return result
+    }, {})
+  }
+
+  /**
+   * Returns an array of columns for the database. Issues a couple of
+   * queries internally to fetch the enums and the auto increment
+   * key.
+   */
+  async #compileAllColumns(tableName: string) {
+    const knex = this.#connection.getWriteClient()
+
+    const columns = await knex
+      .from(knex.raw(`pragma_table_xinfo('${tableName}') as c`))
+      .select(['c.name AS name', 'c.type AS type', 'c.notnull AS not_nullable'])
+
+    const tableDefinition = await knex
+      .from('sqlite_master')
+      .select('sql')
+      .where('type', 'table')
+      .where('name', tableName)
+      .first()
+
+    const enumChecks = this.#extractEnumChecks(tableDefinition.sql)
+    debug('%s: %s table enum checks %O', this.#connection.identifier, tableName, enumChecks)
+
+    return columns.map((column) => {
+      return {
+        name: column.name,
+        type: column.type.toLowerCase(),
+        not_nullable: column.not_nullable,
+        enum_value: enumChecks[column.name] ?? null,
+      } as {
+        name: string
+        type: string
+        not_nullable: boolean
+        enum_value: string[] | null
+      }
+    })
   }
 
   /**
@@ -111,6 +240,50 @@ export class SQLiteDialect extends AbstractDialect {
         name,
         definition,
       }
+    })
+  }
+
+  /**
+   * Returns an array of columns for a given table.
+   *
+   * @example
+   * ```ts
+   * dialect.getAllColumns('users')
+   * ```
+   */
+  async getAllColumns(tableName: string): Promise<ColumnInfo[]> {
+    const columns = await this.#compileAllColumns(tableName)
+    debug('%s: getColumns %O', this.#connection.identifier, columns)
+
+    return columns.map((column) => {
+      const columnInfo: ColumnInfo = {
+        name: column.name,
+        type: SQLITE_STATIC_TYPES[column.type] ?? 'any',
+        dialectType: column.type,
+        nullable: !column.not_nullable,
+        optional: false,
+      }
+
+      /**
+       * Override column type and enumOptions when enum_value
+       * is available.
+       */
+      if (column.enum_value) {
+        columnInfo.type = 'enum'
+        columnInfo.enumOptions = column.enum_value ?? []
+      }
+
+      /**
+       * Remap type when the type is any
+       */
+      if (columnInfo.type === 'any') {
+        const match = SQLITE_VARYING_REMAPS.find(({ matches }) => column.type.startsWith(matches))
+        if (match) {
+          columnInfo.type = SQLITE_STATIC_TYPES[match.type] ?? 'any'
+        }
+      }
+
+      return columnInfo
     })
   }
 

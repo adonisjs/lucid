@@ -371,3 +371,65 @@ test.group('MSSQL Dialect | truncateAllTables', () => {
     assert.deepEqual(await knex.from('profiles').select('*'), [])
   })
 })
+
+test.group('MSSQL Dialect | getAllColumns', () => {
+  test('get columns for a table', async ({ assert, cleanup }) => {
+    const config = getConnectionConfig('mssql')
+    const connection = new Connection('primary', config)
+    cleanup(() => connection.close())
+
+    await MSSQLSetupForScanning(connection)
+    const dialect = new MSSQLDialect(connection)
+    assert.sameDeepMembers(await dialect.getAllColumns('users'), [
+      {
+        name: 'id',
+        type: 'number',
+        dialectType: 'int',
+        nullable: false,
+        optional: false,
+      },
+      {
+        name: 'first_name',
+        type: 'string',
+        dialectType: 'nvarchar',
+        nullable: true,
+        optional: false,
+      },
+      {
+        name: 'last_name',
+        type: 'string',
+        dialectType: 'nvarchar',
+        nullable: true,
+        optional: false,
+      },
+      {
+        name: 'email',
+        type: 'string',
+        dialectType: 'nvarchar',
+        nullable: true,
+        optional: false,
+      },
+      {
+        name: 'age',
+        type: 'number',
+        dialectType: 'int',
+        nullable: false,
+        optional: false,
+      },
+      {
+        name: 'role',
+        type: 'string',
+        dialectType: 'nvarchar',
+        nullable: true,
+        optional: false,
+      },
+      {
+        name: 'password',
+        type: 'string',
+        dialectType: 'nvarchar',
+        nullable: true,
+        optional: false,
+      },
+    ])
+  })
+})

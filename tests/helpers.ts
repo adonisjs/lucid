@@ -33,6 +33,7 @@ export function getConnectionConfig<T extends 'pg' | 'sqlite' | 'mysql' | 'mssql
         connection: {
           filename: join(SQLITE_BASE_PATH, 'better-sqlite-db.sqlite'),
         },
+        asyncStackTraces: true,
         useNullAsDefault: true,
         debug: !!process.env.DEBUG,
       })
@@ -45,6 +46,7 @@ export function getConnectionConfig<T extends 'pg' | 'sqlite' | 'mysql' | 'mssql
           user: process.env.MYSQL_USER as string,
           password: process.env.MYSQL_PASSWORD as string,
         },
+        asyncStackTraces: true,
         debug: !!process.env.DEBUG,
       })
     case 'pg':
@@ -56,6 +58,7 @@ export function getConnectionConfig<T extends 'pg' | 'sqlite' | 'mysql' | 'mssql
           user: process.env.PG_USER as string,
           password: process.env.PG_PASSWORD as string,
         },
+        asyncStackTraces: true,
         debug: !!process.env.DEBUG,
       })
     case 'mssql':
@@ -70,6 +73,7 @@ export function getConnectionConfig<T extends 'pg' | 'sqlite' | 'mysql' | 'mssql
             enableArithAbort: true,
           },
         },
+        asyncStackTraces: true,
         debug: !!process.env.DEBUG,
       })
     default:
@@ -104,7 +108,7 @@ export const pgSetupForScanning = test.macro(async (t, connection: Connection) =
     await connection.client!.schema.dropSchemaIfExists('search')
   }
 
-  t.cleanup(cleanup)
+  // t.cleanup(cleanup)
   await cleanup()
 
   const resources: {
@@ -148,6 +152,7 @@ export const pgSetupForScanning = test.macro(async (t, connection: Connection) =
   await connection.client!.schema.createTable('profiles', (table) => {
     table.increments()
     table.string('full_name').nullable()
+    table.specificType('profile_details', 'user_profile')
     table.integer('user_id').unsigned().references('users.id').onDelete('CASCADE')
   })
   resources.tables.push('users', 'profiles')
@@ -417,10 +422,10 @@ export const MSSQLSetupForScanning = test.macro(async (t, connection: Connection
     table.string('last_name')
     table.string('email').unique()
     table.integer('age').notNullable()
-    table.enu('role', ['admin', 'guest'], {
-      useNative: true,
-      enumName: 'user_role_enum_type',
-    })
+    table.specificType(
+      'role',
+      `nvarchar(100) check ([role] in ('${['admin', 'guest'].join("', '")}'))`
+    )
     table.string('password')
   })
   await connection.client!.schema.createTable('profiles', (table) => {
@@ -465,10 +470,10 @@ export const MSSQLSetupForScanning = test.macro(async (t, connection: Connection
     table.string('last_name')
     table.string('email').unique()
     table.integer('age').notNullable()
-    table.enu('role', ['admin', 'guest'], {
-      useNative: true,
-      enumName: 'user_role_enum_type',
-    })
+    table.specificType(
+      'role',
+      `nvarchar(100) check ([role] in ('${['admin', 'guest'].join("', '")}'))`
+    )
   })
   resources.tables.push('search.users')
 

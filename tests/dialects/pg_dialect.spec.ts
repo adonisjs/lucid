@@ -550,3 +550,66 @@ test.group('PG Dialect | acquireAdvisoryLock', () => {
     assert.isFalse(await dialect1.getAdvisoryLock('migrations'))
   })
 })
+
+test.group('PG Dialect | getAllColumns', () => {
+  test('get columns for a table', async ({ assert, cleanup }) => {
+    const config = getConnectionConfig('pg')
+    const connection = new Connection('primary', config)
+    cleanup(() => connection.close())
+
+    await pgSetupForScanning(connection)
+    const dialect = new PgDialect(connection)
+    assert.sameDeepMembers(await dialect.getAllColumns('public.users'), [
+      {
+        name: 'id',
+        type: 'number',
+        dialectType: 'integer',
+        nullable: false,
+        optional: false,
+      },
+      {
+        name: 'first_name',
+        type: 'string',
+        dialectType: 'contact_name',
+        nullable: false,
+        optional: false,
+      },
+      {
+        name: 'last_name',
+        type: 'string',
+        dialectType: 'contact_name',
+        nullable: false,
+        optional: false,
+      },
+      {
+        name: 'email',
+        type: 'string',
+        dialectType: 'character varying(255)',
+        nullable: true,
+        optional: false,
+      },
+      {
+        name: 'age',
+        type: 'number',
+        dialectType: 'integer',
+        nullable: false,
+        optional: false,
+      },
+      {
+        name: 'role',
+        type: 'enum',
+        dialectType: 'user_role_enum_type',
+        nullable: true,
+        optional: false,
+        enumOptions: ['admin', 'guest'],
+      },
+      {
+        name: 'password',
+        type: 'string',
+        dialectType: 'character varying(255)',
+        nullable: true,
+        optional: false,
+      },
+    ])
+  })
+})

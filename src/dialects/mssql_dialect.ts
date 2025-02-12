@@ -7,9 +7,43 @@
  * file that was distributed with this source code.
  */
 
+import type { Knex } from 'knex'
 import { debug } from '../debug.js'
 import type { Connection } from '../connection.js'
+import type { ColumnInfo } from '../types/common.js'
 import { AbstractDialect } from './abstract_dialect.js'
+
+/**
+ * MSSQL types with static values. The list contains
+ * only the types we want to re-map to the "ColumnInfo.type".
+ */
+const MSSQL_STATIC_TYPES: Record<string, ColumnInfo['type']> = {
+  bigint: 'bigInt',
+  char: 'string',
+  date: 'date',
+  datetime: 'dateTime',
+  datetime2: 'dateTime',
+  datetimeoffset: 'dateTime',
+  decimal: 'number',
+  float: 'number',
+  int: 'number',
+  money: 'bigInt',
+  nchar: 'string',
+  ntext: 'string',
+  numeric: 'number',
+  nvarchar: 'string',
+  real: 'number',
+  smalldatetime: 'dateTime',
+  smallint: 'number',
+  smallmoney: 'number',
+  text: 'string',
+  time: 'time',
+  timestamp: 'dateTime',
+  tinyint: 'number',
+  uniqueidentifier: 'string',
+  varchar: 'string',
+  xml: 'string',
+}
 
 export class MSSQLDialect extends AbstractDialect {
   #connection: Connection
@@ -80,6 +114,28 @@ export class MSSQLDialect extends AbstractDialect {
     }
 
     return query
+  }
+
+  /**
+   * Creates the query to find all columns of a table.
+   */
+  #compileAllColumnsQuery(tableName: string) {
+    const knex = this.#connection.getWriteClient()
+
+    const query = knex
+      .from('sys.columns as col')
+      .select(['col.name AS name', 'type.name AS type', 'col.is_nullable as nullable'])
+      .join('sys.types as type', 'col.user_type_id', 'type.user_type_id')
+      .where('col.object_id', knex.raw(`OBJECT_ID(?)`, [tableName]))
+
+    return query as Knex.QueryBuilder<
+      {},
+      {
+        name: string
+        type: string
+        nullable: boolean
+      }[]
+    >
   }
 
   /**
@@ -168,6 +224,36 @@ export class MSSQLDialect extends AbstractDialect {
         schema,
         definition,
       }
+    })
+  }
+
+  /**
+   * Returns an array of columns for a given table. You can prefix
+   * the table name with a schema name to target a specific
+   * schema + table.
+   *
+   * @example
+   * ```ts
+   * dialect.getAllColumns('users')
+   *
+   * // Target a specific schema
+   * dialect.getAllColumns('reports.users')
+   * ```
+   */
+  async getAllColumns(tableName: string): Promise<ColumnInfo[]> {
+    const columns = await this.#compileAllColumnsQuery(tableName)
+    debug('%s: getColumns %O', this.#connection.identifier, columns)
+
+    return columns.map((column) => {
+      const columnInfo: ColumnInfo = {
+        name: column.name,
+        type: MSSQL_STATIC_TYPES[column.type] ?? 'any',
+        dialectType: column.type,
+        nullable: column.nullable,
+        optional: false,
+      }
+
+      return columnInfo
     })
   }
 

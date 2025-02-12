@@ -65,6 +65,7 @@
   },
   "dependencies": {
     "@poppinss/exception": "^1.2.0",
+    "@poppinss/utils": "^6.9.2",
     "knex": "^3.1.0",
     "knex-dynamic-connection": "^3.2.0",
     "tarn": "3.0.2"

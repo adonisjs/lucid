@@ -8,14 +8,16 @@
  */
 
 import { RuntimeException } from '@poppinss/exception'
-import { DialectContract } from '../types/dialect.js'
-import { ConnectionConfig } from '../types/connection.js'
+import type { ColumnInfo } from '../types/common.js'
+import type { DialectContract } from '../types/dialect.js'
+import type { ConnectionConfig } from '../types/connection.js'
 
 export abstract class AbstractDialect implements DialectContract {
   abstract name: string
   abstract dateFormat: string
   abstract dateTimeFormat: string
   abstract getAllTables(_?: string[]): Promise<{ name: string }[]>
+  abstract getAllColumns(table: string): Promise<ColumnInfo[]>
   abstract hasTable(tableName: string, searchPath?: string[]): Promise<boolean>
   abstract dropAllTables(excludeTables?: string[], searchPath?: string[]): Promise<void>
   abstract truncate(table: string): Promise<void>

@@ -264,3 +264,66 @@ test.group('MySQL Dialect | acquireAdvisoryLock', () => {
     assert.isFalse(await dialect1.getAdvisoryLock('migrations'))
   })
 })
+
+test.group('MySQL Dialect | getAllColumns', () => {
+  test('get columns for a table', async ({ assert, cleanup }) => {
+    const config = getConnectionConfig('mysql')
+    const connection = new Connection('primary', config)
+    cleanup(() => connection.close())
+
+    await mySQLSetupForScanning(connection)
+    const dialect = new MySQLDialect(connection)
+    assert.sameDeepMembers(await dialect.getAllColumns('users'), [
+      {
+        name: 'id',
+        type: 'number',
+        dialectType: 'int',
+        nullable: false,
+        optional: false,
+      },
+      {
+        name: 'first_name',
+        type: 'string',
+        dialectType: 'varchar',
+        nullable: true,
+        optional: false,
+      },
+      {
+        name: 'last_name',
+        type: 'string',
+        dialectType: 'varchar',
+        nullable: true,
+        optional: false,
+      },
+      {
+        name: 'email',
+        type: 'string',
+        dialectType: 'varchar',
+        nullable: true,
+        optional: false,
+      },
+      {
+        name: 'age',
+        type: 'number',
+        dialectType: 'int',
+        nullable: false,
+        optional: false,
+      },
+      {
+        name: 'role',
+        type: 'enum',
+        dialectType: 'enum',
+        nullable: true,
+        optional: false,
+        enumOptions: ['admin', 'guest'],
+      },
+      {
+        name: 'password',
+        type: 'string',
+        dialectType: 'varchar',
+        nullable: true,
+        optional: false,
+      },
+    ])
+  })
+})
