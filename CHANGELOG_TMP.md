@@ -28,3 +28,8 @@ const connection = new Connection(id, config)
 
 - Add `hasView`, `hasTable`, and `truncateAllTables` methods to the `DialectContract`.
 - Add support for managing views in MSSQL and improve how tables are dropped in MSSQL dialect.
+
+## Models
+
+- Setters will be invoked when the key is set from the adapter results. More of bug fix.
+- `Attribute.consume` is invoked twice. Once for the original value and another time for the model property value.

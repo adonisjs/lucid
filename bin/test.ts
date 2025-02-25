@@ -16,6 +16,10 @@ configure({
       name: 'cross-db',
       files: ['tests/cross-db/**/*.spec.ts'],
     },
+    {
+      name: 'types',
+      files: ['tests/types/**/*.spec.ts'],
+    },
   ],
   plugins: [
     expect(),

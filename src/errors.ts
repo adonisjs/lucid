@@ -20,3 +20,9 @@ export const E_INVALID_REPLICAS_CONFIG = createError(
   'E_INVALID_REPLICAS_CONFIG',
   500
 )
+
+export const E_MISSING_MODEL_PROPERTY = createError<[string, string]>(
+  'The property %s.%s either does not exist or was not retrieved from the database.',
+  'E_INVALID_REPLICAS_CONFIG',
+  500
+)

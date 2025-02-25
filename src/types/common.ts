@@ -8,6 +8,25 @@
  */
 
 /**
+ * Prettify complex TypeScript types
+ */
+export type Prettify<T> = {
+  -readonly [K in keyof T]: T[K]
+} & {}
+
+/**
+ * Datatypes support for JSON.
+ */
+export type JSONTypes =
+  | string
+  | number
+  | boolean
+  | null
+  | undefined
+  | JSONTypes[]
+  | { [key: string]: JSONTypes }
+
+/**
  * Represents the information of a column that exists in the database.
  * The information is limited to what we need to automatically generate
  * Lucid model schemas.
