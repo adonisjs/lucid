@@ -7,6 +7,7 @@
  * file that was distributed with this source code.
  */
 
+import deepEqual from 'fast-deep-equal'
 import { defineStaticProperty } from '@poppinss/utils'
 import type {
   CanBeCasted,
@@ -14,8 +15,11 @@ import type {
   AttributeOptions,
   GetInstanceProperties,
 } from '../types/model.js'
+import { debug } from '../debug.js'
 import { isObject } from '../helpers.js'
 import { proxyHandler } from './proxy_handler.js'
+
+const PRIMITIVES = ['string', 'undefined', 'boolean', 'number']
 
 export class BaseModel {
   /**
@@ -116,6 +120,7 @@ export class BaseModel {
       return
     }
 
+    debug('booting model "%s"', this.name)
     this.booted = true
 
     /**
@@ -174,6 +179,7 @@ export class BaseModel {
     this.$attributesMap.set(name, attribute)
     this.$keysMap.attributesToColumns[name] = attribute.columnName
     this.$keysMap.columnsToAttributes[attribute.columnName] = name
+    debug('defining attribute %s: %O', name, attribute)
     return attribute
   }
 
@@ -195,6 +201,7 @@ export class BaseModel {
    * Register a caster for a given model property.
    */
   static defineCast(propertyName: string, valueObject: CanBeCasted) {
+    debug('defining cast %s: %O', propertyName, valueObject)
     this.$castsMap.set(propertyName, valueObject)
   }
 
@@ -222,6 +229,7 @@ export class BaseModel {
       meta: options.meta,
     }
     this.$computedPropertiesMap.set(name, computed)
+    debug('defining computed property %s: %O', name, computed)
     return computed
   }
 
@@ -241,6 +249,26 @@ export class BaseModel {
   }
 
   /**
+   * A flag to know if the current instance of the model has been persisted
+   * to the database atleast once.
+   *
+   * The "$isPersisted" is also set to true, when a model instance is created
+   * as a result of a SELECT query.
+   */
+  $isPersisted: boolean = false
+
+  /**
+   * A flag to know if the current instance of the model has been deleted.
+   */
+  $isDeleted: boolean = false
+
+  /**
+   * A flag to know if the current instance of the model is created locally or
+   * was it fetched from the database as a result of SELECT query.
+   */
+  $isLocal: boolean = true
+
+  /**
    * Attributes refers to model properties that are persisted
    * to the database.
    */
@@ -257,6 +285,32 @@ export class BaseModel {
    * does not have a corresponding model property.
    */
   $extras: Record<string, any> = {}
+
+  /**
+   * Returns an object with only the dirty (aka modified) properties. The
+   * diff is computed between the "$attributes" and the "$original"
+   * properties.
+   *
+   * When the model is not persisted (aka {@link BaseModel.$isPersisted} is false),
+   * then all the {@link BaseModel.$attributes} are considered dirty.
+   */
+  get $dirty(): Record<string, any> {
+    /**
+     * Do not compute diff, when model has never been persisted
+     */
+    if (!this.$isPersisted) {
+      return {
+        ...this.$attributes,
+      }
+    }
+
+    return Object.keys(this.$attributes).reduce((result: any, key) => {
+      if (this.isDirty(key)) {
+        result[key] = this.$attributes[key]
+      }
+      return result
+    }, {})
+  }
 
   constructor() {
     return new Proxy(this, proxyHandler)
@@ -276,6 +330,64 @@ export class BaseModel {
    */
   setAttribute(key: string, value: any) {
     this.$attributes[key] = value
+  }
+
+  /**
+   * Returns a boolean indicating if a given attribute is dirty (aka modified)
+   * or not.
+   *
+   * - Returns false, if the provided key is not an attribute or not fetched from
+   *   the database.
+   * - Primitives values like "string", "number", "boolean", "undefined", and "null"
+   *   are compared using the JavaScript strict equality check (===).
+   * - Value objects are compared via the "isDirty" method on the value object.
+   * - Other rich data-types like objects, arrays, sets, maps are compared using the
+   *   "fast-deep-equal" npm package.
+   *
+   * @example
+   * ```ts
+   * // Check if email is dirty
+   * user.isDirty('email')
+   *
+   * // Check if email or password is dirty
+   * user.isDirty(['email', 'password'])
+   * ```
+   */
+  isDirty(attributes?: string | string[]) {
+    const keys = Array.isArray(attributes) ? attributes : attributes ? [attributes] : []
+    return keys.some((key) => {
+      /**
+       * Properties not hydrated are never dirty
+       */
+      if (key in this.$attributes === false) {
+        debug('skipping non-attribute key from dirty check "%s"', key)
+        return false
+      }
+
+      const value = this.$attributes[key]
+      const typeofValue = typeof value
+
+      /**
+       * Compare primitives and null value using strict equality
+       * check
+       */
+      if (value === null || PRIMITIVES.includes(typeofValue)) {
+        debug('comparing primitive value(%s) for key "%s"', typeofValue, key)
+        return value !== this.$original[key]
+      }
+
+      /**
+       * Objects that have 'isDirty` are used to find if the value
+       * is dirty or not.
+       */
+      if (typeofValue === 'object' && 'isDirty' in value) {
+        debug('comparing value object for key "%s"', key)
+        return value.isDirty(this.$original[key])
+      }
+
+      debug('deep comparing "%s"', key)
+      return !deepEqual(value, this.$original[key])
+    })
   }
 
   /**
@@ -341,6 +453,7 @@ export class BaseModel {
           originalValue = cast.consume(originalValue, attributeName, this)
         }
 
+        debug('hydrating key "%s" as an attribute "%s": %O', key, attributeName, value)
         ;(this as any)[attributeName] = value
         this.$original[attributeName] = originalValue
         return
@@ -360,6 +473,7 @@ export class BaseModel {
        * Key is not an attribute, but a regular model instance property.
        */
       if (this.hasOwnProperty(key)) {
+        debug('hydrating key "%s" as a property: %O', key, value)
         ;(this as any)[key] = value
         return
       }
@@ -367,6 +481,7 @@ export class BaseModel {
       /**
        * Unknown properties are moved to the "$extras" object
        */
+      debug('hydrating key "%s" under $extras: %O', key, value)
       this.$extras[key] = value
     })
   }
