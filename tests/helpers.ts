@@ -82,6 +82,47 @@ export function getConnectionConfig<T extends 'pg' | 'sqlite' | 'mysql' | 'mssql
 }
 
 /**
+ * Prepares tables for testing.
+ */
+export const dbSetup = test.macro(async (t, connection: Connection) => {
+  async function cleanup() {
+    await connection.client!.schema.dropTableIfExists('profiles')
+    await connection.client!.schema.dropTableIfExists('users')
+    await connection.client!.schema.dropTableIfExists('skills')
+  }
+
+  t.cleanup(cleanup)
+  await cleanup()
+
+  /**
+   * Creating neccessary tables
+   */
+  await connection.client!.schema.createTable('users', (table) => {
+    table.increments()
+    table.string('first_name')
+    table.string('last_name')
+    table.string('email').unique()
+    table.integer('age').notNullable()
+    table.enu('role', ['admin', 'guest'], {
+      useNative: true,
+      enumName: 'user_role_enum_type',
+    })
+    table.string('password')
+  })
+  await connection.client!.schema.createTable('profiles', (table) => {
+    table.increments()
+    table.string('full_name').nullable()
+    table.specificType('profile_details', 'user_profile')
+    table.integer('user_id').unsigned().references('users.id').onDelete('CASCADE')
+  })
+  await connection.client!.schema.createTable('skills', (table) => {
+    table.increments()
+    table.string('skill_name').nullable()
+    table.integer('user_id').unsigned().references('users.id').onDelete('CASCADE')
+  })
+})
+
+/**
  * Prepares the PG database for testing the dialect helpers that are used
  * to scan the database for precise info. Here we create:
  *
@@ -108,7 +149,7 @@ export const pgSetupForScanning = test.macro(async (t, connection: Connection) =
     await connection.client!.schema.dropSchemaIfExists('search')
   }
 
-  // t.cleanup(cleanup)
+  t.cleanup(cleanup)
   await cleanup()
 
   const resources: {

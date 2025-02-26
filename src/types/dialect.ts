@@ -8,6 +8,7 @@
  */
 
 import type { ColumnInfo } from './common.js'
+import type { SupportedDialectNames } from './connection.js'
 
 /**
  * Interface to be implemented by Dialects implementation.
@@ -17,7 +18,7 @@ export interface DialectContract {
    * The unique name for the dialect. Lucid internals might rely on
    * this name for conditionally enabling/disabling features
    */
-  readonly name: string
+  readonly name: SupportedDialectNames
 
   /**
    * The format in which the date should be stored in the database

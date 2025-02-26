@@ -14,8 +14,16 @@ import { RuntimeException } from '@poppinss/exception'
 
 import { debug } from './debug.js'
 import * as errors from './errors.js'
+import { dialects } from './dialects/main.js'
+import { QueryClient } from './query_clients/client.js'
+import type { DialectContract } from './types/dialect.js'
 import type { ConnectionConfig, SupportedDialectNames } from './types/connection.js'
 
+/**
+ * A connection represents a database connection created by instantiating
+ * knex and its connections pool. In case of read/write replicas, two
+ * knex instances will be created.
+ */
 export class Connection {
   #state: {
     closeErrorCallbacks: ((error: any, connection: Connection) => void)[]
@@ -43,19 +51,19 @@ export class Connection {
   /**
    * Dialect for which the connection is created
    */
-  dialectName: SupportedDialectNames
+  readonly dialectName: SupportedDialectNames
 
   /**
    * Client refers to the npm package used for connecting to
    * a given dialect
    */
-  clientName: string
+  readonly clientName: string
 
   /**
    * A boolean to know if the read-write replicas have been configured
    * on the given connection
    */
-  hasReadWriteReplicas: boolean
+  readonly hasReadWriteReplicas: boolean
 
   /**
    * @deprecated: Instead use "identifier"
@@ -87,6 +95,11 @@ export class Connection {
     return !!(this.client || this.readClient)
   }
 
+  /**
+   * Reference to the dialect implementation for the given connection
+   */
+  dialect: DialectContract
+
   constructor(
     /**
      * A unique connection identifier that is used to track the connection
@@ -102,6 +115,7 @@ export class Connection {
     this.#setupWriteConnection()
     this.#setupReadConnection()
     this.#monitorPoolResources()
+    this.dialect = new dialects[config.dialectName](this)
   }
 
   /**
@@ -243,6 +257,7 @@ export class Connection {
       if (this.client === this.readClient) {
         this.readClient = undefined
       }
+      this.pool!.removeAllListeners()
       this.client = undefined
       this.#state.closeCallbacks.forEach((callback) => callback(this))
     })
@@ -250,6 +265,7 @@ export class Connection {
     if (this.readPool !== this.pool) {
       this.readPool!.on('poolDestroySuccess', () => {
         debug('%s: read pool destroyed, cleaning up resource', this.identifier)
+        this.readPool!.removeAllListeners()
         this.readClient = undefined
       })
     }
@@ -282,7 +298,11 @@ export class Connection {
    * making write queries.
    *
    * An exception is thrown when the connection has been closed
-   * and no client exists
+   * and no client exists.
+   *
+   * @note
+   * Avoid using Knex directly and instead use the {@link QueryClient} and
+   * {@link AbstractQueryBuilder} offered by Lucid
    */
   getWriteClient(): Knex {
     if (!this.client) {
@@ -298,7 +318,11 @@ export class Connection {
    * making read queries.
    *
    * An exception is thrown when the connection has been closed
-   * and no client exists
+   * and no client exists.
+   *
+   * @note
+   * Avoid using Knex directly and instead use the {@link QueryClient} and
+   * {@link AbstractQueryBuilder} offered by Lucid
    */
   getReadClient(): Knex {
     if (!this.readClient) {
@@ -307,6 +331,21 @@ export class Connection {
       )
     }
     return this.readClient
+  }
+
+  /**
+   * Returns the query client for the current connection. A query client can be
+   * created in one of the following modes.
+   *
+   * - dual: In dual mode, the query client will send SELECT queries to the
+   *   `read` connection and all other queries to the `write` connection.
+   * - write: In write mode, all queries will be sent to the `write` connection.
+   * - read: Whereas, in read mode the write queries are disallowed.
+   *
+   * @default: 'dual'
+   */
+  getQueryClient(mode: 'dual' | 'write' | 'read' = 'dual') {
+    return new QueryClient(this, mode)
   }
 
   /**

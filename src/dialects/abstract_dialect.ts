@@ -8,6 +8,7 @@
  */
 
 import { RuntimeException } from '@poppinss/exception'
+
 import type { ColumnInfo } from '../types/common.js'
 import type { DialectContract } from '../types/dialect.js'
 import type { ConnectionConfig } from '../types/connection.js'

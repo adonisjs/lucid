@@ -20,7 +20,7 @@ import type { Options as BetterSQLiteConnectionOptions } from 'better-sqlite3'
  * the `sqlite3` dialect.
  *
  * The number of supported dialects are usually fixed and we do not add
- * the new one's very often.
+ * the new one's very often and neither they can be added from outside
  */
 export type SupportedDialectNames = 'mssql' | 'mysql' | 'postgres' | 'sqlite3'
 

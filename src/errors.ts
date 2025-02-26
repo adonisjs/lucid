@@ -21,8 +21,14 @@ export const E_INVALID_REPLICAS_CONFIG = createError(
   500
 )
 
-export const E_MISSING_MODEL_PROPERTY = createError<[string, string]>(
+export const E_MISSING_MODEL_PROPERTY = createError<[model: string, property: string]>(
   'The property %s.%s either does not exist or was not retrieved from the database.',
   'E_INVALID_REPLICAS_CONFIG',
+  500
+)
+
+export const E_INVALID_SQL_EXPRESSION = createError<[expression: any, action: string]>(
+  'Invalid SQL expression "%s" provided to the "%s" method',
+  'E_INVALID_SQL_EXPRESSION',
   500
 )

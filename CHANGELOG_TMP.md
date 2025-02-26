@@ -1,8 +1,17 @@
 # A temporary changelog as I am making changes
 
+- Introduce `dialectName` and `clientName` properties in the connection config. Both options will be set automatically when using the `config` helpers to define the config.
+- Allow `connection.clientName` to be a string value. Earlier it was a union or fixed values.
+- Add property `connection.dialect`. Earlier we used to create a dialect instance for every query client, whereas in practice a single dialect instance per connection is all we need. Therefore, now the `dialect` is created and accessible via the connection.
+- Deprecate `connection.name` in favor of `connection.identifier`.
+
 - Remove `connection.connect` method, since we perform the connect steps as soon as class constructor is created. The `connect` method was mis-leading as it felt like creating a database connection. Whereas, in reality we were constructing knex instances in this method.
 - Rename `connection.disconnect` to `connection.close`.
 - The `Connection` class is no longer an instance of `EventEmitter`. Instead, you can listen for disconnection events by defining callbacks. The callbacks are defined as `connection.onClose` and `connection.onError`.
+- Remove property `queryClient.emitter`. Query client no longer emit events.
+- Deprecate property `queryClient.connectionName` in favor of `queryClient.connection.identifier`.
+- Remove methods `queryClient.getReadClient()` and `queryClient.getWriteClient()`, instead use `queryClient.connection.getReadClient()` and `queryClient.connection.getWriteClient()`.
+- Remove all dialect specific methods from the query client. Instead, one should use the dialect directly.
 
 ```diff
 const connection = new Connection(id, config)
@@ -13,7 +22,7 @@ const connection = new Connection(id, config)
 + connection.onCloseError(function (error, self) {})
 ```
 
-- Add support for implementation based clients. Now, we no longer expect the `client` property to be a string. It could be a Connection class as well.
+- Add support for implementation based clients. Now, we no longer expect the `client` property to be a string. It could be a `Client` class (based upon knex) as well.
 
 - Remove property `version` from dialects. The version was used by certain parts of Lucid ORM to decide which features of the database to use. Instead, these features will be added as flags to the dialect.
 
@@ -26,7 +35,7 @@ const connection = new Connection(id, config)
 + {name: string}[]
 ```
 
-- Add `hasView`, `hasTable`, and `truncateAllTables` methods to the `DialectContract`.
+- Add `hasView`, `getAllColumns`, `hasTable`, `truncateAllTables`, and `getMigrationsTables` methods to the `DialectContract`.
 - Add support for managing views in MSSQL and improve how tables are dropped in MSSQL dialect.
 
 ## Models
