@@ -59,7 +59,7 @@ test.group('Select query builder | select', () => {
       .select(
         'username',
         'id',
-        query.createSubQuery().select('email').from('user_emails').as('user_email')
+        query.createSelectSubQuery().select('email').from('user_emails').as('user_email')
       )
       .toSQL()
 
@@ -170,7 +170,7 @@ test.group('Select query builder | select', () => {
 
     const sql = query
       .select('username', 'id')
-      .select(query.createSubQuery().select('email').from('user_emails').as('user_email'))
+      .select(query.createSelectSubQuery().select('email').from('user_emails').as('user_email'))
       .toSQL()
     const knexSQL = knex
       .select('username', 'id', (q: any) => q.select('email').from('user_emails').as('user_email'))
@@ -191,7 +191,7 @@ test.group('Select query builder | select', () => {
     const sql = query
       .select('username', 'id')
       .clearSelect()
-      .select(query.createSubQuery().select('email').from('user_emails').as('user_email'))
+      .select(query.createSelectSubQuery().select('email').from('user_emails').as('user_email'))
       .toSQL()
     const knexSQL = knex
       .select('username', 'id')

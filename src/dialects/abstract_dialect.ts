@@ -11,10 +11,10 @@ import { RuntimeException } from '@poppinss/exception'
 
 import type { ColumnInfo } from '../types/common.js'
 import type { DialectContract } from '../types/dialect.js'
-import type { ConnectionConfig } from '../types/connection.js'
+import type { ConnectionConfig, SupportedDialectNames } from '../types/connection.js'
 
 export abstract class AbstractDialect implements DialectContract {
-  abstract name: string
+  abstract name: SupportedDialectNames
   abstract dateFormat: string
   abstract dateTimeFormat: string
   abstract getAllTables(_?: string[]): Promise<{ name: string }[]>

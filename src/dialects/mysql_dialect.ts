@@ -46,7 +46,7 @@ const MYSQL_STATIC_TYPES: Record<string, ColumnInfo['type']> = {
 export class MySQLDialect extends AbstractDialect {
   #connection: Connection
 
-  name: string = 'mysql'
+  name: 'mysql' = 'mysql'
   supportsViews: boolean = true
   supportsAdvisoryLocks: boolean = true
 

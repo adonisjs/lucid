@@ -15,6 +15,11 @@ export type Prettify<T> = {
 } & {}
 
 /**
+ * Values can be stringified to a JSON object
+ */
+export type JSONTypes = string | boolean | number | Record<string, any> | JSONTypes[]
+
+/**
  * Represents the information of a column that exists in the database.
  * The information is limited to what we need to automatically generate
  * Lucid model schemas.

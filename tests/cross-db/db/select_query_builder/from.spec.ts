@@ -52,7 +52,9 @@ test.group('Select query builder | from', () => {
     const knex = connection.getReadClient()
     const query = new SelectQueryBuilder(client)
 
-    const sql = query.from(query.createSubQuery().select('name').from('users').as('u')).toSQL()
+    const sql = query
+      .from(query.createSelectSubQuery().select('name').from('users').as('u'))
+      .toSQL()
     const knexSQL = knex.from((q: any) => q.select('name').from('users').as('u')).toSQL()
 
     debug('%O', sql)

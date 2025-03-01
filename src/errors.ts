@@ -32,3 +32,15 @@ export const E_INVALID_SQL_EXPRESSION = createError<[expression: any, action: st
   'E_INVALID_SQL_EXPRESSION',
   500
 )
+
+export const E_INVALID_SUBQUERY_REFERENCE = createError(
+  'Cannot reference self as a subquery',
+  'E_INVALID_SUBQUERY_REFERENCE',
+  500
+)
+
+export const E_CANNOT_PERFORM_WRITE_QUERIES = createError(
+  'Cannot access the connection for write queries, since the database client is in read-only mode',
+  'E_CANNOT_PERFORM_WRITE_QUERIES',
+  500
+)

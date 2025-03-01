@@ -10,51 +10,30 @@
 import type { Knex } from 'knex'
 import * as errors from '../errors.js'
 
-import { TO_KNEX } from '../symbols.js'
-import { isPlainObject } from '../helpers.js'
-import { RawExpressionBuilder } from './raw_expression_builder.js'
-import { RefExpressionBuilder } from './ref_expression_builder.js'
+import { isPlainObject, transformValueExpressions } from '../helpers.js'
 import { SharedExpressionBuilder } from './shared_expression_builder.js'
-import type { FromExpressions, QueryClientContract, SelectExpressions } from '../types/query.js'
+import type { FromExpressions, DatabaseClientContract, SelectExpressions } from '../types/query.js'
 
 export class SelectExpressionBuilder extends SharedExpressionBuilder {
-  #knex: Knex
-
-  constructor(protected client: QueryClientContract) {
-    const knex = client.connection.getReadClient()
-    super(knex.queryBuilder())
-    this.#knex = client.connection.getReadClient()
+  constructor(protected client: DatabaseClientContract) {
+    super(client.getReadClient())
   }
 
   /**
-   * Prevents referencing self as a sub-query, since each sub-query
-   * must be its own query builder instance
-   */
-  #preventSelfAsSubQuery(query: SelectExpressionBuilder) {
-    if (query === this) {
-      throw new Error('Cannot reference self inside a sub-query')
-    }
-  }
-
-  /**
-   * Transforms the select expression a value that is acceptable
-   * by Knex
+   * Transforms the select expression to a knex compatible value.
    */
   #transformSelectExpression(column: SelectExpressions) {
+    /**
+     * String based column names will be transformed using the
+     * "transformColumnName" method
+     */
     if (typeof column === 'string') {
-      return this.transformKey(column)
+      return this.transformColumnName(column)
     }
 
-    if (typeof column === 'function') {
-      const query = new SelectExpressionBuilder(this.client)
-      column(query)
-      return query.knexQuery
-    }
-
-    if (column instanceof RawExpressionBuilder || column instanceof RefExpressionBuilder) {
-      return column[TO_KNEX](this.client.connection.getReadClient())
-    }
-
+    /**
+     * Converting an object with aliases to knex compatible object
+     */
     if (isPlainObject<Record<string, SelectExpressions>>(column)) {
       return Object.keys(column).reduce<Record<string, string | Knex.QueryBuilder>>(
         (result, key) => {
@@ -65,12 +44,15 @@ export class SelectExpressionBuilder extends SharedExpressionBuilder {
       )
     }
 
-    if ('knexQuery' in column) {
-      this.#preventSelfAsSubQuery(column)
-      return column.knexQuery
+    /**
+     * Transforming value expressions to knex compatible expressions
+     */
+    const transformedValue = transformValueExpressions(column, this, this.knex)
+    if (!transformedValue) {
+      throw new errors.E_INVALID_SQL_EXPRESSION([column, 'select'])
     }
 
-    throw new errors.E_INVALID_SQL_EXPRESSION([column, 'select'])
+    return transformedValue
   }
 
   /**
@@ -82,22 +64,23 @@ export class SelectExpressionBuilder extends SharedExpressionBuilder {
       return table
     }
 
-    if (typeof table === 'function') {
-      const query = new SelectExpressionBuilder(this.client)
-      table(query)
-      return query.knexQuery
+    /**
+     * Transforming value expressions to knex compatible expressions
+     */
+    const transformedValue = transformValueExpressions(table, this, this.knex)
+    if (!transformedValue) {
+      throw new errors.E_INVALID_SQL_EXPRESSION([table, 'from'])
     }
 
-    if (table instanceof RawExpressionBuilder || table instanceof RefExpressionBuilder) {
-      return table[TO_KNEX](this.#knex)
-    }
+    return transformedValue
+  }
 
-    if ('knexQuery' in table) {
-      this.#preventSelfAsSubQuery(table)
-      return table.knexQuery
-    }
-
-    throw new errors.E_INVALID_SQL_EXPRESSION([table, 'select'])
+  /**
+   * Returns an instance of the {@link SelectExpressionBuilder} to be
+   * used for creating subqueries.
+   */
+  createSelectSubQuery() {
+    return new SelectExpressionBuilder(this.client)
   }
 
   /**

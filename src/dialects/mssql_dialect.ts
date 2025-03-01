@@ -49,7 +49,7 @@ export class MSSQLDialect extends AbstractDialect {
   #connection: Connection
   #defaultSearchPath = ['dbo']
 
-  name: string = 'mssql'
+  name: 'mssql' = 'mssql'
   supportsViews: boolean = true
   supportsAdvisoryLocks: boolean = false
   supportsReturningStatement: boolean = true

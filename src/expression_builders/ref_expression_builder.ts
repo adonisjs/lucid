@@ -39,6 +39,9 @@ export class RefExpressionBuilder {
     return this
   }
 
+  /**
+   * Convert ref to Knex.ref
+   */
   [TO_KNEX](client: Knex): Knex.Ref<string, {}> {
     const ref = client.ref(this.#ref)
     this.#schema && ref.withSchema(this.#schema)

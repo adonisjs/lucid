@@ -7,64 +7,108 @@
  * file that was distributed with this source code.
  */
 
-import type { Connection } from '../connection.js'
-import type { DialectContract } from './dialect.js'
+import type { Knex } from 'knex'
 import type { RefExpressionBuilder } from '../expression_builders/ref_expression_builder.js'
 import type { RawExpressionBuilder } from '../expression_builders/raw_expression_builder.js'
 import type { SelectExpressionBuilder } from '../expression_builders/select_expression_builder.js'
+import type { SelectQueryBuilder } from '../query_builders/select_query_builder.js'
 
-export type RawQueryBindingValues =
-  | string
-  | number
-  | boolean
-  | Date
-  | Array<string>
-  | Array<number>
-  | Array<Date>
-  | Array<boolean>
-  | Buffer
-export type RawQueryBindings = { [key: string]: RawQueryBindingValues } | RawQueryBindingValues[]
+/**
+ * A set of operators suggestions for the where clause. Additional unknown
+ * operators can be used as well.
+ */
+export type WhereOperator = '=' | '!=' | '<>' | '>' | '>=' | '<' | '<=' | '<=>' | '~' | '~*' | '!~*'
+
+/**
+ * Set of strict values accepted and transformed by Knex natively
+ */
+export type KnexStrictValues = string | number | boolean | Date | Buffer
+
+/**
+ * Allowed values for the bindings for a raw query
+ */
+export type RawQueryBindings =
+  | { [key: string]: KnexStrictValues | KnexStrictValues[] }
+  | KnexStrictValues[]
+
+/**
+ * A union of expressions accepted by the query builder
+ */
+export type QueryBuilderValueExpressions =
+  | SelectExpressionBuilder
+  | RawExpressionBuilder
+  | RefExpressionBuilder
+  | ((query: SelectExpressionBuilder) => void)
 
 /**
  * Expressions allowed when selecting columns from the database
  */
 export type SelectExpressions =
   | string
-  | SelectExpressionBuilder
-  | RefExpressionBuilder
-  | RawExpressionBuilder
-  | ((query: SelectExpressionBuilder) => void)
-  | Record<string, string | SelectExpressionBuilder | ((query: SelectExpressionBuilder) => void)>
+  | QueryBuilderValueExpressions
+  | Record<string, string | QueryBuilderValueExpressions>
 
 /**
  * Expressions allowed when selecting tables from the database
  */
-export type FromExpressions =
-  | string
-  | SelectExpressionBuilder
-  | RawExpressionBuilder
-  | ((query: SelectExpressionBuilder) => void)
+export type FromExpressions = string | QueryBuilderValueExpressions
 
 /**
- * Interface to be implemented by the query and the transaction clients
+ * A set of arguments accepted by different where methods.
  */
-export interface QueryClientContract {
+export type WhereExpressionArguments =
+  | [
+      column: string | RawExpressionBuilder | RefExpressionBuilder,
+      operator: WhereOperator | (string & {}),
+      value: KnexStrictValues | QueryBuilderValueExpressions,
+    ]
+  | [
+      column: string | RawExpressionBuilder | RefExpressionBuilder,
+      value: KnexStrictValues | QueryBuilderValueExpressions,
+    ]
+  | [dict: Record<string, KnexStrictValues | QueryBuilderValueExpressions>]
+
+/**
+ * A set of arguments accepted by the whereIn method
+ */
+export type WhereInExpressionArguments = [
+  column: string | string[] | RawExpressionBuilder | RefExpressionBuilder,
+  value: KnexStrictValues[] | QueryBuilderValueExpressions,
+]
+
+/**
+ * A set of arguments accepted by the whereJsonObject method
+ */
+export type WhereJSONObjectExpressionArguments = [
+  column: string | RawExpressionBuilder | RefExpressionBuilder,
+  value: string | Record<string, any> | QueryBuilderValueExpressions,
+]
+
+/**
+ * A set of arguments accepted by the whereJsonPath method
+ */
+export type WhereJSONPathExpressionArguments =
+  | [
+      column: string | RawExpressionBuilder | RefExpressionBuilder,
+      jsonPath: string,
+      operator: WhereOperator,
+      value: QueryBuilderValueExpressions,
+    ]
+  | [
+      column: string | RawExpressionBuilder | RefExpressionBuilder,
+      jsonPath: string,
+      operator: WhereOperator,
+      value: any,
+    ]
+
+/**
+ * Interface to be implemented by the database clients
+ */
+export interface DatabaseClientContract {
   /**
    * Check if the client belongs to a database transaction.
    */
   readonly isTransaction: boolean
-
-  /**
-   * Reference to the database dialect for which the query client
-   * was created. A query client is always tied to a dialect.
-   */
-  readonly dialect: DialectContract
-
-  /**
-   * Reference to the connection for which the query client was created.
-   * A query client is always tied to a connection.
-   */
-  readonly connection: Connection
 
   /**
    * The mode in which the client should execute queries. In dual mode,
@@ -77,11 +121,16 @@ export interface QueryClientContract {
   readonly mode: 'dual' | 'write' | 'read'
 
   /**
+   * Reference to the connection's unique identifier
+   */
+  readonly connectionIdentifier: string
+
+  /**
    * The name of the connection from which the client
    * was originated.
    *
    * @deprecated
-   * Instead use {@link Connection.identifier}
+   * Instead use {@link DatabaseClientContract.connectionIdentifier}
    */
   readonly connectionName: string
 
@@ -92,6 +141,22 @@ export interface QueryClientContract {
   debug: boolean
 
   /**
+   * Returns reference to the read client for executing the
+   * read queries.
+   *
+   * - Returns write client when `mode=write`
+   * - Returns read client when `mode=dual|read`.
+   */
+  getReadClient(): Knex
+
+  /**
+   * Returns reference to the write client for executing the
+   * write queries. This method will throw an error when the
+   * DatabaseClient instance is created in "read" mode.
+   */
+  getWriteClient(): Knex
+
+  /**
    * Returns instance of the {@link RefExpressionBuilder}
    */
   ref(reference: string): RefExpressionBuilder
@@ -100,4 +165,14 @@ export interface QueryClientContract {
    * Returns instance of the {@link RawExpressionBuilder}
    */
   raw(sql: string, bindings?: RawQueryBindings): RawExpressionBuilder
+
+  /**
+   * Listen when a new instance of the {@link SelectQueryBuilder} is created
+   */
+  onQuery(callback: (query: SelectQueryBuilder) => void): void
+
+  /**
+   * Creates an instance of the {@link SelectQueryBuilder}
+   */
+  query(): SelectQueryBuilder
 }

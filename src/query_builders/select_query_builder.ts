@@ -7,19 +7,19 @@
  * file that was distributed with this source code.
  */
 
-import type { QueryClientContract } from '../types/query.js'
+import type { DatabaseClientContract } from '../types/query.js'
 import { SelectExpressionBuilder } from '../expression_builders/select_expression_builder.js'
 
 export class SelectQueryBuilder extends SelectExpressionBuilder {
-  constructor(client: QueryClientContract) {
+  constructor(client: DatabaseClientContract) {
     super(client)
   }
 
   /**
-   * Creates an instance of the {@link SelectExpressionBuilder} that can be
-   * used as a subquery.
+   * Executes the select query using the database client
    */
-  createSubQuery() {
-    return new SelectExpressionBuilder(this.client)
+  async exec<T>(): Promise<T[]> {
+    const result = await this.knexQuery
+    return result
   }
 }

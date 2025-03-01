@@ -80,7 +80,7 @@ export class PgDialect extends AbstractDialect {
   #connection: Connection
   declare protected config: PGConfigOptions
 
-  name: string = 'pg'
+  name: 'postgres' = 'postgres'
   supportsViews: boolean = true
   supportsTypes: boolean = true
   supportsAdvisoryLocks: boolean = true

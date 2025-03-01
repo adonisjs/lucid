@@ -35,6 +35,9 @@ export class RawExpressionBuilder {
     return this
   }
 
+  /**
+   * Convert raw to Knex.raw
+   */
   [TO_KNEX](client: Knex): Knex.Raw<any> {
     const rawQuery = client.raw(this.#sql, this.#bindings ?? [])
     if (this.#wrapBefore && this.#wrapAfter) {

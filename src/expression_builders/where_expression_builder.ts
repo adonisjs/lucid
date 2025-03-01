@@ -7,46 +7,47 @@
  * file that was distributed with this source code.
  */
 
-import type { Knex } from 'knex'
+import { Knex } from 'knex'
 import type {
   WhereExpressionArguments,
   WhereInExpressionArguments,
-  WhereJSONPathExpressionArguments,
   WhereJSONObjectExpressionArguments,
+  WhereJSONPathExpressionArguments,
 } from '../types/query.js'
-import { WhereExpressionBuilder } from './where_expression_builder.js'
 import { WhereClauseTransformer } from '../transformers/where_clause.js'
-import type { SelectExpressionBuilder } from './select_expression_builder.js'
+import type { SharedExpressionBuilder } from './shared_expression_builder.js'
 
 /**
- * The SharedExpressionBuilder class encapsulates the API methods shared between
- * the select and the update queries for the sake of not duplicating them.
+ * WhereExpression builder is used within the where groups to define
+ * where clauses on the SQL query.
  */
-export abstract class SharedExpressionBuilder {
+export class WhereExpressionBuilder {
+  #grouping: 'or' | 'and'
   #whereTransformer: WhereClauseTransformer
 
   /**
-   * Reference to the underlying knex query builder.
+   * Function to create a new select subquery builder.
    */
-  knexQuery: Knex.QueryBuilder
-
-  constructor(protected knex: Knex) {
-    this.knexQuery = knex.queryBuilder()
-    this.#whereTransformer = new WhereClauseTransformer(this, this.knex)
+  createSelectSubQuery() {
+    return this.parent.createSelectSubQuery()
   }
-
-  /**
-   * Implement the method to create a select expression builder
-   * for running sub-queries
-   */
-  abstract createSelectSubQuery(): SelectExpressionBuilder
 
   /**
    * Function to transform column names as they are used by different
    * query methods like "where", "select", "orderBy" and so on.
    */
-  transformColumnName(key: string): string {
-    return key
+  transformColumnName(columnName: string) {
+    return this.parent.transformColumnName(columnName)
+  }
+
+  constructor(
+    protected parent: SharedExpressionBuilder,
+    protected knex: Knex,
+    public knexQuery: Knex.QueryBuilder,
+    grouping: 'or' | 'and'
+  ) {
+    this.#grouping = grouping
+    this.#whereTransformer = new WhereClauseTransformer(this, this.knex)
   }
 
   /**
@@ -60,42 +61,46 @@ export abstract class SharedExpressionBuilder {
    *
    * @example
    * ```ts
-   * query.where('username', 'virk')
-   * query.where('username', '!=', 'virk')
+   * exp.where('username', 'virk')
+   * exp.where('username', '!=', 'virk')
    *
-   * query.where('role', (q) => q.select('name').from('roles').where('id', roleId))
-   * query.where('lottery_number', client
+   * exp.where('role', (q) => q.select('name').from('roles').where('id', roleId))
+   * exp.where('lottery_number', client
    *    .raw('select ?? from ?? where ?? = ?', ['ticket_number', 'lotteries', 'status', 'won'])
    *    .wrap('(', ')')
    * )
    *
-   * query.where({
+   * exp.where({
    *   username: 'virk',
    *   is_active: true,
    * })
    * ```
    */
-  where(...expression: WhereExpressionArguments): this {
+  where(...expression: WhereExpressionArguments) {
     const [column, operator, value] = this.#whereTransformer.transformWhere(expression)
+
+    const method = this.#grouping === 'or' ? 'orWhere' : 'where'
     if (operator && value) {
-      this.knexQuery.where(column as any, operator, value)
+      this.knexQuery[method](column as any, operator, value)
     } else {
-      this.knexQuery.where(column)
+      this.knexQuery[method](column)
     }
     return this
   }
 
   /**
    * Apply a where not clause to the SQL query. The `whereNot` accepts
-   * the same set of arguments as the {@link SharedExpressionBuilder.where}
+   * the same set of arguments as the {@link WhereExpressionBuilder.where}
    * method.
    */
   whereNot(...expression: WhereExpressionArguments) {
     const [column, operator, value] = this.#whereTransformer.transformWhere(expression)
+
+    const method = this.#grouping === 'or' ? 'orWhereNot' : 'whereNot'
     if (operator && value) {
-      this.knexQuery.whereNot(column as any, operator, value)
+      this.knexQuery[method](column as any, operator, value)
     } else {
-      this.knexQuery.whereNot(column)
+      this.knexQuery[method](column)
     }
     return this
   }
@@ -112,31 +117,33 @@ export abstract class SharedExpressionBuilder {
    *
    * @example
    * ```ts
-   * query.whereIn('username', ['virk', 'romain'])
-   * query.whereIn(['username', 'email'], [
+   * exp.whereIn('username', ['virk', 'romain'])
+   * exp.whereIn(['username', 'email'], [
    *   ['virk', 'virk@adonisjs.com'],
    *   ['romain', 'romain@adonisjs.com']
    * ])
    *
-   * query.whereIn('country_code', (q) => {
+   * exp.whereIn('country_code', (q) => {
    *   q.select('country_code').from('countries').where('is_active', true)
    * })
    * ```
    */
   whereIn(...expression: WhereInExpressionArguments) {
+    const method = this.#grouping === 'or' ? 'orWhereIn' : 'whereIn'
     const [column, value] = this.#whereTransformer.transformWhereIn(expression)
-    this.knexQuery.whereIn(column as any, value as any)
+    this.knexQuery[method](column as any, value as any)
     return this
   }
 
   /**
    * Apply a where not in clause to the SQL query. The `whereNotIn` accepts
-   * the same set of arguments as the {@link SharedExpressionBuilder.whereIn}
+   * the same set of arguments as the {@link WhereExpressionBuilder.whereIn}
    * method.
    */
-  whereNotIn(...expression: WhereInExpressionArguments): this {
+  whereNotIn(...expression: WhereInExpressionArguments) {
+    const method = this.#grouping === 'or' ? 'orWhereNotIn' : 'whereNotIn'
     const [column, value] = this.#whereTransformer.transformWhereIn(expression)
-    this.knexQuery.whereIn(column as any, value as any)
+    this.knexQuery[method](column as any, value as any)
     return this
   }
 
@@ -151,23 +158,25 @@ export abstract class SharedExpressionBuilder {
    *
    * @example
    * ```ts
-   * query.whereJsonObject('address', { city: 'Gurgaon' })
+   * exp.whereJsonObject('address', { city: 'Gurgaon' })
    * ```
    */
   whereJsonObject(...expression: WhereJSONObjectExpressionArguments): this {
+    const method = this.#grouping === 'or' ? 'orWhereJsonObject' : 'whereJsonObject'
     const [column, value] = this.#whereTransformer.transformWhereJsonObject(expression)
-    this.knexQuery.whereJsonObject(column as any, value)
+    this.knexQuery[method](column as any, value)
     return this
   }
 
   /**
    * Apply a where not equal clause on a JSON column. The `whereNotJsonObject` accepts
-   * the same set of arguments as the {@link SharedExpressionBuilder.whereJsonObject}
+   * the same set of arguments as the {@link WhereExpressionBuilder.whereJsonObject}
    * method.
    */
   whereNotJsonObject(...expression: WhereJSONObjectExpressionArguments): this {
+    const method = this.#grouping === 'or' ? 'orWhereNotJsonObject' : 'whereNotJsonObject'
     const [column, value] = this.#whereTransformer.transformWhereJsonObject(expression)
-    this.knexQuery.whereNotJsonObject(column as any, value)
+    this.knexQuery[method](column as any, value)
     return this
   }
 
@@ -183,13 +192,15 @@ export abstract class SharedExpressionBuilder {
    *
    * @example
    * ```ts
-   * query.whereJsonPath('address', '$.city', '=', 'Gurgaon')
+   * exp.whereJsonPath('address', '$.city', '=', 'Gurgaon')
    * ```
    */
   whereJsonPath(...expression: WhereJSONPathExpressionArguments) {
+    const method = this.#grouping === 'or' ? 'orWhereJsonPath' : 'whereJsonPath'
+
     const [column, jsonPath, operator, value] =
       this.#whereTransformer.transformWhereJsonPath(expression)
-    this.knexQuery.whereJsonPath(column as any, jsonPath, operator, value)
+    this.knexQuery[method](column as any, jsonPath, operator, value)
     return this
   }
 
@@ -199,7 +210,7 @@ export abstract class SharedExpressionBuilder {
    *
    * @example
    * ```ts
-   * query.orWhereGroup((exp) => {
+   * exp.orWhereGroup((exp) => {
    *   exp.where('username', 'virk').where('username', 'romain')
    * })
    * // SELECT * users WHERE (username = 'virk' or username = 'romain')
@@ -207,7 +218,7 @@ export abstract class SharedExpressionBuilder {
    */
   orWhereGroup(callback: (expressionBuilder: WhereExpressionBuilder) => void): this {
     this.knexQuery.where((subQuery) => {
-      const expressionBuilder = new WhereExpressionBuilder(this, this.knex, subQuery, 'or')
+      const expressionBuilder = new WhereExpressionBuilder(this.parent, this.knex, subQuery, 'or')
       callback(expressionBuilder)
     })
     return this
@@ -227,32 +238,9 @@ export abstract class SharedExpressionBuilder {
    */
   andWhereGroup(callback: (expressionBuilder: WhereExpressionBuilder) => void): this {
     this.knexQuery.where((subQuery) => {
-      const expressionBuilder = new WhereExpressionBuilder(this, this.knex, subQuery, 'and')
+      const expressionBuilder = new WhereExpressionBuilder(this.parent, this.knex, subQuery, 'and')
       callback(expressionBuilder)
     })
     return this
-  }
-
-  /**
-   * Converts query to its SQL representation
-   */
-  toSQL() {
-    return this.knexQuery.toSQL()
-  }
-
-  /**
-   * Converts query to a compiled SQL string with inline
-   * bindings
-   */
-  toString() {
-    return this.knexQuery.toString()
-  }
-
-  /**
-   * Converts query to its SQL representation that is sent to
-   * the client for execution.
-   */
-  toNative() {
-    return this.knexQuery.toSQL().toNative()
   }
 }

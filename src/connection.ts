@@ -15,7 +15,7 @@ import { RuntimeException } from '@poppinss/exception'
 import { debug } from './debug.js'
 import * as errors from './errors.js'
 import { dialects } from './dialects/main.js'
-import { QueryClient } from './query_clients/client.js'
+import { QueryClient } from './database_clients/query_client.js'
 import type { DialectContract } from './types/dialect.js'
 import type { ConnectionConfig, SupportedDialectNames } from './types/connection.js'
 

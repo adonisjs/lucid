@@ -35,6 +35,7 @@
     "quick:test": "DB=sqlite NODE_DEBUG=adonisjs:lucid node --import=ts-node-maintained/register/esm --enable-source-maps bin/test.ts"
   },
   "devDependencies": {
+    "@adonisjs/core": "^6.17.2",
     "@adonisjs/env": "^6.1.1",
     "@adonisjs/eslint-config": "^2.0.0-beta.6",
     "@adonisjs/prettier-config": "^1.4.0",
@@ -65,11 +66,15 @@
   },
   "dependencies": {
     "@poppinss/exception": "^1.2.0",
+    "@poppinss/hooks": "^7.2.5",
     "@poppinss/utils": "^6.9.2",
     "fast-deep-equal": "^3.1.3",
     "knex": "^3.1.0",
     "knex-dynamic-connection": "^3.2.0",
     "tarn": "3.0.2"
+  },
+  "peerDependencies": {
+    "@adonisjs/core": "^6.17.2"
   },
   "homepage": "https://github.com/adonisjs/lucid#readme",
   "repository": {

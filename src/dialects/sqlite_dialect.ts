@@ -82,7 +82,7 @@ const SQLITE_VARYING_REMAPS = [
 export class SQLiteDialect extends AbstractDialect {
   #connection: Connection
 
-  name: string = 'sqlite3'
+  name: 'sqlite3' = 'sqlite3'
   supportsViews: boolean = true
 
   dateFormat: string = 'yyyy-MM-dd'
