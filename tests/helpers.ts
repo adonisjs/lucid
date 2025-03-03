@@ -87,12 +87,19 @@ export function getConnectionConfig<T extends 'pg' | 'sqlite' | 'mysql' | 'mssql
 export const dbSetup = test.macro(async (t, connection: Connection) => {
   async function cleanup() {
     await connection.client!.schema.dropTableIfExists('profiles')
-    await connection.client!.schema.dropTableIfExists('users')
     await connection.client!.schema.dropTableIfExists('skills')
+    await connection.client!.schema.dropTableIfExists('users')
+    await connection.client!.schema.dropTableIfExists('roles')
   }
 
   t.cleanup(cleanup)
   await cleanup()
+
+  await connection.client!.schema.createTable('roles', (table) => {
+    table.increments()
+    table.string('name')
+    table.boolean('is_default').defaultTo(false)
+  })
 
   /**
    * Creating neccessary tables
@@ -101,18 +108,16 @@ export const dbSetup = test.macro(async (t, connection: Connection) => {
     table.increments()
     table.string('first_name')
     table.string('last_name')
+    table.string('username').unique()
     table.string('email').unique()
     table.integer('age').notNullable()
-    table.enu('role', ['admin', 'guest'], {
-      useNative: true,
-      enumName: 'user_role_enum_type',
-    })
+    table.integer('role_id').unsigned().references('roles.id').onDelete('CASCADE')
     table.string('password')
   })
   await connection.client!.schema.createTable('profiles', (table) => {
     table.increments()
     table.string('full_name').nullable()
-    table.specificType('profile_details', 'user_profile')
+    table.jsonb('profile_details')
     table.integer('user_id').unsigned().references('users.id').onDelete('CASCADE')
   })
   await connection.client!.schema.createTable('skills', (table) => {

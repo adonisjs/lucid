@@ -15,6 +15,7 @@ import { SelectQueryBuilder } from '../query_builders/select_query_builder.js'
 import { RawExpressionBuilder } from '../expression_builders/raw_expression_builder.js'
 import { RefExpressionBuilder } from '../expression_builders/ref_expression_builder.js'
 import type { DatabaseClientContract, RawQueryBindings } from '../types/query.js'
+import { InsertQueryBuilder } from '../query_builders/insert_query_builder.js'
 
 export abstract class DatabaseClient implements DatabaseClientContract {
   #connection: Connection
@@ -24,6 +25,7 @@ export abstract class DatabaseClient implements DatabaseClientContract {
    * builder is created
    */
   #selectQueryCallbacks: ((query: SelectQueryBuilder) => void)[] = []
+  #insertQueryCallback: ((query: InsertQueryBuilder) => void)[] = []
 
   /**
    * Enable/disable query debugging for all the queries initiated
@@ -107,9 +109,27 @@ export abstract class DatabaseClient implements DatabaseClientContract {
   }
 
   /**
+   * Listen when a new instance of the {@link InsertQueryBuilder} is created
+   */
+  onInsertQuery(callback: (query: InsertQueryBuilder) => void): void {
+    this.#insertQueryCallback.push(callback)
+  }
+
+  /**
    * Creates an instance of the {@link SelectQueryBuilder}
    */
   query() {
-    return new SelectQueryBuilder(this)
+    const query = new SelectQueryBuilder(this)
+    this.#selectQueryCallbacks.forEach((cb) => cb(query))
+    return query
+  }
+
+  /**
+   * Creates an instance of the {@link InsertQueryBuilder}
+   */
+  insertQuery() {
+    const query = new InsertQueryBuilder(this)
+    this.#insertQueryCallback.forEach((cb) => cb(query))
+    return query
   }
 }

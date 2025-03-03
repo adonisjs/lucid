@@ -16,6 +16,7 @@ import { RawExpressionBuilder } from './expression_builders/raw_expression_build
 import type { WhereExpressionBuilder } from './expression_builders/where_expression_builder.js'
 import type { SharedExpressionBuilder } from './expression_builders/shared_expression_builder.js'
 import type { SelectExpressionBuilder } from './expression_builders/select_expression_builder.js'
+import { InsertQueryBuilder } from './query_builders/insert_query_builder.js'
 
 /**
  * Checks if value is an object excluding Arrays and null values
@@ -49,25 +50,29 @@ export function isPlainObject<T extends Record<string, any> = Record<string, any
  */
 export function transformValueExpressions<
   T extends SelectExpressionBuilder | ((query: SelectExpressionBuilder) => void),
->(value: T, self: SharedExpressionBuilder | WhereExpressionBuilder, knex: Knex): Knex.QueryBuilder
+>(
+  value: T,
+  self: SharedExpressionBuilder | WhereExpressionBuilder | InsertQueryBuilder,
+  knex: Knex
+): Knex.QueryBuilder
 export function transformValueExpressions<T extends RawExpressionBuilder | RefExpressionBuilder>(
   value: T,
-  self: SharedExpressionBuilder | WhereExpressionBuilder,
+  self: SharedExpressionBuilder | WhereExpressionBuilder | InsertQueryBuilder,
   knex: Knex
 ): Knex.Raw | Knex.Ref<any, {}>
 export function transformValueExpressions<T extends QueryBuilderValueExpressions | any>(
   value: T,
-  self: SharedExpressionBuilder | WhereExpressionBuilder,
+  self: SharedExpressionBuilder | WhereExpressionBuilder | InsertQueryBuilder,
   knex: Knex
 ): Knex.QueryBuilder | Knex.Raw | Knex.Ref<any, {}> | undefined
 export function transformValueExpressions<T>(
   value: T,
-  self: SharedExpressionBuilder | WhereExpressionBuilder,
+  self: SharedExpressionBuilder | WhereExpressionBuilder | InsertQueryBuilder,
   knex: Knex
 ): undefined
 export function transformValueExpressions<T>(
   value: T,
-  self: SharedExpressionBuilder | WhereExpressionBuilder,
+  self: SharedExpressionBuilder | WhereExpressionBuilder | InsertQueryBuilder,
   knex: Knex
 ) {
   /**

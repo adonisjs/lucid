@@ -12,6 +12,7 @@ import type { RefExpressionBuilder } from '../expression_builders/ref_expression
 import type { RawExpressionBuilder } from '../expression_builders/raw_expression_builder.js'
 import type { SelectExpressionBuilder } from '../expression_builders/select_expression_builder.js'
 import type { SelectQueryBuilder } from '../query_builders/select_query_builder.js'
+import { InsertQueryBuilder } from '../query_builders/insert_query_builder.js'
 
 /**
  * A set of operators suggestions for the where clause. Additional unknown
@@ -167,12 +168,22 @@ export interface DatabaseClientContract {
   raw(sql: string, bindings?: RawQueryBindings): RawExpressionBuilder
 
   /**
-   * Listen when a new instance of the {@link SelectQueryBuilder} is created
+   * Listen when a new instance of the {@link SelectQueryBuilder}
    */
   onQuery(callback: (query: SelectQueryBuilder) => void): void
+
+  /**
+   * Listen when a new instance of the {@link InsertQueryBuilder}
+   */
+  onInsertQuery(callback: (query: InsertQueryBuilder) => void): void
 
   /**
    * Creates an instance of the {@link SelectQueryBuilder}
    */
   query(): SelectQueryBuilder
+
+  /**
+   * Creates an instance of the {@link InsertQueryBuilder}
+   */
+  insertQuery(): InsertQueryBuilder
 }

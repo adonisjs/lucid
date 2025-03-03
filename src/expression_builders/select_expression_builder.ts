@@ -76,8 +76,7 @@ export class SelectExpressionBuilder extends SharedExpressionBuilder {
   }
 
   /**
-   * Returns an instance of the {@link SelectExpressionBuilder} to be
-   * used for creating subqueries.
+   * Returns an instance of the {@link SelectExpressionBuilder}
    */
   createSelectSubQuery() {
     return new SelectExpressionBuilder(this.client)
