@@ -139,9 +139,6 @@
   "bugs": {
     "url": "https://github.com/adonisjs/lucid/issues"
   },
-  "overrides": {
-    "strtok3": "8.0.1"
-  },
   "prettier": "@adonisjs/prettier-config",
   "commitlint": {
     "extends": [
