@@ -225,7 +225,7 @@ export class MigrationRunner extends EventEmitter {
    */
   private async executeMigration(migration: FileNode<unknown>) {
     const SchemaClass = await this.getMigrationSource(migration)
-    const client = await this.getClient(BaseSchema.disableTransactions)
+    const client = await this.getClient(SchemaClass.disableTransactions)
 
     try {
       const schema = new SchemaClass(client, migration.name, this.dryRun)
