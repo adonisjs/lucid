@@ -25,7 +25,7 @@ export const SUPPORT_WITH_MATERIALIZED = ['pg', 'sqlite'].includes(process.env.D
  * Returns the config for constructing a new connection based
  * upon the "process.env.DB" value.
  */
-export function getConnectionConfig<T extends 'pg' | 'sqlite' | 'mysql' | 'mssql'>(
+export function getConnectionConfig<T extends 'pg' | 'sqlite' | 'mysql' | 'mssql' | 'legacy_mysql'>(
   client: T | undefined = process.env.DB as T
 ) {
   switch (client) {
@@ -46,6 +46,18 @@ export function getConnectionConfig<T extends 'pg' | 'sqlite' | 'mysql' | 'mssql
           database: process.env.MYSQL_DATABASE as string,
           user: process.env.MYSQL_USER as string,
           password: process.env.MYSQL_PASSWORD as string,
+        },
+        asyncStackTraces: true,
+        debug: !!process.env.DEBUG,
+      })
+    case 'legacy_mysql':
+      return clients.mysql2({
+        connection: {
+          host: process.env.LEGACY_MYSQL_HOST as string,
+          port: Number(process.env.LEGACY_MYSQL_PORT),
+          database: process.env.LEGACY_MYSQL_DATABASE as string,
+          user: process.env.LEGACY_MYSQL_USER as string,
+          password: process.env.LEGACY_MYSQL_PASSWORD as string,
         },
         asyncStackTraces: true,
         debug: !!process.env.DEBUG,
