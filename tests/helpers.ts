@@ -12,13 +12,14 @@ import { Env } from '@adonisjs/env'
 import { test } from '@japa/runner'
 import { fileURLToPath } from 'node:url'
 import { clients } from '../src/define_config.js'
-import { Connection } from '../src/connection.js'
+import { Connection } from '../src/connection/connection.js'
 
 await Env.create(new URL('../', import.meta.url), {})
 
 export const APP_ROOT = new URL('./tmp', import.meta.url)
 export const SQLITE_BASE_PATH = fileURLToPath(APP_ROOT)
 export const SUPPORTS_READ_WRITE_REPLICAS = ['pg', 'mysql', 'mssql'].includes(process.env.DB!)
+export const SUPPORT_WITH_MATERIALIZED = ['pg', 'sqlite'].includes(process.env.DB!)
 
 /**
  * Returns the config for constructing a new connection based

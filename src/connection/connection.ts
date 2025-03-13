@@ -12,12 +12,17 @@ import knex, { Knex } from 'knex'
 import { patchKnex } from 'knex-dynamic-connection'
 import { RuntimeException } from '@poppinss/exception'
 
-import { debug } from './debug.js'
-import * as errors from './errors.js'
-import { dialects } from './dialects/main.js'
-import { QueryClient } from './database_clients/query_client.js'
-import type { DialectContract } from './types/dialect.js'
-import type { ConnectionConfig, SupportedDialectNames } from './types/connection.js'
+import { debug } from '../debug.js'
+import * as errors from '../errors.js'
+import { dialects } from '../dialects/main.js'
+import { QueryClient } from '../database_clients/query_client.js'
+import type { DialectContract } from '../types/dialect.js'
+import type {
+  ConnectionConfig,
+  ConnectionLogger,
+  SupportedDialectNames,
+} from '../types/connection.js'
+import { createKnexLogger } from './logger.js'
 
 /**
  * A connection represents a database connection created by instantiating
@@ -25,20 +30,20 @@ import type { ConnectionConfig, SupportedDialectNames } from './types/connection
  * knex instances will be created.
  */
 export class Connection {
+  /**
+   * Shared with knex instances
+   */
+  #knexLogger: Knex.Logger
+
   #state: {
     closeErrorCallbacks: ((error: any, connection: Connection) => void)[]
     closeCallbacks: ((connection: Connection) => void)[]
     replicasConfig: any[]
     roundRobinCounter: number
-  } = {
-    closeErrorCallbacks: [],
-    closeCallbacks: [],
-    replicasConfig: [],
-    roundRobinCounter: 0,
-  }
+  } = this.#createFreshState()
 
   /**
-   * Reference to knex.
+   * Reference to knex instance for executing write queries
    */
   client?: Knex
 
@@ -106,7 +111,8 @@ export class Connection {
      * by the connection manager
      */
     public identifier: string,
-    public config: ConnectionConfig
+    public config: ConnectionConfig,
+    logger?: ConnectionLogger
   ) {
     this.#validateConnectionSettings()
     this.clientName = config.clientName
@@ -115,7 +121,25 @@ export class Connection {
     this.#setupWriteConnection()
     this.#setupReadConnection()
     this.#monitorPoolResources()
+    this.#knexLogger = createKnexLogger(logger ?? console)
     this.dialect = new dialects[config.dialectName](this)
+  }
+
+  /**
+   * Creates the fresh state for the connection
+   */
+  #createFreshState() {
+    return {
+      closeErrorCallbacks: [],
+      closeCallbacks: [],
+      replicasConfig: [],
+      roundRobinCounter: 0,
+    } satisfies {
+      closeErrorCallbacks: ((error: any, connection: Connection) => void)[]
+      closeCallbacks: ((connection: Connection) => void)[]
+      replicasConfig: any[]
+      roundRobinCounter: number
+    }
   }
 
   /**
@@ -177,7 +201,7 @@ export class Connection {
     }
 
     debug('%s: creating write connection %O', this.identifier, writeConfig)
-    this.client = knex.knex(writeConfig)
+    this.client = knex.knex({ log: this.#knexLogger, ...writeConfig })
     patchKnex(this.client, (originalConfig) => originalConfig.connection as Knex.ConnectionConfig)
   }
 
@@ -216,7 +240,7 @@ export class Connection {
     }
 
     debug('%s: creating read connection %O', this.identifier, initialConfig)
-    this.readClient = knex(initialConfig)
+    this.readClient = knex({ log: this.#knexLogger, ...initialConfig })
 
     /**
      * Creating the final config array of read replicas.
@@ -260,6 +284,7 @@ export class Connection {
       this.pool!.removeAllListeners()
       this.client = undefined
       this.#state.closeCallbacks.forEach((callback) => callback(this))
+      this.#state = this.#createFreshState()
     })
 
     if (this.readPool !== this.pool) {

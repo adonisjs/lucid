@@ -12,7 +12,7 @@ import { MySQLDialect } from './mysql_dialect.js'
 import { MSSQLDialect } from './mssql_dialect.js'
 import { SQLiteDialect } from './sqlite_dialect.js'
 
-import type { Connection } from '../connection.js'
+import type { Connection } from '../connection/connection.js'
 import type { DialectContract } from '../types/dialect.js'
 import type { SupportedDialectNames } from '../types/connection.js'
 

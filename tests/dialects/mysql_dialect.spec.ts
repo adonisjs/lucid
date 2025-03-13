@@ -8,7 +8,7 @@
  */
 
 import { test } from '@japa/runner'
-import { Connection } from '../../src/connection.js'
+import { Connection } from '../../src/connection/connection.js'
 import { MySQLDialect } from '../../src/dialects/mysql_dialect.js'
 import {
   dbSetup,
@@ -347,7 +347,7 @@ test.group('MYSQL Dialect | insert', () => {
     await client
       .insertQuery()
       .table('roles')
-      .insert([
+      .values([
         {
           name: 'guest',
           is_default: true,
@@ -364,7 +364,7 @@ test.group('MYSQL Dialect | insert', () => {
     await client
       .insertQuery()
       .table('users')
-      .insert({
+      .values({
         first_name: 'Harminder',
         last_name: 'Virk',
         username: 'virk@adonisjs.com', // self refs are not supported
@@ -415,7 +415,7 @@ test.group('MYSQL Dialect | insert', () => {
     await client
       .insertQuery()
       .table('users')
-      .insert({
+      .values({
         first_name: 'Harminder',
         last_name: 'Virk',
         username: 'virk@adonisjs.com',
@@ -427,7 +427,7 @@ test.group('MYSQL Dialect | insert', () => {
     await client
       .insertQuery()
       .table('users')
-      .insert({
+      .values({
         first_name: 'Harminder',
         username: 'virk',
         email: 'virk@adonisjs.com',
@@ -458,7 +458,7 @@ test.group('MYSQL Dialect | insert', () => {
     await client
       .insertQuery()
       .table('users')
-      .insert({
+      .values({
         first_name: 'Harminder',
         last_name: 'Virk',
         username: 'virk@adonisjs.com',
@@ -470,7 +470,7 @@ test.group('MYSQL Dialect | insert', () => {
     await client
       .insertQuery()
       .table('users')
-      .insert({
+      .values({
         first_name: 'Aman',
         last_name: 'Virk',
         username: 'virk',
@@ -502,7 +502,7 @@ test.group('MYSQL Dialect | insert', () => {
     await client
       .insertQuery()
       .table('users')
-      .insert({
+      .values({
         first_name: 'Harminder',
         last_name: 'Virk',
         username: 'virk@adonisjs.com',
@@ -514,7 +514,7 @@ test.group('MYSQL Dialect | insert', () => {
     await client
       .insertQuery()
       .table('users')
-      .insert({
+      .values({
         first_name: 'Harminder',
         username: 'virk',
         email: 'virk@adonisjs.com',
@@ -547,7 +547,7 @@ test.group('MYSQL Dialect | insert', () => {
     const [lastInsertedId] = await client
       .insertQuery()
       .table('users')
-      .insert([
+      .values([
         {
           first_name: 'Harminder',
           last_name: 'Virk',
@@ -564,7 +564,7 @@ test.group('MYSQL Dialect | insert', () => {
     await client
       .insertQuery()
       .table('skills')
-      .insert([
+      .values([
         {
           user_id: lastInsertedId,
           skill_name: 'programming',
@@ -582,7 +582,8 @@ test.group('MYSQL Dialect | insert', () => {
     await client
       .insertQuery()
       .table('skills')
-      .insertUsing(['skill_name', 'user_id'], (query) => {
+      .columns(['skill_name', 'user_id'])
+      .using((query) => {
         query.select('skill_name', 'user_id').from('skills').where('user_id', lastInsertedId)
       })
       .exec()

@@ -13,14 +13,37 @@ import { TO_KNEX } from '../symbols.js'
 import { transformValueExpressions } from '../helpers.js'
 import { RawExpressionBuilder } from '../expression_builders/raw_expression_builder.js'
 import { SelectExpressionBuilder } from '../expression_builders/select_expression_builder.js'
-import type { DatabaseClientContract, QueryBuilderValueExpressions } from '../types/query.js'
+import type {
+  CanBeExecuted,
+  DatabaseClientContract,
+  QueryBuilderValueExpressions,
+} from '../types/query.js'
 import { ConflictExpressionBuilder } from '../expression_builders/conflict_expression_builder.js'
 
-export class InsertQueryBuilder {
+export class InsertQueryBuilder implements CanBeExecuted {
   #tableName?: string
+  #context: Record<string, any> = {}
 
+  /**
+   * Reference to knex client. Needed for converting "RawExpression" and
+   * "RefExpression" classes to knex compatible values
+   */
   protected knex: Knex
-  protected knexQuery: Knex.QueryBuilder
+
+  /**
+   * Flag to know if debugging it enabled or not
+   */
+  debugging: boolean = false
+
+  /**
+   * Underlying knex query to mutate
+   */
+  knexQuery: Knex.QueryBuilder
+
+  /**
+   * The queryType is used the query client
+   */
+  readonly queryType = 'write'
 
   constructor(protected client: DatabaseClientContract) {
     this.knex = client.getWriteClient()
@@ -44,8 +67,38 @@ export class InsertQueryBuilder {
   }
 
   /**
-   * Function to transform column names as they are used by different
-   * query methods like "where", "select", "orderBy" and so on.
+   * Returns the query context
+   */
+  getContext(): Record<string, any> {
+    return this.#context
+  }
+
+  /**
+   * Define the context to be shared with the "db:query" event.
+   *
+   * This method will override existing context with provided values.
+   * Use {@link InsertQueryBuilder.withContext} to merge values
+   */
+  setContext(context: Record<string, any>): this {
+    this.#context = context
+    return this
+  }
+
+  /**
+   * Define the context to be shared with the "db:query" event.
+   *
+   * The provided values will be shallow merged with the existing
+   * values. Use {@link InsertQueryBuilder.setContext} to remove existing context with
+   * new values.
+   */
+  withContext(context: Record<string, any>): this {
+    Object.assign(this.#context, context)
+    return this
+  }
+
+  /**
+   * Function to transform column names provided as values to the
+   * "values" method.
    */
   transformColumnName(key: string): string {
     return key
@@ -56,6 +109,15 @@ export class InsertQueryBuilder {
    */
   createSelectSubQuery() {
     return new SelectExpressionBuilder(this.client)
+  }
+
+  /**
+   * Enable/disable query debugging for the current query builder.
+   * Debugging will emit the "db:query" event
+   */
+  debug(toggle: boolean = true) {
+    this.debugging = toggle
+    return this
   }
 
   /**
@@ -83,7 +145,7 @@ export class InsertQueryBuilder {
    *
    * @example
    * ```ts
-   * query.insert({
+   * query.insertInto('users').values({
    *   first_name: 'Harminder',
    *   last_name: 'Virk',
    *   username: 'virk@adonisjs.com',
@@ -94,7 +156,7 @@ export class InsertQueryBuilder {
    *  })
    * ```
    */
-  insert(
+  values(
     values: Record<string, any> | Record<string, any>[],
     options?: {
       includeTriggerModifications: boolean
@@ -114,38 +176,43 @@ export class InsertQueryBuilder {
   }
 
   /**
-   * Define the columns for the insert query and pick values using a subquery
-   * or a raw query.
+   * Define the columns for the insert query and chain the "using"
+   * method to specify the values via a subquery builder or raw query.
    *
    * @example
    * ```ts
    * query
-   *   .table('expired_tokens')
-   *   .insertUsing(['token', 'user_id', 'expires_at'], (query) => {
-   *     query
+   *   .insertInto('expired_tokens')
+   *   .columns(['token', 'user_id', 'expires_at'])
+   *   .using((query) => {
+   *     return query
    *       .select('token', 'user_id', 'expires_at')
    *       .where('expires_at', '<=', client.raw('now()'))
    *   })
    * ```
    */
-  insertUsing(
-    columns: string[],
-    query: QueryBuilderValueExpressions,
-    options?: {
-      includeTriggerModifications: boolean
-    }
-  ): this {
+  columns(columns: string[]) {
     this.knexQuery.into(
       this.knex.raw(`?? (${columns.map(() => `??`).join(', ')})`, [this.#tableName, ...columns])
     )
 
-    const transformedValue = transformValueExpressions(query, this, this.knex)
-    if (!transformedValue) {
-      throw new errors.E_INVALID_SQL_EXPRESSION([query, 'insertUsing'])
-    }
+    const parent = this
+    return {
+      using(
+        query: QueryBuilderValueExpressions,
+        options?: {
+          includeTriggerModifications: boolean
+        }
+      ): InsertQueryBuilder {
+        const transformedValue = transformValueExpressions(query, parent, parent.knex)
+        if (!transformedValue) {
+          throw new errors.E_INVALID_SQL_EXPRESSION([query, 'insertUsing'])
+        }
 
-    this.knexQuery.insert(transformedValue, [], options)
-    return this
+        parent.knexQuery.insert(transformedValue, [], options)
+        return parent
+      },
+    }
   }
 
   /**
@@ -209,8 +276,30 @@ export class InsertQueryBuilder {
    * await query.exec()
    * ```
    */
-  async exec() {
-    const result = await this.knexQuery
-    return result
+  exec<T = any>(): Promise<T> {
+    return this.client.exec<T>(this)
+  }
+
+  /**
+   * Converts query to its SQL representation
+   */
+  toSQL() {
+    return this.knexQuery.toSQL()
+  }
+
+  /**
+   * Converts query to a compiled SQL string with inline
+   * bindings
+   */
+  toString() {
+    return this.knexQuery.toString()
+  }
+
+  /**
+   * Converts query to its SQL representation that is sent to
+   * the client for execution.
+   */
+  toNative() {
+    return this.knexQuery.toSQL().toNative()
   }
 }

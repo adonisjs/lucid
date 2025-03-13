@@ -12,6 +12,8 @@ import type { ConnectionConfig as PGConnectionOptions } from 'pg'
 import type { ConnectionOptions as MySQL2ConnectionOptions } from 'mysql2'
 import type { Options as BetterSQLiteConnectionOptions } from 'better-sqlite3'
 
+import type { Connection } from '../connection/connection.js'
+
 /**
  * A dialect refers to the SQL flavor supported by Lucid. However,
  * different JavaScript clients can be used for the same dialect.
@@ -227,4 +229,66 @@ export type ConnectionConfig = SharedConfigOptions & {
       pool?: SharedConfigOptions['pool']
     }
   }
+}
+
+/**
+ * Reference to the connection node stored with the connection
+ * manager.
+ */
+export type ManagerConnection = {
+  /**
+   * @deprecated
+   * Instead use "identifier"
+   */
+  name: string
+
+  /**
+   * Unique identifier for the connection. Two connections with
+   * the same identifier can never be registered with the
+   * manager.
+   */
+  identifier: string
+
+  /**
+   * Reference to the configuration used for creating the connection
+   */
+  config: ConnectionConfig
+
+  /**
+   * Connection object reference. Exists only after `connect` method
+   * is called
+   */
+  connection?: Connection
+
+  /**
+   * Current state of the connection.
+   *
+   * - In `registered` state, connection identifier and config is registered
+   *   with the manager, but no connection object is created.
+   * - In `open` state, connection object is created and can be used for
+   *   executing queries.
+   * - In `closing` state, connection object is closing the underlying database
+   *   connection and cannot be used for creating new query builders.
+   * - In `closed` state, connection is closed and the connection object
+   *   is deleted including knex references.
+   */
+  state: 'registered' | 'open' | 'closing' | 'closed'
+}
+
+/**
+ * Logger accepted by the connection to self consume knex logs
+ */
+export interface ConnectionLogger {
+  info(message: string): void
+  warn(message: string): void
+  error(message: string): void
+  debug(message: string): void
+}
+
+/**
+ * Emitter accepted by the connection manager and query client to emit events
+ */
+export interface DatabaseEmitter {
+  emit(event: string | Symbol, data: any): void
+  hasListeners(event: string | Symbol): boolean
 }

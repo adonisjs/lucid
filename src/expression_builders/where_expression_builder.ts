@@ -7,18 +7,23 @@
  * file that was distributed with this source code.
  */
 
-import { Knex } from 'knex'
+import type { Knex } from 'knex'
 import type {
+  RawQueryBindings,
   WhereExpressionArguments,
   WhereInExpressionArguments,
-  WhereJSONObjectExpressionArguments,
+  WhereNullExpressionArguments,
+  WhereExistsExpressionArguments,
+  WhereColumnExpressionArguments,
+  WhereBetweenExpressionArguments,
   WhereJSONPathExpressionArguments,
+  WhereJSONObjectExpressionArguments,
 } from '../types/query.js'
 import { WhereClauseTransformer } from '../transformers/where_clause.js'
 import type { SharedExpressionBuilder } from './shared_expression_builder.js'
 
 /**
- * WhereExpression builder is used within the where groups to define
+ * WhereExpressionBuilder is used within the where groups to define
  * where clauses on the SQL query.
  */
 export class WhereExpressionBuilder {
@@ -76,11 +81,11 @@ export class WhereExpressionBuilder {
    * })
    * ```
    */
-  where(...expression: WhereExpressionArguments) {
+  where(...expression: WhereExpressionArguments): this {
     const [column, operator, value] = this.#whereTransformer.transformWhere(expression)
 
     const method = this.#grouping === 'or' ? 'orWhere' : 'where'
-    if (operator && value) {
+    if (operator && value !== undefined) {
       this.knexQuery[method](column as any, operator, value)
     } else {
       this.knexQuery[method](column)
@@ -93,11 +98,63 @@ export class WhereExpressionBuilder {
    * the same set of arguments as the {@link WhereExpressionBuilder.where}
    * method.
    */
-  whereNot(...expression: WhereExpressionArguments) {
+  whereNot(...expression: WhereExpressionArguments): this {
     const [column, operator, value] = this.#whereTransformer.transformWhere(expression)
 
     const method = this.#grouping === 'or' ? 'orWhereNot' : 'whereNot'
-    if (operator && value) {
+    if (operator && value !== undefined) {
+      this.knexQuery[method](column as any, operator, value)
+    } else {
+      this.knexQuery[method](column)
+    }
+    return this
+  }
+
+  /**
+   * Apply a where clause to the SQL query comparing two columns with each
+   * other
+   *
+   * - Column name can be a string, {@link RefExpressionBuilder}, or the {@link RawExpressionBuilder}.
+   * - The operator must be a string.
+   * - The other column name must be a string value.
+   *
+   * @example
+   * ```ts
+   * exp.whereColumn('username', '=', 'email')
+   * exp.whereColumn('upvotes', '>', 'downvotes')
+   * ```
+   */
+  whereColumn(...expression: WhereColumnExpressionArguments): this {
+    const [column, operator, value] = this.#whereTransformer.transformWhereColumn(expression)
+
+    const method = this.#grouping === 'or' ? 'orWhere' : 'where'
+    if (operator && value !== undefined) {
+      this.knexQuery[method](column as any, operator, value)
+    } else {
+      this.knexQuery[method](column)
+    }
+    return this
+  }
+
+  /**
+   * Apply a where NOT clause to the SQL query comparing two columns with each
+   * other
+   *
+   * - Column name can be a string, {@link RefExpressionBuilder}, or the {@link RawExpressionBuilder}.
+   * - The operator must be a string.
+   * - The other column name must be a string value.
+   *
+   * @example
+   * ```ts
+   * exp.whereNotColumn('username', '=', 'email')
+   * exp.whereNotColumn('upvotes', '>', 'downvotes')
+   * ```
+   */
+  whereNotColumn(...expression: WhereColumnExpressionArguments): this {
+    const [column, operator, value] = this.#whereTransformer.transformWhereColumn(expression)
+
+    const method = this.#grouping === 'or' ? 'orWhereNot' : 'whereNot'
+    if (operator && value !== undefined) {
       this.knexQuery[method](column as any, operator, value)
     } else {
       this.knexQuery[method](column)
@@ -128,7 +185,7 @@ export class WhereExpressionBuilder {
    * })
    * ```
    */
-  whereIn(...expression: WhereInExpressionArguments) {
+  whereIn(...expression: WhereInExpressionArguments): this {
     const method = this.#grouping === 'or' ? 'orWhereIn' : 'whereIn'
     const [column, value] = this.#whereTransformer.transformWhereIn(expression)
     this.knexQuery[method](column as any, value as any)
@@ -140,7 +197,7 @@ export class WhereExpressionBuilder {
    * the same set of arguments as the {@link WhereExpressionBuilder.whereIn}
    * method.
    */
-  whereNotIn(...expression: WhereInExpressionArguments) {
+  whereNotIn(...expression: WhereInExpressionArguments): this {
     const method = this.#grouping === 'or' ? 'orWhereNotIn' : 'whereNotIn'
     const [column, value] = this.#whereTransformer.transformWhereIn(expression)
     this.knexQuery[method](column as any, value as any)
@@ -158,10 +215,10 @@ export class WhereExpressionBuilder {
    *
    * @example
    * ```ts
-   * exp.whereJsonObject('address', { city: 'Gurgaon' })
+   * exp.whereJson('address', { city: 'Gurgaon' })
    * ```
    */
-  whereJsonObject(...expression: WhereJSONObjectExpressionArguments): this {
+  whereJson(...expression: WhereJSONObjectExpressionArguments): this {
     const method = this.#grouping === 'or' ? 'orWhereJsonObject' : 'whereJsonObject'
     const [column, value] = this.#whereTransformer.transformWhereJsonObject(expression)
     this.knexQuery[method](column as any, value)
@@ -169,12 +226,104 @@ export class WhereExpressionBuilder {
   }
 
   /**
-   * Apply a where not equal clause on a JSON column. The `whereNotJsonObject` accepts
-   * the same set of arguments as the {@link WhereExpressionBuilder.whereJsonObject}
+   * Apply a where not equal clause on a JSON column. The `whereNotJson` accepts
+   * the same set of arguments as the {@link WhereExpressionBuilder.whereJson}
    * method.
    */
-  whereNotJsonObject(...expression: WhereJSONObjectExpressionArguments): this {
+  whereNotJson(...expression: WhereJSONObjectExpressionArguments): this {
     const method = this.#grouping === 'or' ? 'orWhereNotJsonObject' : 'whereNotJsonObject'
+    const [column, value] = this.#whereTransformer.transformWhereJsonObject(expression)
+    this.knexQuery[method](column as any, value)
+    return this
+  }
+
+  /**
+   * Apply a where clause on a JSON column where the column value is the subset
+   * of the provided value. The value object will be stringified before
+   * sending it to the client.
+   *
+   * - Column name can be a string, {@link RefExpressionBuilder}, or the {@link RawExpressionBuilder}.
+   * - The value can an object. Or it can be a {@link RefExpressionBuilder},
+   *   {@link RawExpressionBuilder}, {@link SelectExpressionBuilder}, or a
+   *   callback function that receives an instance of the {@link SelectExpressionBuilder}.
+   *
+   * @example
+   * ```ts
+   * exp.whereJsonSubset('address', { city: 'Gurgaon' })
+   * ```
+   */
+  whereJsonSubset(...expression: WhereJSONObjectExpressionArguments): this {
+    const method = this.#grouping === 'or' ? 'orWhereJsonSubsetOf' : 'whereJsonSubsetOf'
+
+    const [column, value] = this.#whereTransformer.transformWhereJsonObject(expression)
+    this.knexQuery[method](column as any, value)
+    return this
+  }
+
+  /**
+   * Apply a where clause on a JSON column where the column value is not the subset
+   * of the provided value. The value object will be stringified before
+   * sending it to the client.
+   *
+   * - Column name can be a string, {@link RefExpressionBuilder}, or the {@link RawExpressionBuilder}.
+   * - The value can an object. Or it can be a {@link RefExpressionBuilder},
+   *   {@link RawExpressionBuilder}, {@link SelectExpressionBuilder}, or a
+   *   callback function that receives an instance of the {@link SelectExpressionBuilder}.
+   *
+   * @example
+   * ```ts
+   * exp.whereJsonNotSubset('address', { pincode: '122002' })
+   * ```
+   */
+  whereJsonNotSubset(...expression: WhereJSONObjectExpressionArguments): this {
+    const method = this.#grouping === 'or' ? 'orWhereJsonNotSubsetOf' : 'whereJsonNotSubsetOf'
+
+    const [column, value] = this.#whereTransformer.transformWhereJsonObject(expression)
+    this.knexQuery[method](column as any, value)
+    return this
+  }
+
+  /**
+   * Apply a where clause on a JSON column where the column value is the superset
+   * of the provided value. The value object will be stringified before
+   * sending it to the client.
+   *
+   * - Column name can be a string, {@link RefExpressionBuilder}, or the {@link RawExpressionBuilder}.
+   * - The value can an object. Or it can be a {@link RefExpressionBuilder},
+   *   {@link RawExpressionBuilder}, {@link SelectExpressionBuilder}, or a
+   *   callback function that receives an instance of the {@link SelectExpressionBuilder}.
+   *
+   * @example
+   * ```ts
+   * exp.whereJsonSuperset('address', { city: 'Gurgaon' })
+   * ```
+   */
+  whereJsonSuperset(...expression: WhereJSONObjectExpressionArguments): this {
+    const method = this.#grouping === 'or' ? 'orWhereJsonSupersetOf' : 'whereJsonSupersetOf'
+
+    const [column, value] = this.#whereTransformer.transformWhereJsonObject(expression)
+    this.knexQuery[method](column as any, value)
+    return this
+  }
+
+  /**
+   * Apply a where clause on a JSON column where the column value is not the superset
+   * of the provided value. The value object will be stringified before
+   * sending it to the client.
+   *
+   * - Column name can be a string, {@link RefExpressionBuilder}, or the {@link RawExpressionBuilder}.
+   * - The value can an object. Or it can be a {@link RefExpressionBuilder},
+   *   {@link RawExpressionBuilder}, {@link SelectExpressionBuilder}, or a
+   *   callback function that receives an instance of the {@link SelectExpressionBuilder}.
+   *
+   * @example
+   * ```ts
+   * exp.whereJsonNotSuperset('address', { pincode: '122002' })
+   * ```
+   */
+  whereJsonNotSuperset(...expression: WhereJSONObjectExpressionArguments): this {
+    const method = this.#grouping === 'or' ? 'orWhereJsonNotSupersetOf' : 'whereJsonNotSupersetOf'
+
     const [column, value] = this.#whereTransformer.transformWhereJsonObject(expression)
     this.knexQuery[method](column as any, value)
     return this
@@ -195,7 +344,7 @@ export class WhereExpressionBuilder {
    * exp.whereJsonPath('address', '$.city', '=', 'Gurgaon')
    * ```
    */
-  whereJsonPath(...expression: WhereJSONPathExpressionArguments) {
+  whereJsonPath(...expression: WhereJSONPathExpressionArguments): this {
     const method = this.#grouping === 'or' ? 'orWhereJsonPath' : 'whereJsonPath'
 
     const [column, jsonPath, operator, value] =
@@ -205,18 +354,156 @@ export class WhereExpressionBuilder {
   }
 
   /**
+   * Apply where null clause to the SQL. The column name can be a string
+   * value, {@link RefExpressionBuilder}, or the {@link RawExpressionBuilder}.
+   *
+   * @example
+   * ```ts
+   * exp.whereNull('deleted_at')
+   * exp.whereNull(db.raw(`??->>??`, ['address', 'city']))
+   * ```
+   */
+  whereNull(...expression: WhereNullExpressionArguments): this {
+    const method = this.#grouping === 'or' ? 'orWhereNull' : 'whereNull'
+    const [column] = this.#whereTransformer.transformWhereNull(expression)
+    this.knexQuery[method](column as any)
+    return this
+  }
+
+  /**
+   * Apply where NOT null clause to the SQL. The column name can be a string
+   * value, {@link RefExpressionBuilder}, or the {@link RawExpressionBuilder}.
+   *
+   * @example
+   * ```ts
+   * exp.whereNotNull('deleted_at')
+   * exp.whereNotNull(db.raw(`??->>??`, ['address', 'city']))
+   * ```
+   */
+  whereNotNull(...expression: WhereNullExpressionArguments): this {
+    const method = this.#grouping === 'or' ? 'orWhereNotNull' : 'whereNotNull'
+    const [column] = this.#whereTransformer.transformWhereNull(expression)
+    this.knexQuery[method](column as any)
+    return this
+  }
+
+  /**
+   * Apply where exists clause to the SQL query. The subquery can be specified
+   * as a {@link SelectExpressionBuilder}, {@link RawExpressionBuilder}, or
+   * a callback that receives the {@link SelectExpressionBuilder}
+   *
+   * @example
+   * ```ts
+   * exp.whereExists((q) => {
+   *   q.from('profiles').whereColumn('profiles.user_id', 'users.id')
+   * })
+   * ```
+   */
+  whereExists(...expression: WhereExistsExpressionArguments): this {
+    const method = this.#grouping === 'or' ? 'orWhereExists' : 'whereExists'
+    const knexExpression = this.#whereTransformer.transformWhereExists(expression)
+    this.knexQuery[method](knexExpression as any)
+    return this
+  }
+
+  /**
+   * Apply where not exists clause to the SQL query. The subquery can be specified
+   * as a {@link SelectExpressionBuilder}, {@link RawExpressionBuilder}, or
+   * a callback that receives the {@link SelectExpressionBuilder}
+   *
+   * @example
+   * ```ts
+   * exp.whereNotExists((q) => {
+   *   q.from('profiles').whereColumn('profiles.user_id', 'users.id')
+   * })
+   * ```
+   */
+  whereNotExists(...expression: WhereExistsExpressionArguments): this {
+    const method = this.#grouping === 'or' ? 'orWhereNotExists' : 'whereNotExists'
+    const knexExpression = this.#whereTransformer.transformWhereExists(expression)
+    this.knexQuery[method](knexExpression as any)
+    return this
+  }
+
+  /**
+   * Apply where between clause to the SQL query. The following column and value
+   * combinations can be supplied.
+   *
+   * - Column name can be a string, {@link RefExpressionBuilder}, or the {@link RawExpressionBuilder}.
+   * - The value must be a tuple with two items. Each tuple element can be
+   *   a string, number, boolean, Date, and buffer. Or it can be a {@link RefExpressionBuilder}, {@link RawExpressionBuilder}, {@link SelectExpressionBuilder}, or a callback function that receives an instance of the {@link SelectExpressionBuilder}.
+   *
+   * @example
+   * ```ts
+   * exp.whereBetween('age', [18, 60])
+   *
+   * // Get all sales made during promotion
+   * exp.whereBetween('created_at', [
+   *   (q) => q.from('promotions').select('started_at').where('promotion_id', 1),
+   *   (q) => q.from('promotions').select('ended_at').where('promotion_id', 1)
+   * ])
+   * ```
+   */
+  whereBetween(...expression: WhereBetweenExpressionArguments): this {
+    const method = this.#grouping === 'or' ? 'orWhereBetween' : 'whereBetween'
+    const [column, values] = this.#whereTransformer.transformWhereBetween(expression)
+    this.knexQuery[method](column as any, values)
+    return this
+  }
+
+  /**
+   * Apply where not between clause to the SQL query. The following column and value
+   * combinations can be supplied.
+   *
+   * - Column name can be a string, {@link RefExpressionBuilder}, or the {@link RawExpressionBuilder}.
+   * - The value must be a tuple with two items. Each tuple element can be
+   *   a string, number, boolean, Date, and buffer. Or it can be a {@link RefExpressionBuilder}, {@link RawExpressionBuilder}, {@link SelectExpressionBuilder}, or a callback function that receives an instance of the {@link SelectExpressionBuilder}.
+   *
+   * @example
+   * ```ts
+   * exp.whereNotBetween('age', [0, 10])
+   *
+   * // Get all sales exlcuding promotion days
+   * exp.whereNotBetween('created_at', [
+   *   (q) => q.from('promotions').select('started_at').where('promotion_id', 1),
+   *   (q) => q.from('promotions').select('ended_at').where('promotion_id', 1)
+   * ])
+   * ```
+   */
+  whereNotBetween(...expression: WhereBetweenExpressionArguments): this {
+    const method = this.#grouping === 'or' ? 'orWhereNotBetween' : 'whereNotBetween'
+    const [column, values] = this.#whereTransformer.transformWhereBetween(expression)
+    this.knexQuery[method](column as any, values)
+    return this
+  }
+
+  /**
+   * Specify a where clause as a raw SQL query.
+   *
+   * @example
+   * ```ts
+   * exp.whereRaw(`??->>'city' = ?`, ['address', 'Gurgaon'])
+   * ```
+   */
+  whereRaw(sql: string, bindings?: RawQueryBindings): this {
+    const method = this.#grouping === 'or' ? 'orWhereRaw' : 'whereRaw'
+    this.knexQuery[method](sql, bindings)
+    return this
+  }
+
+  /**
    * Define a where group that will apply the `OR` operator to all
    * the where clauses defined within the callback.
    *
    * @example
    * ```ts
-   * exp.orWhereGroup((exp) => {
+   * exp.or((exp) => {
    *   exp.where('username', 'virk').where('username', 'romain')
    * })
    * // SELECT * users WHERE (username = 'virk' or username = 'romain')
    * ```
    */
-  orWhereGroup(callback: (expressionBuilder: WhereExpressionBuilder) => void): this {
+  or(callback: (expressionBuilder: WhereExpressionBuilder) => void): this {
     this.knexQuery.where((subQuery) => {
       const expressionBuilder = new WhereExpressionBuilder(this.parent, this.knex, subQuery, 'or')
       callback(expressionBuilder)
@@ -230,13 +517,13 @@ export class WhereExpressionBuilder {
    *
    * @example
    * ```ts
-   * query.andWhereGroup((exp) => {
+   * query.and((exp) => {
    *   exp.where('username', 'virk').where('is_active', true)
    * })
    * // SELECT * users WHERE (username = 'virk' AND is_active = true)
    * ```
    */
-  andWhereGroup(callback: (expressionBuilder: WhereExpressionBuilder) => void): this {
+  and(callback: (expressionBuilder: WhereExpressionBuilder) => void): this {
     this.knexQuery.where((subQuery) => {
       const expressionBuilder = new WhereExpressionBuilder(this.parent, this.knex, subQuery, 'and')
       callback(expressionBuilder)

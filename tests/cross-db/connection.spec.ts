@@ -8,7 +8,7 @@
  */
 
 import { test } from '@japa/runner'
-import { Connection } from '../../src/connection.js'
+import { Connection } from '../../src/connection/connection.js'
 import { getConnectionConfig, SUPPORTS_READ_WRITE_REPLICAS } from '../helpers.js'
 
 test.group('Connection | config', () => {
@@ -156,6 +156,9 @@ test.group('Connection | setup', () => {
     assert.isFalse(connection.ready)
     assert.isUndefined(connection.client)
     assert.isUndefined(connection.readClient)
+
+    assert.throws(() => connection.getReadClient(), 'Cannot access connection client.')
+    assert.throws(() => connection.getWriteClient(), 'Cannot access connection client.')
   })
 
   test('invoke on close hook', async ({ assert }) => {

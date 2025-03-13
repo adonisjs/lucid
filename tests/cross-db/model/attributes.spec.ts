@@ -137,11 +137,11 @@ test.group('Model | attributes', () => {
      */
     assert.throws(
       () => user.firstName,
-      'The property User.firstName either does not exist or was not retrieved from the database.'
+      'The property User.firstName either does not exist or was not retrieved from the database'
     )
     assert.throws(
       () => user.lastName,
-      'The property User.lastName either does not exist or was not retrieved from the database.'
+      'The property User.lastName either does not exist or was not retrieved from the database'
     )
   })
 

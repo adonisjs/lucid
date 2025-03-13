@@ -9,6 +9,12 @@
 
 import { createError } from '@poppinss/exception'
 
+export const E_UNMANAGED_DB_CONNECTION = createError<[string]>(
+  'Cannot connect to an unregistered connection "%s"',
+  'E_UNMANAGED_DB_CONNECTION',
+  500
+)
+
 export const E_INVALID_CONNECTION_CONFIG = createError(
   'Make sure to define read/write "replicas" or define the "connection" options',
   'E_INVALID_CONNECTION_CONFIG',
@@ -22,8 +28,8 @@ export const E_INVALID_REPLICAS_CONFIG = createError(
 )
 
 export const E_MISSING_MODEL_PROPERTY = createError<[model: string, property: string]>(
-  'The property %s.%s either does not exist or was not retrieved from the database.',
-  'E_INVALID_REPLICAS_CONFIG',
+  'The property %s.%s either does not exist or was not retrieved from the database',
+  'E_MISSING_MODEL_PROPERTY',
   500
 )
 

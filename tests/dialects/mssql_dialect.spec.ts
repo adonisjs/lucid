@@ -8,7 +8,7 @@
  */
 
 import { test } from '@japa/runner'
-import { Connection } from '../../src/connection.js'
+import { Connection } from '../../src/connection/connection.js'
 import { MSSQLDialect } from '../../src/dialects/mssql_dialect.js'
 import {
   dbSetup,
@@ -453,7 +453,7 @@ test.group('MSSQL Dialect | insert', () => {
     await client
       .insertQuery()
       .table('roles')
-      .insert([
+      .values([
         {
           name: 'guest',
           is_default: true,
@@ -470,7 +470,7 @@ test.group('MSSQL Dialect | insert', () => {
     const [row] = await client
       .insertQuery()
       .table('users')
-      .insert({
+      .values({
         first_name: 'Harminder',
         last_name: 'Virk',
         username: 'virk@adonisjs.com', // self refs are not supported
@@ -526,7 +526,7 @@ test.group('MSSQL Dialect | insert', () => {
     const [row] = await client
       .insertQuery()
       .table('users')
-      .insert([
+      .values([
         {
           first_name: 'Harminder',
           last_name: 'Virk',
@@ -544,7 +544,7 @@ test.group('MSSQL Dialect | insert', () => {
     await client
       .insertQuery()
       .table('skills')
-      .insert([
+      .values([
         {
           user_id: row.id,
           skill_name: 'programming',
@@ -562,7 +562,8 @@ test.group('MSSQL Dialect | insert', () => {
     await client
       .insertQuery()
       .table('skills')
-      .insertUsing(['skill_name', 'user_id'], (query) => {
+      .columns(['skill_name', 'user_id'])
+      .using((query) => {
         query.select('skill_name', 'user_id').from('skills').where('user_id', row.id)
       })
       .exec()

@@ -10,13 +10,16 @@
 import { Knex } from 'knex'
 import * as errors from './errors.js'
 import { TO_KNEX } from './symbols.js'
+import type { DatabaseEmitter } from './types/connection.js'
 import type { QueryBuilderValueExpressions } from './types/query.js'
+import type { InsertQueryBuilder } from './query_builders/insert_query_builder.js'
 import { RefExpressionBuilder } from './expression_builders/ref_expression_builder.js'
 import { RawExpressionBuilder } from './expression_builders/raw_expression_builder.js'
+import type { JoinExpressionBuilder } from './expression_builders/join_expression_builder.js'
+import type { WithExpressionBuilder } from './expression_builders/with_expression_builder.js'
 import type { WhereExpressionBuilder } from './expression_builders/where_expression_builder.js'
 import type { SharedExpressionBuilder } from './expression_builders/shared_expression_builder.js'
 import type { SelectExpressionBuilder } from './expression_builders/select_expression_builder.js'
-import { InsertQueryBuilder } from './query_builders/insert_query_builder.js'
 
 /**
  * Checks if value is an object excluding Arrays and null values
@@ -49,32 +52,52 @@ export function isPlainObject<T extends Record<string, any> = Record<string, any
  * Transforms a Lucid value expression to Knex value expression.
  */
 export function transformValueExpressions<
-  T extends SelectExpressionBuilder | ((query: SelectExpressionBuilder) => void),
+  T extends
+    | SelectExpressionBuilder
+    | InsertQueryBuilder
+    | ((query: SelectExpressionBuilder) => void),
 >(
   value: T,
-  self: SharedExpressionBuilder | WhereExpressionBuilder | InsertQueryBuilder,
+  self:
+    | SharedExpressionBuilder
+    | WhereExpressionBuilder
+    | InsertQueryBuilder
+    | WithExpressionBuilder
+    | JoinExpressionBuilder,
   knex: Knex
 ): Knex.QueryBuilder
 export function transformValueExpressions<T extends RawExpressionBuilder | RefExpressionBuilder>(
   value: T,
-  self: SharedExpressionBuilder | WhereExpressionBuilder | InsertQueryBuilder,
+  self:
+    | SharedExpressionBuilder
+    | WhereExpressionBuilder
+    | WithExpressionBuilder
+    | InsertQueryBuilder
+    | JoinExpressionBuilder,
   knex: Knex
 ): Knex.Raw | Knex.Ref<any, {}>
-export function transformValueExpressions<T extends QueryBuilderValueExpressions | any>(
-  value: T,
-  self: SharedExpressionBuilder | WhereExpressionBuilder | InsertQueryBuilder,
-  knex: Knex
-): Knex.QueryBuilder | Knex.Raw | Knex.Ref<any, {}> | undefined
 export function transformValueExpressions<T>(
   value: T,
-  self: SharedExpressionBuilder | WhereExpressionBuilder | InsertQueryBuilder,
+  self:
+    | SharedExpressionBuilder
+    | WhereExpressionBuilder
+    | WithExpressionBuilder
+    | InsertQueryBuilder
+    | JoinExpressionBuilder,
   knex: Knex
-): undefined
+): T extends QueryBuilderValueExpressions | InsertQueryBuilder
+  ? Knex.QueryBuilder | Knex.Raw | Knex.Ref<any, {}>
+  : undefined
 export function transformValueExpressions<T>(
   value: T,
-  self: SharedExpressionBuilder | WhereExpressionBuilder | InsertQueryBuilder,
+  self:
+    | SharedExpressionBuilder
+    | WhereExpressionBuilder
+    | WithExpressionBuilder
+    | InsertQueryBuilder
+    | JoinExpressionBuilder,
   knex: Knex
-) {
+): Knex.QueryBuilder | Knex.Raw | Knex.Ref<any, {}> | undefined {
   /**
    * Converts inline callback to a Knex subquery
    */
@@ -98,6 +121,13 @@ export function transformValueExpressions<T>(
     if (value === (self as any)) {
       throw new errors.E_INVALID_SUBQUERY_REFERENCE()
     }
-    return value.knexQuery
+    return value.knexQuery as Knex.QueryBuilder
   }
+}
+
+export const NOOP_EMITTER: DatabaseEmitter = {
+  emit() {},
+  hasListeners() {
+    return false
+  },
 }

@@ -9,7 +9,7 @@
 
 import type { Knex } from 'knex'
 import { debug } from '../debug.js'
-import type { Connection } from '../connection.js'
+import type { Connection } from '../connection/connection.js'
 import type { ColumnInfo } from '../types/common.js'
 import { AbstractDialect } from './abstract_dialect.js'
 

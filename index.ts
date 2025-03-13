@@ -8,7 +8,7 @@
  */
 
 export * from './src/define_config.js'
-export { Connection } from './src/connection.js'
+export { Connection } from './src/connection/connection.js'
 export { QueryClient } from './src/database_clients/query_client.js'
 export { DatabaseClient } from './src/database_clients/abstract_client.js'
 export { SelectQueryBuilder } from './src/query_builders/select_query_builder.js'

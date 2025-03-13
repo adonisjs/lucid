@@ -11,8 +11,8 @@ import type { Knex } from 'knex'
 import type { InsertQueryBuilder } from '../query_builders/insert_query_builder.js'
 
 /**
- * ConflictExpressionBuilder is used to construct ON CONFLICT action
- * on an insert query
+ * ConflictExpressionBuilder is used to construct the "ON CONFLICT" action
+ * on an insert query.
  */
 export class ConflictExpressionBuilder {
   constructor(
@@ -47,7 +47,6 @@ export class ConflictExpressionBuilder {
    *
    * // Perform merge with custom values
    * query.onConflict().merge({ column: 'value' })
-   *
    *
    * // Merge selected columns only
    * query.onConflict().merge(['score'])

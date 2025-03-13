@@ -19,10 +19,14 @@ import type {
   WhereOperator,
   KnexStrictValues,
   WhereExpressionArguments,
-  QueryBuilderValueExpressions,
   WhereInExpressionArguments,
-  WhereJSONObjectExpressionArguments,
+  WhereNullExpressionArguments,
+  QueryBuilderValueExpressions,
+  WhereExistsExpressionArguments,
+  WhereColumnExpressionArguments,
+  WhereBetweenExpressionArguments,
   WhereJSONPathExpressionArguments,
+  WhereJSONObjectExpressionArguments,
 } from '../types/query.js'
 
 /**
@@ -102,13 +106,13 @@ export class WhereClauseTransformer {
      * Transforming value expressions to knex compatible expressions
      */
     const transformedValue = transformValueExpressions(column, this.#parent, this.#knex)
-    if (!transformedValue) {
-      return column as T extends QueryBuilderValueExpressions
+    if (transformedValue !== undefined) {
+      return transformedValue as unknown as T extends QueryBuilderValueExpressions
         ? Knex.Raw | Knex.Ref<any, {}> | Knex.QueryBuilder
         : T
     }
 
-    return transformedValue as T extends QueryBuilderValueExpressions
+    return column as T extends QueryBuilderValueExpressions
       ? Knex.Raw | Knex.Ref<any, {}> | Knex.QueryBuilder
       : T
   }
@@ -160,6 +164,53 @@ export class WhereClauseTransformer {
   }
 
   /**
+   * Transforms the arguments of the whereColumn method to values
+   * knex can accept.
+   */
+  transformWhereColumn(expression: WhereColumnExpressionArguments) {
+    /**
+     * If only one argument is provided, we expect the first value
+     * to be an object with where clauses.
+     */
+    if (expression.length === 1) {
+      const column = expression[0]
+
+      if (isPlainObject(column)) {
+        const transformed = Object.keys(column).reduce<
+          Record<string, KnexStrictValues | Knex.Raw | Knex.QueryBuilder>
+        >((result, key) => {
+          const columnName = this.#parent.transformColumnName(key)
+          const otherColumnName = this.#parent.transformColumnName(column[key])
+          result[columnName] = this.#knex.ref(otherColumnName)
+          return result
+        }, {})
+        return [transformed, undefined, undefined] as const
+      }
+
+      throw new errors.E_INVALID_SQL_EXPRESSION([column, 'whereColumn'])
+    }
+
+    const column = expression[0]
+    let operator = expression[1]
+    let otherColumn = expression[2]
+
+    /**
+     * When the otherColumn is undefined we expect the operator
+     * to be the otherColumn.
+     */
+    if (otherColumn === undefined) {
+      otherColumn = operator
+      operator = '='
+    }
+
+    return [
+      this.#transformWhereColumnNameExpression(column),
+      operator as WhereOperator,
+      this.#knex.ref(this.#transformWhereColumnNameExpression(otherColumn)),
+    ] as const
+  }
+
+  /**
    * Transforms the arguments of the whereIn method to values
    * knex can accept.
    */
@@ -192,5 +243,40 @@ export class WhereClauseTransformer {
       expression[2],
       this.#transformWhereValueExpression(expression[3]),
     ] as const
+  }
+
+  /**
+   * Transforms the arguments for the whereNull method to values knex
+   * can accept
+   */
+  transformWhereNull(expression: WhereNullExpressionArguments) {
+    return [this.#transformWhereColumnNameExpression(expression[0])] as const
+  }
+
+  /**
+   * Transforms the arguments for the whereExists method to values knex
+   * can accept
+   */
+  transformWhereExists(expression: WhereExistsExpressionArguments) {
+    const transformedValue = transformValueExpressions(expression[0], this.#parent, this.#knex)
+    if (!transformedValue) {
+      throw new errors.E_INVALID_SQL_EXPRESSION([expression, 'whereExists'])
+    }
+
+    return transformedValue
+  }
+
+  /**
+   * Transforms the arguments for the whereExists method to values knex
+   * can accept
+   */
+  transformWhereBetween(expression: WhereBetweenExpressionArguments) {
+    const column = this.#transformWhereColumnNameExpression(expression[0])
+    const values = [
+      this.#transformWhereValueExpression(expression[1][0]),
+      this.#transformWhereValueExpression(expression[1][1]),
+    ] as const
+
+    return [column, values] as const
   }
 }

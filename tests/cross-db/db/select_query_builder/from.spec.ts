@@ -10,7 +10,7 @@
 import { test } from '@japa/runner'
 import { debug } from '../../../../src/debug.js'
 import { getConnectionConfig } from '../../../helpers.js'
-import { Connection } from '../../../../src/connection.js'
+import { Connection } from '../../../../src/connection/connection.js'
 import { SelectQueryBuilder } from '../../../../src/query_builders/select_query_builder.js'
 
 test.group('Select query builder | from', () => {

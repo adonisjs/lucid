@@ -12,7 +12,11 @@ import * as errors from '../errors.js'
 
 import { isPlainObject, transformValueExpressions } from '../helpers.js'
 import { SharedExpressionBuilder } from './shared_expression_builder.js'
-import type { FromExpressions, DatabaseClientContract, SelectExpressions } from '../types/query.js'
+import type {
+  FromExpressionArguments,
+  DatabaseClientContract,
+  SelectExpressions,
+} from '../types/query.js'
 
 export class SelectExpressionBuilder extends SharedExpressionBuilder {
   constructor(protected client: DatabaseClientContract) {
@@ -59,9 +63,16 @@ export class SelectExpressionBuilder extends SharedExpressionBuilder {
    * Transforms the from expression a value that is acceptable
    * by Knex
    */
-  #transformFromExpression(table: FromExpressions) {
+  #transformFromExpression(table: FromExpressionArguments[0]) {
     if (typeof table === 'string') {
       return table
+    }
+
+    if (Array.isArray(table)) {
+      return table.reduce<Record<string, string>>((result, tableIdentifier) => {
+        result[tableIdentifier] = tableIdentifier
+        return result
+      }, {})
     }
 
     /**
@@ -166,8 +177,8 @@ export class SelectExpressionBuilder extends SharedExpressionBuilder {
    * - Use {@link RawExpressionBuilder} to select columns from a raw SQL expression.
    * - Or a callback that receives a new instance of the {@link SelectExpressionBuilder}
    */
-  from(table: FromExpressions): this {
-    this.knexQuery.from(this.#transformFromExpression(table))
+  from(...expression: FromExpressionArguments): this {
+    this.knexQuery.from(this.#transformFromExpression(expression[0]))
     return this
   }
 
