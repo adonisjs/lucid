@@ -13,9 +13,10 @@ import * as errors from '../errors.js'
 import { isPlainObject, transformValueExpressions } from '../helpers.js'
 import { SharedExpressionBuilder } from './shared_expression_builder.js'
 import type {
-  FromExpressionArguments,
-  DatabaseClientContract,
   SelectExpressions,
+  DatabaseClientContract,
+  FromExpressionArguments,
+  OrderByExpressionArguments,
 } from '../types/query.js'
 
 export class SelectExpressionBuilder extends SharedExpressionBuilder {
@@ -179,6 +180,77 @@ export class SelectExpressionBuilder extends SharedExpressionBuilder {
    */
   from(...expression: FromExpressionArguments): this {
     this.knexQuery.from(this.#transformFromExpression(expression[0]))
+    return this
+  }
+
+  /**
+   * Apply offset to the SQL query. When "options.skipBinding" option is
+   * provided, then the offset will be inlined in the query instead of
+   * using a prepared value
+   */
+  offset(offset: number, options?: { skipBinding: boolean }): this {
+    this.knexQuery.offset(offset, options)
+    return this
+  }
+
+  /**
+   * Apply limit to the SQL query. When "options.skipBinding" option is
+   * provided, then the limit will be inlined in the query instead of
+   * using a prepared value
+   */
+  limit(limit: number, options?: { skipBinding: boolean }): this {
+    this.knexQuery.limit(limit, options)
+    return this
+  }
+
+  orderBy(...expression: OrderByExpressionArguments): this {
+    /**
+     * The arguments are provided as "columnName", "direction"
+     */
+    if (typeof expression[0] === 'string') {
+      this.knexQuery.orderBy(this.transformColumnName(expression[0]), expression[1])
+      return this
+    }
+
+    /**
+     * The arguments are provided as an array of column strings or array of objects.
+     */
+    if (Array.isArray(expression[0])) {
+      const toKnex = expression[0].map((value) => {
+        if (typeof value === 'string') {
+          return this.transformColumnName(value)
+        }
+
+        const transformedColumn =
+          typeof value.column === 'string'
+            ? this.transformColumnName(value.column)
+            : transformValueExpressions(value.column, this, this.knex)
+
+        if (!transformedColumn) {
+          throw new errors.E_INVALID_SQL_EXPRESSION([value.column, 'orderBy'])
+        }
+
+        return {
+          ...value,
+          column: transformedColumn,
+        }
+      })
+
+      // @ts-expect-error "Raw queries are allowed but knex types refuses to accept it"
+      this.knexQuery.orderBy(toKnex)
+      return this
+    }
+
+    /**
+     * The arguments are provided as "columnName as QueryExpressionsValue", "direction"
+     */
+    const transformedColumn = transformValueExpressions(expression[0], this, this.knex)
+    if (!transformedColumn) {
+      throw new errors.E_INVALID_SQL_EXPRESSION([expression[0], 'orderBy'])
+    }
+
+    // @ts-expect-error "Raw queries are allowed but knex types refuses to accept it"
+    this.knexQuery.orderBy(transformedColumn, expression[1])
     return this
   }
 

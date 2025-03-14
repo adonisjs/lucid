@@ -569,34 +569,170 @@ export abstract class SharedExpressionBuilder {
     return this
   }
 
+  /**
+   * Joins another table to the query using an inner join.
+   *
+   * @example
+   * ```ts
+   * query
+   *   .from('users')
+   *   .join('profiles', 'profiles.user_id', 'users.id')
+   *
+   * // Specify one or multiple ON conditions
+   * query
+   *  .from('users')
+   *  .join('profiles', (joinExp) => {
+   *    joinExp.on('profiles.user_id', 'users.id')
+   *  })
+   * ```
+   */
   join(...expression: JoinExpressionArguments): this {
     return this.applyJoin(expression, 'join')
   }
 
+  /**
+   * Joins another table to the query using an inner join.
+   *
+   * @example
+   * ```ts
+   * query
+   *   .from('users')
+   *   .innerJoin('profiles', 'profiles.user_id', 'users.id')
+   *
+   * // Specify one or multiple ON conditions
+   * query
+   *  .from('users')
+   *  .innerJoin('profiles', (joinExp) => {
+   *    joinExp.on('profiles.user_id', 'users.id')
+   *  })
+   * ```
+   */
   innerJoin(...expression: JoinExpressionArguments): this {
     return this.applyJoin(expression, 'innerJoin')
   }
 
+  /**
+   * Joins another table to the query using a LEFT join.
+   *
+   * @example
+   * ```ts
+   * query
+   *   .from('users')
+   *   .leftJoin('profiles', 'profiles.user_id', 'users.id')
+   *
+   * // Specify one or multiple ON conditions
+   * query
+   *  .from('users')
+   *  .leftJoin('profiles', (joinExp) => {
+   *    joinExp.on('profiles.user_id', 'users.id')
+   *  })
+   * ```
+   */
   leftJoin(...expression: JoinExpressionArguments): this {
     return this.applyJoin(expression, 'leftJoin')
   }
 
+  /**
+   * Joins another table to the query using a LEFT OUTER join.
+   *
+   * @example
+   * ```ts
+   * query
+   *   .from('users')
+   *   .leftOuterJoin('profiles', 'profiles.user_id', 'users.id')
+   *
+   * // Specify one or multiple ON conditions
+   * query
+   *  .from('users')
+   *  .leftOuterJoin('profiles', (joinExp) => {
+   *    joinExp.on('profiles.user_id', 'users.id')
+   *  })
+   * ```
+   */
   leftOuterJoin(...expression: JoinExpressionArguments): this {
     return this.applyJoin(expression, 'leftOuterJoin')
   }
 
+  /**
+   * Joins another table to the query using a RIGHT join.
+   *
+   * @example
+   * ```ts
+   * query
+   *   .from('users')
+   *   .rightJoin('profiles', 'profiles.user_id', 'users.id')
+   *
+   * // Specify one or multiple ON conditions
+   * query
+   *  .from('users')
+   *  .rightJoin('profiles', (joinExp) => {
+   *    joinExp.on('profiles.user_id', 'users.id')
+   *  })
+   * ```
+   */
   rightJoin(...expression: JoinExpressionArguments): this {
     return this.applyJoin(expression, 'rightJoin')
   }
 
+  /**
+   * Joins another table to the query using a RIGHT OUTER join.
+   *
+   * @example
+   * ```ts
+   * query
+   *   .from('users')
+   *   .rightOuterJoin('profiles', 'profiles.user_id', 'users.id')
+   *
+   * // Specify one or multiple ON conditions
+   * query
+   *  .from('users')
+   *  .rightOuterJoin('profiles', (joinExp) => {
+   *    joinExp.on('profiles.user_id', 'users.id')
+   *  })
+   * ```
+   */
   rightOuterJoin(...expression: JoinExpressionArguments): this {
     return this.applyJoin(expression, 'rightOuterJoin')
   }
 
+  /**
+   * Joins another table to the query using a FULL OUTER join.
+   *
+   * @example
+   * ```ts
+   * query
+   *   .from('users')
+   *   .fullOuterJoin('profiles', 'profiles.user_id', 'users.id')
+   *
+   * // Specify one or multiple ON conditions
+   * query
+   *  .from('users')
+   *  .fullOuterJoin('profiles', (joinExp) => {
+   *    joinExp.on('profiles.user_id', 'users.id')
+   *  })
+   * ```
+   */
   fullOuterJoin(...expression: JoinExpressionArguments): this {
     return this.applyJoin(expression, 'fullOuterJoin')
   }
 
+  /**
+   * Joins another table to the query using a CROSS join.
+   *
+   * @example
+   * ```ts
+   * query
+   *   .from('users')
+   *   .crossJoin('profiles', 'profiles.user_id', 'users.id')
+   *
+   * // Specify one or multiple ON conditions
+   * query
+   *  .from('users')
+   *  .crossJoin('profiles', (joinExp) => {
+   *    joinExp.on('profiles.user_id', 'users.id')
+   *  })
+   * ```
+   */
   crossJoin(...expression: JoinExpressionArguments): this {
     return this.applyJoin(expression, 'crossJoin')
   }

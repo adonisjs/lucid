@@ -245,6 +245,20 @@ export type JoinExpressionArguments =
   | [table: string, callback: (joinExpression: JoinExpressionBuilder) => void]
 
 /**
+ * Arguments accepted by the "orderBy" method
+ */
+export type OrderByExpressionArguments =
+  | [column: string | QueryBuilderValueExpressions, direction?: 'asc' | 'desc']
+  | [columns: string[]]
+  | [
+      {
+        column: string | QueryBuilderValueExpressions
+        order?: 'asc' | 'desc'
+        nulls?: 'first' | 'last'
+      }[],
+    ]
+
+/**
  * Data emitted by the "db:query" event
  */
 export type DbQueryEventData = Knex.Sql & Record<string, any>
