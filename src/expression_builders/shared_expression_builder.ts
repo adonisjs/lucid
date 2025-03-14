@@ -602,6 +602,36 @@ export abstract class SharedExpressionBuilder {
   }
 
   /**
+   * Register a callback to get notified when a query is executed
+   *
+   * @example
+   * ```ts
+   * query.on('query', (sql) => console.log(sql))
+   * ```
+   */
+  on(event: 'query', listener: (sql: Knex.Sql) => void): this
+
+  /**
+   * Register a callback to get notified with the query results
+   *
+   * @example
+   * ```ts
+   * query.on('query-response', (result, sql) => console.log(result, sql))
+   * ```
+   */
+  on(
+    event: 'query-response',
+    listener: (result: any, sql: Knex.Sql & { response: any }) => void
+  ): this
+  on(
+    event: 'query' | 'query-response',
+    listener: (result: any, sql: Knex.Sql & { response: any }) => void
+  ): this {
+    this.knexQuery.on(event, listener)
+    return this
+  }
+
+  /**
    * Converts query to its SQL representation
    */
   toSQL() {

@@ -13,12 +13,12 @@ import { TO_KNEX } from '../symbols.js'
 import { transformValueExpressions } from '../helpers.js'
 import { RawExpressionBuilder } from '../expression_builders/raw_expression_builder.js'
 import { SelectExpressionBuilder } from '../expression_builders/select_expression_builder.js'
+import { ConflictExpressionBuilder } from '../expression_builders/conflict_expression_builder.js'
 import type {
   CanBeExecuted,
   DatabaseClientContract,
   QueryBuilderValueExpressions,
 } from '../types/query.js'
-import { ConflictExpressionBuilder } from '../expression_builders/conflict_expression_builder.js'
 
 export class InsertQueryBuilder implements CanBeExecuted {
   #tableName?: string
@@ -57,7 +57,7 @@ export class InsertQueryBuilder implements CanBeExecuted {
     return Object.keys(row).reduce<Record<string, any>>((result, key) => {
       const value = row[key]
       const transformedValue = transformValueExpressions(value, this, this.knex)
-      if (!transformedValue) {
+      if (transformedValue === undefined) {
         result[this.transformColumnName(key)] = value
       } else {
         result[this.transformColumnName(key)] = transformedValue
@@ -265,6 +265,36 @@ export class InsertQueryBuilder implements CanBeExecuted {
    */
   returning(columns: string[]): this {
     this.knexQuery.returning(columns)
+    return this
+  }
+
+  /**
+   * Register a callback to get notified when a query is executed
+   *
+   * @example
+   * ```ts
+   * query.on('query', (sql) => console.log(sql))
+   * ```
+   */
+  on(event: 'query', listener: (sql: Knex.Sql) => void): this
+
+  /**
+   * Register a callback to get notified with the query results
+   *
+   * @example
+   * ```ts
+   * query.on('query-response', (result, sql) => console.log(result, sql))
+   * ```
+   */
+  on(
+    event: 'query-response',
+    listener: (result: any, sql: Knex.Sql & { response: any }) => void
+  ): this
+  on(
+    event: 'query' | 'query-response',
+    listener: (result: any, sql: Knex.Sql & { response: any }) => void
+  ): this {
+    this.knexQuery.on(event, listener)
     return this
   }
 

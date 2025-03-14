@@ -83,7 +83,7 @@ export class DeleteQueryBuilder extends SharedExpressionBuilder {
   }
 
   /**
-   * Executes the select query using the database client
+   * Executes the delete query using the database client
    */
   exec<T = any>(): Promise<T> {
     return this.client.exec<T>(this)

@@ -8,8 +8,9 @@
  */
 
 import { test } from '@japa/runner'
-import { Connection } from '../../src/connection/connection.js'
+import { debug } from '../../src/debug.js'
 import { PgDialect } from '../../src/dialects/pg_dialect.js'
+import { Connection } from '../../src/connection/connection.js'
 import { PGConfigOptions } from '../../src/types/connection.js'
 import {
   dbSetup,
@@ -645,6 +646,7 @@ test.group('PG Dialect | insert', () => {
           name: 'staff',
         },
       ])
+      .on('query', (sql) => debug('%O', sql))
       .exec()
 
     await client
@@ -659,6 +661,7 @@ test.group('PG Dialect | insert', () => {
         role_id: (q: SelectExpressionBuilder) =>
           q.from('roles').select('id').where('is_default', true),
       })
+      .on('query', (sql) => debug('%O', sql))
       .exec()
 
     const roles = await client.query().select('name', 'is_default', 'id').from('roles').exec()
@@ -708,6 +711,7 @@ test.group('PG Dialect | insert', () => {
         email: 'virk@adonisjs.com',
         age: 35,
       })
+      .on('query', (sql) => debug('%O', sql))
       .exec()
 
     await client
@@ -719,6 +723,7 @@ test.group('PG Dialect | insert', () => {
         email: 'virk@adonisjs.com',
         age: 35,
       })
+      .on('query', (sql) => debug('%O', sql))
       .onConflict(['email'])
       .merge()
       .exec()
@@ -751,6 +756,7 @@ test.group('PG Dialect | insert', () => {
         email: 'virk@adonisjs.com',
         age: 35,
       })
+      .on('query', (sql) => debug('%O', sql))
       .exec()
 
     await client
@@ -765,6 +771,7 @@ test.group('PG Dialect | insert', () => {
       })
       .onConflict(['email'])
       .merge(['age'])
+      .on('query', (sql) => debug('%O', sql))
       .exec()
 
     const users = await client.query().select('first_name', 'username', 'age').from('users').exec()
@@ -795,6 +802,7 @@ test.group('PG Dialect | insert', () => {
         email: 'virk@adonisjs.com',
         age: 35,
       })
+      .on('query', (sql) => debug('%O', sql))
       .exec()
 
     await client
@@ -808,6 +816,7 @@ test.group('PG Dialect | insert', () => {
       })
       .onConflict(['email'])
       .ignore()
+      .on('query', (sql) => debug('%O', sql))
       .exec()
 
     const users = await client.query().select('email', 'username').from('users').exec()
@@ -843,6 +852,7 @@ test.group('PG Dialect | insert', () => {
         },
       ])
       .returning(['id'])
+      .on('query', (sql) => debug('%O', sql))
       .exec()
 
     /**
@@ -861,6 +871,7 @@ test.group('PG Dialect | insert', () => {
           skill_name: 'cooking',
         },
       ])
+      .on('query', (sql) => debug('%O', sql))
       .exec()
 
     /**
@@ -873,6 +884,7 @@ test.group('PG Dialect | insert', () => {
       .using((query) => {
         query.select('skill_name', 'user_id').from('skills').where('user_id', row.id)
       })
+      .on('query', (sql) => debug('%O', sql))
       .exec()
 
     const skills = await client.query().select('skill_name').from('skills').exec()
@@ -888,6 +900,100 @@ test.group('PG Dialect | insert', () => {
       },
       {
         skill_name: 'cooking',
+      },
+    ])
+  })
+})
+
+test.group('PG Dialect | update', () => {
+  test('update table with complex values', async ({ assert, cleanup }) => {
+    const config = getConnectionConfig('pg')
+    const connection = new Connection('primary', config)
+    const client = new QueryClient(connection, 'dual')
+    cleanup(() => connection.close())
+
+    await dbSetup(connection)
+
+    await client
+      .insertInto('users')
+      .values([
+        {
+          first_name: 'Harminder',
+          last_name: 'Virk',
+          email: 'virk@adonisjs.com',
+          age: 35,
+        },
+        {
+          first_name: 'Romain',
+          last_name: 'Lanz',
+          username: 'rlanz',
+          email: 'rlanz@adonisjs.com',
+          age: 30,
+        },
+      ])
+      .exec()
+
+    await client
+      .updateTable('users')
+      .set({
+        username: client.raw('CASE WHEN ?? iS NULL THEN ?? ELSE ?? END', [
+          'username',
+          'email',
+          'username',
+        ]),
+        age: client.raw('?? + ?', ['age', 1]),
+      })
+      .on('query', (sql) => debug('%O', sql))
+      .exec()
+
+    const users = await client.query().select('email', 'username', 'age').from('users').exec()
+    assert.deepEqual(users, [
+      {
+        age: 36,
+        email: 'virk@adonisjs.com',
+        username: 'virk@adonisjs.com',
+      },
+      {
+        age: 31,
+        email: 'rlanz@adonisjs.com',
+        username: 'rlanz',
+      },
+    ])
+  })
+
+  test('update table as a key-value pair', async ({ assert, cleanup }) => {
+    const config = getConnectionConfig('pg')
+    const connection = new Connection('primary', config)
+    const client = new QueryClient(connection, 'dual')
+    cleanup(() => connection.close())
+
+    await dbSetup(connection)
+
+    await client
+      .insertInto('users')
+      .values([
+        {
+          first_name: 'Romain',
+          last_name: 'Lanz',
+          username: 'rlanz',
+          email: 'rlanz@adonisjs.com',
+          age: 30,
+        },
+      ])
+      .exec()
+
+    await client
+      .updateTable('users')
+      .set('username', client.raw('??', ['email']))
+      .where('username', 'rlanz')
+      .on('query', (sql) => debug('%O', sql))
+      .exec()
+
+    const users = await client.query().select('email', 'username').from('users').exec()
+    assert.deepEqual(users, [
+      {
+        email: 'rlanz@adonisjs.com',
+        username: 'rlanz@adonisjs.com',
       },
     ])
   })
