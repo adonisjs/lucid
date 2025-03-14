@@ -12,6 +12,9 @@ import { SelectExpressionBuilder } from '../expression_builders/select_expressio
 import { SharedExpressionBuilder } from '../expression_builders/shared_expression_builder.js'
 
 export class DeleteQueryBuilder extends SharedExpressionBuilder {
+  /**
+   * Should be shared during clone
+   */
   #context: Record<string, any> = {}
 
   /**
@@ -26,6 +29,19 @@ export class DeleteQueryBuilder extends SharedExpressionBuilder {
 
   constructor(protected client: DatabaseClientContract) {
     super(client.getWriteClient())
+  }
+
+  /**
+   * Clones the current query with its query context, applied SQL
+   * conditions and debugging state.
+   */
+  clone() {
+    const clonedQuery = new DeleteQueryBuilder(this.client)
+    clonedQuery.setContext({ ...this.getContext() })
+    clonedQuery.knexQuery = this.knexQuery.clone()
+    clonedQuery.debugging = this.debugging
+
+    return clonedQuery
   }
 
   /**

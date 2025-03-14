@@ -22,6 +22,10 @@ import type {
 
 export class InsertQueryBuilder implements CanBeExecuted {
   #tableName?: string
+
+  /**
+   * Should be shared during clone
+   */
   #context: Record<string, any> = {}
 
   /**
@@ -64,6 +68,20 @@ export class InsertQueryBuilder implements CanBeExecuted {
       }
       return result
     }, {})
+  }
+
+  /**
+   * Clones the current query with its query context, applied SQL
+   * conditions and debugging state.
+   */
+  clone() {
+    const clonedQuery = new InsertQueryBuilder(this.client)
+    clonedQuery.setContext({ ...this.getContext() })
+    clonedQuery.knexQuery = this.knexQuery.clone()
+    clonedQuery.debugging = this.debugging
+    this.#tableName && clonedQuery.table(this.#tableName)
+
+    return clonedQuery
   }
 
   /**

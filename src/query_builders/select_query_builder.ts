@@ -15,7 +15,14 @@ import { SelectExpressionBuilder } from '../expression_builders/select_expressio
  * from a SQL table.
  */
 export class SelectQueryBuilder extends SelectExpressionBuilder implements CanBeExecuted {
+  /**
+   * Should be shared during clone
+   */
   #context: Record<string, any> = {}
+
+  /**
+   * The queryType is used the query client
+   */
   readonly queryType = 'read'
 
   /**
@@ -25,6 +32,19 @@ export class SelectQueryBuilder extends SelectExpressionBuilder implements CanBe
 
   constructor(client: DatabaseClientContract) {
     super(client)
+  }
+
+  /**
+   * Clones the current query with its query context, applied SQL
+   * conditions and debugging state.
+   */
+  clone() {
+    const clonedQuery = new SelectQueryBuilder(this.client)
+    clonedQuery.setContext({ ...this.getContext() })
+    clonedQuery.knexQuery = this.knexQuery.clone()
+    clonedQuery.debugging = this.debugging
+
+    return clonedQuery
   }
 
   /**

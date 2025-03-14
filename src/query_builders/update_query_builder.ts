@@ -13,13 +13,20 @@ import { SharedExpressionBuilder } from '../expression_builders/shared_expressio
 import { transformValueExpressions } from '../helpers.js'
 
 export class UpdateQueryBuilder extends SharedExpressionBuilder {
+  /**
+   * Should be shared during clone
+   */
   #context: Record<string, any> = {}
-  readonly queryType = 'write'
 
   /**
    * Flag to know if debugging it enabled or not
    */
   debugging: boolean = false
+
+  /**
+   * The queryType is used the query client
+   */
+  readonly queryType = 'write'
 
   constructor(protected client: DatabaseClientContract) {
     super(client.getWriteClient())
@@ -39,6 +46,19 @@ export class UpdateQueryBuilder extends SharedExpressionBuilder {
       }
       return result
     }, {})
+  }
+
+  /**
+   * Clones the current query with its query context, applied SQL
+   * conditions and debugging state.
+   */
+  clone() {
+    const clonedQuery = new UpdateQueryBuilder(this.client)
+    clonedQuery.setContext({ ...this.getContext() })
+    clonedQuery.knexQuery = this.knexQuery.clone()
+    clonedQuery.debugging = this.debugging
+
+    return clonedQuery
   }
 
   /**

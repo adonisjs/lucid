@@ -8,9 +8,9 @@
  */
 
 import { test } from '@japa/runner'
-import { getConnectionConfig } from '../helpers.js'
-import { Connection } from '../../src/connection/connection.js'
-import { ConnectionManager } from '../../src/connection/manager.js'
+import { getConnectionConfig } from '../../helpers.js'
+import { Connection } from '../../../src/connection/connection.js'
+import { ConnectionManager } from '../../../src/connection/manager.js'
 
 test.group('Connection Manager', () => {
   test('add connection to the manager', ({ assert }) => {

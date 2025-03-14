@@ -9,12 +9,12 @@ processCLIArgs(process.argv.splice(2))
 configure({
   suites: [
     {
-      name: 'dialects',
-      files: ['tests/dialects/**/*.spec.ts'],
+      name: 'independent',
+      files: ['tests/independent/**/*.spec.ts'],
     },
     {
-      name: 'cross-db',
-      files: ['tests/cross-db/**/*.spec.ts'],
+      name: 'shared',
+      files: ['tests/shared/**/*.spec.ts'],
     },
     {
       name: 'types',

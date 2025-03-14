@@ -8,8 +8,8 @@
  */
 
 import { test } from '@japa/runner'
-import { Connection } from '../../src/connection/connection.js'
-import { getConnectionConfig, SUPPORTS_READ_WRITE_REPLICAS } from '../helpers.js'
+import { Connection } from '../../../src/connection/connection.js'
+import { getConnectionConfig, SUPPORTS_READ_WRITE_REPLICAS } from '../../helpers.js'
 
 test.group('Connection | config', () => {
   test('override top-level connection properties with write replica properties', ({ assert }) => {
