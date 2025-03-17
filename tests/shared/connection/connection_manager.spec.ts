@@ -15,24 +15,27 @@ import { ConnectionManager } from '../../../src/connection/manager.js'
 test.group('Connection Manager', () => {
   test('add connection to the manager', ({ assert }) => {
     const manager = new ConnectionManager()
-    manager.add('primary', getConnectionConfig())
+    const config = getConnectionConfig()
+    manager.add('primary', config)
 
     assert.isTrue(manager.has('primary'))
     assert.isFalse(manager.isConnected('primary'))
-    assert.deepEqual(manager.get('primary'), {
+    assert.containsSubset(manager.get('primary'), {
       identifier: 'primary',
       name: 'primary',
-      config: getConnectionConfig(),
       state: 'registered',
     })
+    assert.strictEqual(manager.get('primary')?.config, config)
   })
 
   test('noop when connection already exists', ({ assert }) => {
     const manager = new ConnectionManager()
-    manager.add('primary', getConnectionConfig())
-    manager.add('primary', { ...getConnectionConfig(), pool: { min: 0, max: 1 } })
+    const config = getConnectionConfig()
 
-    assert.deepEqual(manager.get('primary')?.config, getConnectionConfig())
+    manager.add('primary', config)
+    manager.add('primary', { ...config, pool: { min: 0, max: 1 } })
+
+    assert.strictEqual(manager.get('primary')?.config, config)
   })
 
   test('make connection', ({ assert }) => {

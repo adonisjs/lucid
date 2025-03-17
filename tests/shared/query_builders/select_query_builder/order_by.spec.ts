@@ -73,14 +73,11 @@ test.group('Select query builder | orderBy', () => {
 
     const sql = query
       .from('users')
-      .orderBy(
-        client.raw('select ?? from ?? limit ?', ['updated_at', 'profiles', 1]).wrap('(', ')'),
-        'desc'
-      )
+      .orderBy(client.raw('select ?? from ??', ['updated_at', 'profiles']).wrap('(', ')'), 'desc')
       .toSQL()
     const knexSQL = knex
       .from('users')
-      .orderBy(knex.from('profiles').limit(1).select('updated_at'), 'desc')
+      .orderBy(knex.from('profiles').select('updated_at'), 'desc')
       .toSQL()
 
     debug('%O', sql)
@@ -168,9 +165,7 @@ test.group('Select query builder | orderBy', () => {
       .from('users')
       .orderBy([
         {
-          column: client
-            .raw('select ?? from ?? limit ?', ['updated_at', 'profiles', 1])
-            .wrap('(', ')'),
+          column: client.raw('select ?? from ??', ['updated_at', 'profiles']).wrap('(', ')'),
           order: 'asc',
         },
         { column: 'name', order: 'desc', nulls: 'last' },
@@ -179,7 +174,7 @@ test.group('Select query builder | orderBy', () => {
     const knexSQL = knex
       .from('users')
       .orderBy([
-        { column: knex.from('profiles').limit(1).select('updated_at'), order: 'asc' },
+        { column: knex.from('profiles').select('updated_at'), order: 'asc' },
         { column: 'name', order: 'desc', nulls: 'last' },
       ])
       .toSQL()
