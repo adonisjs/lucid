@@ -7,6 +7,8 @@
  * file that was distributed with this source code.
  */
 
+import pg from 'pg'
+import { TYPES } from 'tedious'
 import { join } from 'node:path'
 import { Env } from '@adonisjs/env'
 import { test } from '@japa/runner'
@@ -18,8 +20,10 @@ await Env.create(new URL('../', import.meta.url), {})
 
 export const APP_ROOT = new URL('./tmp', import.meta.url)
 export const SQLITE_BASE_PATH = fileURLToPath(APP_ROOT)
-export const SUPPORTS_READ_WRITE_REPLICAS = ['pg', 'mysql', 'mssql'].includes(process.env.DB!)
 export const SUPPORT_WITH_MATERIALIZED = ['pg', 'sqlite'].includes(process.env.DB!)
+export const SUPPORTS_READ_WRITE_REPLICAS = ['pg', 'mysql', 'mssql'].includes(process.env.DB!)
+
+pg.types.setTypeParser(pg.types.builtins.INT8, (value) => BigInt(value))
 
 /**
  * Returns the config for constructing a new connection based
@@ -46,6 +50,15 @@ export function getConnectionConfig<T extends 'pg' | 'sqlite' | 'mysql' | 'mssql
           database: process.env.MYSQL_DATABASE as string,
           user: process.env.MYSQL_USER as string,
           password: process.env.MYSQL_PASSWORD as string,
+          supportBigNumbers: true,
+          bigNumberStrings: true,
+          typeCast: function (field, next) {
+            if (field.type === 'LONGLONG') {
+              const v = field.string()
+              return v !== undefined && v !== null ? BigInt(v) : v
+            }
+            return next()
+          },
         },
         asyncStackTraces: true,
         debug: !!process.env.DEBUG,
@@ -58,6 +71,15 @@ export function getConnectionConfig<T extends 'pg' | 'sqlite' | 'mysql' | 'mssql
           database: process.env.LEGACY_MYSQL_DATABASE as string,
           user: process.env.LEGACY_MYSQL_USER as string,
           password: process.env.LEGACY_MYSQL_PASSWORD as string,
+          supportBigNumbers: true,
+          bigNumberStrings: true,
+          typeCast: function (field, next) {
+            if (field.type === 'LONGLONG') {
+              const v = field.string()
+              return v !== undefined && v !== null ? BigInt(v) : v
+            }
+            return next()
+          },
         },
         asyncStackTraces: true,
         debug: !!process.env.DEBUG,
@@ -84,6 +106,11 @@ export function getConnectionConfig<T extends 'pg' | 'sqlite' | 'mysql' | 'mssql
           database: 'master',
           options: {
             enableArithAbort: true,
+            mapBinding(value) {
+              if (typeof value === 'bigint') {
+                return { type: TYPES.BigInt, value: value.toString() }
+              }
+            },
           },
         },
         asyncStackTraces: true,
@@ -137,6 +164,27 @@ export const dbSetup = test.macro(async (t, connection: Connection) => {
     table.increments()
     table.string('skill_name').nullable()
     table.integer('user_id').unsigned().references('users.id').onDelete('CASCADE')
+  })
+})
+
+/**
+ * Prepares tables for testing bigInts
+ */
+export const dbBigIntsSetup = test.macro(async (t, connection: Connection) => {
+  async function cleanup() {
+    await connection.client!.schema.dropTableIfExists('departments')
+  }
+
+  t.cleanup(cleanup)
+  await cleanup()
+
+  /**
+   * Creating neccessary tables
+   */
+  await connection.client!.schema.createTable('departments', (table) => {
+    table.bigIncrements()
+    table.string('name')
+    table.bigInteger('budget').notNullable()
   })
 })
 

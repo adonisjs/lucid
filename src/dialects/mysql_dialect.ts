@@ -401,7 +401,14 @@ export class MySQLDialect extends AbstractDialect {
       .getWriteClient()
       .raw(`SELECT GET_LOCK('${key}', ${timeout}) as lock_status;`)
 
-    return response[0] && response[0][0] && response[0][0].lock_status === 1
+    const lockStatus = response[0] && response[0][0] && response[0][0].lock_status
+
+    /**
+     * When using mixed data-types like BigInts or BigInts as string representation, then
+     * the value of GET_LOCK could be a string, BigInt, or a number. Therefore we cast
+     * it to a string always for the check
+     */
+    return String(lockStatus) === '1'
   }
 
   /**
@@ -422,6 +429,13 @@ export class MySQLDialect extends AbstractDialect {
       .getWriteClient()
       .raw(`SELECT RELEASE_LOCK('${key}') as lock_status;`)
 
-    return response[0] && response[0][0] && response[0][0].lock_status === 1
+    const lockStatus = response[0] && response[0][0] && response[0][0].lock_status
+
+    /**
+     * When using mixed data-types like BigInts or BigInts as string representation, then
+     * the value of GET_LOCK could be a string, BigInt, or a number. Therefore we cast
+     * it to a string always for the check
+     */
+    return String(lockStatus) === '1'
   }
 }
