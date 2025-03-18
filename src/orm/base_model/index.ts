@@ -1958,6 +1958,56 @@ class BaseModelImpl implements LucidRow {
   }
 
   /**
+   * Perform save on the model without invoking hooks.
+   */
+  async saveQuietly(): Promise<this> {
+    this.ensureIsntDeleted()
+    const Model = this.constructor as typeof BaseModel
+
+    /**
+     * Persist the model when it's not persisted already
+     */
+    if (!this.$isPersisted) {
+      this.initiateAutoCreateColumns()
+      await Model.$adapter.insert(this, this.prepareForAdapter(this.$attributes))
+
+      this.$hydrateOriginals()
+      this.$isPersisted = true
+
+      return this
+    }
+
+    /**
+     * Call hooks beforehand, so that they have the chance
+     * to make mutations that produces one or more `$dirty`
+     * fields.
+     */
+    const forceUpdate = this.forceUpdate
+    this.forceUpdate = false
+
+    /**
+     * Do not issue updates when model doesn't have any mutations
+     */
+    if (!this.$isDirty && !forceUpdate) {
+      return this
+    }
+
+    /**
+     * Perform update
+     */
+    this.initiateAutoUpdateColumns()
+
+    const updatePayload = this.prepareForAdapter(this.$dirty)
+    if (Object.keys(updatePayload).length > 0) {
+      await Model.$adapter.update(this, updatePayload)
+    }
+
+    this.$hydrateOriginals()
+
+    return this
+  }
+
+  /**
    * The lockForUpdate method re-fetches the model instance from
    * the database and locks the row to perform an update. The
    * provided callback receives a fresh user instance and should

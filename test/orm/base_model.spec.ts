@@ -1,5 +1,5 @@
 /*
- * @poppinss/data-models
+ * @adonisjs/lucid
  *
  * (c) Harminder Virk <virk@adonisjs.com>
  *
@@ -898,6 +898,59 @@ test.group('Base Model | persist', (group) => {
 
     assert.deepEqual(user.$attributes, { username: 'virk', fullName: 'H virk', id: 1 })
     assert.deepEqual(user.$original, { username: 'virk', fullName: 'H virk', id: 1 })
+  })
+
+  test('do not invoke before and after create hooks when saving quietly', async ({
+    fs,
+    assert,
+  }) => {
+    assert.plan(1)
+
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+
+    const BaseModel = getBaseModel(adapter)
+
+    const stack: string[] = []
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+
+      @column()
+      declare username: string
+
+      @column()
+      declare email: string
+
+      @beforeCreate()
+      static beforeCreateHook() {
+        stack.push('beforeCreateHook')
+      }
+
+      @beforeSave()
+      static beforeSaveHook() {
+        stack.push('beforeSaveHook')
+      }
+
+      @afterCreate()
+      static afterCreateHook() {
+        stack.push('afterCreateHook')
+      }
+
+      @afterSave()
+      static afterSaveHook() {
+        stack.push('afterSaveHook')
+      }
+    }
+
+    const user = new User()
+    user.username = 'virk'
+    await user.saveQuietly()
+
+    assert.deepEqual(stack, [])
   })
 
   test('merge adapter insert return value with attributes', async ({ fs, assert }) => {

@@ -634,6 +634,11 @@ export interface LucidRow {
   save(): Promise<this>
 
   /**
+   * Perform save on the model without invoking hooks.
+   */
+  saveQuietly(): Promise<this>
+
+  /**
    * The lockForUpdate method re-fetches the model instance from
    * the database and locks the row to perform an update. The
    * provided callback receives a fresh user instance and should
