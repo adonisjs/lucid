@@ -690,6 +690,15 @@ class BaseModelImpl implements LucidRow {
   }
 
   /**
+   * Same as [[BaseModel.create]] without invoking hooks.
+   */
+  static async createQuietly(values: any, options?: ModelAssignOptions): Promise<any> {
+    const instance = this.newUpWithOptions(values, options, options?.allowExtraProperties)
+    await instance.saveQuietly()
+    return instance
+  }
+
+  /**
    * Same as [[BaseModel.create]], but persists multiple instances. The create
    * many call will be wrapped inside a managed transaction for consistency.
    * If required, you can also pass a transaction client and the method
@@ -707,6 +716,28 @@ class BaseModelImpl implements LucidRow {
 
       for (let row of values) {
         const modelInstance = await this.create(row, createOptions)
+        modelInstances.push(modelInstance)
+      }
+
+      return modelInstances
+    })
+  }
+
+  /**
+   * Same as [[BaseModel.createMany]] without invoking hooks.
+   */
+  static async createManyQuietly(values: any, options?: ModelAssignOptions): Promise<any[]> {
+    const client = this.$adapter.modelConstructorClient(this, options)
+
+    return managedTransaction(client, async (trx) => {
+      const modelInstances: LucidRow[] = []
+      const createOptions = {
+        client: trx,
+        allowExtraProperties: options?.allowExtraProperties,
+      }
+
+      for (let row of values) {
+        const modelInstance = await this.createQuietly(row, createOptions)
         modelInstances.push(modelInstance)
       }
 
@@ -1958,7 +1989,7 @@ class BaseModelImpl implements LucidRow {
   }
 
   /**
-   * Perform save on the model without invoking hooks.
+   * Same as [[BaseModel.save]] without invoking hooks.
    */
   async saveQuietly(): Promise<this> {
     this.ensureIsntDeleted()
@@ -2044,6 +2075,17 @@ class BaseModelImpl implements LucidRow {
     this.$isDeleted = true
 
     await Model.$hooks.runner('after:delete').run(this)
+  }
+
+  /**
+   * Same as [[BaseModel.delete]] without invoking hooks.
+   */
+  async deleteQuietly() {
+    this.ensureIsntDeleted()
+    const Model = this.constructor as typeof BaseModel
+
+    await Model.$adapter.delete(this)
+    this.$isDeleted = true
   }
 
   /**

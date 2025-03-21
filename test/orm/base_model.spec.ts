@@ -5272,6 +5272,42 @@ test.group('Base Model | hooks', (group) => {
     ])
   })
 
+  test('do not invoke before and after create hooks with quiet variant', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+
+    const BaseModel = getBaseModel(adapter)
+
+    const stack: string[] = []
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+
+      @column()
+      declare username: string
+
+      @column()
+      declare email: string
+
+      @beforeCreate()
+      static beforeCreateHook() {
+        stack.push('beforeCreateHook')
+      }
+
+      @afterCreate()
+      static afterCreateHook() {
+        stack.push('afterCreateHook')
+      }
+    }
+
+    await User.createQuietly({ username: 'virk' })
+
+    assert.deepEqual(stack, [])
+  })
+
   test('abort create when before hook raises exception', async ({ fs, assert }) => {
     assert.plan(3)
 
@@ -5571,6 +5607,46 @@ test.group('Base Model | hooks', (group) => {
 
     const usersCount = await db.from('users').count('*', 'total')
     assert.equal(usersCount[0].total, 0)
+  })
+
+  test('do not invoke before and after delete hooks with quiet variant', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+
+    const stack: string[] = []
+
+    const BaseModel = getBaseModel(adapter)
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+
+      @column()
+      declare username: string
+
+      @column()
+      declare email: string
+
+      @beforeDelete()
+      static beforeDeleteHook() {
+        stack.push('beforeDeleteHook')
+      }
+
+      @afterDelete()
+      static afterDeleteHook() {
+        stack.push('afterDeleteHook')
+      }
+    }
+
+    await db.insertQuery().table('users').insert({ username: 'virk' })
+    const user = await User.findOrFail(1)
+    await user.deleteQuietly()
+
+    const usersCount = await db.from('users').count('*', 'total')
+    assert.equal(usersCount[0].total, 0)
+    assert.lengthOf(stack, 0)
   })
 
   test('abort delete when before hook raises exception', async ({ fs, assert }) => {

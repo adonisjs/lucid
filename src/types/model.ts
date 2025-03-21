@@ -652,6 +652,11 @@ export interface LucidRow {
   delete(): Promise<void>
 
   /**
+   * Same as [[BaseModel.delete]] without invoking hooks
+   */
+  deleteQuietly(): Promise<void>
+
+  /**
    * Reload/Refresh the model instance
    */
   refresh(): Promise<this>
