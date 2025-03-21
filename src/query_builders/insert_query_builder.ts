@@ -49,6 +49,13 @@ export class InsertQueryBuilder implements CanBeExecuted {
    */
   readonly queryType = 'write'
 
+  /**
+   * Find if the query is in a transaction
+   */
+  get transacting() {
+    return this.client.isTransaction
+  }
+
   constructor(protected client: DatabaseClientContract) {
     this.knex = client.getWriteClient()
     this.knexQuery = this.knex.queryBuilder()
@@ -135,6 +142,20 @@ export class InsertQueryBuilder implements CanBeExecuted {
    */
   debug(toggle: boolean = true) {
     this.debugging = toggle
+    return this
+  }
+
+  /**
+   * Switch the client to be used for executing the query.
+   *
+   * @example
+   * ```ts
+   * query.use(await db.transaction())
+   * await query.exec()
+   * ```
+   */
+  use(client: DatabaseClientContract): this {
+    this.client = client
     return this
   }
 

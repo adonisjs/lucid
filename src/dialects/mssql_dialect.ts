@@ -123,7 +123,7 @@ export class MSSQLDialect extends AbstractDialect {
     const knex = this.#connection.getWriteClient()
 
     const query = knex
-      .from('sys.columns as col')
+      .from<{}, {}>('sys.columns as col')
       .select(['col.name AS name', 'type.name AS type', 'col.is_nullable as nullable'])
       .join('sys.types as type', 'col.user_type_id', 'type.user_type_id')
       .where('col.object_id', knex.raw(`OBJECT_ID(?)`, [tableName]))

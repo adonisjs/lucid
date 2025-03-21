@@ -30,6 +30,13 @@ export class SelectQueryBuilder extends SelectExpressionBuilder implements CanBe
    */
   debugging: boolean = false
 
+  /**
+   * Find if the query is in a transaction
+   */
+  get transacting() {
+    return this.client.isTransaction
+  }
+
   constructor(client: DatabaseClientContract) {
     super(client)
   }

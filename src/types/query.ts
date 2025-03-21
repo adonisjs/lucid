@@ -18,6 +18,18 @@ import type { RefExpressionBuilder } from '../expression_builders/ref_expression
 import type { JoinExpressionBuilder } from '../expression_builders/join_expression_builder.js'
 import type { WithExpressionBuilder } from '../expression_builders/with_expression_builder.js'
 import type { SelectExpressionBuilder } from '../expression_builders/select_expression_builder.js'
+import { TransactionClient } from '../database_clients/transaction_client.js'
+
+/**
+ * Same as knex. Need to redefine, as knex doesn't export this
+ * type
+ */
+export type IsolationLevels =
+  | 'read uncommitted'
+  | 'read committed'
+  | 'snapshot'
+  | 'repeatable read'
+  | 'serializable'
 
 /**
  * A set of operators suggestions for the where clause. Additional unknown
@@ -262,6 +274,21 @@ export type OrderByExpressionArguments =
  * Data emitted by the "db:query" event
  */
 export type DbQueryEventData = Knex.Sql & Record<string, any>
+
+/**
+ * Data emitted by the "db:transaction:begin" event
+ */
+export type DbTransactionBeginEventData = Record<string, any>
+
+/**
+ * Data emitted by the "db:transaction:commit" event
+ */
+export type DbTransactionCommitEventData = Record<string, any>
+
+/**
+ * Data emitted by the "db:transaction:rollback" event
+ */
+export type DbTransactionRollbackEventData = Record<string, any>
 
 /**
  * Must be implemented by query builders that can be executed using the
@@ -597,4 +624,10 @@ export interface DatabaseClientContract {
    * Executes a executable query and returns its results back.
    */
   exec<T>(query: CanBeExecuted): Promise<T>
+
+  transaction(options?: { isolationLevel?: IsolationLevels }): Promise<TransactionClient>
+  transaction<T>(
+    callback: (trx: TransactionClient) => T,
+    options?: { isolationLevel?: IsolationLevels }
+  ): Promise<T>
 }

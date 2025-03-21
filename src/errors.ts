@@ -50,3 +50,9 @@ export const E_CANNOT_PERFORM_WRITE_QUERIES = createError(
   'E_CANNOT_PERFORM_WRITE_QUERIES',
   500
 )
+
+export const E_CANNOT_BEGIN_TRANSACTION = createError(
+  'Cannot begin transaction, since the database client is in read-only mode',
+  'E_CANNOT_BEGIN_TRANSACTION',
+  500
+)

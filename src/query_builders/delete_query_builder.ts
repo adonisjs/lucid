@@ -27,6 +27,13 @@ export class DeleteQueryBuilder extends SharedExpressionBuilder {
    */
   readonly queryType = 'write'
 
+  /**
+   * Find if the query is in a transaction
+   */
+  get transacting() {
+    return this.client.isTransaction
+  }
+
   constructor(protected client: DatabaseClientContract) {
     super(client.getWriteClient())
   }

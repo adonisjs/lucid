@@ -14,15 +14,16 @@ import { RuntimeException } from '@poppinss/exception'
 
 import { debug } from '../debug.js'
 import * as errors from '../errors.js'
+import { createKnexLogger } from './logger.js'
 import { dialects } from '../dialects/main.js'
 import { QueryClient } from '../database_clients/query_client.js'
 import type { DialectContract } from '../types/dialect.js'
 import type {
   ConnectionConfig,
   ConnectionLogger,
+  DatabaseEmitter,
   SupportedDialectNames,
 } from '../types/connection.js'
-import { createKnexLogger } from './logger.js'
 
 /**
  * A connection represents a database connection created by instantiating
@@ -30,6 +31,11 @@ import { createKnexLogger } from './logger.js'
  * knex instances will be created.
  */
 export class Connection {
+  /**
+   * Reference to the emitter to be shared with QueryClient
+   */
+  #emitter?: DatabaseEmitter
+
   /**
    * Shared with knex instances
    */
@@ -112,7 +118,8 @@ export class Connection {
      */
     public identifier: string,
     public config: ConnectionConfig,
-    logger?: ConnectionLogger
+    logger?: ConnectionLogger,
+    emitter?: DatabaseEmitter
   ) {
     this.#validateConnectionSettings()
     this.clientName = config.clientName
@@ -121,6 +128,7 @@ export class Connection {
     this.#setupWriteConnection()
     this.#setupReadConnection()
     this.#monitorPoolResources()
+    this.#emitter = emitter
     this.#knexLogger = createKnexLogger(logger ?? console)
     this.dialect = new dialects[config.dialectName](this)
   }
@@ -370,7 +378,7 @@ export class Connection {
    * @default: 'dual'
    */
   getQueryClient(mode: 'dual' | 'write' | 'read' = 'dual') {
-    return new QueryClient(this, mode)
+    return new QueryClient(this, mode, this.#emitter)
   }
 
   /**
