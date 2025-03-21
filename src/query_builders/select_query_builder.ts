@@ -28,7 +28,7 @@ export class SelectQueryBuilder extends SelectExpressionBuilder implements CanBe
   /**
    * Flag to know if debugging it enabled or not
    */
-  debugging: boolean = false
+  debugging: boolean
 
   /**
    * Find if the query is in a transaction
@@ -39,6 +39,7 @@ export class SelectQueryBuilder extends SelectExpressionBuilder implements CanBe
 
   constructor(client: DatabaseClientContract) {
     super(client)
+    this.debugging = client.debug
   }
 
   /**

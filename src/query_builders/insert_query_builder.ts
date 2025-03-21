@@ -37,7 +37,7 @@ export class InsertQueryBuilder implements CanBeExecuted {
   /**
    * Flag to know if debugging it enabled or not
    */
-  debugging: boolean = false
+  debugging: boolean
 
   /**
    * Underlying knex query to mutate
@@ -59,6 +59,7 @@ export class InsertQueryBuilder implements CanBeExecuted {
   constructor(protected client: DatabaseClientContract) {
     this.knex = client.getWriteClient()
     this.knexQuery = this.knex.queryBuilder()
+    this.debugging = client.debug
   }
 
   /**

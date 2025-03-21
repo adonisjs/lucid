@@ -20,7 +20,7 @@ export class DeleteQueryBuilder extends SharedExpressionBuilder {
   /**
    * Flag to know if debugging it enabled or not
    */
-  debugging: boolean = false
+  debugging: boolean
 
   /**
    * The queryType is used the query client
@@ -36,6 +36,7 @@ export class DeleteQueryBuilder extends SharedExpressionBuilder {
 
   constructor(protected client: DatabaseClientContract) {
     super(client.getWriteClient())
+    this.debugging = client.debug
   }
 
   /**

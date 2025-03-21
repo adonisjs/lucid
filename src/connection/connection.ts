@@ -24,6 +24,7 @@ import type {
   DatabaseEmitter,
   SupportedDialectNames,
 } from '../types/connection.js'
+import { NOOP_EMITTER } from '../helpers.js'
 
 /**
  * A connection represents a database connection created by instantiating
@@ -34,7 +35,7 @@ export class Connection {
   /**
    * Reference to the emitter to be shared with QueryClient
    */
-  #emitter?: DatabaseEmitter
+  #emitter: DatabaseEmitter
 
   /**
    * Shared with knex instances
@@ -128,7 +129,7 @@ export class Connection {
     this.#setupWriteConnection()
     this.#setupReadConnection()
     this.#monitorPoolResources()
-    this.#emitter = emitter
+    this.#emitter = emitter ?? NOOP_EMITTER
     this.#knexLogger = createKnexLogger(logger ?? console)
     this.dialect = new dialects[config.dialectName](this)
   }
@@ -295,7 +296,15 @@ export class Connection {
       this.#state = this.#createFreshState()
     })
 
+    this.pool!.on('createSuccess', (_, resource) => {
+      debug('%s: write pool connection created "%s"', this.identifier, resource.__knexUid)
+    })
+
     if (this.readPool !== this.pool) {
+      this.pool!.on('createSuccess', (_, resource) => {
+        debug('%s: read pool connection created "%s"', this.identifier, resource.id)
+      })
+
       this.readPool!.on('poolDestroySuccess', () => {
         debug('%s: read pool destroyed, cleaning up resource', this.identifier)
         this.readPool!.removeAllListeners()
