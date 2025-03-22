@@ -19,6 +19,7 @@ import { QueryClientContract, TransactionClientContract } from './database.js'
 import {
   LucidModel,
   LucidRow,
+  ModelAdapterOptions,
   ModelAssignOptions,
   ModelAttributes,
   ModelObject,
@@ -614,7 +615,7 @@ export interface HasOneClientContract<
   /**
    * Save related instance. Sets up the FK automatically
    */
-  save(related: InstanceType<RelatedModel>): Promise<void>
+  save(related: InstanceType<RelatedModel>, options?: ModelAdapterOptions): Promise<void>
 
   /**
    * Create related instance. Sets up the FK automatically
@@ -654,7 +655,7 @@ export interface HasManyClientContract<
   /**
    * Save many of related instances. Sets up FK automatically
    */
-  saveMany(related: InstanceType<RelatedModel>[]): Promise<void>
+  saveMany(related: InstanceType<RelatedModel>[], options?: ModelAdapterOptions): Promise<void>
 
   /**
    * Create many of related instances. Sets up FK automatically
@@ -703,12 +704,12 @@ export interface BelongsToClientContract<
   /**
    * Associate related instance
    */
-  associate(related: InstanceType<RelatedModel>): Promise<void>
+  associate(related: InstanceType<RelatedModel>, options?: ModelAdapterOptions): Promise<void>
 
   /**
    * Dissociate related instance
    */
-  dissociate(): Promise<void>
+  dissociate(options?: ModelAdapterOptions): Promise<void>
 }
 
 /**
@@ -734,7 +735,8 @@ export interface ManyToManyClientContract<
   save(
     related: InstanceType<RelatedModel>,
     performSync?: boolean, // defaults to true
-    pivotAttributes?: ModelObject
+    pivotAttributes?: ModelObject,
+    options?: ModelAdapterOptions
   ): Promise<void>
 
   /**
@@ -743,7 +745,8 @@ export interface ManyToManyClientContract<
   saveMany(
     related: InstanceType<RelatedModel>[],
     performSync?: boolean, // defaults to true
-    pivotAttributes?: (ModelObject | undefined)[]
+    pivotAttributes?: (ModelObject | undefined)[],
+    options?: ModelAdapterOptions
   ): Promise<void>
 
   /**

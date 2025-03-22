@@ -9,7 +9,7 @@
 
 import { OneOrMany } from '../../../types/querybuilder.js'
 import { QueryClientContract } from '../../../types/database.js'
-import { LucidModel, LucidRow } from '../../../types/model.js'
+import { LucidModel, LucidRow, ModelAdapterOptions } from '../../../types/model.js'
 import { BelongsToClientContract } from '../../../types/relations.js'
 
 import { BelongsTo } from './index.js'
@@ -67,13 +67,13 @@ export class BelongsToQueryClient implements BelongsToClientContract<BelongsTo, 
   /**
    * Associate the related model with the parent model
    */
-  async associate(related: LucidRow) {
-    await managedTransaction(this.parent.$trx || this.client, async (trx) => {
+  async associate(related: LucidRow, options: ModelAdapterOptions = {}) {
+    await managedTransaction(options.client || this.parent.$trx || this.client, async (trx) => {
       related.$trx = trx
       await related.save()
 
       this.relation.hydrateForPersistance(this.parent, related)
-      this.parent.$trx = trx
+      this.parent.$setOptionsAndTrx({ ...options, client: trx })
       await this.parent.save()
     })
   }
@@ -81,8 +81,9 @@ export class BelongsToQueryClient implements BelongsToClientContract<BelongsTo, 
   /**
    * Drop association
    */
-  async dissociate() {
+  async dissociate(options: ModelAdapterOptions = {}) {
     ;(this.parent as any)[this.relation.foreignKey] = null
+    this.parent.$setOptionsAndTrx(options)
     await this.parent.save()
   }
 }

@@ -7935,3 +7935,65 @@ test.group('Model | ManyToMany | delete', (group) => {
     assert.deepEqual(sql, rawSql)
   })
 })
+
+test.group('Model | ManyToMany | transaction', (group) => {
+  group.setup(async () => {
+    await setup()
+  })
+
+  group.teardown(async () => {
+    await cleanup()
+  })
+
+  group.each.teardown(async () => {
+    await resetTables()
+  })
+
+  test('use transaction', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter)
+
+    class Skill extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+
+      @column()
+      declare name: string
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+
+      @column()
+      declare username: string
+
+      @manyToMany(() => Skill)
+      declare skills: ManyToMany<typeof Skill>
+    }
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+
+    const trx = await db.connection('primary').transaction()
+    const pool = db.manager.get('primary')!.connection!.pool!
+
+    const options = { client: trx }
+
+    await Promise.all([
+      user.related('skills').create({ name: 'create' }, {}, options),
+      user.related('skills').createMany([{ name: 'createMany' }], [], options),
+      user.related('skills').save(new Skill().merge({ name: 'save' }), true, {}, options),
+      user.related('skills').saveMany([new Skill().merge({ name: 'saveMany' })], true, [], options),
+    ])
+
+    await trx.rollback()
+
+    assert.equal(pool.numUsed(), 0)
+    assert.equal(pool.numFree(), 1)
+  })
+})

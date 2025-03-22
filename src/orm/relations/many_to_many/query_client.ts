@@ -133,8 +133,13 @@ export class ManyToManyQueryClient implements ManyToManyClientContract<ManyToMan
    * Save related model instance.
    * @note: Read the "NO_PIVOT_ATTRS" section at the top
    */
-  async save(related: LucidRow, performSync: boolean = true, pivotAttributes?: ModelObject) {
-    await managedTransaction(this.parent.$trx || this.client, async (trx) => {
+  async save(
+    related: LucidRow,
+    performSync: boolean = true,
+    pivotAttributes?: ModelObject,
+    options: ModelAssignOptions = {}
+  ) {
+    await managedTransaction(options.client || this.parent.$trx || this.client, async (trx) => {
       /**
        * Persist parent
        */
@@ -144,7 +149,7 @@ export class ManyToManyQueryClient implements ManyToManyClientContract<ManyToMan
       /**
        * Persist related
        */
-      related.$trx = trx
+      related.$setOptionsAndTrx({ ...options, client: trx })
       await related.save()
 
       const [, relatedForeignKeyValue] = this.relation.getPivotRelatedPair(related)
@@ -171,9 +176,10 @@ export class ManyToManyQueryClient implements ManyToManyClientContract<ManyToMan
   async saveMany(
     related: LucidRow[],
     performSync: boolean = true,
-    pivotAttributes?: (ModelObject | undefined)[]
+    pivotAttributes?: (ModelObject | undefined)[],
+    options: ModelAssignOptions = {}
   ) {
-    await managedTransaction(this.parent.$trx || this.client, async (trx) => {
+    await managedTransaction(options.client || this.parent.$trx || this.client, async (trx) => {
       /**
        * Persist parent
        */
@@ -184,7 +190,7 @@ export class ManyToManyQueryClient implements ManyToManyClientContract<ManyToMan
        * Persist all related models
        */
       for (let one of related) {
-        one.$trx = trx
+        one.$setOptionsAndTrx({ ...options, client: trx })
         await one.save()
       }
 
@@ -217,16 +223,16 @@ export class ManyToManyQueryClient implements ManyToManyClientContract<ManyToMan
   async create(
     values: ModelObject,
     pivotAttributes?: ModelObject,
-    options?: ModelAssignOptions
+    options: ModelAssignOptions = {}
   ): Promise<LucidRow> {
-    return managedTransaction(this.parent.$trx || this.client, async (trx) => {
+    return managedTransaction(options.client || this.parent.$trx || this.client, async (trx) => {
       this.parent.$trx = trx
       await this.parent.save()
 
       /**
        * Create and persist related model instance
        */
-      const related = await this.relation.relatedModel().create(values, { client: trx, ...options })
+      const related = await this.relation.relatedModel().create(values, { ...options, client: trx })
 
       const [, relatedForeignKeyValue] = this.relation.getPivotRelatedPair(related)
       const pivotPayload = {
@@ -249,9 +255,9 @@ export class ManyToManyQueryClient implements ManyToManyClientContract<ManyToMan
   async createMany(
     values: ModelObject[],
     pivotAttributes?: (ModelObject | undefined)[],
-    options?: ModelAssignOptions
+    options: ModelAssignOptions = {}
   ): Promise<LucidRow[]> {
-    return managedTransaction(this.parent.$trx || this.client, async (trx) => {
+    return managedTransaction(options.client || this.parent.$trx || this.client, async (trx) => {
       this.parent.$trx = trx
       await this.parent.save()
 
@@ -260,7 +266,7 @@ export class ManyToManyQueryClient implements ManyToManyClientContract<ManyToMan
        */
       const related = await this.relation
         .relatedModel()
-        .createMany(values, { client: trx, ...options })
+        .createMany(values, { ...options, client: trx })
 
       const relatedForeignKeyValues = related.reduce<Record<string, ModelObject>>(
         (result, one, index) => {
@@ -316,7 +322,8 @@ export class ManyToManyQueryClient implements ManyToManyClientContract<ManyToMan
     /**
      * Perform bulk insert
      */
-    const query = trx ? trx.insertQuery() : this.client.insertQuery()
+    const transaction = trx || this.parent.$trx
+    const query = transaction ? transaction.insertQuery() : this.client.insertQuery()
     await query.table(this.relation.pivotTable).multiInsert(pivotRows)
   }
 
@@ -337,8 +344,9 @@ export class ManyToManyQueryClient implements ManyToManyClientContract<ManyToMan
     /**
      * Use transaction when defined
      */
-    if (trx) {
-      query.useTransaction(trx)
+    const transaction = trx || this.parent.$trx
+    if (transaction) {
+      query.useTransaction(transaction)
     }
 
     await query.del()
@@ -360,7 +368,7 @@ export class ManyToManyQueryClient implements ManyToManyClientContract<ManyToMan
     detach: boolean = true,
     trx?: TransactionClientContract
   ) {
-    await managedTransaction(trx || this.client, async (transaction) => {
+    await managedTransaction(trx || this.parent.$trx || this.client, async (transaction) => {
       const hasAttributes = !Array.isArray(ids)
 
       /**

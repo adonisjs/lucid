@@ -9,7 +9,13 @@
 
 import { QueryClientContract } from '../../../types/database.js'
 import { OneOrMany } from '../../../types/querybuilder.js'
-import { LucidRow, LucidModel, ModelObject, ModelAssignOptions } from '../../../types/model.js'
+import {
+  LucidRow,
+  LucidModel,
+  ModelObject,
+  ModelAssignOptions,
+  ModelAdapterOptions,
+} from '../../../types/model.js'
 import { HasManyClientContract } from '../../../types/relations.js'
 
 import { HasMany } from './index.js'
@@ -68,13 +74,13 @@ export class HasManyQueryClient implements HasManyClientContract<HasMany, LucidM
   /**
    * Save related model instance
    */
-  async save(related: LucidRow) {
-    await managedTransaction(this.parent.$trx || this.client, async (trx) => {
+  async save(related: LucidRow, options: ModelAdapterOptions = {}) {
+    await managedTransaction(options.client || this.parent.$trx || this.client, async (trx) => {
       this.parent.$trx = trx
       await this.parent.save()
 
       this.relation.hydrateForPersistance(this.parent, related)
-      related.$trx = trx
+      related.$setOptionsAndTrx({ ...options, client: trx })
       await related.save()
     })
   }
@@ -82,16 +88,16 @@ export class HasManyQueryClient implements HasManyClientContract<HasMany, LucidM
   /**
    * Save related model instance
    */
-  async saveMany(related: LucidRow[]) {
+  async saveMany(related: LucidRow[], options: ModelAdapterOptions = {}) {
     const parent = this.parent
 
-    await managedTransaction(this.parent.$trx || this.client, async (trx) => {
+    await managedTransaction(options.client || this.parent.$trx || this.client, async (trx) => {
       this.parent.$trx = trx
       await parent.save()
 
       for (let row of related) {
         this.relation.hydrateForPersistance(this.parent, row)
-        row.$trx = trx
+        row.$setOptionsAndTrx({ ...options, client: trx })
         await row.save()
       }
     })
@@ -100,24 +106,24 @@ export class HasManyQueryClient implements HasManyClientContract<HasMany, LucidM
   /**
    * Create instance of the related model
    */
-  async create(values: ModelObject, options?: ModelAssignOptions): Promise<LucidRow> {
-    return managedTransaction(this.parent.$trx || this.client, async (trx) => {
+  async create(values: ModelObject, options: ModelAssignOptions = {}): Promise<LucidRow> {
+    return managedTransaction(options.client || this.parent.$trx || this.client, async (trx) => {
       this.parent.$trx = trx
       await this.parent.save()
 
       const valuesToPersist = Object.assign({}, values)
       this.relation.hydrateForPersistance(this.parent, valuesToPersist)
-      return this.relation.relatedModel().create(valuesToPersist, { client: trx, ...options })
+      return this.relation.relatedModel().create(valuesToPersist, { ...options, client: trx })
     })
   }
 
   /**
    * Create instance of the related model
    */
-  async createMany(values: ModelObject[], options?: ModelAssignOptions): Promise<LucidRow[]> {
+  async createMany(values: ModelObject[], options: ModelAssignOptions = {}): Promise<LucidRow[]> {
     const parent = this.parent
 
-    return managedTransaction(this.parent.$trx || this.client, async (trx) => {
+    return managedTransaction(options.client || this.parent.$trx || this.client, async (trx) => {
       this.parent.$trx = trx
       await parent.save()
 
@@ -127,7 +133,7 @@ export class HasManyQueryClient implements HasManyClientContract<HasMany, LucidM
         return valueToPersist
       })
 
-      return this.relation.relatedModel().createMany(valuesToPersist, { client: trx, ...options })
+      return this.relation.relatedModel().createMany(valuesToPersist, { ...options, client: trx })
     })
   }
 
@@ -137,9 +143,9 @@ export class HasManyQueryClient implements HasManyClientContract<HasMany, LucidM
   async firstOrCreate(
     search: any,
     savePayload?: any,
-    options?: ModelAssignOptions
+    options: ModelAssignOptions = {}
   ): Promise<LucidRow> {
-    return managedTransaction(this.parent.$trx || this.client, async (trx) => {
+    return managedTransaction(options.client || this.parent.$trx || this.client, async (trx) => {
       this.parent.$trx = trx
       await this.parent.save()
 
@@ -148,7 +154,7 @@ export class HasManyQueryClient implements HasManyClientContract<HasMany, LucidM
 
       return this.relation
         .relatedModel()
-        .firstOrCreate(valuesToPersist, savePayload, { client: trx, ...options })
+        .firstOrCreate(valuesToPersist, savePayload, { ...options, client: trx })
     })
   }
 
@@ -158,9 +164,9 @@ export class HasManyQueryClient implements HasManyClientContract<HasMany, LucidM
   async updateOrCreate(
     search: ModelObject,
     updatePayload: ModelObject,
-    options?: ModelAssignOptions
+    options: ModelAssignOptions = {}
   ): Promise<LucidRow> {
-    return managedTransaction(this.parent.$trx || this.client, async (trx) => {
+    return managedTransaction(options.client || this.parent.$trx || this.client, async (trx) => {
       this.parent.$trx = trx
       await this.parent.save()
 
@@ -179,9 +185,9 @@ export class HasManyQueryClient implements HasManyClientContract<HasMany, LucidM
   async fetchOrCreateMany(
     payload: ModelObject[],
     predicate?: any,
-    options?: ModelAssignOptions
+    options: ModelAssignOptions = {}
   ): Promise<LucidRow[]> {
-    return managedTransaction(this.parent.$trx || this.client, async (trx) => {
+    return managedTransaction(options.client || this.parent.$trx || this.client, async (trx) => {
       this.parent.$trx = trx
       await this.parent.save()
 
@@ -206,9 +212,9 @@ export class HasManyQueryClient implements HasManyClientContract<HasMany, LucidM
   async updateOrCreateMany(
     payload: ModelObject[],
     predicate?: any,
-    options?: ModelAssignOptions
+    options: ModelAssignOptions = {}
   ): Promise<LucidRow[]> {
-    return managedTransaction(this.parent.$trx || this.client, async (trx) => {
+    return managedTransaction(options.client || this.parent.$trx || this.client, async (trx) => {
       this.parent.$trx = trx
       await this.parent.save()
 

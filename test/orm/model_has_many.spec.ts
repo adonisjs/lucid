@@ -5804,3 +5804,72 @@ test.group('Model | HasMany | delete', (group) => {
     assert.deepEqual(sql, rawSql)
   })
 })
+
+test.group('Model | HasMany | transaction', (group) => {
+  group.setup(async () => {
+    await setup()
+  })
+
+  group.teardown(async () => {
+    await cleanup()
+  })
+
+  group.each.teardown(async () => {
+    await resetTables()
+  })
+
+  test('use transaction', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter)
+
+    class Post extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+
+      @column()
+      declare userId: number
+
+      @column()
+      declare title: string
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+
+      @column()
+      declare username: string
+
+      @hasMany(() => Post)
+      declare posts: HasMany<typeof Post>
+    }
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+
+    const trx = await db.connection('primary').transaction()
+    const pool = db.manager.get('primary')!.connection!.pool!
+
+    const options = { client: trx }
+
+    await Promise.all([
+      user.related('posts').create({ title: 'create' }, options),
+      user.related('posts').createMany([{ title: 'createMany' }], options),
+      user.related('posts').firstOrCreate({}, { title: 'firstOrCreate' }, options),
+      user.related('posts').updateOrCreate({}, { title: 'updateOrCreate' }, options),
+      user.related('posts').fetchOrCreateMany([{ title: 'fetchOrCreateMany' }], 'title', options),
+      user.related('posts').updateOrCreateMany([{ title: 'updateOrCreateMany' }], 'title', options),
+      user.related('posts').save(new Post().merge({ title: 'save' }), options),
+      user.related('posts').saveMany([new Post().merge({ title: 'saveMany' })], options),
+    ])
+
+    await trx.rollback()
+
+    assert.equal(pool.numUsed(), 0)
+    assert.equal(pool.numFree(), 1)
+  })
+})

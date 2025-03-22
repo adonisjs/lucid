@@ -3065,3 +3065,68 @@ test.group('Model | HasOne | delete', (group) => {
     assert.deepEqual(sql, rawSql)
   })
 })
+
+test.group('Model | HasOne | transaction', (group) => {
+  group.setup(async () => {
+    await setup()
+  })
+
+  group.teardown(async () => {
+    await cleanup()
+  })
+
+  group.each.teardown(async () => {
+    await resetTables()
+  })
+
+  test('use transaction', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter)
+
+    class Profile extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+
+      @column()
+      declare userId: number
+
+      @column()
+      declare displayName: string
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+
+      @column()
+      declare username: string
+
+      @hasOne(() => Profile)
+      declare profile: HasOne<typeof Profile>
+    }
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+
+    const trx = await db.connection('primary').transaction()
+    const pool = db.manager.get('primary')!.connection!.pool!
+
+    const options = { client: trx }
+
+    await Promise.all([
+      user.related('profile').create({ displayName: 'create' }, options),
+      user.related('profile').firstOrCreate({}, { displayName: 'firstOrCreate' }, options),
+      user.related('profile').updateOrCreate({}, { displayName: 'updateOrCreate' }, options),
+      user.related('profile').save(new Profile().merge({ displayName: 'save' }), options),
+    ])
+
+    await trx.rollback()
+
+    assert.equal(pool.numUsed(), 0)
+    assert.equal(pool.numFree(), 1)
+  })
+})

@@ -9,7 +9,13 @@
 
 import { QueryClientContract } from '../../../types/database.js'
 import { OneOrMany } from '../../../types/querybuilder.js'
-import { ModelObject, LucidModel, LucidRow, ModelAssignOptions } from '../../../types/model.js'
+import {
+  ModelObject,
+  LucidModel,
+  LucidRow,
+  ModelAssignOptions,
+  ModelAdapterOptions,
+} from '../../../types/model.js'
 import { HasOneClientContract } from '../../../types/relations.js'
 
 import { HasOne } from './index.js'
@@ -69,13 +75,13 @@ export class HasOneQueryClient implements HasOneClientContract<HasOne, LucidMode
   /**
    * Save related model instance
    */
-  async save(related: LucidRow) {
-    await managedTransaction(this.parent.$trx || this.client, async (trx) => {
+  async save(related: LucidRow, options: ModelAdapterOptions = {}) {
+    await managedTransaction(options.client || this.parent.$trx || this.client, async (trx) => {
       this.parent.$trx = trx
       await this.parent.save()
 
       this.relation.hydrateForPersistance(this.parent, related)
-      related.$trx = trx
+      related.$setOptionsAndTrx({ ...options, client: trx })
       await related.save()
     })
   }
@@ -83,16 +89,16 @@ export class HasOneQueryClient implements HasOneClientContract<HasOne, LucidMode
   /**
    * Create instance of the related model
    */
-  async create(values: ModelObject, options?: ModelAssignOptions): Promise<LucidRow> {
+  async create(values: ModelObject, options: ModelAssignOptions = {}): Promise<LucidRow> {
     const parent = this.parent
 
-    return managedTransaction(this.parent.$trx || this.client, async (trx) => {
+    return managedTransaction(options.client || this.parent.$trx || this.client, async (trx) => {
       this.parent.$trx = trx
       await parent.save()
 
       const valuesToPersist = Object.assign({}, values)
       this.relation.hydrateForPersistance(this.parent, valuesToPersist)
-      return this.relation.relatedModel().create(valuesToPersist, { client: trx, ...options })
+      return this.relation.relatedModel().create(valuesToPersist, { ...options, client: trx })
     })
   }
 
@@ -102,9 +108,9 @@ export class HasOneQueryClient implements HasOneClientContract<HasOne, LucidMode
   async firstOrCreate(
     search: ModelObject,
     savePayload?: ModelObject,
-    options?: ModelAssignOptions
+    options: ModelAssignOptions = {}
   ): Promise<LucidRow> {
-    return managedTransaction(this.parent.$trx || this.client, async (trx) => {
+    return managedTransaction(options.client || this.parent.$trx || this.client, async (trx) => {
       this.parent.$trx = trx
       await this.parent.save()
 
@@ -113,7 +119,7 @@ export class HasOneQueryClient implements HasOneClientContract<HasOne, LucidMode
 
       return this.relation
         .relatedModel()
-        .firstOrCreate(valuesToPersist, savePayload, { client: trx, ...options })
+        .firstOrCreate(valuesToPersist, savePayload, { ...options, client: trx })
     })
   }
 
@@ -123,9 +129,9 @@ export class HasOneQueryClient implements HasOneClientContract<HasOne, LucidMode
   async updateOrCreate(
     search: ModelObject,
     updatePayload: ModelObject,
-    options?: ModelAssignOptions
+    options: ModelAssignOptions = {}
   ): Promise<LucidRow> {
-    return managedTransaction(this.parent.$trx || this.client, async (trx) => {
+    return managedTransaction(options.client || this.parent.$trx || this.client, async (trx) => {
       this.parent.$trx = trx
       await this.parent.save()
 
@@ -134,7 +140,7 @@ export class HasOneQueryClient implements HasOneClientContract<HasOne, LucidMode
 
       return this.relation
         .relatedModel()
-        .updateOrCreate(valuesToPersist, updatePayload, { client: trx, ...options })
+        .updateOrCreate(valuesToPersist, updatePayload, { ...options, client: trx })
     })
   }
 }
