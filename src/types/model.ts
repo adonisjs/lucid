@@ -978,9 +978,27 @@ export interface LucidModel {
   ): Promise<InstanceType<T>>
 
   /**
+   * Same as [[BaseModel.create]] but without invoking hooks
+   */
+  createQuietly<T extends LucidModel>(
+    this: T,
+    values: Partial<ModelAttributes<InstanceType<T>>>,
+    options?: ModelAssignOptions
+  ): Promise<InstanceType<T>>
+
+  /**
    * Create many of model instances
    */
   createMany<T extends LucidModel>(
+    this: T,
+    values: Partial<ModelAttributes<InstanceType<T>>>[],
+    options?: ModelAssignOptions
+  ): Promise<InstanceType<T>[]>
+
+  /**
+   * Same as [[BaseModel.createMany]] but without invoking hooks
+   */
+  createManyQuietly<T extends LucidModel>(
     this: T,
     values: Partial<ModelAttributes<InstanceType<T>>>[],
     options?: ModelAssignOptions
