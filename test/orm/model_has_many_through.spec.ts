@@ -8,7 +8,7 @@
  */
 
 import { test } from '@japa/runner'
-import type { HasManyThrough } from '../../src/types/relations.js'
+import type { ExtractModelRelations, HasManyThrough } from '../../src/types/relations.js'
 
 import { scope } from '../../src/orm/base_model/index.js'
 import { hasManyThrough, column } from '../../src/orm/decorators/index.js'
@@ -329,6 +329,34 @@ test.group('Model | Has Many Through | Options', (group) => {
 
     assert.equal(relation['throughForeignKey'], 'userUid')
     assert.equal(relation['throughForeignKeyColumnName'], 'user_uid')
+  })
+
+  test('allow optional relation', async ({ fs, expectTypeOf }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter)
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+
+      @column()
+      declare countryId: number
+    }
+
+    class Post extends BaseModel {}
+
+    class Country extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+
+      @hasManyThrough([() => Post, () => User])
+      declare posts?: HasManyThrough<typeof Post>
+    }
+
+    expectTypeOf<ExtractModelRelations<Country>>().toEqualTypeOf<'posts' | undefined>()
   })
 })
 

@@ -8,7 +8,7 @@
  */
 
 import { test } from '@japa/runner'
-import type { ManyToMany } from '../../src/types/relations.js'
+import type { ExtractModelRelations, ManyToMany } from '../../src/types/relations.js'
 
 import { scope } from '../../src/orm/base_model/index.js'
 import { column, manyToMany } from '../../src/orm/decorators/index.js'
@@ -337,6 +337,29 @@ test.group('Model | ManyToMany | Options', (group) => {
 
     assert.deepEqual(User.$getRelation('skills')!.model, User)
     assert.equal(User.$getRelation('skills')!['pivotRelatedForeignKey'], 'skill_uid')
+  })
+
+  test('allow optional relation', async ({ fs, expectTypeOf }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter)
+
+    class Skill extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+
+      @manyToMany(() => Skill)
+      declare skills?: ManyToMany<typeof Skill>
+    }
+
+    expectTypeOf<ExtractModelRelations<User>>().toEqualTypeOf<'skills' | undefined>()
   })
 })
 

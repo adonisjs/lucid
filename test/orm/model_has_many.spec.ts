@@ -9,7 +9,7 @@
 
 import { test } from '@japa/runner'
 import { DateTime } from 'luxon'
-import type { HasMany } from '../../src/types/relations.js'
+import type { ExtractModelRelations, HasMany } from '../../src/types/relations.js'
 
 import { scope } from '../../src/orm/base_model/index.js'
 import { column, hasMany } from '../../src/orm/decorators/index.js'
@@ -227,6 +227,29 @@ test.group('Model | HasMany | Options', (group) => {
 
     assert.deepEqual(User.$getRelation('posts')!.model, User)
     assert.equal(User.$getRelation('posts')!['foreignKey'], 'userUid')
+  })
+
+  test('allow optional relation', async ({ fs, expectTypeOf }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter)
+
+    class Post extends BaseModel {
+      @column()
+      declare userId: number
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+
+      @hasMany(() => Post)
+      declare posts?: HasMany<typeof Post>
+    }
+
+    expectTypeOf<ExtractModelRelations<User>>().toEqualTypeOf<'posts' | undefined>()
   })
 })
 

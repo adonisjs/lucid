@@ -8,7 +8,7 @@
  */
 
 import { test } from '@japa/runner'
-import type { HasOne, BelongsTo } from '../../src/types/relations.js'
+import type { HasOne, BelongsTo, ExtractModelRelations } from '../../src/types/relations.js'
 
 import { scope } from '../../src/orm/base_model/index.js'
 import { column, hasOne, belongsTo } from '../../src/orm/decorators/index.js'
@@ -230,6 +230,29 @@ test.group('Model | HasOne | Options', (group) => {
 
     assert.equal(User.$getRelation('profile')!['foreignKey'], 'userUid')
     assert.deepEqual(User.$getRelation('profile')!.model, User)
+  })
+
+  test('allow nullable or optional relation', async ({ fs, expectTypeOf }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter)
+
+    class Profile extends BaseModel {
+      @column()
+      declare userId: number
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+
+      @hasOne(() => Profile)
+      declare profile?: HasOne<typeof Profile> | null
+    }
+
+    expectTypeOf<ExtractModelRelations<User>>().toEqualTypeOf<'profile' | undefined>()
   })
 })
 

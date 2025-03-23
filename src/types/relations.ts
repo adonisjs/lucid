@@ -23,7 +23,7 @@ import {
   ModelAttributes,
   ModelObject,
   ModelQueryBuilderContract,
-  TypedDecorator,
+  OptionalTypedDecorator,
 } from './model.js'
 
 /**
@@ -36,7 +36,11 @@ import {
  * Extracts relationship attributes from the model
  */
 export type ExtractModelRelations<Model extends LucidRow> = {
-  [Key in keyof Model]: Model[Key] extends ModelRelations<LucidModel, LucidModel> ? Key : never
+  [Key in keyof Model]: Model[Key] extends undefined | null
+    ? never
+    : NonNullable<Model[Key]> extends ModelRelations<LucidModel, LucidModel>
+      ? Key
+      : never
 }[keyof Model]
 
 /**
@@ -117,7 +121,7 @@ export type ThroughRelationOptions<
 export type HasOneDecorator = <RelatedModel extends LucidModel>(
   model: () => RelatedModel,
   options?: RelationOptions<RelatedModel, LucidModel, HasOne<RelatedModel, LucidModel>>
-) => TypedDecorator<HasOne<RelatedModel> | null>
+) => OptionalTypedDecorator<HasOne<RelatedModel> | null>
 
 /**
  * Decorator signature to define has many relationship
@@ -125,7 +129,7 @@ export type HasOneDecorator = <RelatedModel extends LucidModel>(
 export type HasManyDecorator = <RelatedModel extends LucidModel>(
   model: () => RelatedModel,
   options?: RelationOptions<RelatedModel, LucidModel, HasOne<RelatedModel, LucidModel>>
-) => TypedDecorator<HasMany<RelatedModel>>
+) => OptionalTypedDecorator<HasMany<RelatedModel>>
 
 /**
  * Decorator signature to define belongs to relationship
@@ -133,7 +137,7 @@ export type HasManyDecorator = <RelatedModel extends LucidModel>(
 export type BelongsToDecorator = <RelatedModel extends LucidModel>(
   model: () => RelatedModel,
   options?: RelationOptions<RelatedModel, LucidModel, HasOne<RelatedModel, LucidModel>>
-) => TypedDecorator<BelongsTo<RelatedModel> | null>
+) => OptionalTypedDecorator<BelongsTo<RelatedModel> | null>
 
 /**
  * Decorator signature to define many to many relationship
@@ -141,7 +145,7 @@ export type BelongsToDecorator = <RelatedModel extends LucidModel>(
 export type ManyToManyDecorator = <RelatedModel extends LucidModel>(
   model: () => RelatedModel,
   column?: ManyToManyRelationOptions<ManyToMany<RelatedModel>>
-) => TypedDecorator<ManyToMany<RelatedModel>>
+) => OptionalTypedDecorator<ManyToMany<RelatedModel>>
 
 /**
  * Decorator signature to define has many through relationship
@@ -152,7 +156,7 @@ export type HasManyThroughDecorator = <RelatedModel extends LucidModel>(
     ThroughRelationOptions<RelatedModel, LucidModel, HasManyThrough<RelatedModel>>,
     'throughModel'
   >
-) => TypedDecorator<HasManyThrough<RelatedModel>>
+) => OptionalTypedDecorator<HasManyThrough<RelatedModel>>
 
 /**
  * ------------------------------------------------------
