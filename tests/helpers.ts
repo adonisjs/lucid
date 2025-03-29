@@ -29,15 +29,26 @@ pg.types.setTypeParser(pg.types.builtins.INT8, (value) => BigInt(value))
  * Returns the config for constructing a new connection based
  * upon the "process.env.DB" value.
  */
-export function getConnectionConfig<T extends 'pg' | 'sqlite' | 'mysql' | 'mssql' | 'legacy_mysql'>(
-  client: T | undefined = process.env.DB as T
-) {
+export function getConnectionConfig<
+  T extends 'pg' | 'sqlite' | 'libsql' | 'mysql' | 'mssql' | 'legacy_mysql',
+>(client: T | undefined = process.env.DB as T) {
   switch (client) {
     case 'sqlite':
       return clients.betterSqlite3({
         connection: {
           filename: join(SQLITE_BASE_PATH, 'better-sqlite-db.sqlite'),
         },
+        defaultSafeIntegers: true,
+        asyncStackTraces: true,
+        useNullAsDefault: true,
+        debug: !!process.env.DEBUG,
+      })
+    case 'libsql':
+      return clients.betterSqlite3({
+        connection: {
+          filename: join(SQLITE_BASE_PATH, 'better-sqlite-db.sqlite'),
+        },
+        defaultSafeIntegers: true,
         asyncStackTraces: true,
         useNullAsDefault: true,
         debug: !!process.env.DEBUG,
@@ -61,6 +72,7 @@ export function getConnectionConfig<T extends 'pg' | 'sqlite' | 'mysql' | 'mssql
           },
         },
         asyncStackTraces: true,
+        useNullAsDefault: true,
         debug: !!process.env.DEBUG,
       })
     case 'legacy_mysql':
@@ -82,6 +94,7 @@ export function getConnectionConfig<T extends 'pg' | 'sqlite' | 'mysql' | 'mssql
           },
         },
         asyncStackTraces: true,
+        useNullAsDefault: true,
         debug: !!process.env.DEBUG,
       })
     case 'pg':
@@ -94,6 +107,7 @@ export function getConnectionConfig<T extends 'pg' | 'sqlite' | 'mysql' | 'mssql
           password: process.env.PG_PASSWORD as string,
         },
         asyncStackTraces: true,
+        useNullAsDefault: true,
         debug: !!process.env.DEBUG,
       })
     case 'mssql':
@@ -114,6 +128,7 @@ export function getConnectionConfig<T extends 'pg' | 'sqlite' | 'mysql' | 'mssql
           },
         },
         asyncStackTraces: true,
+        useNullAsDefault: true,
         debug: !!process.env.DEBUG,
       })
     default:

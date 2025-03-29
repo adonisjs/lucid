@@ -58,4 +58,40 @@ test.group('PG Dialect | bigInt', () => {
       },
     ])
   })
+
+  test('return aggregates as bigInt', async ({ assert, cleanup }) => {
+    /**
+     * BigInts are supported via the pg.types object for Int8 data-type.
+     */
+    const config = getConnectionConfig('pg')
+    const connection = new Connection('primary', config)
+    const client = new QueryClient(connection, 'dual')
+    cleanup(() => connection.close())
+
+    await dbBigIntsSetup(connection)
+
+    const ids = await client
+      .insertQuery()
+      .table('departments')
+      .values([
+        {
+          name: 'IT',
+          budget: BigInt(100),
+        },
+        {
+          name: 'Sales',
+          budget: BigInt(400),
+        },
+      ])
+      .returning(['id'])
+      .on('query', (sql) => debug('%O', sql))
+      .exec()
+
+    assert.deepEqual(ids, [{ id: BigInt(1) }, { id: BigInt(2) }])
+    const query = client.selectFrom('departments')
+    query.knexQuery.count('* as total')
+
+    const departments = await query.exec()
+    console.log(departments)
+  })
 })

@@ -15,7 +15,7 @@ import { NOOP_EMITTER } from '../helpers.js'
 import { DatabaseEmitter } from '../types/connection.js'
 import type { DialectContract } from '../types/dialect.js'
 import type { Connection } from '../connection/connection.js'
-import { beginTransactionTracer, queryTracer } from '../tracing_channels.js'
+import { beginTransaction, dbQuery } from '../tracing_channels.js'
 import { SelectQueryBuilder } from '../query_builders/select_query_builder.js'
 import { InsertQueryBuilder } from '../query_builders/insert_query_builder.js'
 import { DeleteQueryBuilder } from '../query_builders/delete_query_builder.js'
@@ -33,6 +33,7 @@ import type {
   FromExpressionArguments,
 } from '../types/query.js'
 import { TransactionClient } from './transaction_client.js'
+import { FunctionExpressionBuilder } from '../expression_builders/function_expression_builder.js'
 
 /**
  * DatabaseClient can be used to create different query builders and execute
@@ -76,6 +77,11 @@ export abstract class DatabaseClient implements DatabaseClientContract {
    * transaction
    */
   isTransaction: boolean = false
+
+  /**
+   * Helpers functions to express parts of a SQL query
+   */
+  fn = new FunctionExpressionBuilder()
 
   /**
    * The name of the connection from which the client
@@ -140,7 +146,7 @@ export abstract class DatabaseClient implements DatabaseClientContract {
     const tracingData = { ...this.getContext(), isSavePoint: this.isTransaction }
     const event = this.createEvent('db:transaction:begin', this.debug)
 
-    return beginTransactionTracer.tracePromise(async () => {
+    return beginTransaction.tracePromise(async () => {
       const trx = await this.getWriteClient().transaction(options)
       debug('begin transaction')
       event.emit(tracingData)
@@ -528,7 +534,7 @@ export abstract class DatabaseClient implements DatabaseClientContract {
       const tracingData = { ...query.getContext() } as DbQueryEventData
       const event = this.createEvent('db:query', query.debugging)
 
-      const result = (await queryTracer.tracePromise(async () => {
+      const result = (await dbQuery.tracePromise(async () => {
         /**
          * This logic will mess up if one query instance is used to execute
          * multiple times, which in itself is incorrect usage of the

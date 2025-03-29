@@ -18,30 +18,30 @@ import type {
 /**
  * Traces SQL queries performed by the query clients.
  */
-export const queryTracer = diagnostics_channel.tracingChannel<'db-query', DbQueryEventData>(
-  'db-query'
+export const dbQuery = diagnostics_channel.tracingChannel<'lucid-db-query', DbQueryEventData>(
+  'lucid-db-query'
 )
 
 /**
  * Traces time taken to begin a transaction
  */
-export const beginTransactionTracer = diagnostics_channel.tracingChannel<
-  'db-transaction-begin',
+export const beginTransaction = diagnostics_channel.tracingChannel<
+  'lucid-begin-transaction',
   DbTransactionBeginEventData
->('db-transaction-begin')
+>('lucid-begin-transaction')
 
 /**
  * Traces time taken to commit a transaction
  */
-export const commitTransactionTracer = diagnostics_channel.tracingChannel<
-  'db-transaction-commit',
+export const commitTransaction = diagnostics_channel.tracingChannel<
+  'lucid-commit-transaction',
   DbTransactionCommitEventData
->('db-transaction-commit')
+>('lucid-commit-transaction')
 
 /**
  * Traces time taken to rollback a transaction
  */
-export const rollbackTransactionTracer = diagnostics_channel.tracingChannel<
-  'db-transaction-rollback',
+export const rollbackTransaction = diagnostics_channel.tracingChannel<
+  'lucid-rollback-transaction',
   DbTransactionRollbackEventData
->('db-transaction-rollback')
+>('lucid-rollback-transaction')

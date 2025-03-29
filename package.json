@@ -12,7 +12,9 @@
     "!build/tests"
   ],
   "exports": {
-    ".": "./build/index.js"
+    ".": "./build/index.js",
+    "./types": "./build/src/types/main.js",
+    "./query_builder": "./build/src/query_builders/main.js"
   },
   "scripts": {
     "pretest": "npm run lint && rm -rf coverage/tmp && mkdir -p coverage/tmp",
@@ -48,6 +50,7 @@
     "@japa/file-system": "^2.3.2",
     "@japa/runner": "^4.2.0",
     "@japa/snapshot": "^2.0.8",
+    "@libsql/sqlite3": "^0.3.1",
     "@release-it/conventional-changelog": "^10.0.0",
     "@swc/core": "1.10.7",
     "@types/better-sqlite3": "^7.6.12",
@@ -78,7 +81,37 @@
     "tarn": "3.0.2"
   },
   "peerDependencies": {
-    "@adonisjs/core": "^6.17.2"
+    "@adonisjs/core": "^6.17.2",
+    "tedious": "^18.6.1",
+    "better-sqlite3": "^11.9.1",
+    "mysql2": "^3.14.0",
+    "pg": "^8.14.1",
+    "@types/pg": "^8.11.11",
+    "@types/better-sqlite3": "^7.6.12",
+    "@libsql/sqlite3": "^0.3.1"
+  },
+  "peerDependenciesMeta": {
+    "tedious": {
+      "optional": true
+    },
+    "better-sqlite3": {
+      "optional": true
+    },
+    "mysql2": {
+      "optional": true
+    },
+    "pg": {
+      "optional": true
+    },
+    "@types/pg": {
+      "optional": true
+    },
+    "@types/better-sqlite3": {
+      "optional": true
+    },
+    "@libsql/sqlite3": {
+      "optional": true
+    }
   },
   "homepage": "https://github.com/adonisjs/lucid#readme",
   "repository": {

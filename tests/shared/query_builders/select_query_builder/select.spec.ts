@@ -204,4 +204,151 @@ test.group('Select query builder | select', () => {
     assert.deepEqual(sql.bindings, knexSQL.bindings)
     assert.equal(sql.method, knexSQL.method)
   })
+
+  test('select aggregates', ({ assert }) => {
+    const connection = new Connection('primary', getConnectionConfig())
+    const client = connection.getQueryClient()
+    const knex = connection.getReadClient()
+    const query = new SelectQueryBuilder(client)
+
+    const sql = query
+      .select([
+        'id',
+        client.fn.sum('balances').as('amount_left'),
+        { avg_age: client.fn.avg('age') },
+      ])
+      .from('users')
+      .toSQL()
+
+    const knexSQL = knex
+      .select('id')
+      .sum('balances as amount_left')
+      .avg({ avg_age: 'age' })
+      .from('users')
+      .toSQL()
+
+    debug('%O', sql)
+    assert.equal(sql.sql, knexSQL.sql)
+    assert.deepEqual(sql.bindings, knexSQL.bindings)
+    assert.equal(sql.method, knexSQL.method)
+  })
+
+  test('sum multiple columns as one', ({ assert }) => {
+    const connection = new Connection('primary', getConnectionConfig())
+    const client = connection.getQueryClient()
+    const knex = connection.getReadClient()
+    const query = new SelectQueryBuilder(client)
+
+    const sql = query
+      .select([client.fn.sum(['balances', 'spent']).as('gross_total')])
+      .from('users')
+      .toSQL()
+
+    const knexSQL = knex
+      .sum({ gross_total: ['balances', 'spent'] })
+      .from('users')
+      .toSQL()
+
+    debug('%O', sql)
+    assert.equal(sql.sql, knexSQL.sql)
+    assert.deepEqual(sql.bindings, knexSQL.bindings)
+    assert.equal(sql.method, knexSQL.method)
+  })
+
+  test('sum using a raw query', ({ assert }) => {
+    const connection = new Connection('primary', getConnectionConfig())
+    const client = connection.getQueryClient()
+    const knex = connection.getReadClient()
+    const query = new SelectQueryBuilder(client)
+
+    const sql = query
+      .select([
+        client.fn.sum(
+          client.raw('SELECT ?? from ?? WHERE ?? = ??', [
+            'amount',
+            'deposits',
+            'deposits.user_id',
+            'users.id',
+          ])
+        ),
+      ])
+      .from('users')
+      .toSQL()
+
+    const knexSQL = knex
+      .sum(
+        knex.raw('SELECT ?? from ?? WHERE ?? = ??', [
+          'amount',
+          'deposits',
+          'deposits.user_id',
+          'users.id',
+        ])
+      )
+      .from('users')
+      .toSQL()
+
+    debug('%O', sql)
+    assert.equal(sql.sql, knexSQL.sql)
+    assert.deepEqual(sql.bindings, knexSQL.bindings)
+    assert.equal(sql.method, knexSQL.method)
+  })
+
+  test('count columns', ({ assert }) => {
+    const connection = new Connection('primary', getConnectionConfig())
+    const client = connection.getQueryClient()
+    const knex = connection.getReadClient()
+    const query = new SelectQueryBuilder(client)
+
+    const sql = query
+      .select([client.fn.count('*').as('users_count')])
+      .from('users')
+      .toSQL()
+
+    const knexSQL = knex.count('* as users_count').from('users').toSQL()
+
+    debug('%O', sql)
+    assert.equal(sql.sql, knexSQL.sql)
+    assert.deepEqual(sql.bindings, knexSQL.bindings)
+    assert.equal(sql.method, knexSQL.method)
+  })
+
+  test('count columns as raw query', ({ assert }) => {
+    const connection = new Connection('primary', getConnectionConfig())
+    const client = connection.getQueryClient()
+    const knex = connection.getReadClient()
+    const query = new SelectQueryBuilder(client)
+
+    const sql = query
+      .select([
+        client.fn
+          .count(
+            client.raw('SELECT ?? from ?? WHERE ?? = ??', [
+              'amount',
+              'deposits',
+              'deposits.user_id',
+              'users.id',
+            ])
+          )
+          .as('user_deposits_counts'),
+      ])
+      .from('users')
+      .toSQL()
+
+    const knexSQL = knex
+      .count({
+        user_deposits_counts: knex.raw('SELECT ?? from ?? WHERE ?? = ??', [
+          'amount',
+          'deposits',
+          'deposits.user_id',
+          'users.id',
+        ]),
+      })
+      .from('users')
+      .toSQL()
+
+    debug('%O', sql)
+    assert.equal(sql.sql, knexSQL.sql)
+    assert.deepEqual(sql.bindings, knexSQL.bindings)
+    assert.equal(sql.method, knexSQL.method)
+  })
 })

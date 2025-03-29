@@ -64,4 +64,45 @@ test.group('MySQL Dialect | bigInt', () => {
         },
       ])
     })
+
+  test('{$self} return aggregates as bigInt')
+    .with(['mysql', 'legacy_mysql'] as const)
+    .run(async ({ assert, cleanup }, dialect) => {
+      /**
+       * BigInts are supported via the following connection config options.
+       *
+       * supportBigNumbers
+       * bigNumberStrings
+       * typeCast
+       */
+      const config = getConnectionConfig(dialect)
+      const connection = new Connection('primary', config)
+      const client = new QueryClient(connection, 'dual')
+      cleanup(() => connection.close())
+
+      await dbBigIntsSetup(connection)
+
+      await client
+        .insertQuery()
+        .table('departments')
+        .values([
+          {
+            name: 'IT',
+            budget: BigInt(100),
+          },
+          {
+            name: 'Sales',
+            budget: BigInt(400),
+          },
+        ])
+        .returning(['id'])
+        .on('query', (sql) => debug('%O', sql))
+        .exec()
+
+      const query = client.selectFrom('departments')
+      query.knexQuery.count('* as total')
+
+      const departments = await query.exec()
+      console.log(departments)
+    })
 })

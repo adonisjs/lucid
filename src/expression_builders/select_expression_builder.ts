@@ -10,6 +10,7 @@
 import type { Knex } from 'knex'
 import * as errors from '../errors.js'
 
+import { AGGREGATE_ARGUMENTS } from '../symbols.js'
 import { isPlainObject, transformValueExpressions } from '../helpers.js'
 import { SharedExpressionBuilder } from './shared_expression_builder.js'
 import type {
@@ -17,6 +18,8 @@ import type {
   DatabaseClientContract,
   FromExpressionArguments,
   OrderByExpressionArguments,
+  AggregateExpressionArguments,
+  QueryBuilderValueExpressions,
 } from '../types/query.js'
 
 export class SelectExpressionBuilder extends SharedExpressionBuilder {
@@ -25,28 +28,29 @@ export class SelectExpressionBuilder extends SharedExpressionBuilder {
   }
 
   /**
-   * Transforms the select expression to a knex compatible value.
+   * Transforms an aggregate expression to a value accepted by Knex
    */
-  #transformSelectExpression(column: SelectExpressions) {
+  #transformAggregateExpression(column: AggregateExpressionArguments[0]) {
+    if (Array.isArray(column)) {
+      return column.map((columnExpression) => {
+        if (typeof columnExpression === 'string') {
+          return this.transformColumnName(columnExpression)
+        }
+
+        const transformedValue = transformValueExpressions(columnExpression, this, this.knex)
+        if (!transformedValue) {
+          throw new errors.E_INVALID_SQL_EXPRESSION([columnExpression, 'select'])
+        }
+        return transformedValue
+      })
+    }
+
     /**
      * String based column names will be transformed using the
      * "transformColumnName" method
      */
     if (typeof column === 'string') {
       return this.transformColumnName(column)
-    }
-
-    /**
-     * Converting an object with aliases to knex compatible object
-     */
-    if (isPlainObject<Record<string, SelectExpressions>>(column)) {
-      return Object.keys(column).reduce<Record<string, string | Knex.QueryBuilder>>(
-        (result, key) => {
-          result[key] = this.#transformSelectExpression(column[key]) as string | Knex.QueryBuilder
-          return result
-        },
-        {}
-      )
     }
 
     /**
@@ -69,9 +73,20 @@ export class SelectExpressionBuilder extends SharedExpressionBuilder {
       return table
     }
 
-    if (Array.isArray(table)) {
-      return table.reduce<Record<string, string>>((result, tableIdentifier) => {
-        result[tableIdentifier] = tableIdentifier
+    /**
+     * An object with the key as the table alias and value is an expression
+     * to compute the FROM source
+     */
+    if (isPlainObject<Record<string, string | QueryBuilderValueExpressions>>(table)) {
+      return Object.keys(table).reduce<
+        Record<string, string | Knex.Raw | Knex.QueryBuilder | Knex.Ref<any, any>>
+      >((result, tableIdentifier) => {
+        const transformedValue = transformValueExpressions(table[tableIdentifier], this, this.knex)
+        if (!transformedValue) {
+          throw new errors.E_INVALID_SQL_EXPRESSION([tableIdentifier, 'from'])
+        }
+
+        result[tableIdentifier] = transformedValue
         return result
       }, {})
     }
@@ -149,14 +164,70 @@ export class SelectExpressionBuilder extends SharedExpressionBuilder {
   select(...columns: SelectExpressions[]): this
   select(columns: SelectExpressions[]): this
   select(...columns: SelectExpressions[] | [SelectExpressions[]]): this {
-    this.knexQuery.select(
-      columns.flatMap((column) => {
-        if (Array.isArray(column)) {
-          return column.map((c) => this.#transformSelectExpression(c))
-        }
-        return this.#transformSelectExpression(column)
-      })
-    )
+    /**
+     * We will always have a flat array of select expressions.
+     */
+    const columnsCollection = Array.isArray(columns[0])
+      ? columns[0]
+      : (columns as SelectExpressions[])
+
+    columnsCollection.forEach((column) => {
+      if (typeof column === 'string') {
+        this.knexQuery.select(this.transformColumnName(column))
+        return
+      }
+
+      /**
+       * The column is an aggregage expression
+       */
+      if (AGGREGATE_ARGUMENTS in column) {
+        const { method, expression, alias } = column[AGGREGATE_ARGUMENTS]
+        const knexExpression = this.#transformAggregateExpression(expression[0])
+
+        // @ts-expect-error
+        this.knexQuery[method](alias ? { [alias]: knexExpression } : knexExpression)
+        return
+      }
+
+      if (isPlainObject<Record<string, SelectExpressions>>(column)) {
+        Object.keys(column).forEach((key) => {
+          const value = column[key]
+          if (typeof value === 'string') {
+            this.knexQuery.select({
+              [key]: this.transformColumnName(value),
+            })
+            return
+          }
+
+          if (AGGREGATE_ARGUMENTS in value) {
+            const { method, expression } = value[AGGREGATE_ARGUMENTS]
+            // @ts-expect-error
+            this.knexQuery[method]({
+              [key]: this.#transformAggregateExpression(expression[0]),
+            })
+            return
+          }
+
+          const transformedValue = transformValueExpressions(value, this, this.knex)
+          if (!transformedValue) {
+            throw new errors.E_INVALID_SQL_EXPRESSION([column, 'select'])
+          }
+
+          this.knexQuery.select({
+            [key]: transformedValue,
+          })
+        })
+        return
+      }
+
+      const transformedValue = transformValueExpressions(column, this, this.knex)
+      if (!transformedValue) {
+        throw new errors.E_INVALID_SQL_EXPRESSION([column, 'select'])
+      }
+
+      this.knexQuery.select(transformedValue)
+    })
+
     return this
   }
 
@@ -179,6 +250,7 @@ export class SelectExpressionBuilder extends SharedExpressionBuilder {
    * - Or a callback that receives a new instance of the {@link SelectExpressionBuilder}
    */
   from(...expression: FromExpressionArguments): this {
+    // @ts-expect-error
     this.knexQuery.from(this.#transformFromExpression(expression[0]))
     return this
   }

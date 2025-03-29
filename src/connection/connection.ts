@@ -14,9 +14,11 @@ import { RuntimeException } from '@poppinss/exception'
 
 import { debug } from '../debug.js'
 import * as errors from '../errors.js'
+import { NOOP_EMITTER } from '../helpers.js'
 import { createKnexLogger } from './logger.js'
 import { dialects } from '../dialects/main.js'
 import { QueryClient } from '../database_clients/query_client.js'
+
 import type { DialectContract } from '../types/dialect.js'
 import type {
   ConnectionConfig,
@@ -24,7 +26,6 @@ import type {
   DatabaseEmitter,
   SupportedDialectNames,
 } from '../types/connection.js'
-import { NOOP_EMITTER } from '../helpers.js'
 
 /**
  * A connection represents a database connection created by instantiating
@@ -135,6 +136,34 @@ export class Connection {
   }
 
   /**
+   * Patches the knex client's "acquireRawConnection" method to add
+   * support for BigInts when using the better-sqlite3 client and
+   * "defaultSafeIntegers" is enabled.
+   */
+  #patchSqliteConnectionToSupportBigInts(client: Knex) {
+    /**
+     * Return early when defaultSafeIntegers are disabled
+     */
+    if (
+      this.config.clientName !== 'better-sqlite3' ||
+      'defaultSafeIntegers' in this.config === false ||
+      !this.config.defaultSafeIntegers
+    ) {
+      return
+    }
+
+    const originalAcquireRawConnection = client.client.acquireRawConnection.bind(client.client)
+    client.client.acquireRawConnection = function () {
+      return originalAcquireRawConnection(...arguments).then((db: any) => {
+        if ('defaultSafeIntegers' in db) {
+          db.defaultSafeIntegers(true)
+        }
+        return db
+      })
+    }
+  }
+
+  /**
    * Creates the fresh state for the connection
    */
   #createFreshState() {
@@ -211,6 +240,7 @@ export class Connection {
 
     debug('%s: creating write connection %O', this.identifier, writeConfig)
     this.client = knex.knex({ log: this.#knexLogger, ...writeConfig })
+    this.#patchSqliteConnectionToSupportBigInts(this.client)
     patchKnex(this.client, (originalConfig) => originalConfig.connection as Knex.ConnectionConfig)
   }
 
@@ -250,6 +280,7 @@ export class Connection {
 
     debug('%s: creating read connection %O', this.identifier, initialConfig)
     this.readClient = knex({ log: this.#knexLogger, ...initialConfig })
+    this.#patchSqliteConnectionToSupportBigInts(this.readClient)
 
     /**
      * Creating the final config array of read replicas.
@@ -387,7 +418,9 @@ export class Connection {
    * @default: 'dual'
    */
   getQueryClient(mode: 'dual' | 'write' | 'read' = 'dual') {
-    return new QueryClient(this, mode, this.#emitter)
+    const client = new QueryClient(this, mode, this.#emitter)
+    client.debug = this.config.debug ?? false
+    return client
   }
 
   /**

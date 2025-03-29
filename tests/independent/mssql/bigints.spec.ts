@@ -64,4 +64,45 @@ test.group('MSSQL Dialect | bigInt', () => {
       },
     ])
   })
+
+  test('return aggregates as bigInt', async ({ assert, cleanup }) => {
+    /**
+     * MSSQL client does not allow inserting values as BigInt, unless the
+     * "options.mapBinding" method is defined to self convert values to
+     * strings.
+     *
+     * Also, the MSSQL client does not allow casting datatypes to JavaScript
+     * types. So with MSSQL, bigInts will be string values
+     */
+    const config = getConnectionConfig('mssql')
+    const connection = new Connection('primary', config)
+    const client = new QueryClient(connection, 'dual')
+    cleanup(() => connection.close())
+
+    await dbBigIntsSetup(connection)
+
+    const ids = await client
+      .insertQuery()
+      .table('departments')
+      .values([
+        {
+          name: 'IT',
+          budget: BigInt(100),
+        },
+        {
+          name: 'Sales',
+          budget: BigInt(400),
+        },
+      ])
+      .returning(['id'])
+      .on('query', (sql) => debug('%O', sql))
+      .exec()
+
+    assert.deepEqual(ids, [{ id: '1' }, { id: '2' }])
+    const query = client.selectFrom('departments')
+    query.knexQuery.count('* as total')
+
+    const departments = await query.exec()
+    console.log(departments)
+  })
 })

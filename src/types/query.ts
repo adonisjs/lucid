@@ -9,6 +9,8 @@
 
 import type { Knex } from 'knex'
 import type { DialectContract } from './dialect.js'
+import type { AGGREGATE_ARGUMENTS } from '../symbols.js'
+import type { TransactionClient } from '../database_clients/transaction_client.js'
 import type { UpdateQueryBuilder } from '../query_builders/update_query_builder.js'
 import type { DeleteQueryBuilder } from '../query_builders/delete_query_builder.js'
 import type { SelectQueryBuilder } from '../query_builders/select_query_builder.js'
@@ -18,7 +20,6 @@ import type { RefExpressionBuilder } from '../expression_builders/ref_expression
 import type { JoinExpressionBuilder } from '../expression_builders/join_expression_builder.js'
 import type { WithExpressionBuilder } from '../expression_builders/with_expression_builder.js'
 import type { SelectExpressionBuilder } from '../expression_builders/select_expression_builder.js'
-import { TransactionClient } from '../database_clients/transaction_client.js'
 
 /**
  * Same as knex. Need to redefine, as knex doesn't export this
@@ -43,6 +44,19 @@ export type WhereOperator = '=' | '!=' | '<>' | '>' | '>=' | '<' | '<=' | '<=>' 
 export type KnexStrictValues = string | number | boolean | Date | Buffer
 
 /**
+ * Aggregate methods supported by Knex
+ */
+export type AggregateMethods =
+  | 'sum'
+  | 'sumDistinct'
+  | 'avg'
+  | 'avgDistinct'
+  | 'max'
+  | 'min'
+  | 'count'
+  | 'countDistinct'
+
+/**
  * Allowed values for the bindings for a raw query
  */
 export type RawQueryBindings =
@@ -59,18 +73,31 @@ export type QueryBuilderValueExpressions =
   | ((query: SelectExpressionBuilder) => void)
 
 /**
+ * Representation of an aggregate expression accepted by the
+ * select method
+ */
+export type AggregateExpression = {
+  [AGGREGATE_ARGUMENTS]: {
+    method: AggregateMethods
+    expression: AggregateExpressionArguments
+    alias: undefined | string
+  }
+}
+
+/**
  * Expressions allowed when selecting columns from the database
  */
 export type SelectExpressions =
   | string
   | QueryBuilderValueExpressions
-  | Record<string, string | QueryBuilderValueExpressions>
+  | Record<string, string | QueryBuilderValueExpressions | AggregateExpression>
+  | AggregateExpression
 
 /**
  * Expressions allowed when selecting tables from the database
  */
 export type FromExpressionArguments = [
-  string | string[] | Record<string, string> | QueryBuilderValueExpressions,
+  string | Record<string, string | QueryBuilderValueExpressions> | QueryBuilderValueExpressions,
 ]
 
 /**
@@ -269,6 +296,13 @@ export type OrderByExpressionArguments =
         nulls?: 'first' | 'last'
       }[],
     ]
+
+/**
+ * Expressions allowed when defining aggregates
+ */
+export type AggregateExpressionArguments = [
+  string | string[] | RawExpressionBuilder | RawExpressionBuilder[],
+]
 
 /**
  * Data emitted by the "db:query" event

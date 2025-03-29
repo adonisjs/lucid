@@ -153,7 +153,25 @@ export type PGConfigOptions = SharedConfigOptions & {
   dialectName: 'postgres'
   clientName: 'pg'
   client: 'pg'
+
+  /**
+   * Specify connection settings
+   */
   connection: PGConnectionOptions
+
+  /**
+   * Specify separate read and write connections
+   */
+  replicas?: {
+    read: {
+      connection: PGConnectionOptions[]
+      pool?: SharedConfigOptions['pool']
+    }
+    write: {
+      connection: PGConnectionOptions
+      pool?: SharedConfigOptions['pool']
+    }
+  }
 
   /**
    * Define the search path for the database queries. PostgreSQL natively
@@ -179,7 +197,25 @@ export type MySQL2ConfigOptions = SharedConfigOptions & {
   dialectName: 'mysql'
   clientName: 'mysql2'
   client: 'mysql2'
+
+  /**
+   * Specify connection settings
+   */
   connection: MySQL2ConnectionOptions
+
+  /**
+   * Specify separate read and write connections
+   */
+  replicas?: {
+    read: {
+      connection: MySQL2ConnectionOptions[]
+      pool?: SharedConfigOptions['pool']
+    }
+    write: {
+      connection: MySQL2ConnectionOptions
+      pool?: SharedConfigOptions['pool']
+    }
+  }
 }
 
 /**
@@ -189,9 +225,22 @@ export type BetterSQLiteConfigOptions = SharedConfigOptions & {
   dialectName: 'sqlite3'
   clientName: 'better-sqlite3'
   client: 'better-sqlite3'
+  defaultSafeIntegers?: boolean
   connection: {
     filename: string
     options?: BetterSQLiteConnectionOptions
+  }
+}
+
+/**
+ * Configuration options accepted by the "@libsql/sqlite3" client
+ */
+export type LibSQLConfigOptions = SharedConfigOptions & {
+  dialectName: 'libsql'
+  clientName: 'libsql-sqlite3'
+  client: 'libsql-sqlite3'
+  connection: {
+    filename: string
   }
 }
 
@@ -202,11 +251,34 @@ export type TediousConfigOptions = SharedConfigOptions & {
   dialectName: 'mssql'
   clientName: 'mssql'
   client: 'mssql'
+
+  /**
+   * Specify connection settings
+   */
   connection: Knex.MsSqlConnectionConfig & {
     /**
      * User is supported by the Knex runtime code
      */
     user: string
+  }
+
+  /**
+   * Specify separate read and write connections
+   */
+  replicas?: {
+    read: {
+      connection: Knex.MsSqlConnectionConfig &
+        {
+          user: string
+        }[]
+      pool?: SharedConfigOptions['pool']
+    }
+    write: {
+      connection: Knex.MsSqlConnectionConfig & {
+        user: string
+      }
+      pool?: SharedConfigOptions['pool']
+    }
   }
 }
 

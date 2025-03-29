@@ -20,6 +20,55 @@ test.group('SQLite Dialect | bigInt', (group) => {
 
   test('insert and return bigInt values as numbers', async ({ assert, cleanup }) => {
     /**
+     * Supported by calling "defaultSafeIntegers" method on the client connection.
+     * We invoke this method by patching the knex "acquireRawConnection" method.
+     *
+     * https://github.com/WiseLibs/better-sqlite3/blob/master/docs/integer.md
+     * https://github.com/knex/knex/issues/5050
+     */
+    const config = getConnectionConfig('sqlite')
+    const connection = new Connection('primary', config)
+    const client = new QueryClient(connection, 'dual')
+    cleanup(() => connection.close())
+
+    await dbBigIntsSetup(connection)
+
+    const ids = await client
+      .insertQuery()
+      .table('departments')
+      .values([
+        {
+          name: 'IT',
+          budget: BigInt(100),
+        },
+        {
+          name: 'Sales',
+          budget: BigInt(400),
+        },
+      ])
+      .returning(['id'])
+      .on('query', (sql) => debug('%O', sql))
+      .exec()
+
+    assert.deepEqual(ids, [{ id: BigInt(1) }, { id: BigInt(2) }])
+    const departments = await client.selectFrom('departments').exec()
+
+    assert.deepEqual(departments, [
+      {
+        id: BigInt(1),
+        name: 'IT',
+        budget: BigInt(100),
+      },
+      {
+        id: BigInt(2),
+        name: 'Sales',
+        budget: BigInt(400),
+      },
+    ])
+  })
+
+  test('return aggregates as bigInt', async ({ assert, cleanup }) => {
+    /**
      * Not supported by us right now, even though SQLite and better-sqlite3
      * both support it. But for that we will have to patch the "acquireConnection"
      * method in Knex.
@@ -51,20 +100,11 @@ test.group('SQLite Dialect | bigInt', (group) => {
       .on('query', (sql) => debug('%O', sql))
       .exec()
 
-    assert.deepEqual(ids, [{ id: 1 }, { id: 2 }])
-    const departments = await client.selectFrom('departments').exec()
+    assert.deepEqual(ids, [{ id: BigInt(1) }, { id: BigInt(2) }])
+    const query = client.selectFrom('departments')
+    query.knexQuery.count('* as total')
 
-    assert.deepEqual(departments, [
-      {
-        id: 1,
-        name: 'IT',
-        budget: 100,
-      },
-      {
-        id: 2,
-        name: 'Sales',
-        budget: 400,
-      },
-    ])
+    const departments = await query.exec()
+    console.log(departments)
   })
 })

@@ -8,3 +8,4 @@
  */
 
 export const TO_KNEX = Symbol.for('toKnex')
+export const AGGREGATE_ARGUMENTS = Symbol.for('aggregateArguments')

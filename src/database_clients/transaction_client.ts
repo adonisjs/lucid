@@ -13,7 +13,7 @@ import { DatabaseClient } from './abstract_client.js'
 import type { IsolationLevels } from '../types/query.js'
 import type { Connection } from '../connection/connection.js'
 import type { DatabaseEmitter } from '../types/connection.js'
-import { commitTransactionTracer, rollbackTransactionTracer } from '../tracing_channels.js'
+import { commitTransaction, rollbackTransaction } from '../tracing_channels.js'
 import { debug } from '../debug.js'
 
 export class TransactionClient extends DatabaseClient {
@@ -81,7 +81,7 @@ export class TransactionClient extends DatabaseClient {
     const tracingData = { ...this.getContext() }
     const event = this.createEvent('db:transaction:commit', this.debug)
 
-    return commitTransactionTracer.tracePromise(async () => {
+    return commitTransaction.tracePromise(async () => {
       debug('committing transaction')
       await this.knexTransaction.commit()
       tracingData.duration = process.hrtime(this.#startedAt)
@@ -104,7 +104,7 @@ export class TransactionClient extends DatabaseClient {
     const tracingData = { ...this.getContext() }
     const event = this.createEvent('db:transaction:rollback', this.debug)
 
-    return rollbackTransactionTracer.tracePromise(async () => {
+    return rollbackTransaction.tracePromise(async () => {
       debug('rolling back transaction')
       await this.knexTransaction.rollback()
       tracingData.duration = process.hrtime(this.#startedAt)
