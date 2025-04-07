@@ -8,7 +8,7 @@
  */
 
 import { test } from '@japa/runner'
-import type { BelongsTo } from '../../src/types/relations.js'
+import type { BelongsTo, ExtractModelRelations } from '../../src/types/relations.js'
 import { scope } from '../../src/orm/base_model/index.js'
 
 import { column, belongsTo } from '../../src/orm/decorators/index.js'
@@ -223,6 +223,26 @@ test.group('Model | BelongsTo | Options', (group) => {
     assert.deepEqual(Profile.$getRelation('user')!.relatedModel(), User)
     assert.deepEqual(Profile.$getRelation('user')!.model, Profile)
     assert.equal(Profile.$getRelation('user')!['foreignKey'], 'userUid')
+  })
+
+  test('allow nullable or optional relation', async ({ fs, expectTypeOf }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter)
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+    }
+
+    class Profile extends BaseModel {
+      @belongsTo(() => User)
+      declare user?: BelongsTo<typeof User> | null
+    }
+
+    expectTypeOf<ExtractModelRelations<Profile>>().toEqualTypeOf<'user' | undefined>()
   })
 })
 

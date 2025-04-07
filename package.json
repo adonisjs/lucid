@@ -65,6 +65,7 @@
     "@adonisjs/prettier-config": "^1.4.4",
     "@adonisjs/tsconfig": "^1.4.0",
     "@japa/assert": "^4.0.1",
+    "@japa/expect-type": "^2.0.3",
     "@japa/file-system": "^2.3.2",
     "@japa/runner": "^4.2.0",
     "@libsql/sqlite3": "^0.3.1",
