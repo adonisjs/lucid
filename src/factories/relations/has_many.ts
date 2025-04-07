@@ -45,7 +45,7 @@ export class HasMany extends BaseRelation implements FactoryRelationContract {
       })
       .makeStubbedMany(count || 1)
 
-    parent.$setRelated(this.relation.relationName, instances)
+    parent.$pushRelated(this.relation.relationName, instances)
   }
 
   /**
@@ -63,6 +63,6 @@ export class HasMany extends BaseRelation implements FactoryRelationContract {
       })
       .createMany(count || 1)
 
-    parent.$setRelated(this.relation.relationName, instance)
+    parent.$pushRelated(this.relation.relationName, instance)
   }
 }

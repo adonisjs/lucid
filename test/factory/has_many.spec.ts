@@ -478,6 +478,85 @@ test.group('Factory | HasMany | create', (group) => {
     assert.equal(user.posts[1].title, 'Lucid 101')
   })
 
+  test('create many relationship with different states', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter)
+
+    class Post extends BaseModel {
+      @column()
+      declare userId: number
+
+      @column()
+      declare tenantId: number
+
+      @column()
+      declare title: string
+    }
+    Post.boot()
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+
+      @column()
+      declare username: string
+
+      @column()
+      points: number = 0
+
+      @hasMany(() => Post)
+      declare posts: HasMany<typeof Post>
+    }
+
+    const postFactory = factoryManager
+      .define(Post, () => {
+        return {
+          title: 'Adonis 101',
+        }
+      })
+      .build()
+
+    const factory = factoryManager
+      .define(User, () => {
+        return {}
+      })
+      .relation('posts', () => postFactory)
+      .build()
+
+    const user = await factory
+      .with('posts', 2, (related) => related.merge({ title: 'Lucid 101' }))
+      .with('posts', 2, (related) => related.merge({ title: 'Lucid 101', tenantId: 1 }))
+      .create()
+
+    assert.isTrue(user.$isPersisted)
+    assert.lengthOf(user.posts, 4)
+
+    assert.instanceOf(user.posts[0], Post)
+    assert.isTrue(user.posts[0].$isPersisted)
+    assert.equal(user.posts[0].userId, user.id)
+    assert.equal(user.posts[0].title, 'Lucid 101')
+
+    assert.instanceOf(user.posts[1], Post)
+    assert.isTrue(user.posts[1].$isPersisted)
+    assert.equal(user.posts[1].userId, user.id)
+    assert.equal(user.posts[1].title, 'Lucid 101')
+
+    assert.instanceOf(user.posts[2], Post)
+    assert.isTrue(user.posts[2].$isPersisted)
+    assert.equal(user.posts[2].userId, user.id)
+    assert.equal(user.posts[2].tenantId, 1)
+    assert.equal(user.posts[2].title, 'Lucid 101')
+
+    assert.instanceOf(user.posts[3], Post)
+    assert.isTrue(user.posts[3].$isPersisted)
+    assert.equal(user.posts[3].userId, user.id)
+    assert.equal(user.posts[3].tenantId, 1)
+    assert.equal(user.posts[3].title, 'Lucid 101')
+  })
+
   test('create relationship with custom foreign key', async ({ fs, assert }) => {
     const app = new AppFactory().create(fs.baseUrl, () => {})
     await app.init()
