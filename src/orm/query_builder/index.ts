@@ -168,29 +168,15 @@ export class ModelQueryBuilder
     }
   }
 
+  private isWriteQuery() {
+    return ['update', 'del', 'insert'].includes((this.knexQuery as any)['_method'])
+  }
+
   /**
-   * Executes the current query
+   * Convert fetched results to an array of model instances
    */
-  private async execQuery() {
-    this.applyWhere()
-
-    const isWriteQuery = ['update', 'del', 'insert'].includes((this.knexQuery as any)['_method'])
-    const queryData = Object.assign(this.getQueryData(), this.customReporterData)
-    const rows = await new QueryRunner(this.client, this.debugQueries, queryData).run(
-      this.knexQuery
-    )
-
-    /**
-     * Return the rows as it is when query is a write query
-     */
-    if (isWriteQuery || !this.wrapResultsToModelInstances) {
-      return Array.isArray(rows) ? rows : [rows]
-    }
-
-    /**
-     * Convert fetched results to an array of model instances
-     */
-    const modelInstances = rows.reduce((models: LucidRow[], row: ModelObject) => {
+  private convertRowsToModelInstances(rows: any): LucidRow[] {
+    return rows.reduce((models: LucidRow[], row: ModelObject) => {
       if (isObject(row)) {
         const modelInstance = this.model.$createFromAdapterResult(
           row,
@@ -209,14 +195,39 @@ export class ModelQueryBuilder
       }
       return models
     }, [])
+  }
 
-    /**
-     * Preload for model instances
-     */
-    await this.preloader
+  /**
+   * Preload for model instances
+   */
+  private async preloadFromModels(models: LucidRow[]): Promise<void> {
+    return this.preloader
       .sideload(this.sideloaded)
       .debug(this.debugQueries)
-      .processAllForMany(modelInstances, this.client)
+      .processAllForMany(models, this.client)
+  }
+
+  /**
+   * Executes the current query
+   */
+  private async execQuery() {
+    this.applyWhere()
+
+    const queryData = Object.assign(this.getQueryData(), this.customReporterData)
+    const rows = await new QueryRunner(this.client, this.debugQueries, queryData).run(
+      this.knexQuery
+    )
+
+    /**
+     * Return the rows as it is when query is a write query
+     */
+    if (this.isWriteQuery() || !this.wrapResultsToModelInstances) {
+      return Array.isArray(rows) ? rows : [rows]
+    }
+
+    const modelInstances = this.convertRowsToModelInstances(rows)
+
+    await this.preloadFromModels(modelInstances)
 
     return modelInstances
   }

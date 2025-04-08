@@ -24,6 +24,7 @@
     "./commands": "./build/commands/main.js",
     "./factories": "./build/src/factories/main.js",
     "./database": "./build/src/database/main.js",
+    "./query_runner": "./build/src/query_runner/main.js",
     "./orm": "./build/src/orm/main.js",
     "./orm/relations": "./build/src/orm/relations/main.js",
     "./seeders": "./build/src/seeders/main.js",
