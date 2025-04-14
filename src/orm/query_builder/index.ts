@@ -74,11 +74,6 @@ export class ModelQueryBuilder
   implements ModelQueryBuilderContract<LucidModel, LucidRow>
 {
   /**
-   * Side-loaded attributes that will be passed to the model instances
-   */
-  protected sideloaded: ModelObject = {}
-
-  /**
    * A copy of defined preloads on the model instance
    */
   protected preloader: PreloaderContract<LucidRow>
@@ -133,6 +128,11 @@ export class ModelQueryBuilder
    * Whether query is a sub-query for `.where` callback
    */
   isChildQuery = false
+
+  /**
+   * Side-loaded attributes that will be passed to the model instances
+   */
+  sideloaded: ModelObject = {}
 
   constructor(
     builder: Knex.QueryBuilder,
@@ -448,8 +448,13 @@ export class ModelQueryBuilder
   /**
    * Set side-loaded properties to be passed to the model instance
    */
-  sideload(value: ModelObject) {
-    this.sideloaded = value
+  sideload(value: ModelObject, merge = false) {
+    if (merge) {
+      Object.assign(this.sideloaded, value)
+    } else {
+      this.sideloaded = value
+    }
+
     return this
   }
 
