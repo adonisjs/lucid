@@ -138,7 +138,9 @@ export default abstract class MigrationsBase extends BaseCommand {
         this.logger.log(this.colors.red(message))
 
         const failedFile = files.find(({ status }) => status === 'error')
-        if (failedFile) this.logger.fatal(failedFile.file.name)
+        if (failedFile) {
+          this.logger.fatal(failedFile.file.name)
+        }
 
         this.exitCode = 1
         break
