@@ -8,10 +8,10 @@
  */
 
 import { BaseCommand, flags } from '@adonisjs/core/ace'
-import { stubsRoot } from '../stubs/main.js'
 import { CommandOptions } from '@adonisjs/core/types/ace'
 import string from '@poppinss/utils/string'
 import { Knex } from 'knex'
+import { stubsRoot } from '../stubs/main.js'
 
 declare module '@adonisjs/lucid/database' {
   interface DatabaseQueryBuilder {
@@ -114,22 +114,23 @@ export default class DbPull extends BaseCommand {
         return
       }
 
-      this.logger.info(`Found ${tables.length} tables in the database`)
+      // Remove adonis_schema and adonis_schema_versions from the tables
+      this.logger.info(`Found ${tables.length - 2} tables in the database`)
 
-      for (const table of tables) {
-        if (this.ignoreTables.includes(table)) continue
+      tables
+        .filter((table) => !this.ignoreTables.includes(table))
+        .forEach(async (table) => {
+          try {
+            this.logger.info(`Processing table: ${table}`)
 
-        try {
-          this.logger.info(`Processing table: ${table}`)
+            const columns = await connection.columnsInfo(table)
 
-          const columns = await connection.columnsInfo(table)
-
-          await this.generateModel(table, columns)
-          this.logger.success(`Generated model for table: ${table}`)
-        } catch (error: any) {
-          this.logger.error(`Failed to process table ${table}: ${error.message}`)
-        }
-      }
+            await this.generateModel(table, columns)
+            this.logger.success(`Generated model for table: ${table}`)
+          } catch (error: any) {
+            this.logger.error(`Failed to process table ${table}: ${error.message}`)
+          }
+        })
     } catch (error: any) {
       this.logger.error(`Database error: ${error.message}`)
     }
