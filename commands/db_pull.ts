@@ -117,20 +117,20 @@ export default class DbPull extends BaseCommand {
       // Remove adonis_schema and adonis_schema_versions from the tables
       this.logger.info(`Found ${tables.length - 2} tables in the database`)
 
-      tables
-        .filter((table) => !this.ignoreTables.includes(table))
-        .forEach(async (table) => {
-          try {
-            this.logger.info(`Processing table: ${table}`)
+      for (const table of tables) {
+        if (this.ignoreTables.includes(table)) continue
 
-            const columns = await connection.columnsInfo(table)
+        try {
+          this.logger.info(`Processing table: ${table}`)
 
-            await this.generateModel(table, columns)
-            this.logger.success(`Generated model for table: ${table}`)
-          } catch (error: any) {
-            this.logger.error(`Failed to process table ${table}: ${error.message}`)
-          }
-        })
+          const columns = await connection.columnsInfo(table)
+
+          await this.generateModel(table, columns)
+          this.logger.success(`Generated model for table: ${table}`)
+        } catch (error: any) {
+          this.logger.error(`Failed to process table ${table}: ${error.message}`)
+        }
+      }
     } catch (error: any) {
       this.logger.error(`Database error: ${error.message}`)
     }
