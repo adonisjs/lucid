@@ -402,12 +402,17 @@ export interface ModelQueryBuilderContract<Model extends LucidModel, Result = In
    */
   clone<ClonedResult = Result>(): ModelQueryBuilderContract<Model, ClonedResult>
 
+  sideloaded: InstanceType<Model>['$sideloaded']
+
   /**
    * A custom set of sideloaded properties defined on the query
    * builder, this will be passed to the model instance created
    * by the query builder
    */
-  sideload(value: ModelObject): this
+  sideload<Sideloaded extends InstanceType<Model>['$sideloaded'], Merge extends boolean = false>(
+    value: Merge extends true ? Partial<Sideloaded> : Sideloaded,
+    merge?: Merge
+  ): this
 
   /**
    * Execute and get first result
