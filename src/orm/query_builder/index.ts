@@ -168,14 +168,14 @@ export class ModelQueryBuilder
     }
   }
 
-  private isWriteQuery() {
+  public isWriteQuery() {
     return ['update', 'del', 'insert'].includes((this.knexQuery as any)['_method'])
   }
 
   /**
    * Convert fetched results to an array of model instances
    */
-  private convertRowsToModelInstances(rows: any): LucidRow[] {
+  public convertRowsToModelInstances(rows: any): LucidRow[] {
     return rows.reduce((models: LucidRow[], row: ModelObject) => {
       if (isObject(row)) {
         const modelInstance = this.model.$createFromAdapterResult(
@@ -200,7 +200,7 @@ export class ModelQueryBuilder
   /**
    * Preload for model instances
    */
-  private async preloadFromModels(models: LucidRow[]): Promise<void> {
+  public async preloadFromModels(models: LucidRow[]): Promise<void> {
     return this.preloader
       .sideload(this.sideloaded)
       .debug(this.debugQueries)
