@@ -3003,7 +3003,7 @@ test.group('BaseModel | fill/merge', (group) => {
 
     assert.deepEqual(user.$attributes, { age: 22 })
     user.merge({ username: 'virk', age: undefined })
-    assert.deepEqual(user.$attributes, { username: 'virk', age: undefined })
+    assert.deepEqual(user.$attributes, { username: 'virk', age: 22 })
   })
 
   test('invoke setter when using fill', async ({ fs, assert }) => {

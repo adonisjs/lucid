@@ -1776,6 +1776,10 @@ class BaseModelImpl implements LucidRow {
       Object.keys(values).forEach((key) => {
         const value = values[key]
 
+        if (value === undefined) {
+          return
+        }
+
         /**
          * Set as column
          */
