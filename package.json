@@ -22,6 +22,7 @@
     ".": "./build/index.js",
     "./schema": "./build/src/schema/main.js",
     "./commands": "./build/commands/main.js",
+    "./commands/*": "./build/commands/*.js",
     "./factories": "./build/src/factories/main.js",
     "./database": "./build/src/database/main.js",
     "./query_runner": "./build/src/query_runner/main.js",
