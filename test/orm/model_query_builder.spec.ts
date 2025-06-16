@@ -22,6 +22,7 @@ import {
   getBaseModel,
 } from '../../test-helpers/index.js'
 import type { HasMany } from '../../src/types/relations.js'
+import { ModelQueryBuilderContract } from '../../src/types/model.js'
 
 test.group('Model query builder', (group) => {
   group.setup(async () => {
@@ -577,5 +578,29 @@ test.group('Model query builder', (group) => {
     const posts = await Post.query().whereIn('id', users[0].related('posts').query().select('id'))
 
     assert.lengthOf(posts, 1)
+  })
+
+  test('define custom type for sideloaded', async ({ fs, expectTypeOf }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter)
+
+    type Sideload = { test: boolean }
+
+    class User extends BaseModel {
+      declare $sideloaded: Sideload
+
+      @column({ isPrimary: true })
+      declare id: number
+
+      @column()
+      declare username: string
+    }
+
+    type Query = ModelQueryBuilderContract<typeof User>
+
+    expectTypeOf<Query['sideloaded']>().toEqualTypeOf<Sideload>()
   })
 })
