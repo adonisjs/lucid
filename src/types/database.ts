@@ -326,6 +326,7 @@ export type MigratorConfig = {
  */
 export type SeedersConfig = {
   paths: string[]
+  naturalSort?: boolean
 }
 
 /**

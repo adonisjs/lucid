@@ -26,7 +26,11 @@ export class SeedersSource {
    * paths are resolved from the project root
    */
   private async getDirectoryFiles(directoryPath: string): Promise<FileNode<unknown>[]> {
-    const { files } = await sourceFiles(this.app.appRoot, directoryPath, false)
+    const { files } = await sourceFiles(
+      this.app.appRoot,
+      directoryPath,
+      this.config.seeders?.naturalSort || false
+    )
     return files
   }
 
