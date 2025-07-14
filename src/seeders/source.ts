@@ -29,7 +29,7 @@ export class SeedersSource {
     const { files } = await sourceFiles(
       this.app.appRoot,
       directoryPath,
-      this.config.seeders?.naturalSort || false
+      this.config.seeders?.naturalSort || true
     )
     return files
   }
