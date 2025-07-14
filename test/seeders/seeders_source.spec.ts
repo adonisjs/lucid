@@ -181,6 +181,14 @@ test.group('Seeds Source', (group) => {
           name: 'database/seeders/2',
         },
         {
+          absPath: join(fs.basePath, 'database/seeders/3.ts'),
+          name: 'database/seeders/3',
+        },
+        {
+          absPath: join(fs.basePath, 'database/seeders/4.ts'),
+          name: 'database/seeders/4',
+        },
+        {
           absPath: join(fs.basePath, 'database/seeders/10.ts'),
           name: 'database/seeders/10',
         },
