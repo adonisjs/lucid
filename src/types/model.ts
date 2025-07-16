@@ -222,7 +222,7 @@ export type ColumnOptions = {
   /**
    * Invoked when row is fetched from the database
    */
-  consume?: (value: any, attribute: string, model: LucidRow) => any
+  consume?: (value: any, attribute: string, model: LucidRow, adapterResult: ModelObject) => any
 }
 
 /**

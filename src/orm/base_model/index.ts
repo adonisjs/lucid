@@ -1707,7 +1707,7 @@ class BaseModelImpl implements LucidRow {
            */
           const value =
             typeof attribute.consume === 'function'
-              ? attribute.consume(adapterResult[key], attributeName, this)
+              ? attribute.consume(adapterResult[key], attributeName, this, adapterResult)
               : adapterResult[key]
 
           /**
