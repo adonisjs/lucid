@@ -1817,18 +1817,18 @@ test.group('Base Model | create from adapter results', (group) => {
       declare username: string
 
       @column({
-        consume: (value) => value.toUpperCase(),
+        consume: (value, attribute, instance, adapterResult) => `${value.toUpperCase()} ${attribute} ${instance.constructor.name.toString()} ${adapterResult.username}`,
       })
       declare fullName: string
     }
 
-    const user = User.$createFromAdapterResult({ full_name: 'virk' })
+    const user = User.$createFromAdapterResult({ full_name: 'Harminder Virk', username: 'virk' })
 
     assert.isTrue(user!.$isPersisted)
     assert.isFalse(user!.$isDirty)
     assert.isFalse(user!.$isLocal)
-    assert.deepEqual(user!.$attributes, { fullName: 'VIRK' })
-    assert.deepEqual(user!.$original, { fullName: 'VIRK' })
+    assert.deepEqual(user!.$attributes, { fullName: "HARMINDER VIRK fullName User virk", username: 'virk' })
+    assert.deepEqual(user!.$original, { fullName: "HARMINDER VIRK fullName User virk", username: 'virk' })
   })
 
   test('original and attributes should not be shared', async ({ fs, assert }) => {
