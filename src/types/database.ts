@@ -302,7 +302,7 @@ export interface TransactionClientContract extends QueryClientContract, EventEmi
  * Connection node used by majority of database
  * clients
  */
-type SharedConnectionNode = {
+export type SharedConnectionNode = {
   host?: string
   user?: string
   password?: string
