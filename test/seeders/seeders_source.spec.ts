@@ -144,4 +144,59 @@ test.group('Seeds Source', (group) => {
       ]
     )
   })
+
+  test('use a natural sort to order files when configured', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+
+    const config = Object.assign({}, db.getRawConnection('primary')!.config, {
+      seeders: {
+        naturalSort: true,
+        paths: ['database/seeders'],
+      },
+    })
+
+    const seedersSource = new SeedersSource(config, app)
+    await fs.create('database/seeders/1.ts', '')
+    await fs.create('database/seeders/2.ts', '')
+    await fs.create('database/seeders/10.ts', '')
+    await fs.create('database/seeders/3.ts', '')
+    await fs.create('database/seeders/100.ts', '')
+    await fs.create('database/seeders/4.ts', '')
+    await db.manager.closeAll()
+
+    const files = await seedersSource.getSeeders()
+    assert.deepEqual(
+      files.map((file) => {
+        return { absPath: file.absPath, name: file.name }
+      }),
+      [
+        {
+          absPath: join(fs.basePath, 'database/seeders/1.ts'),
+          name: 'database/seeders/1',
+        },
+        {
+          absPath: join(fs.basePath, 'database/seeders/2.ts'),
+          name: 'database/seeders/2',
+        },
+        {
+          absPath: join(fs.basePath, 'database/seeders/3.ts'),
+          name: 'database/seeders/3',
+        },
+        {
+          absPath: join(fs.basePath, 'database/seeders/4.ts'),
+          name: 'database/seeders/4',
+        },
+        {
+          absPath: join(fs.basePath, 'database/seeders/10.ts'),
+          name: 'database/seeders/10',
+        },
+        {
+          absPath: join(fs.basePath, 'database/seeders/100.ts'),
+          name: 'database/seeders/100',
+        },
+      ]
+    )
+  })
 })
