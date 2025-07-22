@@ -131,16 +131,15 @@ export default abstract class MigrationsBase extends BaseCommand {
 
       case 'error':
         const files = Object.values(migrator.migratedFiles)
-
-        const skippedMigrations = files?.filter(({ status }) => status === 'pending').length
+        const failedFile = files.find(({ status }) => status === 'error')
+        const skippedMigrations = files.filter(({ status }) => status === 'pending').length
 
         message = `❯ Executed ${processedFiles.size} migrations, 1 error, ${skippedMigrations} skipped`
-        this.logger.log(this.colors.red(message))
 
-        const failedFile = files.find(({ status }) => status === 'error')
         if (failedFile) {
-          this.logger.fatal(failedFile.file.name)
+          this.logger.error(failedFile.file.name)
         }
+        this.logger.log(this.colors.red(message))
 
         this.exitCode = 1
         break
