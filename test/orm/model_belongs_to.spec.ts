@@ -22,6 +22,7 @@ import {
   getDb,
 } from '../../test-helpers/index.js'
 import { AppFactory } from '@adonisjs/core/factories/app'
+import { ExtractRelationCallback } from '../../src/types/test.js'
 
 test.group('Model | BelongsTo | Options', (group) => {
   group.setup(async () => {
@@ -238,11 +239,25 @@ test.group('Model | BelongsTo | Options', (group) => {
     }
 
     class Profile extends BaseModel {
+      @column()
+      declare userId: number
+
       @belongsTo(() => User)
       declare user?: BelongsTo<typeof User> | null
     }
 
+    const preload = Profile.query().preload<'user'>
+    const withCount = Profile.query().withCount<'user'>
+    const withAggregate = Profile.query().withAggregate<'user'>
+    const whereHas = Profile.query().whereHas<'user'>
+    const related = new Profile().related('user')
+
     expectTypeOf<ExtractModelRelations<Profile>>().toEqualTypeOf<'user' | undefined>()
+    expectTypeOf<ExtractRelationCallback<typeof preload>>().not.toBeNever()
+    expectTypeOf<ExtractRelationCallback<typeof withCount>>().not.toBeNever()
+    expectTypeOf<ExtractRelationCallback<typeof withAggregate>>().not.toBeNever()
+    expectTypeOf<ExtractRelationCallback<typeof whereHas>>().not.toBeNever()
+    expectTypeOf<typeof related>().not.toBeNever()
   })
 })
 

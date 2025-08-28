@@ -992,8 +992,8 @@ export interface ManyToManySubQueryBuilderContract<Related extends LucidModel>
 export interface WithCount<Model extends LucidRow, Builder> {
   <
     Name extends ExtractModelRelations<Model>,
-    RelatedBuilder = Model[Name] extends ModelRelations<LucidModel, LucidModel>
-      ? Model[Name]['subQuery']
+    RelatedBuilder = NonNullable<Model[Name]> extends ModelRelations<LucidModel, LucidModel>
+      ? NonNullable<Model[Name]>['subQuery']
       : never,
   >(
     relation: Name,
@@ -1007,8 +1007,8 @@ export interface WithCount<Model extends LucidRow, Builder> {
 export interface WithAggregate<Model extends LucidRow, Builder> {
   <
     Name extends ExtractModelRelations<Model>,
-    RelatedBuilder = Model[Name] extends ModelRelations<LucidModel, LucidModel>
-      ? Model[Name]['subQuery']
+    RelatedBuilder = NonNullable<Model[Name]> extends ModelRelations<LucidModel, LucidModel>
+      ? NonNullable<Model[Name]>['subQuery']
       : never,
   >(
     relation: Name,
@@ -1033,8 +1033,8 @@ export interface Has<Model extends LucidRow, Builder> {
 export interface WhereHas<Model extends LucidRow, Builder> {
   <
     Name extends ExtractModelRelations<Model>,
-    RelatedBuilder = Model[Name] extends ModelRelations<LucidModel, LucidModel>
-      ? Model[Name]['subQuery']
+    RelatedBuilder = NonNullable<Model[Name]> extends ModelRelations<LucidModel, LucidModel>
+      ? NonNullable<Model[Name]>['subQuery']
       : never,
   >(
     relation: Name,
@@ -1056,8 +1056,8 @@ export interface WhereHas<Model extends LucidRow, Builder> {
 export interface Preload<Model extends LucidRow, Builder> {
   <
     Name extends ExtractModelRelations<Model>,
-    RelatedBuilder = Model[Name] extends ModelRelations<LucidModel, LucidModel>
-      ? Model[Name]['builder']
+    RelatedBuilder = NonNullable<Model[Name]> extends ModelRelations<LucidModel, LucidModel>
+      ? NonNullable<Model[Name]>['builder']
       : never,
   >(
     relation: Name,

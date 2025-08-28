@@ -23,6 +23,7 @@ import {
   resetTables,
 } from '../../test-helpers/index.js'
 import { AppFactory } from '@adonisjs/core/factories/app'
+import { ExtractRelationCallback } from '../../src/types/test.js'
 
 test.group('Model | HasOne | Options', (group) => {
   group.setup(async () => {
@@ -252,7 +253,18 @@ test.group('Model | HasOne | Options', (group) => {
       declare profile?: HasOne<typeof Profile> | null
     }
 
+    const preload = User.query().preload<'profile'>
+    const withCount = User.query().withCount<'profile'>
+    const withAggregate = User.query().withAggregate<'profile'>
+    const whereHas = User.query().whereHas<'profile'>
+    const related = new User().related('profile')
+
     expectTypeOf<ExtractModelRelations<User>>().toEqualTypeOf<'profile' | undefined>()
+    expectTypeOf<ExtractRelationCallback<typeof preload>>().not.toBeNever()
+    expectTypeOf<ExtractRelationCallback<typeof withCount>>().not.toBeNever()
+    expectTypeOf<ExtractRelationCallback<typeof withAggregate>>().not.toBeNever()
+    expectTypeOf<ExtractRelationCallback<typeof whereHas>>().not.toBeNever()
+    expectTypeOf<typeof related>().not.toBeNever()
   })
 })
 
