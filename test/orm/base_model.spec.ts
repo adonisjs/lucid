@@ -1817,7 +1817,8 @@ test.group('Base Model | create from adapter results', (group) => {
       declare username: string
 
       @column({
-        consume: (value, attribute, instance, adapterResult) => `${value.toUpperCase()} ${attribute} ${instance.constructor.name.toString()} ${adapterResult.username}`,
+        consume: (value, attribute, instance, adapterResult) =>
+          `${value.toUpperCase()} ${attribute} ${instance.constructor.name.toString()} ${adapterResult.username}`,
       })
       declare fullName: string
     }
@@ -1827,8 +1828,14 @@ test.group('Base Model | create from adapter results', (group) => {
     assert.isTrue(user!.$isPersisted)
     assert.isFalse(user!.$isDirty)
     assert.isFalse(user!.$isLocal)
-    assert.deepEqual(user!.$attributes, { fullName: "HARMINDER VIRK fullName User virk", username: 'virk' })
-    assert.deepEqual(user!.$original, { fullName: "HARMINDER VIRK fullName User virk", username: 'virk' })
+    assert.deepEqual(user!.$attributes, {
+      fullName: 'HARMINDER VIRK fullName User virk',
+      username: 'virk',
+    })
+    assert.deepEqual(user!.$original, {
+      fullName: 'HARMINDER VIRK fullName User virk',
+      username: 'virk',
+    })
   })
 
   test('original and attributes should not be shared', async ({ fs, assert }) => {
