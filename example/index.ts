@@ -52,7 +52,7 @@ User.create({ id: '1' })
 
 const F = factory.define(User, ({ faker }) => {
   return {
-    username: faker.internet.userName(),
+    username: faker.internet.username(),
   }
 })
 
