@@ -7,11 +7,11 @@
  * file that was distributed with this source code.
  */
 
-import { Knex } from 'knex'
-import { LucidRow } from '../../../types/model.js'
-import { QueryClientContract } from '../../../types/database.js'
+import { type Knex } from 'knex'
+import { type LucidRow } from '../../../types/model.js'
+import { type QueryClientContract } from '../../../types/database.js'
 
-import { HasOne } from './index.js'
+import { type HasOne } from './index.js'
 import { getValue, unique } from '../../../utils/index.js'
 import { BaseQueryBuilder } from '../base/query_builder.js'
 

@@ -8,20 +8,20 @@
  */
 
 import {
-  LucidModel,
-  HooksDecorator,
-  ColumnDecorator,
-  ComputedDecorator,
-  DateColumnDecorator,
-  DateTimeColumnDecorator,
+  type LucidModel,
+  type HooksDecorator,
+  type ColumnDecorator,
+  type ComputedDecorator,
+  type DateColumnDecorator,
+  type DateTimeColumnDecorator,
 } from '../../types/model.js'
 
 import {
-  HasOneDecorator,
-  HasManyDecorator,
-  BelongsToDecorator,
-  ManyToManyDecorator,
-  HasManyThroughDecorator,
+  type HasOneDecorator,
+  type HasManyDecorator,
+  type BelongsToDecorator,
+  type ManyToManyDecorator,
+  type HasManyThroughDecorator,
 } from '../../types/relations.js'
 
 import { dateColumn } from './date.js'

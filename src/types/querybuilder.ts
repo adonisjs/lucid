@@ -7,8 +7,12 @@
  * file that was distributed with this source code.
  */
 
-import { Knex } from 'knex'
-import { DialectContract, QueryClientContract, TransactionClientContract } from './database.js'
+import { type Knex } from 'knex'
+import {
+  type DialectContract,
+  type QueryClientContract,
+  type TransactionClientContract,
+} from './database.js'
 
 /**
  * Extracted from ts-essentials

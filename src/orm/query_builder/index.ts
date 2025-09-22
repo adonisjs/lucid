@@ -7,30 +7,30 @@
  * file that was distributed with this source code.
  */
 
-import { Knex } from 'knex'
-import { Exception } from '@poppinss/utils'
+import { type Knex } from 'knex'
+import { Exception } from '@poppinss/utils/exception'
 
 import {
-  LucidRow,
-  LucidModel,
-  ModelObject,
-  ModelAdapterOptions,
-  ModelQueryBuilderContract,
+  type LucidRow,
+  type LucidModel,
+  type ModelObject,
+  type ModelAdapterOptions,
+  type ModelQueryBuilderContract,
 } from '../../types/model.js'
 
 import {
-  PreloaderContract,
-  RelationshipsContract,
-  RelationQueryBuilderContract,
+  type PreloaderContract,
+  type RelationshipsContract,
+  type RelationQueryBuilderContract,
 } from '../../types/relations.js'
 
 import {
-  DialectContract,
-  QueryClientContract,
-  TransactionClientContract,
+  type DialectContract,
+  type QueryClientContract,
+  type TransactionClientContract,
 } from '../../types/database.js'
 
-import { DBQueryCallback, Dictionary, OneOrMany } from '../../types/querybuilder.js'
+import { type DBQueryCallback, type Dictionary, type OneOrMany } from '../../types/querybuilder.js'
 
 import { isObject } from '../../utils/index.js'
 import { Preloader } from '../preloader/index.js'

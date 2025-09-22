@@ -8,7 +8,7 @@
  */
 
 import type { Knex } from 'knex'
-import { Exception } from '@poppinss/utils'
+import { Exception } from '@poppinss/utils/exception'
 import { getDDLMethod } from '../utils/index.js'
 import type { DeferCallback } from '../types/schema.js'
 import { QueryReporter } from '../query_reporter/index.js'

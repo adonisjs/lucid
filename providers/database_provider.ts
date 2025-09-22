@@ -15,7 +15,7 @@ import { QueryClient } from '../src/query_client/index.js'
 import { BaseModel } from '../src/orm/base_model/index.js'
 import { DatabaseTestUtils } from '../src/test_utils/database.js'
 import type { ConnectionContract, DatabaseConfig, DbQueryEventNode } from '../src/types/database.js'
-import { VineDbSearchCallback, VineDbSearchOptions } from '../src/types/vine.js'
+import { type VineDbSearchCallback, type VineDbSearchOptions } from '../src/types/vine.js'
 
 /**
  * Extending AdonisJS types

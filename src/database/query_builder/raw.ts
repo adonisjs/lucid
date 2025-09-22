@@ -7,11 +7,11 @@
  * file that was distributed with this source code.
  */
 
-import { Knex } from 'knex'
+import { type Knex } from 'knex'
 
 import { QueryRunner } from '../../query_runner/index.js'
-import { RawQueryBuilderContract } from '../../types/querybuilder.js'
-import { QueryClientContract, TransactionClientContract } from '../../types/database.js'
+import { type RawQueryBuilderContract } from '../../types/querybuilder.js'
+import { type QueryClientContract, type TransactionClientContract } from '../../types/database.js'
 
 /**
  * Exposes the API to execute raw queries

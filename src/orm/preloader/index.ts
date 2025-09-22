@@ -7,15 +7,15 @@
  * file that was distributed with this source code.
  */
 
-import { LucidRow, LucidModel, ModelObject } from '../../types/model.js'
+import { type LucidRow, type LucidModel, type ModelObject } from '../../types/model.js'
 
 import {
-  PreloaderContract,
-  RelationshipsContract,
-  RelationQueryBuilderContract,
+  type PreloaderContract,
+  type RelationshipsContract,
+  type RelationQueryBuilderContract,
 } from '../../types/relations.js'
 
-import { QueryClientContract } from '../../types/database.js'
+import { type QueryClientContract } from '../../types/database.js'
 import * as errors from '../../errors.js'
 
 /**

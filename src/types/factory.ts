@@ -7,11 +7,17 @@
  * file that was distributed with this source code.
  */
 
-import { faker } from '@faker-js/faker'
-import { OneOrMany } from './querybuilder.js'
-import { RelationshipsContract, ExtractModelRelations } from './relations.js'
-import { QueryClientContract, TransactionClientContract } from './database.js'
-import { LucidRow, LucidModel, ModelAttributes, ModelAdapterOptions, ModelObject } from './model.js'
+import { type faker } from '@faker-js/faker'
+import { type OneOrMany } from './querybuilder.js'
+import { type RelationshipsContract, type ExtractModelRelations } from './relations.js'
+import { type QueryClientContract, type TransactionClientContract } from './database.js'
+import {
+  type LucidRow,
+  type LucidModel,
+  type ModelAttributes,
+  type ModelAdapterOptions,
+  type ModelObject,
+} from './model.js'
 
 /**
  * ------------------------------------------------------

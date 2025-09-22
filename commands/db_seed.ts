@@ -11,10 +11,10 @@ import slash from 'slash'
 import { extname } from 'node:path'
 import { BaseCommand, flags } from '@adonisjs/core/ace'
 
-import { FileNode } from '../src/types/database.js'
-import { SeederFileNode } from '../src/types/seeder.js'
+import { type FileNode } from '../src/types/database.js'
+import { type SeederFileNode } from '../src/types/seeder.js'
 import type { SeedsRunner } from '../src/seeders/runner.js'
-import { CommandOptions } from '@adonisjs/core/types/ace'
+import { type CommandOptions } from '@adonisjs/core/types/ace'
 
 export default class DbSeed extends BaseCommand {
   static commandName = 'db:seed'

@@ -7,13 +7,13 @@
  * file that was distributed with this source code.
  */
 
-import { LucidModel, LucidRow } from '../../types/model.js'
+import { type LucidModel, type LucidRow } from '../../types/model.js'
 import {
-  RelationCallback,
-  FactoryModelContract,
-  FactoryContextContract,
-  FactoryBuilderQueryContract,
-  FactoryRelationContract,
+  type RelationCallback,
+  type FactoryModelContract,
+  type FactoryContextContract,
+  type FactoryBuilderQueryContract,
+  type FactoryRelationContract,
 } from '../../types/factory.js'
 
 /**

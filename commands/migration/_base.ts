@@ -13,7 +13,7 @@ import { BaseCommand } from '@adonisjs/core/ace'
 import { getDDLMethod } from '../../src/utils/index.js'
 import type { MigrationRunner } from '../../src/migration/runner.js'
 import { prettyPrint } from '../../src/helpers/pretty_print.js'
-import { MigratedFileNode } from '../../src/types/migrator.js'
+import { type MigratedFileNode } from '../../src/types/migrator.js'
 
 /**
  * Base class to execute migrations and print logs

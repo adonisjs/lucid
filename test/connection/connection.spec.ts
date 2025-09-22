@@ -7,9 +7,9 @@
  * file that was distributed with this source code.
  */
 
-import { Knex } from 'knex'
+import { type Knex } from 'knex'
 import { test } from '@japa/runner'
-import { MysqlConfig } from '../../src/types/database.js'
+import { type MysqlConfig } from '../../src/types/database.js'
 import { Connection } from '../../src/connection/index.js'
 import { setup, cleanup, getConfig, resetTables, logger } from '../../test-helpers/index.js'
 

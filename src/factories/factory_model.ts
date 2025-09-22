@@ -8,23 +8,23 @@
  */
 
 import Hooks from '@poppinss/hooks'
-import { LucidModel, ModelAdapterOptions } from '../types/model.js'
-import { ExtractModelRelations, RelationshipsContract } from '../types/relations.js'
+import { type LucidModel, type ModelAdapterOptions } from '../types/model.js'
+import { type ExtractModelRelations, type RelationshipsContract } from '../types/relations.js'
 
 import {
-  EventsList,
-  HooksHandler,
-  StateCallback,
-  MergeCallback,
-  NewUpCallback,
-  DefineCallback,
-  FactoryModelContract,
-  FactoryRelationContract,
-  FactoryBuilderQueryContract,
-  FactoryBuilderContract,
+  type EventsList,
+  type HooksHandler,
+  type StateCallback,
+  type MergeCallback,
+  type NewUpCallback,
+  type DefineCallback,
+  type FactoryModelContract,
+  type FactoryRelationContract,
+  type FactoryBuilderQueryContract,
+  type FactoryBuilderContract,
 } from '../types/factory.js'
 
-import { FactoryManager } from './main.js'
+import { type FactoryManager } from './main.js'
 import { HasOne } from './relations/has_one.js'
 import { HasMany } from './relations/has_many.js'
 import { FactoryBuilder } from './factory_builder.js'

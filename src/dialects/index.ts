@@ -16,10 +16,10 @@ import { OracleDialect } from './oracle.js'
 import { RedshiftDialect } from './red_shift.js'
 import { BetterSqliteDialect } from './better_sqlite.js'
 import {
-  DialectContract,
-  SharedConfigNode,
-  QueryClientContract,
-  ConnectionContract,
+  type DialectContract,
+  type SharedConfigNode,
+  type QueryClientContract,
+  type ConnectionContract,
 } from '../types/database.js'
 
 export const clientsToDialectsMapping: {

@@ -7,10 +7,10 @@
  * file that was distributed with this source code.
  */
 
-import { Knex } from 'knex'
+import { type Knex } from 'knex'
 import Macroable from '@poppinss/macroable'
-import { Exception } from '@poppinss/utils'
-import { ChainableContract, DBQueryCallback } from '../../types/querybuilder.js'
+import { Exception } from '@poppinss/utils/exception'
+import { type ChainableContract, type DBQueryCallback } from '../../types/querybuilder.js'
 
 import { isObject } from '../../utils/index.js'
 import { RawQueryBuilder } from './raw.js'

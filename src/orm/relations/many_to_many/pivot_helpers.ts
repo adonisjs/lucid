@@ -18,7 +18,7 @@
 |
 */
 
-import { ManyToManyQueryBuilder } from './query_builder.js'
+import { type ManyToManyQueryBuilder } from './query_builder.js'
 import { ManyToManySubQueryBuilder } from './sub_query_builder.js'
 
 export class PivotHelpers {

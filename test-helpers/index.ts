@@ -10,25 +10,25 @@
 import dotenv from 'dotenv'
 import { Chance } from 'chance'
 import { join } from 'node:path'
-import knex, { Knex } from 'knex'
+import knex, { type Knex } from 'knex'
 import { fileURLToPath } from 'node:url'
 import { getActiveTest } from '@japa/runner'
 import { Logger } from '@adonisjs/core/logger'
 import { Emitter } from '@adonisjs/core/events'
-import { Application } from '@adonisjs/core/app'
+import { type Application } from '@adonisjs/core/app'
 import { AppFactory } from '@adonisjs/core/factories/app'
 
 import {
-  DatabaseConfig,
-  ConnectionConfig,
-  ConnectionContract,
-  QueryClientContract,
+  type DatabaseConfig,
+  type ConnectionConfig,
+  type ConnectionContract,
+  type QueryClientContract,
 } from '../src/types/database.js'
 
 import {
-  RawQueryBuilderContract,
-  InsertQueryBuilderContract,
-  DatabaseQueryBuilderContract,
+  type RawQueryBuilderContract,
+  type InsertQueryBuilderContract,
+  type DatabaseQueryBuilderContract,
 } from '../src/types/querybuilder.js'
 
 import { BaseSchema } from '../src/schema/main.js'
@@ -37,11 +37,11 @@ import LibSQLClient from '../src/clients/libsql.cjs'
 import { Adapter } from '../src/orm/adapter/index.js'
 import { BaseModel } from '../src/orm/base_model/index.js'
 import { QueryClient } from '../src/query_client/index.js'
-import { MigratorOptions } from '../src/types/migrator.js'
+import { type MigratorOptions } from '../src/types/migrator.js'
 import { MigrationRunner } from '../src/migration/runner.js'
 import { RawQueryBuilder } from '../src/database/query_builder/raw.js'
 import { InsertQueryBuilder } from '../src/database/query_builder/insert.js'
-import { LucidRow, LucidModel, AdapterContract } from '../src/types/model.js'
+import { type LucidRow, type LucidModel, type AdapterContract } from '../src/types/model.js'
 import { DatabaseQueryBuilder } from '../src/database/query_builder/database.js'
 
 dotenv.config()

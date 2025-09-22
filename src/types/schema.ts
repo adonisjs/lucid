@@ -7,7 +7,7 @@
  * file that was distributed with this source code.
  */
 
-import { QueryClientContract } from './database.js'
+import { type QueryClientContract } from './database.js'
 
 /**
  * Shape of callback to defer database calls

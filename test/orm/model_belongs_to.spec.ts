@@ -22,7 +22,7 @@ import {
   getDb,
 } from '../../test-helpers/index.js'
 import { AppFactory } from '@adonisjs/core/factories/app'
-import { ExtractRelationCallback } from '../../src/types/test.js'
+import { type ExtractRelationCallback } from '../../src/types/test.js'
 
 test.group('Model | BelongsTo | Options', (group) => {
   group.setup(async () => {

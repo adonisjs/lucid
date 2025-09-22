@@ -7,8 +7,8 @@
  * file that was distributed with this source code.
  */
 
-import { createError, Exception } from '@poppinss/utils'
-import { LucidModel } from './types/model.js'
+import { createError, Exception } from '@poppinss/utils/exception'
+import { type LucidModel } from './types/model.js'
 
 export const E_INVALID_DATE_COLUMN_VALUE = createError<[string, string | null]>(
   'Invalid value for "%s". %s',

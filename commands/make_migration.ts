@@ -7,7 +7,7 @@
  * file that was distributed with this source code.
  */
 
-import { CommandOptions } from '@adonisjs/core/types/ace'
+import { type CommandOptions } from '@adonisjs/core/types/ace'
 import { stubsRoot } from '../stubs/main.js'
 import { args, BaseCommand, flags } from '@adonisjs/core/ace'
 

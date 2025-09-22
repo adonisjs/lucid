@@ -8,7 +8,11 @@
  */
 
 import { RawBuilder } from '../database/static_builder/raw.js'
-import { DialectContract, SharedConfigNode, QueryClientContract } from '../types/database.js'
+import {
+  type DialectContract,
+  type SharedConfigNode,
+  type QueryClientContract,
+} from '../types/database.js'
 
 export class MssqlDialect implements DialectContract {
   readonly name = 'mssql'

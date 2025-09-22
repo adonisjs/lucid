@@ -7,7 +7,7 @@
  * file that was distributed with this source code.
  */
 
-import { QueryClientContract } from '../types/database.js'
+import { type QueryClientContract } from '../types/database.js'
 
 export class BaseSeeder {
   static environment: string[]

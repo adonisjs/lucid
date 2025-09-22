@@ -12,15 +12,15 @@ import type { Pool } from 'tarn'
 import type { EventEmitter } from 'node:events'
 import type { ConnectionOptions } from 'node:tls'
 import type { Emitter } from '@adonisjs/core/events'
-import { LucidModel, ModelQueryBuilderContract } from './model.js'
+import { type LucidModel, type ModelQueryBuilderContract } from './model.js'
 import {
-  FromTable,
-  RawQueryBindings,
-  RawBuilderContract,
-  RawQueryBuilderContract,
-  ReferenceBuilderContract,
-  InsertQueryBuilderContract,
-  DatabaseQueryBuilderContract,
+  type FromTable,
+  type RawQueryBindings,
+  type RawBuilderContract,
+  type RawQueryBuilderContract,
+  type ReferenceBuilderContract,
+  type InsertQueryBuilderContract,
+  type DatabaseQueryBuilderContract,
 } from './querybuilder.js'
 
 /**

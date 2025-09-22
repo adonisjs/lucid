@@ -9,7 +9,7 @@
 
 import type { Database } from '../database/main.js'
 import vine, { VineNumber, VineString } from '@vinejs/vine'
-import { VineDbSearchCallback, VineDbSearchOptions } from '../types/vine.js'
+import { type VineDbSearchCallback, type VineDbSearchOptions } from '../types/vine.js'
 
 /**
  * Default validation messages used by the unique and the

@@ -9,7 +9,7 @@
 
 import { BaseCommand, args } from '@adonisjs/core/ace'
 import { stubsRoot } from '../stubs/main.js'
-import { CommandOptions } from '@adonisjs/core/types/ace'
+import { type CommandOptions } from '@adonisjs/core/types/ace'
 
 export default class MakeSeeder extends BaseCommand {
   static commandName = 'make:seeder'

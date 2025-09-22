@@ -17,7 +17,7 @@ import Reset from '../commands/migration/reset.js'
 import Migrate from '../commands/migration/run.js'
 import DbTruncate from '../commands/db_truncate.js'
 import { AppFactory } from '@adonisjs/core/factories/app'
-import { ApplicationService } from '@adonisjs/core/types'
+import { type ApplicationService } from '@adonisjs/core/types'
 import { DatabaseTestUtils } from '../src/test_utils/database.js'
 
 test.group('Database Test Utils', () => {

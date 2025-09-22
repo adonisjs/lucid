@@ -7,13 +7,13 @@
  * file that was distributed with this source code.
  */
 
-import { OneOrMany } from '../../../types/querybuilder.js'
-import { QueryClientContract } from '../../../types/database.js'
-import { LucidRow, LucidModel, ModelObject } from '../../../types/model.js'
+import { type OneOrMany } from '../../../types/querybuilder.js'
+import { type QueryClientContract } from '../../../types/database.js'
+import { type LucidRow, type LucidModel, type ModelObject } from '../../../types/model.js'
 import {
-  RelationOptions,
-  HasOne as ModelHasOne,
-  HasOneRelationContract,
+  type RelationOptions,
+  type HasOne as ModelHasOne,
+  type HasOneRelationContract,
 } from '../../../types/relations.js'
 
 import { KeysExtractor } from '../keys_extractor.js'

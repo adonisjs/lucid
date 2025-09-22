@@ -7,11 +7,14 @@
  * file that was distributed with this source code.
  */
 
-import { Knex } from 'knex'
-import { DBQueryCallback } from '../../../types/querybuilder.js'
-import { QueryClientContract } from '../../../types/database.js'
-import { LucidModel } from '../../../types/model.js'
-import { RelationSubQueryBuilderContract, RelationshipsContract } from '../../../types/relations.js'
+import { type Knex } from 'knex'
+import { type DBQueryCallback } from '../../../types/querybuilder.js'
+import { type QueryClientContract } from '../../../types/database.js'
+import { type LucidModel } from '../../../types/model.js'
+import {
+  type RelationSubQueryBuilderContract,
+  type RelationshipsContract,
+} from '../../../types/relations.js'
 import { ModelQueryBuilder } from '../../query_builder/index.js'
 
 /**

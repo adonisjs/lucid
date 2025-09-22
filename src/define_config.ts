@@ -7,7 +7,7 @@
  * file that was distributed with this source code.
  */
 
-import { DatabaseConfig } from './types/database.js'
+import { type DatabaseConfig } from './types/database.js'
 
 export function defineConfig(config: DatabaseConfig): DatabaseConfig {
   return config

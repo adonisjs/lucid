@@ -9,20 +9,24 @@
 
 import slash from 'slash'
 import { EventEmitter } from 'node:events'
-import { MigratorOptions, MigratedFileNode, MigrationListNode } from '../types/migrator.js'
+import {
+  type MigratorOptions,
+  type MigratedFileNode,
+  type MigrationListNode,
+} from '../types/migrator.js'
 
 import {
-  FileNode,
-  MigratorConfig,
-  QueryClientContract,
-  SharedConfigNode,
-  TransactionClientContract,
+  type FileNode,
+  type MigratorConfig,
+  type QueryClientContract,
+  type SharedConfigNode,
+  type TransactionClientContract,
 } from '../types/database.js'
 
 import { MigrationSource } from './source.js'
-import { Database } from '../database/main.js'
-import { Application } from '@adonisjs/core/app'
-import { BaseSchema } from '../schema/main.js'
+import { type Database } from '../database/main.js'
+import { type Application } from '@adonisjs/core/app'
+import { type BaseSchema } from '../schema/main.js'
 import * as errors from '../errors.js'
 
 /**

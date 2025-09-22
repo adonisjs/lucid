@@ -7,8 +7,8 @@
  * file that was distributed with this source code.
  */
 
-import { Knex } from 'knex'
-import { RawBuilderContract } from '../../types/querybuilder.js'
+import { type Knex } from 'knex'
+import { type RawBuilderContract } from '../../types/querybuilder.js'
 
 /**
  * Exposes the API to construct raw queries. If you want to execute

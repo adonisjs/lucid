@@ -7,12 +7,12 @@
  * file that was distributed with this source code.
  */
 
-import { Knex } from 'knex'
-import { QueryClientContract } from '../../../types/database.js'
-import { LucidModel } from '../../../types/model.js'
-import { ManyToManySubQueryBuilderContract } from '../../../types/relations.js'
+import { type Knex } from 'knex'
+import { type QueryClientContract } from '../../../types/database.js'
+import { type LucidModel } from '../../../types/model.js'
+import { type ManyToManySubQueryBuilderContract } from '../../../types/relations.js'
 
-import { ManyToMany } from './index.js'
+import { type ManyToMany } from './index.js'
 import { PivotHelpers } from './pivot_helpers.js'
 import { BaseSubQueryBuilder } from '../base/sub_query_builder.js'
 /**

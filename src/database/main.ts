@@ -8,20 +8,20 @@
  */
 
 import Macroable from '@poppinss/macroable'
-import { Exception } from '@poppinss/utils'
+import { Exception } from '@poppinss/utils/exception'
 import type { Emitter } from '@adonisjs/core/events'
 import type { Logger } from '@adonisjs/core/logger'
 
 import {
-  DatabaseConfig,
-  IsolationLevels,
-  QueryClientContract,
-  DatabaseClientOptions,
-  TransactionClientContract,
-  ConnectionManagerContract,
+  type DatabaseConfig,
+  type IsolationLevels,
+  type QueryClientContract,
+  type DatabaseClientOptions,
+  type TransactionClientContract,
+  type ConnectionManagerContract,
 } from '../types/database.js'
 
-import { LucidModel } from '../types/model.js'
+import { type LucidModel } from '../types/model.js'
 import { Adapter } from '../orm/adapter/index.js'
 import { RawBuilder } from './static_builder/raw.js'
 import { QueryClient } from '../query_client/index.js'

@@ -9,7 +9,7 @@
 
 import { DateTime } from 'luxon'
 import * as errors from '../../errors.js'
-import { LucidRow, LucidModel, DateColumnDecorator } from '../../types/model.js'
+import { type LucidRow, type LucidModel, type DateColumnDecorator } from '../../types/model.js'
 
 /**
  * The method to prepare the date column before persisting it's

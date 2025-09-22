@@ -7,9 +7,9 @@
  * file that was distributed with this source code.
  */
 
-import { Application } from '@adonisjs/core/app'
+import { type Application } from '@adonisjs/core/app'
 
-import { FileNode, SharedConfigNode } from '../types/database.js'
+import { type FileNode, type SharedConfigNode } from '../types/database.js'
 import { sourceFiles } from '../utils/index.js'
 
 /**

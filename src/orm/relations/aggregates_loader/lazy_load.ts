@@ -8,10 +8,10 @@
  */
 
 import {
-  LucidRow,
-  LucidModel,
-  ModelQueryBuilderContract,
-  LazyLoadAggregatesContract,
+  type LucidRow,
+  type LucidModel,
+  type ModelQueryBuilderContract,
+  type LazyLoadAggregatesContract,
 } from '../../../types/model.js'
 
 /**

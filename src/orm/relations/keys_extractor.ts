@@ -7,7 +7,7 @@
  * file that was distributed with this source code.
  */
 
-import { LucidModel } from '../../types/model.js'
+import { type LucidModel } from '../../types/model.js'
 import * as errors from '../../errors.js'
 
 /**

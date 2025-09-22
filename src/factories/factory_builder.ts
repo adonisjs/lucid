@@ -7,16 +7,21 @@
  * file that was distributed with this source code.
  */
 
-import { QueryClientContract } from '../types/database.js'
-import { LucidRow, LucidModel, ModelAdapterOptions, ModelObject } from '../types/model.js'
+import { type QueryClientContract } from '../types/database.js'
 import {
-  FactoryModelContract,
-  FactoryContextContract,
-  FactoryBuilderContract,
-  FactoryRelationContract,
+  type LucidRow,
+  type LucidModel,
+  type ModelAdapterOptions,
+  type ModelObject,
+} from '../types/model.js'
+import {
+  type FactoryModelContract,
+  type FactoryContextContract,
+  type FactoryBuilderContract,
+  type FactoryRelationContract,
 } from '../types/factory.js'
 
-import { FactoryModel } from './factory_model.js'
+import { type FactoryModel } from './factory_model.js'
 import { FactoryContext } from './factory_context.js'
 
 /**

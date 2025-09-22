@@ -49,7 +49,7 @@ import {
   sleep,
   cleanup as cleanupTables,
 } from '../../test-helpers/index.js'
-import { LucidRow } from '../../src/types/model.js'
+import { type LucidRow } from '../../src/types/model.js'
 import { ModelPaginator } from '../../src/orm/paginator/index.js'
 import { SimplePaginator } from '../../src/database/paginator/simple_paginator.js'
 import { SnakeCaseNamingStrategy } from '../../src/orm/naming_strategies/snake_case.js'

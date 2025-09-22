@@ -7,8 +7,8 @@
  * file that was distributed with this source code.
  */
 
-import { Knex } from 'knex'
-import { ReferenceBuilderContract } from '../../types/querybuilder.js'
+import { type Knex } from 'knex'
+import { type ReferenceBuilderContract } from '../../types/querybuilder.js'
 
 /**
  * Reference builder to create SQL reference values

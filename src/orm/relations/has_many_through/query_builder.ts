@@ -7,12 +7,12 @@
  * file that was distributed with this source code.
  */
 
-import { Knex } from 'knex'
-import { QueryClientContract } from '../../../types/database.js'
-import { LucidRow, LucidModel } from '../../../types/model.js'
-import { HasManyThroughQueryBuilderContract } from '../../../types/relations.js'
+import { type Knex } from 'knex'
+import { type QueryClientContract } from '../../../types/database.js'
+import { type LucidRow, type LucidModel } from '../../../types/model.js'
+import { type HasManyThroughQueryBuilderContract } from '../../../types/relations.js'
 
-import { HasManyThrough } from './index.js'
+import { type HasManyThrough } from './index.js'
 import { getValue, unique } from '../../../utils/index.js'
 import { BaseQueryBuilder } from '../base/query_builder.js'
 

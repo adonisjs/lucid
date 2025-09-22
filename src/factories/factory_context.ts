@@ -8,8 +8,8 @@
  */
 
 import { faker } from '@faker-js/faker'
-import { FactoryContextContract } from '../types/factory.js'
-import { TransactionClientContract } from '../types/database.js'
+import { type FactoryContextContract } from '../types/factory.js'
+import { type TransactionClientContract } from '../types/database.js'
 
 export class FactoryContext implements FactoryContextContract {
   faker = faker

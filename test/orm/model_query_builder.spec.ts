@@ -22,7 +22,7 @@ import {
   getBaseModel,
 } from '../../test-helpers/index.js'
 import type { HasMany } from '../../src/types/relations.js'
-import { ModelQueryBuilderContract } from '../../src/types/model.js'
+import { type ModelQueryBuilderContract } from '../../src/types/model.js'
 
 test.group('Model query builder', (group) => {
   group.setup(async () => {

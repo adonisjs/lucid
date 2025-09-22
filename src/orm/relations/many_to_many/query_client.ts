@@ -8,12 +8,20 @@
  */
 
 import { DateTime } from 'luxon'
-import { LucidModel, LucidRow, ModelObject, ModelAssignOptions } from '../../../types/model.js'
-import { ManyToManyClientContract } from '../../../types/relations.js'
-import { QueryClientContract, TransactionClientContract } from '../../../types/database.js'
-import { OneOrMany } from '../../../types/querybuilder.js'
+import {
+  type LucidModel,
+  type LucidRow,
+  type ModelObject,
+  type ModelAssignOptions,
+} from '../../../types/model.js'
+import { type ManyToManyClientContract } from '../../../types/relations.js'
+import {
+  type QueryClientContract,
+  type TransactionClientContract,
+} from '../../../types/database.js'
+import { type OneOrMany } from '../../../types/querybuilder.js'
 
-import { ManyToMany } from './index.js'
+import { type ManyToMany } from './index.js'
 import { ManyToManyQueryBuilder } from './query_builder.js'
 import { ManyToManySubQueryBuilder } from './sub_query_builder.js'
 import { managedTransaction, syncDiff } from '../../../utils/index.js'

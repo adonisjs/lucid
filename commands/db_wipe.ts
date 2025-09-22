@@ -8,8 +8,8 @@
  */
 
 import { BaseCommand, flags } from '@adonisjs/core/ace'
-import { QueryClientContract } from '../src/types/database.js'
-import { CommandOptions } from '@adonisjs/core/types/ace'
+import { type QueryClientContract } from '../src/types/database.js'
+import { type CommandOptions } from '@adonisjs/core/types/ace'
 
 export default class DbWipe extends BaseCommand {
   static commandName = 'db:wipe'

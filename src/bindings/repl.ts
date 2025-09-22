@@ -35,7 +35,7 @@ export function defineReplBindings(app: ApplicationService, Repl: Repl) {
         repl.colors.dim(`recursively reading models from "${app.relativePath(modelsPath)}"`)
       )
 
-      const { fsImportAll } = await import('@poppinss/utils')
+      const { fsImportAll } = await import('@poppinss/utils/fs')
       setupReplState(repl, 'models', await fsImportAll(modelsPath))
     },
     {
@@ -67,7 +67,7 @@ export function defineReplBindings(app: ApplicationService, Repl: Repl) {
         repl.colors.dim(`recursively reading models from "${app.relativePath(factoriesPath)}"`)
       )
 
-      const { fsImportAll } = await import('@poppinss/utils')
+      const { fsImportAll } = await import('@poppinss/utils/fs')
       const factories = await fsImportAll(factoriesPath, { ignoreMissingRoot: true })
 
       if (!factories) {

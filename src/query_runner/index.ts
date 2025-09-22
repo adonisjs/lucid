@@ -7,10 +7,10 @@
  * file that was distributed with this source code.
  */
 
-import { Knex } from 'knex'
-import { Exception } from '@poppinss/utils'
+import { type Knex } from 'knex'
+import { Exception } from '@poppinss/utils/exception'
 import { QueryReporter } from '../query_reporter/index.js'
-import { QueryClientContract, TransactionClientContract } from '../types/database.js'
+import { type QueryClientContract, type TransactionClientContract } from '../types/database.js'
 
 /**
  * Query runner exposes the API for executing knex query builder by using the

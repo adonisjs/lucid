@@ -7,12 +7,12 @@
  * file that was distributed with this source code.
  */
 
-import { Knex } from 'knex'
-import { Exception } from '@poppinss/utils'
-import { LucidRow } from '../../../types/model.js'
-import { QueryClientContract } from '../../../types/database.js'
+import { type Knex } from 'knex'
+import { Exception } from '@poppinss/utils/exception'
+import { type LucidRow } from '../../../types/model.js'
+import { type QueryClientContract } from '../../../types/database.js'
 
-import { BelongsTo } from './index.js'
+import { type BelongsTo } from './index.js'
 import { unique } from '../../../utils/index.js'
 import { BaseQueryBuilder } from '../base/query_builder.js'
 

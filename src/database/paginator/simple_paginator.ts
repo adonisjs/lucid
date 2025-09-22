@@ -9,7 +9,10 @@
 
 import { stringify } from 'qs'
 import { CamelCaseNamingStrategy } from '../../orm/naming_strategies/camel_case.js'
-import { SimplePaginatorContract, SimplePaginatorMetaKeys } from '../../types/querybuilder.js'
+import {
+  type SimplePaginatorContract,
+  type SimplePaginatorMetaKeys,
+} from '../../types/querybuilder.js'
 
 /**
  * Simple paginator works with the data set provided by the standard

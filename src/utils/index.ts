@@ -9,14 +9,16 @@
 
 import slash from 'slash'
 import { join, extname } from 'node:path'
-import { Exception, fsReadAll, isScriptFile } from '@poppinss/utils'
-import { RelationshipsContract } from '../types/relations.js'
-import { LucidRow, ModelObject, CherryPickFields } from '../types/model.js'
+import { fsReadAll } from '@poppinss/utils/fs'
+import { isScriptFile } from '@poppinss/utils'
+import { Exception } from '@poppinss/utils/exception'
+import { type RelationshipsContract } from '../types/relations.js'
+import { type LucidRow, type ModelObject, type CherryPickFields } from '../types/model.js'
 import {
-  DialectContract,
-  FileNode,
-  QueryClientContract,
-  TransactionClientContract,
+  type DialectContract,
+  type FileNode,
+  type QueryClientContract,
+  type TransactionClientContract,
 } from '../types/database.js'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import * as errors from '../errors.js'

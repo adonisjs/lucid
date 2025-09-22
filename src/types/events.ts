@@ -7,7 +7,7 @@
  * file that was distributed with this source code.
  */
 
-import { DbQueryEventNode } from './database.js'
+import { type DbQueryEventNode } from './database.js'
 export interface EventsList {
   'db:query': DbQueryEventNode
 }

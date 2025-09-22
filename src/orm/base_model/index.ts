@@ -10,43 +10,44 @@
 import { DateTime } from 'luxon'
 import Hooks from '@poppinss/hooks'
 import lodash from '@poppinss/utils/lodash'
-import { Exception, defineStaticProperty } from '@poppinss/utils'
+import { Exception } from '@poppinss/utils/exception'
+import { defineStaticProperty } from '@poppinss/utils'
 import {
-  IsolationLevels,
-  QueryClientContract,
-  TransactionClientContract,
+  type IsolationLevels,
+  type QueryClientContract,
+  type TransactionClientContract,
 } from '../../types/database.js'
 
 import {
-  LucidRow,
-  CacheNode,
-  LucidModel,
-  CherryPick,
-  EventsList,
-  ModelObject,
-  HooksHandler,
-  ModelOptions,
-  ColumnOptions,
-  ComputedOptions,
-  AdapterContract,
-  CherryPickFields,
-  ModelColumnOptions,
-  ModelKeysContract,
-  ModelAssignOptions,
-  ModelAdapterOptions,
-  ModelRelationOptions,
-  ModelQueryBuilderContract,
-  ModelPaginatorContract,
-  QueryScopeCallback,
-  QueryScope,
+  type LucidRow,
+  type CacheNode,
+  type LucidModel,
+  type CherryPick,
+  type EventsList,
+  type ModelObject,
+  type HooksHandler,
+  type ModelOptions,
+  type ColumnOptions,
+  type ComputedOptions,
+  type AdapterContract,
+  type CherryPickFields,
+  type ModelColumnOptions,
+  type ModelKeysContract,
+  type ModelAssignOptions,
+  type ModelAdapterOptions,
+  type ModelRelationOptions,
+  type ModelQueryBuilderContract,
+  type ModelPaginatorContract,
+  type QueryScopeCallback,
+  type QueryScope,
 } from '../../types/model.js'
 
 import {
-  ModelRelations,
-  RelationOptions,
-  RelationshipsContract,
-  ThroughRelationOptions,
-  ManyToManyRelationOptions,
+  type ModelRelations,
+  type RelationOptions,
+  type RelationshipsContract,
+  type ThroughRelationOptions,
+  type ManyToManyRelationOptions,
 } from '../../types/relations.js'
 
 import * as errors from '../../errors.js'

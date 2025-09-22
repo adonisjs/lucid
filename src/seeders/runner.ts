@@ -7,12 +7,16 @@
  * file that was distributed with this source code.
  */
 
-import { Application } from '@adonisjs/core/app'
-import { FileNode, QueryClientContract, SharedConfigNode } from '../types/database.js'
-import { SeederConstructorContract, SeederFileNode } from '../types/seeder.js'
+import { type Application } from '@adonisjs/core/app'
+import {
+  type FileNode,
+  type QueryClientContract,
+  type SharedConfigNode,
+} from '../types/database.js'
+import { type SeederConstructorContract, type SeederFileNode } from '../types/seeder.js'
 
 import { SeedersSource } from './source.js'
-import { Database } from '../database/main.js'
+import { type Database } from '../database/main.js'
 
 /**
  * Seeds Runner exposes the API to traverse seeders and execute them

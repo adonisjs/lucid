@@ -7,42 +7,42 @@
  * file that was distributed with this source code.
  */
 
-import { DateTime } from 'luxon'
+import { type DateTime } from 'luxon'
 import type Hooks from '@poppinss/hooks'
 import {
-  TransactionFn,
-  DialectContract,
-  QueryClientContract,
-  TransactionClientContract,
+  type TransactionFn,
+  type DialectContract,
+  type QueryClientContract,
+  type TransactionClientContract,
 } from './database.js'
 
 import {
-  Update,
-  Counter,
-  OneOrMany,
-  Aggregate,
-  Returning,
-  ChainableContract,
-  SimplePaginatorMetaKeys,
-  SimplePaginatorContract,
-  ExcutableQueryBuilderContract,
+  type Update,
+  type Counter,
+  type OneOrMany,
+  type Aggregate,
+  type Returning,
+  type ChainableContract,
+  type SimplePaginatorMetaKeys,
+  type SimplePaginatorContract,
+  type ExcutableQueryBuilderContract,
 } from './querybuilder.js'
 import {
-  ExtractModelRelations,
-  Has,
-  ManyToManyRelationOptions,
-  ModelRelationTypes,
-  ModelRelations,
-  Preload,
-  PreloaderContract,
-  RelationOptions,
-  RelationshipsContract,
-  ThroughRelationOptions,
-  WhereHas,
-  WithAggregate,
-  WithCount,
-  PreloadWithoutCallback,
-  PreloadOnce,
+  type ExtractModelRelations,
+  type Has,
+  type ManyToManyRelationOptions,
+  type ModelRelationTypes,
+  type ModelRelations,
+  type Preload,
+  type PreloaderContract,
+  type RelationOptions,
+  type RelationshipsContract,
+  type ThroughRelationOptions,
+  type WhereHas,
+  type WithAggregate,
+  type WithCount,
+  type PreloadWithoutCallback,
+  type PreloadOnce,
 } from './relations.js'
 
 /**

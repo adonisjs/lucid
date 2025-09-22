@@ -8,22 +8,22 @@
  */
 
 import {
-  RawQuery,
-  OneOrMany,
-  StrictValues,
-  ChainableContract,
-  RawBuilderContract,
+  type RawQuery,
+  type OneOrMany,
+  type StrictValues,
+  type ChainableContract,
+  type RawBuilderContract,
 } from './querybuilder.js'
 
-import { QueryClientContract, TransactionClientContract } from './database.js'
+import { type QueryClientContract, type TransactionClientContract } from './database.js'
 import {
-  LucidModel,
-  LucidRow,
-  ModelAssignOptions,
-  ModelAttributes,
-  ModelObject,
-  ModelQueryBuilderContract,
-  OptionalTypedDecorator,
+  type LucidModel,
+  type LucidRow,
+  type ModelAssignOptions,
+  type ModelAttributes,
+  type ModelObject,
+  type ModelQueryBuilderContract,
+  type OptionalTypedDecorator,
 } from './model.js'
 
 /**

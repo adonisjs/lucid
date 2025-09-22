@@ -8,7 +8,7 @@
  */
 
 import { DateTime } from 'luxon'
-import { LucidRow, LucidModel, DateTimeColumnDecorator } from '../../types/model.js'
+import { type LucidRow, type LucidModel, type DateTimeColumnDecorator } from '../../types/model.js'
 import * as errors from '../../errors.js'
 
 /**

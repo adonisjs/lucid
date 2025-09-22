@@ -7,13 +7,13 @@
  * file that was distributed with this source code.
  */
 
-import { LucidModel, LucidRow } from '../../types/model.js'
-import { HasOneRelationContract } from '../../types/relations.js'
+import { type LucidModel, type LucidRow } from '../../types/model.js'
+import { type HasOneRelationContract } from '../../types/relations.js'
 import {
-  RelationCallback,
-  FactoryModelContract,
-  FactoryRelationContract,
-  FactoryBuilderQueryContract,
+  type RelationCallback,
+  type FactoryModelContract,
+  type FactoryRelationContract,
+  type FactoryBuilderQueryContract,
 } from '../../types/factory.js'
 
 import { BaseRelation } from './base.js'

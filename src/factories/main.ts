@@ -7,8 +7,12 @@
  * file that was distributed with this source code.
  */
 
-import { LucidModel, LucidRow } from '../types/model.js'
-import { DefineCallback, FactoryModelContract, StubIdCallback } from '../types/factory.js'
+import { type LucidModel, type LucidRow } from '../types/model.js'
+import {
+  type DefineCallback,
+  type FactoryModelContract,
+  type StubIdCallback,
+} from '../types/factory.js'
 import { FactoryModel } from './factory_model.js'
 
 /**

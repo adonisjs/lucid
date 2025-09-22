@@ -25,7 +25,7 @@ import {
   logger,
   createEmitter,
 } from '../../test-helpers/index.js'
-import { QueryClient } from '../../src/query_client/index.js'
+import { type QueryClient } from '../../src/query_client/index.js'
 
 if (!['better_sqlite', 'sqlite', 'libsql'].includes(process.env.DB!)) {
   test.group('Query Builder | client', (group) => {

@@ -7,7 +7,7 @@
  * file that was distributed with this source code.
  */
 
-import { LucidModel } from '../../types/model.js'
+import { type LucidModel } from '../../types/model.js'
 
 /**
  * A proxy trap to add support for custom getters and setters

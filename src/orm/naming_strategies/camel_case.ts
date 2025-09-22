@@ -8,8 +8,8 @@
  */
 
 import string from '@poppinss/utils/string'
-import { ModelRelations } from '../../types/relations.js'
-import { NamingStrategyContract, LucidModel } from '../../types/model.js'
+import { type ModelRelations } from '../../types/relations.js'
+import { type NamingStrategyContract, type LucidModel } from '../../types/model.js'
 
 /**
  * Camelcase naming strategy for the model to use camelcase keys

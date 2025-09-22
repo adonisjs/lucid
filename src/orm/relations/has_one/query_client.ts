@@ -7,12 +7,17 @@
  * file that was distributed with this source code.
  */
 
-import { QueryClientContract } from '../../../types/database.js'
-import { OneOrMany } from '../../../types/querybuilder.js'
-import { ModelObject, LucidModel, LucidRow, ModelAssignOptions } from '../../../types/model.js'
-import { HasOneClientContract } from '../../../types/relations.js'
+import { type QueryClientContract } from '../../../types/database.js'
+import { type OneOrMany } from '../../../types/querybuilder.js'
+import {
+  type ModelObject,
+  type LucidModel,
+  type LucidRow,
+  type ModelAssignOptions,
+} from '../../../types/model.js'
+import { type HasOneClientContract } from '../../../types/relations.js'
 
-import { HasOne } from './index.js'
+import { type HasOne } from './index.js'
 import { managedTransaction } from '../../../utils/index.js'
 import { HasOneQueryBuilder } from './query_builder.js'
 import { HasOneSubQueryBuilder } from './sub_query_builder.js'

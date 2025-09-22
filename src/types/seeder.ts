@@ -7,7 +7,7 @@
  * file that was distributed with this source code.
  */
 
-import { FileNode, QueryClientContract } from './database.js'
+import { type FileNode, type QueryClientContract } from './database.js'
 
 /**
  * Shape of file node returned by the run method

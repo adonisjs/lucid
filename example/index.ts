@@ -1,8 +1,8 @@
-import { DateTime } from 'luxon'
+import { type DateTime } from 'luxon'
 import { BaseModel, scope } from '../src/orm/base_model/index.js'
 import { column, hasOne } from '../src/orm/decorators/index.js'
-import { HasOne } from '../src/types/relations.js'
-import { ModelQueryBuilderContract } from '../src/types/model.js'
+import { type HasOne } from '../src/types/relations.js'
+import { type ModelQueryBuilderContract } from '../src/types/model.js'
 import factory from '../src/factories/main.js'
 
 enum ProfileTypes {

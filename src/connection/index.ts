@@ -7,8 +7,8 @@
  * file that was distributed with this source code.
  */
 
-import { Pool } from 'tarn'
-import knex, { Knex } from 'knex'
+import { type Pool } from 'tarn'
+import knex, { type Knex } from 'knex'
 import { EventEmitter } from 'node:events'
 import { patchKnex } from 'knex-dynamic-connection'
 import type { Logger } from '@adonisjs/core/logger'

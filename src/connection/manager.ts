@@ -11,10 +11,10 @@ import type { Emitter } from '@adonisjs/core/events'
 import type { Logger } from '@adonisjs/core/logger'
 
 import {
-  ConnectionNode,
-  ConnectionConfig,
-  ConnectionContract,
-  ConnectionManagerContract,
+  type ConnectionNode,
+  type ConnectionConfig,
+  type ConnectionContract,
+  type ConnectionManagerContract,
 } from '../types/database.js'
 
 import { Connection } from './index.js'

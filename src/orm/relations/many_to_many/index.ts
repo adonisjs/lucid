@@ -7,12 +7,12 @@
  * file that was distributed with this source code.
  */
 
-import { QueryClientContract } from '../../../types/database.js'
-import { LucidRow, LucidModel } from '../../../types/model.js'
+import { type QueryClientContract } from '../../../types/database.js'
+import { type LucidRow, type LucidModel } from '../../../types/model.js'
 import {
-  ManyToManyRelationOptions,
-  ManyToManyRelationContract,
-  ManyToMany as ModelManyToMany,
+  type ManyToManyRelationOptions,
+  type ManyToManyRelationContract,
+  type ManyToMany as ModelManyToMany,
 } from '../../../types/relations.js'
 
 import { KeysExtractor } from '../keys_extractor.js'

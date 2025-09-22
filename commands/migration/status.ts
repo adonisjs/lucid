@@ -8,9 +8,9 @@
  */
 
 import { flags, BaseCommand } from '@adonisjs/core/ace'
-import { MigrationListNode } from '../../src/types/migrator.js'
+import { type MigrationListNode } from '../../src/types/migrator.js'
 import { MigrationRunner } from '../../src/migration/runner.js'
-import { CommandOptions } from '@adonisjs/core/types/ace'
+import { type CommandOptions } from '@adonisjs/core/types/ace'
 
 /**
  * The command is meant to migrate the database by execute migrations

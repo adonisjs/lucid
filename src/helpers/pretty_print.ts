@@ -12,7 +12,7 @@ import igniculus from 'igniculus'
 import kleur from 'kleur'
 import { inspect } from 'node:util'
 import hrTime from 'pretty-hrtime'
-import { DbQueryEventNode } from '../types/database.js'
+import { type DbQueryEventNode } from '../types/database.js'
 
 const illuminate = igniculus({
   comments: { fg: 'gray' },

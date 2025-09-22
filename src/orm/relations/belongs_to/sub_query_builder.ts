@@ -7,12 +7,12 @@
  * file that was distributed with this source code.
  */
 
-import { Knex } from 'knex'
-import { LucidModel } from '../../../types/model.js'
-import { QueryClientContract } from '../../../types/database.js'
-import { RelationSubQueryBuilderContract } from '../../../types/relations.js'
+import { type Knex } from 'knex'
+import { type LucidModel } from '../../../types/model.js'
+import { type QueryClientContract } from '../../../types/database.js'
+import { type RelationSubQueryBuilderContract } from '../../../types/relations.js'
 
-import { BelongsTo } from './index.js'
+import { type BelongsTo } from './index.js'
 import { BaseSubQueryBuilder } from '../base/sub_query_builder.js'
 
 export class BelongsToSubQueryBuilder

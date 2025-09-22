@@ -7,14 +7,17 @@
  * file that was distributed with this source code.
  */
 
-import { Knex } from 'knex'
-import { Exception } from '@poppinss/utils'
+import { type Knex } from 'knex'
+import { Exception } from '@poppinss/utils/exception'
 import {
-  DialectContract,
-  QueryClientContract,
-  TransactionClientContract,
+  type DialectContract,
+  type QueryClientContract,
+  type TransactionClientContract,
 } from '../../types/database.js'
-import { DBQueryCallback, DatabaseQueryBuilderContract } from '../../types/querybuilder.js'
+import {
+  type DBQueryCallback,
+  type DatabaseQueryBuilderContract,
+} from '../../types/querybuilder.js'
 
 import { Chainable } from './chainable.js'
 import { QueryRunner } from '../../query_runner/index.js'

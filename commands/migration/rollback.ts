@@ -11,7 +11,7 @@ import { flags } from '@adonisjs/core/ace'
 
 import MigrationsBase from './_base.js'
 import { MigrationRunner } from '../../src/migration/runner.js'
-import { CommandOptions } from '@adonisjs/core/types/ace'
+import { type CommandOptions } from '@adonisjs/core/types/ace'
 
 /**
  * The command is meant to migrate the database by executing migrations

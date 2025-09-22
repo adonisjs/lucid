@@ -7,16 +7,16 @@
  * file that was distributed with this source code.
  */
 
-import { Knex } from 'knex'
-import { Exception } from '@poppinss/utils'
+import { type Knex } from 'knex'
+import { Exception } from '@poppinss/utils/exception'
 import type { Emitter } from '@adonisjs/core/events'
 
 import {
-  IsolationLevels,
-  DialectContract,
-  ConnectionContract,
-  QueryClientContract,
-  TransactionClientContract,
+  type IsolationLevels,
+  type DialectContract,
+  type ConnectionContract,
+  type QueryClientContract,
+  type TransactionClientContract,
 } from '../types/database.js'
 
 import { RawBuilder } from '../database/static_builder/raw.js'
@@ -26,17 +26,17 @@ import { RawQueryBuilder } from '../database/query_builder/raw.js'
 import { InsertQueryBuilder } from '../database/query_builder/insert.js'
 import { ReferenceBuilder } from '../database/static_builder/reference.js'
 import { DatabaseQueryBuilder } from '../database/query_builder/database.js'
-import { LucidModel, ModelQueryBuilderContract } from '../types/model.js'
+import { type LucidModel, type ModelQueryBuilderContract } from '../types/model.js'
 import {
-  RawQueryBindings,
-  DatabaseQueryBuilderContract,
-  InsertQueryBuilderContract,
-  RawQueryBuilderContract,
-  RawBuilderContract,
-  ReferenceBuilderContract,
-  ChainableContract,
-  Dictionary,
-  QueryCallback,
+  type RawQueryBindings,
+  type DatabaseQueryBuilderContract,
+  type InsertQueryBuilderContract,
+  type RawQueryBuilderContract,
+  type RawBuilderContract,
+  type ReferenceBuilderContract,
+  type ChainableContract,
+  type Dictionary,
+  type QueryCallback,
 } from '../types/querybuilder.js'
 import { ModelQueryBuilder } from '../orm/query_builder/index.js'
 

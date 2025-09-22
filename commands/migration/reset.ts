@@ -8,7 +8,7 @@
  */
 
 import { BaseCommand, flags } from '@adonisjs/core/ace'
-import { CommandOptions } from '@adonisjs/core/types/ace'
+import { type CommandOptions } from '@adonisjs/core/types/ace'
 
 /**
  * This command resets the database by rolling back to batch 0. Same

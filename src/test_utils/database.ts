@@ -7,7 +7,7 @@
  * file that was distributed with this source code.
  */
 
-import { ApplicationService } from '@adonisjs/core/types'
+import { type ApplicationService } from '@adonisjs/core/types'
 
 /**
  * Database test utils are meant to be used during testing to

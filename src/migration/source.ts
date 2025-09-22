@@ -9,7 +9,7 @@
 
 import type { Application } from '@adonisjs/core/app'
 import { sourceFiles } from '../utils/index.js'
-import { SharedConfigNode, FileNode } from '../types/database.js'
+import { type SharedConfigNode, type FileNode } from '../types/database.js'
 
 /**
  * Migration source exposes the API to read the migration files

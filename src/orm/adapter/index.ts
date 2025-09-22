@@ -7,10 +7,15 @@
  * file that was distributed with this source code.
  */
 
-import { Exception } from '@poppinss/utils'
+import { Exception } from '@poppinss/utils/exception'
 import { isObject } from '../../utils/index.js'
 import type { Database } from '../../database/main.js'
-import { LucidRow, LucidModel, AdapterContract, ModelAdapterOptions } from '../../types/model.js'
+import {
+  type LucidRow,
+  type LucidModel,
+  type AdapterContract,
+  type ModelAdapterOptions,
+} from '../../types/model.js'
 
 /**
  * Adapter exposes the API to make database queries and constructor
