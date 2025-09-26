@@ -216,6 +216,11 @@ export type ColumnOptions = {
    * Invoked when row is fetched from the database
    */
   consume?: (value: any, attribute: string, model: LucidRow) => any
+
+  /**
+   * Invoked to compare to values for equality when tracking dirty attributes
+   */
+  equals?: (a: any, b: any) => boolean
 }
 
 /**

@@ -813,6 +813,36 @@ test.group('Base Model | dirty', (group) => {
     user.location.isDirty = true
     assert.deepEqual(user.$dirty, { location: { state: 'goa', country: 'India', isDirty: true } })
   })
+
+  test('compute diff for properties using equals column option', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const adapter = new FakeAdapter()
+
+    const BaseModel = getBaseModel(adapter)
+
+    class User extends BaseModel {
+      @column()
+      declare username: string
+
+      @column()
+      declare age: number
+
+      @column({
+        equals: (a: Set<string>, b: Set<string>) =>
+          a.size === b.size && Array.from(a).every((item) => b.has(item)),
+      })
+      colors: Set<string> = new Set()
+    }
+    User.$adapter = adapter
+
+    const user = new User()
+    user.username = 'virk'
+    user.colors = new Set(['red', 'green', 'blue'])
+
+    assert.isTrue(user.$isDirty)
+    assert.isTrue(!!user.$dirty.colors)
+  })
 })
 
 test.group('Base Model | persist', (group) => {

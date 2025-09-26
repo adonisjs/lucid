@@ -1348,9 +1348,15 @@ class BaseModelImpl implements LucidRow {
     const dirty = Object.keys(this.$attributes).reduce((result: any, key) => {
       const value = this.$attributes[key]
       const originalValue = this.$original[key]
+
+      const Model = this.constructor as LucidModel
+      const column = Model.$getColumn(key)
+
       let isEqual = true
 
-      if (isObject(value) && 'isDirty' in value) {
+      if (column?.equals) {
+        isEqual = column.equals(originalValue, value)
+      } else if (isObject(value) && 'isDirty' in value) {
         isEqual = !value.isDirty
       } else {
         isEqual = compareValues(originalValue, value)
