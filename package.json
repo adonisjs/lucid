@@ -116,7 +116,7 @@
   "peerDependencies": {
     "@adonisjs/assembler": "^8.0.0-next.9",
     "@adonisjs/core": "^7.0.0-next.1",
-    "@vinejs/vine": "^3.0.0",
+    "@vinejs/vine": "^3.0.0 || ^4.0.0",
     "luxon": "^3.4.4"
   },
   "peerDependenciesMeta": {
