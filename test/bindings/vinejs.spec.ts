@@ -49,7 +49,6 @@ test.group('VineJS | unique', (group) => {
       vine.object({
         email: vine.string().unique({
           table: 'users',
-          column: 'email',
         }),
       })
     )
@@ -81,11 +80,9 @@ test.group('VineJS | unique', (group) => {
       vine.object({
         username: vine.string().unique({
           table: 'users',
-          column: 'username',
         }),
         email: vine.string().unique({
           table: 'users',
-          column: 'email',
           caseInsensitive: true,
         }),
       })

@@ -23,7 +23,7 @@ export type VineDbSearchOptions<ValueType> = {
   /**
    * The column against which to search the value
    */
-  column: string
+  column?: string
 
   /**
    * Specify a custom connection for the query

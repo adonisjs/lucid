@@ -48,15 +48,16 @@ export function defineValidationRules(db: Database) {
         }
 
         const { table, column, filter, connection, caseInsensitive } = callbackOrOptions
-        const query = db.connection(connection).from(table).select(column)
+        const columnName = column ?? (field.name as string)
+        const query = db.connection(connection).from(table).select(columnName)
 
         /**
          * Apply where clause respecting the caseInsensitive flag.
          */
         if (caseInsensitive) {
-          query.whereRaw(`lower(${column}) = ?`, [db.raw(`lower(?)`, [value])])
+          query.whereRaw(`lower(${columnName}) = ?`, [db.raw(`lower(?)`, [value])])
         } else {
-          query.where(column, value as string | number)
+          query.where(columnName, value as string | number)
         }
 
         /**
@@ -98,15 +99,16 @@ export function defineValidationRules(db: Database) {
         }
 
         const { table, column, filter, connection, caseInsensitive } = callbackOrOptions
-        const query = db.connection(connection).from(table).select(column)
+        const columnName = column ?? (field.name as string)
+        const query = db.connection(connection).from(table).select(columnName)
 
         /**
          * Apply where clause respecting the caseInsensitive flag.
          */
         if (caseInsensitive) {
-          query.whereRaw(`lower(${column}) = ?`, [db.raw(`lower(?)`, [value])])
+          query.whereRaw(`lower(${columnName}) = ?`, [db.raw(`lower(?)`, [value])])
         } else {
-          query.where(column, value as string | number)
+          query.where(columnName, value as string | number)
         }
 
         /**
