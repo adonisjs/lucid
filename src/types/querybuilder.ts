@@ -715,8 +715,9 @@ export interface ChainableContract {
  * Shape of the raw query that can also be passed as a value to
  * other queries
  */
-export interface RawQueryBuilderContract<Result = any>
-  extends ExcutableQueryBuilderContract<Result> {
+export interface RawQueryBuilderContract<
+  Result = any,
+> extends ExcutableQueryBuilderContract<Result> {
   knexQuery: Knex.Raw
   client: QueryClientContract
   wrap(before: string, after: string): this
@@ -787,8 +788,7 @@ export interface SimplePaginatorContract<Result> extends Array<Result> {
  * chainable API
  */
 export interface DatabaseQueryBuilderContract<Result = Dictionary<any, string>>
-  extends ChainableContract,
-    ExcutableQueryBuilderContract<Result[]> {
+  extends ChainableContract, ExcutableQueryBuilderContract<Result[]> {
   client: QueryClientContract
   returning: Returning<this>
 
@@ -867,8 +867,9 @@ export interface DatabaseQueryBuilderContract<Result = Dictionary<any, string>>
 /**
  * Insert query builder to perform database inserts.
  */
-export interface InsertQueryBuilderContract<Result = any>
-  extends ExcutableQueryBuilderContract<Result> {
+export interface InsertQueryBuilderContract<
+  Result = any,
+> extends ExcutableQueryBuilderContract<Result> {
   knexQuery: Knex.QueryBuilder
   client: QueryClientContract
 

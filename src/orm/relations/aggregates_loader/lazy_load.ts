@@ -17,9 +17,9 @@ import {
 /**
  * An implementation for lazy loading model relationship aggregates
  */
-export class LazyLoadAggregates<Model extends LucidRow>
-  implements LazyLoadAggregatesContract<Model>
-{
+export class LazyLoadAggregates<
+  Model extends LucidRow,
+> implements LazyLoadAggregatesContract<Model> {
   private query: ModelQueryBuilderContract<LucidModel, LucidRow>
 
   constructor(private model: Model) {

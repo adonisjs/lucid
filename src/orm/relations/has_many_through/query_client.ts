@@ -20,9 +20,10 @@ import { HasManyThroughSubQueryBuilder } from './sub_query_builder.js'
  * Query client for executing queries in scope to the defined
  * relationship
  */
-export class HasManyThroughClient
-  implements HasManyThroughClientContract<HasManyThrough, LucidModel>
-{
+export class HasManyThroughClient implements HasManyThroughClientContract<
+  HasManyThrough,
+  LucidModel
+> {
   constructor(
     public relation: HasManyThrough,
     private parent: LucidRow,
