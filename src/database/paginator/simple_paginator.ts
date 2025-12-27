@@ -7,7 +7,7 @@
  * file that was distributed with this source code.
  */
 
-import { stringify } from 'qs'
+import { stringify } from '@poppinss/qs'
 import { CamelCaseNamingStrategy } from '../../orm/naming_strategies/camel_case.js'
 import {
   type SimplePaginatorContract,
