@@ -706,11 +706,20 @@ export class ModelQueryBuilder
     this.ensureCanPerformWrites()
 
     if (value === undefined && returning === undefined) {
-      this.knexQuery.update(this.resolveKey(column, true))
+      // Transform values in the object before passing to knex
+      if (column && typeof column === 'object') {
+        const columns = Object.keys(column).reduce((result: any, key) => {
+          result[this.resolveKey(key)] = this.transformRaw(column[key])
+          return result
+        }, {})
+        this.knexQuery.update(columns)
+      } else {
+        this.knexQuery.update(column)
+      }
     } else if (returning === undefined) {
-      this.knexQuery.update(this.resolveKey(column), value)
+      this.knexQuery.update(this.resolveKey(column), this.transformRaw(value))
     } else {
-      this.knexQuery.update(this.resolveKey(column), value, returning)
+      this.knexQuery.update(this.resolveKey(column), this.transformRaw(value), returning)
     }
 
     return this

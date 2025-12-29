@@ -364,4 +364,71 @@ test.group('Adapter', (group) => {
     assert.isFalse(user.$isDirty)
     assert.isTrue(user.$isPersisted)
   })
+
+  test('handle Database.raw in prepare method for insert and update', async ({
+    assert,
+    fs,
+    cleanup: testCleanup,
+  }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const connection = db.connection()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter)
+
+    // Create a table with appropriate column type based on dialect
+    testCleanup(() => connection.schema.dropTable('locations'))
+    const hasTable = await connection.schema.hasTable('locations')
+    if (!hasTable) {
+      await connection.schema.createTable('locations', (table) => {
+        table.increments('id')
+        table.specificType('coordinates', 'point')
+        table.string('name')
+      })
+    }
+
+    interface Point {
+      longitude: number
+      latitude: number
+    }
+
+    class Location extends BaseModel {
+      static $table = 'locations'
+
+      @column({ isPrimary: true })
+      declare id: number
+
+      @column({
+        prepare: (value: Point) => {
+          return db.raw('POINT(?, ?)', [value.longitude, value.latitude])
+        },
+      })
+      declare coordinates: Point
+
+      @column()
+      declare name: string
+    }
+
+    Location.boot()
+
+    // Test INSERT with Database.raw
+    const location = new Location()
+    location.coordinates = { longitude: -0.12, latitude: 51.5 }
+    location.name = 'Test Location'
+    await location.save()
+
+    assert.exists(location.id)
+    assert.isTrue(location.$isPersisted)
+
+    // Test UPDATE with Database.raw
+    location.coordinates = { longitude: -0.5, latitude: 50.5 }
+    location.name = 'Updated Location'
+    await location.save()
+
+    assert.isFalse(location.$isDirty)
+  }).skip(
+    !['mysql', 'mysql_legacy', 'pg'].includes(process.env.DB!),
+    'Only for MySQL and PostgreSQL'
+  )
 })
