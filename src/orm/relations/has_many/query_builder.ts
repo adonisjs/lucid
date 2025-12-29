@@ -139,8 +139,6 @@ export class HasManyQueryBuilder
     }
 
     const rowName = 'adonis_group_limit_counter'
-    const partitionBy = `PARTITION BY ${this.relation.foreignKeyColumnName}`
-    const orderBy = `ORDER BY ${column} ${direction}`
 
     /**
      * Select * when no columns are selected
@@ -149,9 +147,12 @@ export class HasManyQueryBuilder
       this.select('*')
     }
 
-    this.select(this.client.raw(`row_number() over (${partitionBy} ${orderBy}) as ${rowName}`)).as(
-      'adonis_temp'
-    )
+    this.select(
+      this.client.raw(
+        `row_number() over (PARTITION BY ?? ORDER BY ?? ${direction}) as ${rowName}`,
+        [this.relation.foreignKeyColumnName, column]
+      )
+    ).as('adonis_temp')
 
     const groupQuery = this.relation.relatedModel().query()
     groupQuery.usePreloader(this.preloader)

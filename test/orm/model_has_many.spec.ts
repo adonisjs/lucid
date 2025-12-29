@@ -5827,3 +5827,111 @@ test.group('Model | HasMany | delete', (group) => {
     assert.deepEqual(sql, rawSql)
   })
 })
+
+test.group('Model | HasMany | Regressions', (group) => {
+  group.setup(async () => {
+    await setup()
+  })
+
+  group.teardown(async () => {
+    await cleanup()
+  })
+
+  group.each.teardown(async () => {
+    await resetTables()
+  })
+
+  test('properly quote camelCase foreign key column in PARTITION BY clause', async ({
+    fs,
+    assert,
+    cleanup: testCleanup,
+  }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter)
+
+    class Post extends BaseModel {
+      static table = 'camel_posts'
+
+      @column({ isPrimary: true })
+      declare id: number
+
+      @column({ columnName: 'authorId' })
+      declare authorId: number
+
+      @column()
+      declare title: string
+
+      @column()
+      declare createdAt: Date
+    }
+
+    class User extends BaseModel {
+      static table = 'camel_users'
+
+      @column({ isPrimary: true })
+      declare id: number
+
+      @hasMany(() => Post, {
+        foreignKey: 'authorId',
+      })
+      declare posts: HasMany<typeof Post>
+    }
+
+    const dropTables = async () => {
+      await db.connection().schema.dropTableIfExists('camel_posts')
+      await db.connection().schema.dropTableIfExists('camel_users')
+    }
+
+    // Create tables with camelCase column names
+    await dropTables()
+
+    await db.connection().schema.createTable('camel_users', (table) => {
+      table.increments('id')
+      table.string('username')
+    })
+
+    await db.connection().schema.createTable('camel_posts', (table) => {
+      table.increments('id')
+      table.integer('authorId') // camelCase column name
+      table.string('title')
+      table.timestamp('createdAt')
+    })
+
+    testCleanup(dropTables)
+
+    await db
+      .insertQuery()
+      .table('camel_users')
+      .insert([{ username: 'virk' }])
+
+    const [user0] = await db.query().from('camel_users')
+
+    await db
+      .insertQuery()
+      .table('camel_posts')
+      .insert([
+        {
+          authorId: user0.id,
+          title: 'Post 1',
+          createdAt: new Date(),
+        },
+        {
+          authorId: user0.id,
+          title: 'Post 2',
+          createdAt: new Date(),
+        },
+      ])
+
+    User.boot()
+    Post.boot()
+
+    const users = await User.query().preload('posts', (query) => query.groupLimit(2))
+
+    // The query should work without errors
+    assert.lengthOf(users, 1)
+    assert.lengthOf(users[0].posts, 2)
+  }).skip(process.env.DB === 'mysql_legacy', 'Window functions not supported in MySQL 5.x')
+})

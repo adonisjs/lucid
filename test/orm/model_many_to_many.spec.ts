@@ -7958,3 +7958,114 @@ test.group('Model | ManyToMany | delete', (group) => {
     assert.deepEqual(sql, rawSql)
   })
 })
+
+test.group('Model | ManyToMany | Regressions', (group) => {
+  group.setup(async () => {
+    await setup()
+  })
+
+  group.teardown(async () => {
+    await cleanup()
+  })
+
+  group.each.teardown(async () => {
+    await resetTables()
+  })
+
+  test('properly quote camelCase pivot foreign key column in PARTITION BY clause', async ({
+    fs,
+    assert,
+    cleanup: testCleanup,
+  }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter)
+
+    class Skill extends BaseModel {
+      static table = 'camel_skills'
+
+      @column({ isPrimary: true })
+      declare id: number
+
+      @column()
+      declare name: string
+    }
+
+    class User extends BaseModel {
+      static table = 'camel_users'
+
+      @column({ isPrimary: true })
+      declare id: number
+
+      @column()
+      declare username: string
+
+      @manyToMany(() => Skill, {
+        pivotTable: 'camel_skill_user',
+        pivotForeignKey: 'userId',
+        pivotRelatedForeignKey: 'skillId',
+      })
+      declare skills: ManyToMany<typeof Skill>
+    }
+
+    const dropTables = async () => {
+      await db.connection().schema.dropTableIfExists('camel_skill_user')
+      await db.connection().schema.dropTableIfExists('camel_skills')
+      await db.connection().schema.dropTableIfExists('camel_users')
+    }
+
+    // Create tables with camelCase column names
+    await dropTables()
+
+    await db.connection().schema.createTable('camel_users', (table) => {
+      table.increments('id')
+      table.string('username')
+    })
+
+    await db.connection().schema.createTable('camel_skills', (table) => {
+      table.increments('id')
+      table.string('name')
+    })
+
+    await db.connection().schema.createTable('camel_skill_user', (table) => {
+      table.increments('id')
+      table.integer('userId') // camelCase column name
+      table.integer('skillId') // camelCase column name
+    })
+
+    testCleanup(dropTables)
+
+    await db
+      .insertQuery()
+      .table('camel_users')
+      .insert([{ username: 'virk' }])
+
+    const [user0] = await db.query().from('camel_users')
+
+    await db
+      .insertQuery()
+      .table('camel_skills')
+      .insert([{ name: 'Programming' }, { name: 'Dancing' }])
+
+    const [skill0, skill1] = await db.query().from('camel_skills')
+
+    await db
+      .insertQuery()
+      .table('camel_skill_user')
+      .insert([
+        { userId: user0.id, skillId: skill0.id },
+        { userId: user0.id, skillId: skill1.id },
+      ])
+
+    User.boot()
+    Skill.boot()
+
+    const users = await User.query().preload('skills', (query) => query.groupLimit(2))
+
+    // The query should work without errors
+    assert.lengthOf(users, 1)
+    assert.lengthOf(users[0].skills, 2)
+  }).skip(process.env.DB === 'mysql_legacy', 'Window functions not supported in MySQL 5.x')
+})
