@@ -8,11 +8,11 @@
  */
 
 import { test } from '@japa/runner'
-import type { HasOne, BelongsTo, ExtractModelRelations } from '../../src/types/relations.js'
 
 import { scope } from '../../src/orm/base_model/index.js'
 import { column, hasOne, belongsTo } from '../../src/orm/decorators/index.js'
 import { HasOneQueryBuilder } from '../../src/orm/relations/has_one/query_builder.js'
+import type { HasOne, BelongsTo, ExtractModelRelations } from '../../src/types/relations.js'
 
 import {
   getDb,
@@ -265,6 +265,7 @@ test.group('Model | HasOne | Options', (group) => {
     expectTypeOf<ExtractRelationCallback<typeof withAggregate>>().not.toBeNever()
     expectTypeOf<ExtractRelationCallback<typeof whereHas>>().not.toBeNever()
     expectTypeOf<typeof related>().not.toBeNever()
+    expectTypeOf(new User().load).toBeCallableWith('profile')
   })
 })
 
