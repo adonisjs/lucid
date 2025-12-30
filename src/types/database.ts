@@ -79,6 +79,7 @@ export interface DialectContract {
   dropAllDomains(schemas?: string[]): Promise<void>
 
   truncate(table: string, cascade?: boolean): Promise<void>
+  truncateAllTables(excludeTables?: string[], schemas?: string[]): Promise<void>
 
   getAdvisoryLock(key: string | number, timeout?: number): Promise<boolean>
   releaseAdvisoryLock(key: string | number): Promise<boolean>
@@ -185,6 +186,11 @@ export interface QueryClientContract {
    * Truncate a given table
    */
   truncate(table: string, cascade?: boolean): Promise<void>
+
+  /**
+   * Truncate all tables
+   */
+  truncateAllTables(excludeTables?: string[], schemas?: string[]): Promise<void>
 
   /**
    * Returns columns info for a given table

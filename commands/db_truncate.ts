@@ -56,10 +56,7 @@ export default class DbTruncate extends BaseCommand {
    * Truncate all tables except adonis migrations table
    */
   private async performTruncate(client: QueryClientContract, schemas: string[]) {
-    let tables = await client.getAllTables(schemas)
-    tables = tables.filter((table) => !['adonis_schema', 'adonis_schema_versions'].includes(table))
-
-    await Promise.all(tables.map((table) => client.truncate(table, true)))
+    await client.truncateAllTables(['adonis_schema', 'adonis_schema_versions'], schemas)
     this.logger.success('Truncated tables successfully')
   }
 

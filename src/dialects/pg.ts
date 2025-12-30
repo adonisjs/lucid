@@ -41,17 +41,34 @@ export class PgDialect implements DialectContract {
   }
 
   /**
+   * Returns a filter function to omit tables, views and
+   * types from the excludeList
+   */
+  #omitFromExcludeList(excludeList?: string[]) {
+    if (!excludeList) {
+      return () => true
+    }
+    return ({ name, schema }: { name: string; schema: string }): boolean => {
+      return !(excludeList.includes(`${schema}.${name}`) || excludeList.includes(name))
+    }
+  }
+
+  #compileGetAllTables(schemas: string[]) {
+    return this.client
+      .query()
+      .from('pg_catalog.pg_tables')
+      .select(['tablename as name', 'schemaname as schema'])
+      .whereNotIn('schemaname', ['pg_catalog', 'information_schema'])
+      .whereIn('schemaname', schemas)
+      .orderBy('tablename', 'asc')
+  }
+
+  /**
    * Returns an array of table names for one or many schemas.
    */
   async getAllTables(schemas: string[]) {
-    const tables = await this.client
-      .query()
-      .from('pg_catalog.pg_tables')
-      .select('tablename as table_name')
-      .whereIn('schemaname', schemas)
-      .orderBy('tablename', 'asc')
-
-    return tables.map(({ table_name }) => table_name)
+    const tables = await this.#compileGetAllTables(schemas)
+    return tables.map(({ name }) => name)
   }
 
   /**
@@ -104,6 +121,38 @@ export class PgDialect implements DialectContract {
     return cascade
       ? this.client.rawQuery(`TRUNCATE "${table}" RESTART IDENTITY CASCADE;`)
       : this.client.rawQuery(`TRUNCATE "${table}";`)
+  }
+
+  async truncateAllTables(excludeTables?: string[], schemas?: string[]): Promise<void> {
+    /**
+     * When truncating tables, we only truncate them from the explicitly
+     * provided searchPaths or from the public schema
+     */
+    const searchPath = schemas ?? ['public']
+
+    const tables = await this.#compileGetAllTables(searchPath)
+    const knex = this.client.getWriteClient()
+
+    /**
+     * Collecting the tables to be dropped. We ignore tables from the exclude
+     * tables list.
+     */
+    const tablesToTrunacte = tables
+      .filter(this.#omitFromExcludeList(excludeTables))
+      .map((table) => knex.ref(`${table.schema}.${table.name}`).toSQL().sql)
+
+    if (tablesToTrunacte.length) {
+      const trx = await knex.transaction()
+      try {
+        await trx.schema.raw('SET CONSTRAINTS ALL DEFERRED;')
+        await trx.schema.raw(`TRUNCATE ${tablesToTrunacte.join(',')};`)
+        await trx.schema.raw('SET CONSTRAINTS ALL IMMEDIATE;')
+        await trx.commit()
+      } catch (error) {
+        await trx.rollback()
+        throw error
+      }
+    }
   }
 
   /**

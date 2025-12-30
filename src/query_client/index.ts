@@ -122,6 +122,13 @@ export class QueryClient implements QueryClientContract {
   }
 
   /**
+   * Truncate all tables
+   */
+  async truncateAllTables(excludeTables?: string[], schemas?: string[]): Promise<void> {
+    await this.dialect.truncateAllTables(excludeTables, schemas)
+  }
+
+  /**
    * Get information for a table columns
    */
   columnsInfo(table: string): Promise<{ [column: string]: Knex.ColumnInfo }>

@@ -144,7 +144,7 @@ test.group('Query client', (group) => {
     })
   }
 
-  test('truncate a table with reserved keywork', async () => {
+  test('truncate a table with reserved keywords', async () => {
     const connection = new Connection('primary', getConfig(), logger)
     connection.connect()
 
@@ -158,6 +158,116 @@ test.group('Query client', (group) => {
 
     await connection.client?.schema.dropTable('user')
     await connection.disconnect()
+  })
+
+  test('truncateAllTables should handle foreign key constraints correctly', async ({
+    assert,
+    cleanup: testCleanup,
+  }) => {
+    const connection = new Connection('primary', getConfig(), logger)
+    connection.connect()
+
+    /**
+     * Drop tables if they exist from previous runs
+     */
+    await connection.client?.schema.dropTableIfExists('test_reviews')
+    await connection.client?.schema.dropTableIfExists('test_books')
+    await connection.client?.schema.dropTableIfExists('test_authors')
+
+    /**
+     * Create tables with foreign key relationships
+     */
+    await connection.client!.schema.createTable('test_authors', (table) => {
+      table.increments('id').primary()
+      table.string('name')
+    })
+
+    await connection.client!.schema.createTable('test_books', (table) => {
+      table.increments('id').primary()
+      table.string('title')
+      table.integer('author_id').unsigned().references('test_authors.id').onDelete('CASCADE')
+    })
+
+    await connection.client!.schema.createTable('test_reviews', (table) => {
+      table.increments('id').primary()
+      table.text('content')
+      table.integer('book_id').unsigned().references('test_books.id').onDelete('CASCADE')
+    })
+
+    testCleanup(async () => {
+      await connection.client?.schema.dropTableIfExists('test_reviews')
+      await connection.client?.schema.dropTableIfExists('test_books')
+      await connection.client?.schema.dropTableIfExists('test_authors')
+      await connection.disconnect()
+    })
+
+    /**
+     * Insert test data
+     */
+    const authorResult = await connection
+      .client!.table('test_authors')
+      .insert({ name: 'John Doe' })
+      .returning('id')
+    const authorId = authorResult[0].id
+
+    const bookResult = await connection
+      .client!.table('test_books')
+      .insert({
+        title: 'Test Book',
+        author_id: authorId,
+      })
+      .returning('id')
+    const bookId = bookResult[0].id
+
+    await connection.client!.table('test_reviews').insert({
+      content: 'Great book!',
+      book_id: bookId,
+    })
+
+    /**
+     * Verify data was inserted
+     */
+    const authorsBefore = await connection.client!.table('test_authors').count('* as count')
+    const booksBefore = await connection.client!.table('test_books').count('* as count')
+    const reviewsBefore = await connection.client!.table('test_reviews').count('* as count')
+
+    assert.equal(authorsBefore[0].count, '1')
+    assert.equal(booksBefore[0].count, '1')
+    assert.equal(reviewsBefore[0].count, '1')
+
+    /**
+     * Use truncateAllTables - this should work correctly
+     */
+    const client = new QueryClient('write', connection, createEmitter())
+    await client.truncateAllTables(
+      [
+        'users',
+        'friends',
+        'countries',
+        'profiles',
+        'posts',
+        'comments',
+        'follows',
+        'groups',
+        'group_user',
+        'skills',
+        'skill_user',
+        'identities',
+        'uuid_users',
+      ],
+      ['public']
+    )
+
+    /**
+     * Verify all tables are now empty
+     */
+    const authorsAfter = await connection.client!.table('test_authors').count('* as count')
+    const booksAfter = await connection.client!.table('test_books').count('* as count')
+    const reviewsAfter = await connection.client!.table('test_reviews').count('* as count')
+
+    assert.equal(authorsAfter[0].count, '0')
+    assert.equal(booksAfter[0].count, '0')
+    assert.equal(reviewsAfter[0].count, '0')
   })
 })
 

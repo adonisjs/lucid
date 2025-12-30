@@ -42,6 +42,19 @@ export class MysqlDialect implements DialectContract {
   }
 
   /**
+   * Returns a filter function to omit tables, views and
+   * types from the excludeList
+   */
+  #omitFromExcludeList(excludeList?: string[]) {
+    if (!excludeList) {
+      return () => true
+    }
+    return (name: string): boolean => {
+      return !excludeList.includes(name)
+    }
+  }
+
+  /**
    * Truncate mysql table with option to cascade
    */
   async truncate(table: string, cascade: boolean = false) {
@@ -61,6 +74,47 @@ export class MysqlDialect implements DialectContract {
     } catch (error) {
       await trx.rollback()
       throw error
+    }
+  }
+
+  /**
+   * Truncates all the tables that are in the database.
+   *
+   * You may exclude certain tables from getting truncated by providing them
+   * under the "excludeTables" list.
+   *
+   * @example
+   * ```ts
+   * // Truncate all tables
+   * await dialect.truncateAllTables()
+   *
+   * // Exclude the users table
+   * await dialect.truncateAllTables(['users'])
+   * ```
+   */
+  async truncateAllTables(excludeTables?: string[]): Promise<void> {
+    const tables = await this.getAllTables()
+    const knex = this.client.getWriteClient()
+
+    /**
+     * Collecting the tables to be dropped. We ignore tables from the exclude
+     * tables list.
+     */
+    const tablesToTrunacte = tables.filter(this.#omitFromExcludeList(excludeTables))
+
+    if (tablesToTrunacte.length) {
+      const trx = await knex.transaction()
+      try {
+        await trx.schema.raw('SET FOREIGN_KEY_CHECKS=0;')
+        for (let table of tablesToTrunacte) {
+          await trx.table(table).truncate()
+        }
+        await trx.schema.raw('SET FOREIGN_KEY_CHECKS=1;')
+        await trx.commit()
+      } catch (error) {
+        await trx.rollback()
+        throw error
+      }
     }
   }
 

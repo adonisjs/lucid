@@ -37,6 +37,19 @@ export abstract class BaseSqliteDialect implements DialectContract {
   }
 
   /**
+   * Returns a filter function to omit tables, views and
+   * types from the excludeList
+   */
+  #omitFromExcludeList(excludeList?: string[]) {
+    if (!excludeList) {
+      return () => true
+    }
+    return ({ name }: { name: string }): boolean => {
+      return !excludeList.includes(name)
+    }
+  }
+
+  /**
    * Returns an array of table names
    */
   async getAllTables() {
@@ -85,6 +98,52 @@ export abstract class BaseSqliteDialect implements DialectContract {
    */
   async truncate(table: string) {
     return this.client.knexQuery().table(table).truncate()
+  }
+
+  /**
+   * Truncates all the tables that are in the database.
+   *
+   * You may exclude certain tables from getting truncated by providing them
+   * under the "excludeTables" list.
+   *
+   * @example
+   * ```ts
+   * // Truncate all tables
+   * await dialect.truncateAllTables()
+   *
+   * // Exclude the users table
+   * await dialect.truncateAllTables(['users'])
+   * ```
+   */
+  async truncateAllTables(excludeTables?: string[]): Promise<void> {
+    const tables = await this.getAllTables()
+    const knex = this.client.getWriteClient()
+
+    /**
+     * Collecting the tables to be dropped. We ignore tables from the exclude
+     * tables list.
+     */
+    const tablesToTrunacte = tables
+      .filter(this.#omitFromExcludeList(excludeTables))
+      .map((table) => table.name)
+
+    if (tablesToTrunacte.length) {
+      const pragma = await knex.raw('PRAGMA foreign_keys;')
+      const hasForeignKeys = pragma[0].foreign_keys === 1
+      if (hasForeignKeys) {
+        await knex.raw('PRAGMA foreign_keys = OFF;')
+      }
+
+      try {
+        for (let table of tablesToTrunacte) {
+          await knex.table(table).truncate()
+        }
+      } finally {
+        if (hasForeignKeys) {
+          await knex.raw('PRAGMA foreign_keys = ON;')
+        }
+      }
+    }
   }
 
   /**

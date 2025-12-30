@@ -42,6 +42,19 @@ export class MssqlDialect implements DialectContract {
   }
 
   /**
+   * Returns a filter function to omit tables, views and
+   * types from the excludeList
+   */
+  #omitFromExcludeList(excludeList?: string[]) {
+    if (!excludeList) {
+      return () => true
+    }
+    return ({ name, schema }: { name: string; schema: string }): boolean => {
+      return !(excludeList.includes(`${schema}.${name}`) || excludeList.includes(name))
+    }
+  }
+
+  /**
    * Returns an array of table names
    */
   async getAllTables() {
@@ -67,6 +80,37 @@ export class MssqlDialect implements DialectContract {
    */
   async truncate(table: string, _: boolean) {
     return this.client.knexQuery().table(table).truncate()
+  }
+
+  async truncateAllTables(excludeTables?: string[]): Promise<void> {
+    const tables = await this.getAllTables()
+    const knex = this.client.getWriteClient()
+
+    /**
+     * Collecting the tables to be dropped. We ignore tables from the exclude
+     * tables list.
+     */
+    const tablesToTrunacte = tables
+      .filter(this.#omitFromExcludeList(excludeTables))
+      .map((table) => knex.ref(`${table.schema}.${table.name}`).toSQL().sql)
+
+    if (tablesToTrunacte.length) {
+      const trx = await knex.transaction()
+      try {
+        await trx.schema.raw(`EXEC sp_msforeachtable 'ALTER TABLE \\? NOCHECK CONSTRAINT ALL';`)
+        for (let table of tablesToTrunacte) {
+          await trx.schema.raw(`DELETE FROM ${table};`)
+          await trx.schema.raw(`DBCC CHECKIDENT('${table}', RESEED, 0);`)
+        }
+        await trx.schema.raw(
+          `EXEC sp_msforeachtable 'ALTER TABLE \\? WITH CHECK CHECK CONSTRAINT ALL';`
+        )
+        await trx.commit()
+      } catch (error) {
+        await trx.rollback()
+        throw error
+      }
+    }
   }
 
   /**

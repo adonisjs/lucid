@@ -98,6 +98,13 @@ export class TransactionClient extends EventEmitter implements TransactionClient
   }
 
   /**
+   * Truncate all tables
+   */
+  async truncateAllTables(excludeTables?: string[], schemas?: string[]): Promise<void> {
+    await this.dialect.truncateAllTables(excludeTables, schemas)
+  }
+
+  /**
    * Get columns info inside a transaction. You won't need it here, however
    * added for API compatibility with the [[QueryClient]] class
    */

@@ -41,6 +41,19 @@ export class RedshiftDialect implements DialectContract {
   }
 
   /**
+   * Returns a filter function to omit tables, views and
+   * types from the excludeList
+   */
+  #omitFromExcludeList(excludeList?: string[]) {
+    if (!excludeList) {
+      return () => true
+    }
+    return ({ name, schema }: { name: string; schema: string }): boolean => {
+      return !(excludeList.includes(`${schema}.${name}`) || excludeList.includes(name))
+    }
+  }
+
+  /**
    * Returns an array of table names for one or many schemas.
    *
    * NOTE: ASSUMING FEATURE PARITY WITH POSTGRESQL HERE (NOT TESTED)
@@ -114,6 +127,38 @@ export class RedshiftDialect implements DialectContract {
     return cascade
       ? this.client.rawQuery(`TRUNCATE "${table}" RESTART IDENTITY CASCADE;`)
       : this.client.rawQuery(`TRUNCATE "${table}";`)
+  }
+
+  async truncateAllTables(excludeTables?: string[], schemas?: string[]): Promise<void> {
+    /**
+     * When truncating tables, we only truncate them from the explicitly
+     * provided searchPaths or from the public schema
+     */
+    const searchPath = schemas ?? ['public']
+
+    const tables = await this.getAllTables(searchPath)
+    const knex = this.client.getWriteClient()
+
+    /**
+     * Collecting the tables to be dropped. We ignore tables from the exclude
+     * tables list.
+     */
+    const tablesToTrunacte = tables
+      .filter(this.#omitFromExcludeList(excludeTables))
+      .map((table) => knex.ref(`${table.schema}.${table.name}`).toSQL().sql)
+
+    if (tablesToTrunacte.length) {
+      const trx = await knex.transaction()
+      try {
+        await trx.schema.raw('SET CONSTRAINTS ALL DEFERRED;')
+        await trx.schema.raw(`TRUNCATE ${tablesToTrunacte.join(',')};`)
+        await trx.schema.raw('SET CONSTRAINTS ALL IMMEDIATE;')
+        await trx.commit()
+      } catch (error) {
+        await trx.rollback()
+        throw error
+      }
+    }
   }
 
   /**

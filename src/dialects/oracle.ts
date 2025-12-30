@@ -54,6 +54,15 @@ export class OracleDialect implements DialectContract {
   /**
    * Not implemented yet
    */
+  async truncateAllTables(): Promise<any> {
+    throw new Error(
+      '"truncateAllTables" method is not implemented for oracledb. Create a PR to add the feature'
+    )
+  }
+
+  /**
+   * Not implemented yet
+   */
   async dropAllTables() {
     throw new Error(
       '"dropAllTables" method is not implemented for oracledb. Create a PR to add the feature'
