@@ -102,6 +102,12 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    */
   subQueryAlias?: string
 
+  /**
+   * Table alias set when using `.from({ alias: 'table_name' })`.
+   * Only populated for simple table aliases, not for raw queries or subqueries.
+   */
+  tableAlias?: string
+
   constructor(
     public knexQuery: Knex.QueryBuilder,
     private queryCallback: DBQueryCallback,
@@ -298,6 +304,25 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * use the last selected table
    */
   from(table: any): this {
+    /**
+     * Check if table is provided as an alias object like { u: 'users' }
+     * and store the alias for later use in column selection
+     */
+    if (table && typeof table === 'object' && !Array.isArray(table)) {
+      const keys = Object.keys(table)
+      if (keys.length === 1) {
+        const alias = keys[0]
+        const tableName = table[alias]
+        /**
+         * Only store alias for simple string table names,
+         * not for raw queries or subqueries
+         */
+        if (typeof tableName === 'string') {
+          this.tableAlias = alias
+        }
+      }
+    }
+
     this.knexQuery.from(this.transformValue(table))
     return this
   }

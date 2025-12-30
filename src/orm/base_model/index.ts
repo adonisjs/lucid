@@ -175,6 +175,7 @@ class BaseModelImpl implements LucidRow {
     columnsToSerialized: ModelKeysContract
     serializedToColumns: ModelKeysContract
     serializedToAttributes: ModelKeysContract
+    columnAliasesToAttributes: ModelKeysContract
   }
 
   /**
@@ -323,6 +324,45 @@ class BaseModelImpl implements LucidRow {
   }
 
   /**
+   * Computes the table-qualified alias for a given column name.
+   * This is used to generate consistent aliases across the ORM.
+   *
+   * Example: For a User model with table 'users' and column 'email':
+   * - Returns: 'users_email'
+   */
+  static $getColumnAlias(columnName: string): string {
+    return `${this.table}_${columnName}`
+  }
+
+  /**
+   * Returns an object of column selections with table-qualified names and aliases.
+   * Useful when you want to explicitly select all model columns to prevent column
+   * name conflicts when joining tables.
+   *
+   * @example
+   * ```ts
+   * const users = await User
+   *   .query()
+   *   .select(User.columnsForSelect())
+   *   .join('posts', 'users.id', 'posts.user_id')
+   *
+   * // Generates: SELECT users.id AS users_id, users.name AS users_name
+   * ```
+   *
+   * @returns Object with alias as key and table.column as value
+   */
+  static columnsForSelect(): Record<string, string> {
+    const columns: Record<string, string> = {}
+
+    this.$columnsDefinitions.forEach((column) => {
+      const columnAlias = this.$getColumnAlias(column.columnName)
+      columns[columnAlias] = `${this.table}.${column.columnName}`
+    })
+
+    return columns
+  }
+
+  /**
    * Define a new column on the model. This is required, so that
    * we differentiate between plain properties vs model attributes.
    */
@@ -353,6 +393,8 @@ class BaseModelImpl implements LucidRow {
 
     this.$columnsDefinitions.set(name, column)
 
+    const columnAlias = this.$getColumnAlias(column.columnName)
+
     this.$keys.attributesToColumns.add(name, column.columnName)
     column.serializeAs && this.$keys.attributesToSerialized.add(name, column.serializeAs)
 
@@ -361,6 +403,8 @@ class BaseModelImpl implements LucidRow {
 
     column.serializeAs && this.$keys.serializedToAttributes.add(column.serializeAs, name)
     column.serializeAs && this.$keys.serializedToColumns.add(column.serializeAs, column.columnName)
+
+    this.$keys.columnAliasesToAttributes.add(columnAlias, name)
 
     return column
   }
@@ -586,6 +630,7 @@ class BaseModelImpl implements LucidRow {
         columnsToSerialized: new ModelKeys(),
         serializedToColumns: new ModelKeys(),
         serializedToAttributes: new ModelKeys(),
+        columnAliasesToAttributes: new ModelKeys(),
       },
       (value) => {
         return {
@@ -598,6 +643,9 @@ class BaseModelImpl implements LucidRow {
           serializedToColumns: new ModelKeys(Object.assign({}, value.serializedToColumns.all())),
           serializedToAttributes: new ModelKeys(
             Object.assign({}, value.serializedToAttributes.all())
+          ),
+          columnAliasesToAttributes: new ModelKeys(
+            Object.assign({}, value.columnAliasesToAttributes.all())
           ),
         }
       }
@@ -1697,8 +1745,15 @@ class BaseModelImpl implements LucidRow {
         /**
          * Pull the attribute name from the column name, since adapter
          * results always holds the column names.
+         *
+         * Try three lookups in order:
+         * 1. Table-qualified alias (e.g., "users_id")
+         * 2. Direct column name (e.g., "id") - for backward compatibility
+         * 3. Fallback to undefined
          */
-        const attributeName = Model.$keys.columnsToAttributes.get(key)
+        let attributeName =
+          Model.$keys.columnAliasesToAttributes.get(key) || Model.$keys.columnsToAttributes.get(key)
+
         if (attributeName) {
           const attribute = Model.$getColumn(attributeName)!
 

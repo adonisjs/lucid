@@ -855,6 +855,7 @@ export interface LucidModel {
     columnsToSerialized: ModelKeysContract
     serializedToColumns: ModelKeysContract
     serializedToAttributes: ModelKeysContract
+    columnAliasesToAttributes: ModelKeysContract
   }
 
   /**
@@ -884,6 +885,8 @@ export interface LucidModel {
   $addColumn(name: string, options: Partial<ColumnOptions>): ColumnOptions
   $hasColumn(name: string): boolean
   $getColumn(name: string): ModelColumnOptions | undefined
+  $getColumnAlias(columnName: string): string
+  columnsForSelect(): Record<string, string>
 
   /**
    * Managing computed columns
