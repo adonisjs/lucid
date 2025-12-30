@@ -7,7 +7,6 @@
  * file that was distributed with this source code.
  */
 
-import { RawBuilder } from '../database/static_builder/raw.js'
 import {
   type DialectContract,
   type SharedConfigNode,
@@ -41,6 +40,20 @@ export class MssqlDialect implements DialectContract {
     this.version = (this.client.getReadClient() as any)['context']['client'].version
   }
 
+  #compileGetAllTables() {
+    const knex = this.client.getWriteClient()
+    const query = this.client
+      .getWriteClient()
+      .from('sys.tables as t')
+      .select('t.name', knex.raw('schema_name(t.schema_id) as [schema]'))
+      .where('t.is_ms_shipped', 0)
+      .whereNot('t.name', 'sysdiagrams')
+      .orderByRaw('[schema]')
+      .orderBy('t.name')
+
+    return query
+  }
+
   /**
    * Returns a filter function to omit tables, views and
    * types from the excludeList
@@ -58,17 +71,8 @@ export class MssqlDialect implements DialectContract {
    * Returns an array of table names
    */
   async getAllTables() {
-    const tables = await this.client
-      .query()
-      .from('information_schema.tables')
-      .select('table_name as table_name')
-      .where('table_type', 'BASE TABLE')
-      .where('table_catalog', new RawBuilder('DB_NAME()'))
-      .whereNot('table_name', 'like', 'spt_%')
-      .andWhereNot('table_name', 'MSreplication_options')
-      .orderBy('table_name', 'asc')
-
-    return tables.map(({ table_name }) => table_name)
+    const tables: { name: string; schema: string }[] = await this.#compileGetAllTables()
+    return tables.map(({ name }) => name)
   }
 
   /**
@@ -83,7 +87,7 @@ export class MssqlDialect implements DialectContract {
   }
 
   async truncateAllTables(excludeTables?: string[]): Promise<void> {
-    const tables = await this.getAllTables()
+    const tables: { name: string; schema: string }[] = await this.#compileGetAllTables()
     const knex = this.client.getWriteClient()
 
     /**
@@ -100,7 +104,13 @@ export class MssqlDialect implements DialectContract {
         await trx.schema.raw(`EXEC sp_msforeachtable 'ALTER TABLE \\? NOCHECK CONSTRAINT ALL';`)
         for (let table of tablesToTrunacte) {
           await trx.schema.raw(`DELETE FROM ${table};`)
-          await trx.schema.raw(`DBCC CHECKIDENT('${table}', RESEED, 0);`)
+          /**
+           * Re-seeding is optional and will fail if the table does not
+           * contain an identity column
+           */
+          try {
+            await trx.schema.raw(`DBCC CHECKIDENT('${table}', RESEED, 0);`)
+          } catch {}
         }
         await trx.schema.raw(
           `EXEC sp_msforeachtable 'ALTER TABLE \\? WITH CHECK CHECK CONSTRAINT ALL';`

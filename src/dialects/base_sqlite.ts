@@ -44,7 +44,7 @@ export abstract class BaseSqliteDialect implements DialectContract {
     if (!excludeList) {
       return () => true
     }
-    return ({ name }: { name: string }): boolean => {
+    return (name: string): boolean => {
       return !excludeList.includes(name)
     }
   }
@@ -123,9 +123,7 @@ export abstract class BaseSqliteDialect implements DialectContract {
      * Collecting the tables to be dropped. We ignore tables from the exclude
      * tables list.
      */
-    const tablesToTrunacte = tables
-      .filter(this.#omitFromExcludeList(excludeTables))
-      .map((table) => table.name)
+    const tablesToTrunacte = tables.filter(this.#omitFromExcludeList(excludeTables))
 
     if (tablesToTrunacte.length) {
       const pragma = await knex.raw('PRAGMA foreign_keys;')
