@@ -18,6 +18,7 @@ import Migrate from '../../../commands/migration/run.js'
 import Refresh from '../../../commands/migration/refresh.js'
 import Rollback from '../../../commands/migration/rollback.js'
 import { cleanup, getDb } from '../../../test-helpers/index.js'
+import SchemaGenerate from '../../../commands/schema_generate.ts'
 
 test.group('migration:refresh', (group) => {
   group.each.setup(async () => {
@@ -70,7 +71,7 @@ test.group('migration:refresh', (group) => {
     ace.app.container.singleton('lucid.db', () => db)
     ace.ui.switchMode('raw')
 
-    ace.addLoader(new ListLoader([Reset, DbSeed, Migrate, Rollback]))
+    ace.addLoader(new ListLoader([Reset, DbSeed, Migrate, Rollback, SchemaGenerate]))
 
     const migrate = await ace.create(Migrate, [])
     await migrate.exec()
@@ -81,15 +82,17 @@ test.group('migration:refresh', (group) => {
     const migrated = await db.connection().from('adonis_schema').select('*')
     const hasUsersTable = await db.connection().schema.hasTable('schema_users')
     const hasAccountsTable = await db.connection().schema.hasTable('schema_accounts')
+    const schemaFileExists = await fs.exists('database/schema.ts')
 
     assert.lengthOf(migrated, 2)
     assert.isTrue(hasUsersTable)
     assert.isTrue(hasAccountsTable)
+    assert.isTrue(schemaFileExists)
   })
 
   test('run seeders when --seed flag is passed', async ({ fs, assert }) => {
     await fs.create(
-      'database/seeders/refres_cmd_user.ts',
+      'database/seeders/refresh_cmd_user.ts',
       `export default class UserSeeder {
         public async run () {
           process.env.EXEC_USER_SEEDER = 'true'
@@ -98,7 +101,7 @@ test.group('migration:refresh', (group) => {
     )
 
     await fs.create(
-      'database/migrations/refres_cmd_users_v1.ts',
+      'database/migrations/refresh_cmd_users_v1.ts',
       `
         import { BaseSchema as Schema } from '../../../../src/schema/main.js'
         export default class User extends Schema {
@@ -139,7 +142,7 @@ test.group('migration:refresh', (group) => {
     ace.app.container.singleton('lucid.db', () => db)
     ace.ui.switchMode('raw')
 
-    ace.addLoader(new ListLoader([Reset, DbSeed, Migrate, Rollback]))
+    ace.addLoader(new ListLoader([Reset, DbSeed, Migrate, Rollback, SchemaGenerate]))
 
     const migrate = await ace.create(Migrate, [])
     await migrate.exec()
@@ -149,5 +152,45 @@ test.group('migration:refresh', (group) => {
 
     assert.equal(process.env.EXEC_USER_SEEDER, 'true')
     delete process.env.EXEC_USER_SEEDER
+  })
+
+  test('skip schema generation when --no-schema-generate flag is passed', async ({
+    fs,
+    assert,
+  }) => {
+    await fs.create(
+      'database/migrations/refresh_cmd_users_v2.ts',
+      `
+        import { BaseSchema as Schema } from '../../../../src/schema/main.js'
+        export default class User extends Schema {
+          public async up () {
+            this.schema.createTable('schema_users', (table) => {
+              table.increments()
+            })
+          }
+
+          public async down() {
+            this.schema.dropTable('schema_users')
+          }
+        }
+      `
+    )
+
+    const db = getDb()
+    const ace = await new AceFactory().make(fs.baseUrl, { importer: () => {} })
+    await ace.app.init()
+    ace.app.container.singleton('lucid.db', () => db)
+    ace.ui.switchMode('raw')
+
+    ace.addLoader(new ListLoader([Reset, DbSeed, Migrate, Rollback, SchemaGenerate]))
+
+    const migrate = await ace.create(Migrate, ['--no-schema-generate'])
+    await migrate.exec()
+
+    const refresh = await ace.create(Refresh, ['--no-schema-generate'])
+    await refresh.exec()
+
+    const schemaFileExists = await fs.exists('database/schema.ts')
+    assert.isFalse(schemaFileExists)
   })
 })

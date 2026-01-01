@@ -12,25 +12,24 @@ import { test } from '@japa/runner'
 import { ListLoader } from '@adonisjs/core/ace'
 import { AceFactory } from '@adonisjs/core/factories'
 
-import Reset from '../../../commands/migration/reset.js'
 import Migrate from '../../../commands/migration/run.js'
 import Rollback from '../../../commands/migration/rollback.js'
 import SchemaGenerate from '../../../commands/schema_generate.js'
 import { setup, cleanup, getDb } from '../../../test-helpers/index.js'
 
-test.group('migration:reset', (group) => {
+test.group('migration:rollback', (group) => {
   group.each.setup(async () => {
     await setup()
 
     return async () => {
       await cleanup()
-      await cleanup(['adonis_schema', 'adonis_schema_versions', 'schema_users', 'schema_accounts'])
+      await cleanup(['adonis_schema', 'adonis_schema_versions', 'schema_users'])
     }
   })
 
-  test('rollback to batch 0', async ({ fs, assert }) => {
+  test('rollback migrations and generate schema', async ({ fs, assert }) => {
     await fs.create(
-      'database/migrations/reset_cmd_users.ts',
+      'database/migrations/rollback_cmd_users.ts',
       `
         import { BaseSchema as Schema } from '../../../../src/schema/main.js'
         export default class User extends Schema {
@@ -47,46 +46,26 @@ test.group('migration:reset', (group) => {
       `
     )
 
-    await fs.create(
-      'database/migrations/reset_cmd_posts.ts',
-      `
-        import { BaseSchema as Schema } from '../../../../src/Schema'
-        export default class Account extends Schema {
-          public async up () {
-            this.schema.createTable('schema_accounts', (table) => {
-              table.increments()
-            })
-          }
-
-          public async down() {
-            this.schema.dropTable('schema_accounts')
-          }
-        }
-      `
-    )
-
     const db = getDb()
     const ace = await new AceFactory().make(fs.baseUrl, { importer: () => {} })
     await ace.app.init()
     ace.app.container.singleton('lucid.db', () => db)
     ace.ui.switchMode('raw')
 
-    ace.addLoader(new ListLoader([Rollback, SchemaGenerate]))
+    ace.addLoader(new ListLoader([SchemaGenerate]))
 
     const migrate = await ace.create(Migrate, [])
     await migrate.exec()
 
-    const refresh = await ace.create(Reset, [])
-    await refresh.exec()
+    const rollback = await ace.create(Rollback, [])
+    await rollback.exec()
 
     const migrated = await db.connection().from('adonis_schema').select('*')
     const hasUsersTable = await db.connection().schema.hasTable('schema_users')
-    const hasAccountsTable = await db.connection().schema.hasTable('schema_accounts')
     const schemaFileExists = await fs.exists('database/schema.ts')
 
     assert.lengthOf(migrated, 0)
     assert.isFalse(hasUsersTable)
-    assert.isFalse(hasAccountsTable)
     assert.isTrue(schemaFileExists)
   })
 
@@ -95,7 +74,7 @@ test.group('migration:reset', (group) => {
     assert,
   }) => {
     await fs.create(
-      'database/migrations/reset_cmd_users_v2.ts',
+      'database/migrations/rollback_cmd_users_v2.ts',
       `
         import { BaseSchema as Schema } from '../../../../src/schema/main.js'
         export default class User extends Schema {
@@ -118,13 +97,13 @@ test.group('migration:reset', (group) => {
     ace.app.container.singleton('lucid.db', () => db)
     ace.ui.switchMode('raw')
 
-    ace.addLoader(new ListLoader([Rollback, SchemaGenerate]))
+    ace.addLoader(new ListLoader([SchemaGenerate]))
 
     const migrate = await ace.create(Migrate, ['--no-schema-generate'])
     await migrate.exec()
 
-    const reset = await ace.create(Reset, ['--no-schema-generate'])
-    await reset.exec()
+    const rollback = await ace.create(Rollback, ['--no-schema-generate'])
+    await rollback.exec()
 
     const schemaFileExists = await fs.exists('database/schema.ts')
     assert.isFalse(schemaFileExists)

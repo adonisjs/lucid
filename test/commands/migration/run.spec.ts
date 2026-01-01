@@ -9,9 +9,11 @@
 
 import 'reflect-metadata'
 import { test } from '@japa/runner'
+import { ListLoader } from '@adonisjs/core/ace'
 import { AceFactory } from '@adonisjs/core/factories'
 
 import Migrate from '../../../commands/migration/run.js'
+import SchemaGenerate from '../../../commands/schema_generate.js'
 import { setup, cleanup as cleanupTables, getDb } from '../../../test-helpers/index.js'
 
 test.group('migration:run', (group) => {
@@ -50,16 +52,20 @@ test.group('migration:run', (group) => {
     ace.app.container.singleton('lucid.db', () => db)
     ace.ui.switchMode('raw')
 
+    ace.addLoader(new ListLoader([SchemaGenerate]))
+
     const migrate = await ace.create(Migrate, [])
     await migrate.exec()
 
     const migrated = await db.connection().from('adonis_schema').select('*')
     const hasUsersTable = await db.connection().schema.hasTable('schema_users')
+    const schemaFileExists = await fs.exists('database/schema.ts')
 
     assert.lengthOf(migrated, 1)
     assert.isTrue(hasUsersTable)
     assert.equal(migrated[0].name, 'database/migrations/run_cmd_users')
     assert.equal(migrated[0].batch, 1)
+    assert.isTrue(schemaFileExists)
   })
 
   test('skip migrations when already up to date', async ({ fs, assert }) => {
@@ -231,6 +237,8 @@ test.group('migration:run', (group) => {
     ace.app.container.singleton('lucid.db', () => db)
     ace.ui.switchMode('raw')
 
+    ace.addLoader(new ListLoader([SchemaGenerate]))
+
     const migrate = await ace.create(Migrate, ['--compact-output'])
     await migrate.exec()
 
@@ -281,5 +289,38 @@ test.group('migration:run', (group) => {
     await migrate.exec()
 
     migrate.assertLogMatches(/grey\(❯ Already up to date/)
+  })
+
+  test('skip schema generation when --no-schema-generate flag is passed', async ({
+    fs,
+    assert,
+  }) => {
+    await fs.create(
+      'database/migrations/run_cmd_users_v6.ts',
+      `
+      import { BaseSchema as Schema } from '../../../../src/schema/main.js'
+      export default class User extends Schema {
+        public async up () {
+          this.schema.createTable('schema_users', (table) => {
+            table.increments()
+          })
+        }
+      }
+    `
+    )
+
+    const db = getDb()
+    const ace = await new AceFactory().make(fs.baseUrl, { importer: () => {} })
+    await ace.app.init()
+    ace.app.container.singleton('lucid.db', () => db)
+    ace.ui.switchMode('raw')
+
+    ace.addLoader(new ListLoader([SchemaGenerate]))
+
+    const migrate = await ace.create(Migrate, ['--no-schema-generate'])
+    await migrate.exec()
+
+    const schemaFileExists = await fs.exists('database/schema.ts')
+    assert.isFalse(schemaFileExists)
   })
 })

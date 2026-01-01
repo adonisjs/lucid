@@ -69,8 +69,46 @@ export default class Rollback extends MigrationsBase {
   /**
    * Disable advisory locks
    */
-  @flags.boolean({ description: 'Disable locks acquired to run migrations safely' })
+  @flags.boolean({ description: 'Disable locks acquired to rollback migrations safely' })
   declare disableLocks: boolean
+
+  /**
+   * Generate schema classes after database rollback
+   */
+  @flags.boolean({
+    description: 'Generate schema classes after rollback',
+    showNegatedVariantInHelp: true,
+    default: true,
+  })
+  schemaGenerate: boolean = true
+
+  /**
+   * Converting command properties to arguments
+   */
+  private getArgs() {
+    const args: string[] = []
+    if (this.compactOutput) {
+      args.push('--compact-output')
+    }
+
+    if (this.connection) {
+      args.push(`--connection=${this.connection}`)
+    }
+
+    return args
+  }
+
+  /**
+   * Generate schema classes
+   */
+  private async generateSchemaClasses() {
+    if (this.schemaGenerate === false) {
+      return
+    }
+    const generate = await this.kernel.exec('schema:generate', this.getArgs())
+    this.exitCode = generate.exitCode
+    this.error = generate.error
+  }
 
   /**
    * Instantiating the migrator instance
@@ -123,6 +161,7 @@ export default class Rollback extends MigrationsBase {
 
     await this.instantiateMigrator()
     await this.runMigrations(this.migrator!, this.connection)
+    await this.generateSchemaClasses()
   }
 
   /**

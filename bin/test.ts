@@ -1,4 +1,5 @@
 import { assert } from '@japa/assert'
+import { snapshot } from '@japa/snapshot'
 import { fileSystem } from '@japa/file-system'
 import { expectTypeOf } from '@japa/expect-type'
 import { processCLIArgs, configure, run } from '@japa/runner'
@@ -22,6 +23,7 @@ configure({
   plugins: [
     assert(),
     expectTypeOf(),
+    snapshot(),
     fileSystem({ basePath: new URL('../test-helpers/fs-plugin/', import.meta.url) }),
   ],
 })

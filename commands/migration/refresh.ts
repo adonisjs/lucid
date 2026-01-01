@@ -58,6 +58,16 @@ export default class Refresh extends BaseCommand {
   declare disableLocks: boolean
 
   /**
+   * Generate schema classes after refreshing the database schema
+   */
+  @flags.boolean({
+    description: 'Generate schema classes after refreshing the database schema',
+    showNegatedVariantInHelp: true,
+    default: true,
+  })
+  schemaGenerate: boolean = true
+
+  /**
    * Converting command properties to arguments
    */
   private getArgs() {
@@ -82,6 +92,10 @@ export default class Refresh extends BaseCommand {
       args.push('--disable-locks')
     }
 
+    if (this.schemaGenerate === false) {
+      args.push('--no-schema-generate')
+    }
+
     return args
   }
 
@@ -89,7 +103,16 @@ export default class Refresh extends BaseCommand {
    * Reset all migrations
    */
   private async resetMigrations() {
-    const reset = await this.kernel.exec('migration:reset', this.getArgs())
+    const resetArgs = this.getArgs()
+
+    /**
+     * During reset there is no need to re-generate the schema, because
+     * we should do it after the migrate
+     */
+    if (!resetArgs.includes('--no-schema-generate')) {
+      resetArgs.push('--no-schema-generate')
+    }
+    const reset = await this.kernel.exec('migration:reset', resetArgs)
     this.exitCode = reset.exitCode
     this.error = reset.error
   }

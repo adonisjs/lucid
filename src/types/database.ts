@@ -22,6 +22,7 @@ import {
   type InsertQueryBuilderContract,
   type DatabaseQueryBuilderContract,
 } from './querybuilder.js'
+import { type OrmSchemaGeneratorConfig } from './schema_generator.ts'
 
 /**
  * Same as knex. Need to redefine, as knex doesn't export this
@@ -345,6 +346,7 @@ export type SharedConfigNode = {
   revision?: number
   migrations?: MigratorConfig
   seeders?: SeedersConfig
+  schemaGeneration?: Pick<OrmSchemaGeneratorConfig, 'outputPath' | 'rulesPaths'>
   wipe?: { ignoreTables?: string[] }
   pool?: {
     afterCreate?: (conn: any, done: any) => void

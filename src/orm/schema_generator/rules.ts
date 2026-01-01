@@ -1,0 +1,119 @@
+/*
+ * @adonisjs/lucid
+ *
+ * (c) Harminder Virk <virk@adonisjs.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+import { INTERNAL_TYPES } from './mappings.ts'
+import type { SchemaRules } from '../../types/schema_generator.ts'
+
+/**
+ * Default schema rules for mapping internal types to TypeScript types
+ */
+export const DEFAULT_SCHEMA_RULES: Required<SchemaRules> = {
+  types: {
+    [INTERNAL_TYPES.NUMBER]: {
+      tsType: 'number',
+      imports: [],
+      decorator: '@column()',
+    },
+    [INTERNAL_TYPES.BIGINT]: {
+      tsType: 'bigint | number',
+      imports: [],
+      decorator: '@column()',
+    },
+    [INTERNAL_TYPES.DECIMAL]: {
+      tsType: 'string',
+      imports: [],
+      decorator: '@column()',
+    },
+    [INTERNAL_TYPES.BOOLEAN]: {
+      tsType: 'boolean',
+      imports: [],
+      decorator: '@column()',
+    },
+    [INTERNAL_TYPES.STRING]: {
+      tsType: 'string',
+      imports: [],
+      decorator: '@column()',
+    },
+    [INTERNAL_TYPES.DATE]: {
+      tsType: 'DateTime',
+      imports: [{ source: 'luxon', namedImports: ['DateTime'] }],
+      decorator: '@column.date()',
+    },
+    [INTERNAL_TYPES.TIME]: {
+      tsType: 'string',
+      imports: [],
+      decorator: '@column()',
+    },
+    [INTERNAL_TYPES.BINARY]: {
+      tsType: 'Buffer',
+      imports: [],
+      decorator: '@column()',
+    },
+    [INTERNAL_TYPES.JSON]: {
+      tsType: 'JSONB<any>',
+      imports: [{ source: '#models/data_types', namedImports: ['JSONB'] }],
+      decorator: '@column()',
+    },
+    [INTERNAL_TYPES.JSONB]: {
+      tsType: 'JSONB<any>',
+      imports: [{ source: '#models/data_types', namedImports: ['JSONB'] }],
+      decorator: '@column()',
+    },
+    [INTERNAL_TYPES.DATE_TIME]: {
+      tsType: 'DateTime',
+      imports: [{ source: 'luxon', namedImports: ['DateTime'] }],
+      decorator: '@column.dateTime()',
+    },
+    [INTERNAL_TYPES.UUID]: {
+      tsType: 'string',
+      imports: [],
+      decorator: '@column()',
+    },
+    [INTERNAL_TYPES.ENUM]: {
+      tsType: 'string',
+      imports: [],
+      decorator: '@column()',
+    },
+    [INTERNAL_TYPES.SET]: {
+      tsType: 'string',
+      imports: [],
+      decorator: '@column()',
+    },
+    [INTERNAL_TYPES.UNKNOWN]: {
+      tsType: 'any',
+      imports: [],
+      decorator: '@column()',
+    },
+  },
+  columns: {
+    id: (dataType: string) => {
+      return {
+        tsType: dataType,
+        imports: [],
+        decorator: '@column({ isPrimary: true })',
+      }
+    },
+    password: {
+      tsType: 'string',
+      imports: [],
+      decorator: '@column({ serializeAs: null })',
+    },
+    created_at: {
+      tsType: 'DateTime',
+      imports: [{ source: 'luxon', namedImports: ['DateTime'] }],
+      decorator: '@column.dateTime({ autoCreate: true })',
+    },
+    updated_at: {
+      tsType: 'DateTime',
+      imports: [{ source: 'luxon', namedImports: ['DateTime'] }],
+      decorator: '@column.dateTime({ autoCreate: true, autoUpdate: true })',
+    },
+  },
+  tables: {},
+}

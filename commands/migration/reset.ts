@@ -52,6 +52,16 @@ export default class Reset extends BaseCommand {
   declare disableLocks: boolean
 
   /**
+   * Generate schema classes after database reset
+   */
+  @flags.boolean({
+    description: 'Generate schema classes after reset',
+    showNegatedVariantInHelp: true,
+    default: true,
+  })
+  schemaGenerate: boolean = true
+
+  /**
    * Converting command properties to arguments
    */
   private getArgs() {
@@ -74,6 +84,10 @@ export default class Reset extends BaseCommand {
 
     if (this.disableLocks) {
       args.push('--disable-locks')
+    }
+
+    if (this.schemaGenerate === false) {
+      args.push('--no-schema-generate')
     }
 
     return args

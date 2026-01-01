@@ -56,6 +56,16 @@ export default class Migrate extends MigrationsBase {
   declare disableLocks: boolean
 
   /**
+   * Generate schema classes after migrating the database
+   */
+  @flags.boolean({
+    description: 'Generate schema classes after migrating the database',
+    showNegatedVariantInHelp: true,
+    default: true,
+  })
+  schemaGenerate: boolean = true
+
+  /**
    * Instantiating the migrator instance
    */
   private async instantiateMigrator() {
@@ -67,6 +77,34 @@ export default class Migrate extends MigrationsBase {
       dryRun: this.dryRun,
       disableLocks: this.disableLocks,
     })
+  }
+
+  /**
+   * Converting command properties to arguments
+   */
+  private getArgs() {
+    const args: string[] = []
+    if (this.compactOutput) {
+      args.push('--compact-output')
+    }
+
+    if (this.connection) {
+      args.push(`--connection=${this.connection}`)
+    }
+
+    return args
+  }
+
+  /**
+   * Generate schema classes
+   */
+  private async generateSchemaClasses() {
+    if (this.schemaGenerate === false) {
+      return
+    }
+    const generate = await this.kernel.exec('schema:generate', this.getArgs())
+    this.exitCode = generate.exitCode
+    this.error = generate.error
   }
 
   /**
@@ -104,6 +142,7 @@ export default class Migrate extends MigrationsBase {
 
     await this.instantiateMigrator()
     await this.runMigrations(this.migrator!, this.connection)
+    await this.generateSchemaClasses()
   }
 
   /**
