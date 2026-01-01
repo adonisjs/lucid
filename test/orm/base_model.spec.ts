@@ -5045,7 +5045,6 @@ test.group('Base Model | fetch', (group) => {
     })
 
     const trx = await db.transaction()
-
     await User.updateOrCreateMany(
       'username',
       [

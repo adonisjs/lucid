@@ -113,7 +113,9 @@ test.group('OrmSchemaGenerator | Basic Generation', (group) => {
     assert.include(output, 'declare stock: number')
 
     // Price type depends on database
-    const expectedPriceType = process.env.DB === 'sqlite' ? 'number' : 'string'
+    const expectedPriceType = ['sqlite', 'libsql', 'better_sqlite'].includes(process.env.DB!)
+      ? 'number'
+      : 'string'
     assert.include(output, `declare price: ${expectedPriceType}`)
 
     await connection.schema.dropTable('test_products')

@@ -81,11 +81,6 @@ test.group('OrmSchemaBuilder | Basic Type Mapping', (group) => {
     const schemas = generator.generateSchemas([{ name: 'test_numbers', columns }])
     const output = schemas.classes.join('\n')
 
-    // Note: decimalNum type differs by database:
-    // - PostgreSQL/MySQL: string (preserves exact decimal precision)
-    // - SQLite: number (NUMERIC affinity doesn't preserve exact precision)
-    const expectedType = process.env.DB === 'sqlite' ? 'number' : 'string'
-
     assert.snapshot(output).matchInline(`
       "export class TestNumberSchema extends BaseModel {
         static $columns = ['id', 'smallNum', 'bigNum', 'decimalNum'] as const

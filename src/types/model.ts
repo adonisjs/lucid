@@ -96,21 +96,16 @@ export type OptionalTypedDecorator<PropType> = <
  * columns. Alternatively, the user can self define a `$columns`
  * property.
  */
-export type ModelAttributes<Model extends LucidRow> = Model['$columns'] extends undefined
-  ? {
-      [Filtered in {
-        [P in keyof Model]: P extends keyof LucidRow | 'serializeExtras'
-          ? never
-          : Model[P] extends Function | ModelRelationTypes
-            ? never
-            : P
-      }[keyof Model]]: Model[Filtered]
-    }
-  : Model['$columns']
+export type ModelAttributes<Model extends LucidRow> = {
+  [Filtered in {
+    [P in keyof Model]: P extends keyof LucidRow | 'serializeExtras'
+      ? never
+      : Model[P] extends Function | ModelRelationTypes
+        ? never
+        : P
+  }[keyof Model]]: Model[Filtered]
+}
 
-/**
- * Extract the query scopes of a model
- */
 export type ExtractScopes<Model extends LucidModel> = {
   [Scope in keyof PickProperties<Model, QueryScope<Model, QueryScopeCallback<Model>>>]: (
     ...args: Model[Scope] extends QueryScopeCallback<Model> ? OmitFirst<Model[Scope]> : never
@@ -562,13 +557,6 @@ export interface LucidRow {
   $extras: ModelObject
   $original: ModelObject
   $preloaded: { [relation: string]: LucidRow | LucidRow[] }
-
-  /**
-   * Columns is a property to get type information for model
-   * attributes. This must be declared by the end user
-   */
-  $columns: undefined
-
   $sideloaded: ModelObject
   $primaryKeyValue?: number | string
   $isPersisted: boolean
