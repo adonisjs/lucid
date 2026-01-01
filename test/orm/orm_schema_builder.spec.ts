@@ -80,6 +80,9 @@ test.group('OrmSchemaBuilder | Basic Type Mapping', (group) => {
     const columns = await connection.knexQuery().from('test_numbers').columnInfo()
     const schemas = generator.generateSchemas([{ name: 'test_numbers', columns }])
     const output = schemas.classes.join('\n')
+    const expectedDecilamNumType = ['sqlite', 'libsql', 'better_sqlite'].includes(process.env.DB!)
+      ? 'number'
+      : 'string'
 
     assert.snapshot(output).matchInline(`
       "export class TestNumberSchema extends BaseModel {
@@ -92,7 +95,7 @@ test.group('OrmSchemaBuilder | Basic Type Mapping', (group) => {
         @column()
         declare bigNum: bigint | number
         @column()
-        declare decimalNum: number
+        declare decimalNum: ${expectedDecilamNumType}
       }"
     `)
 
