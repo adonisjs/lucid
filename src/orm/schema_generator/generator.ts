@@ -15,6 +15,7 @@ import { RuntimeException } from '@adonisjs/core/exceptions'
 
 import { OrmSchemaBuilder } from './builder.ts'
 import type { Database } from '../../database/main.ts'
+import { type QueryClientContract } from '../../types/database.ts'
 import type { OrmSchemaGeneratorConfig, DatabaseColumn } from '../../types/schema_generator.ts'
 
 /**
@@ -42,13 +43,20 @@ export class OrmSchemaGenerator extends EventEmitter<{
    */
   private builder: OrmSchemaBuilder
 
+  /**
+   * Query client instance
+   */
+  private connection: QueryClientContract
+
   constructor(
     private db: Database,
     private application: Application<any>,
     private config: OrmSchemaGeneratorConfig
   ) {
     super()
-    this.builder = new OrmSchemaBuilder()
+    const connectionName = this.config.connectionName || this.db.primaryConnectionName
+    this.connection = this.db.connection(connectionName)
+    this.builder = new OrmSchemaBuilder(this.connection)
   }
 
   /**
@@ -79,13 +87,10 @@ export class OrmSchemaGenerator extends EventEmitter<{
   private async fetchTablesAndColumns(): Promise<
     Array<{ name: string; columns: Record<string, any> }>
   > {
-    const connectionName = this.config.connectionName || this.db.primaryConnectionName
-    const connection = this.db.connection(connectionName)
-
     /**
      * Get list of all tables from the database
      */
-    const tables = await connection.getAllTables(this.config.schemas)
+    const tables = await this.connection.getAllTables(this.config.schemas)
     this.emit('collect:tables', tables)
 
     /**
@@ -93,7 +98,7 @@ export class OrmSchemaGenerator extends EventEmitter<{
      */
     const tablesWithColumns = await Promise.all(
       tables.map(async (tableName) => {
-        const columns = await connection.knexQuery().from(tableName).columnInfo()
+        const columns = await this.connection.columnsInfo(tableName)
         this.emit('table:info', { tableName, columns })
         return { name: tableName, columns }
       })

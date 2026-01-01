@@ -169,6 +169,11 @@ export const DATA_TYPES_MAPPING: Record<string, string> = {
   'bit varying': INTERNAL_TYPES.STRING,
 
   /**
+   * Bit boolean types (MSSQL)
+   */
+  'mssql.bit': INTERNAL_TYPES.BOOLEAN,
+
+  /**
    * Network types (PostgreSQL)
    */
   'inet': INTERNAL_TYPES.STRING,

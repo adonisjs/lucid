@@ -17,6 +17,7 @@ import {
   type ConnectionContract,
   type QueryClientContract,
   type TransactionClientContract,
+  type ColumnInfo,
 } from '../types/database.js'
 
 import { RawBuilder } from '../database/static_builder/raw.js'
@@ -131,12 +132,12 @@ export class QueryClient implements QueryClientContract {
   /**
    * Get information for a table columns
    */
-  columnsInfo(table: string): Promise<{ [column: string]: Knex.ColumnInfo }>
-  columnsInfo(table: string, column: string): Promise<Knex.ColumnInfo>
+  columnsInfo(table: string): Promise<{ [column: string]: ColumnInfo }>
+  columnsInfo(table: string, column: string): Promise<ColumnInfo>
   async columnsInfo(
     table: unknown,
     column?: unknown
-  ): Promise<{ [column: string]: Knex.ColumnInfo } | Knex.ColumnInfo> {
+  ): Promise<{ [column: string]: ColumnInfo } | ColumnInfo> {
     const query = this.getWriteClient().table(table as string)
 
     if (column) {

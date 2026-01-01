@@ -19,6 +19,7 @@ import type {
   GeneratedColumn,
   GeneratedSchemas,
 } from '../../types/schema_generator.ts'
+import { type QueryClientContract } from '../../types/database.ts'
 
 /**
  * OrmSchemaBuilder handles the core logic of generating TypeScript
@@ -35,6 +36,8 @@ export class OrmSchemaBuilder {
    */
   private dataTypes: Record<string, string> = DATA_TYPES_MAPPING
 
+  constructor(private client: QueryClientContract) {}
+
   /**
    * Load user-defined schema rules
    */
@@ -50,9 +53,11 @@ export class OrmSchemaBuilder {
     column: DatabaseColumn,
     tableName: string
   ): GeneratedColumn {
+    const dialectColumnType = `${this.client.dialect.name}.${column.type}`
     // Map database type to internal type identifier
     // If no mapping exists, use the database type name itself
-    const internalType = this.dataTypes[column.type] ?? column.type
+    const internalType =
+      this.dataTypes[dialectColumnType] ?? this.dataTypes[column.type] ?? column.type
 
     // For unknown internal types, allow users to define custom rules using the database type name
     const typeLookupKey = internalType === INTERNAL_TYPES.UNKNOWN ? column.type : internalType

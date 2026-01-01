@@ -35,6 +35,8 @@ export type IsolationLevels =
   | 'repeatable read'
   | 'serializable'
 
+export type ColumnInfo = Knex.ColumnInfo
+
 /**
  * Migration node returned by the migration source
  * implementation

@@ -27,7 +27,7 @@ test.group('OrmSchemaBuilder | Basic Type Mapping', (group) => {
   test('generate schema for table with basic types', async ({ assert }) => {
     const db = getDb()
     const connection = db.connection()
-    const generator = new OrmSchemaBuilder()
+    const generator = new OrmSchemaBuilder(connection)
 
     await connection.schema.dropTableIfExists('test_basic_types')
 
@@ -66,7 +66,7 @@ test.group('OrmSchemaBuilder | Basic Type Mapping', (group) => {
   test('handle various numeric types', async ({ assert }) => {
     const db = getDb()
     const connection = db.connection()
-    const generator = new OrmSchemaBuilder()
+    const generator = new OrmSchemaBuilder(connection)
 
     await connection.schema.dropTableIfExists('test_numbers')
 
@@ -105,7 +105,7 @@ test.group('OrmSchemaBuilder | Basic Type Mapping', (group) => {
   test('handle date and datetime types', async ({ assert }) => {
     const db = getDb()
     const connection = db.connection()
-    const generator = new OrmSchemaBuilder()
+    const generator = new OrmSchemaBuilder(connection)
 
     await connection.schema.dropTableIfExists('test_dates')
 
@@ -138,7 +138,7 @@ test.group('OrmSchemaBuilder | Basic Type Mapping', (group) => {
   test('handle JSON type', async ({ assert }) => {
     const db = getDb()
     const connection = db.connection()
-    const generator = new OrmSchemaBuilder()
+    const generator = new OrmSchemaBuilder(connection)
 
     await connection.schema.dropTableIfExists('test_json')
 
@@ -146,6 +146,11 @@ test.group('OrmSchemaBuilder | Basic Type Mapping', (group) => {
       table.increments('id')
       table.json('metadata').notNullable()
     })
+
+    /**
+     * There is no JSONB column type in SQL server, they use Nvarchar instead
+     */
+    const expectedJSONType = ['mssql'].includes(process.env.DB!) ? 'string' : 'JSONB<any>'
 
     const columns = await connection.knexQuery().from('test_json').columnInfo()
     const schemas = generator.generateSchemas([{ name: 'test_json', columns }])
@@ -158,7 +163,7 @@ test.group('OrmSchemaBuilder | Basic Type Mapping', (group) => {
         @column({ isPrimary: true })
         declare id: number
         @column()
-        declare metadata: JSONB<any>
+        declare metadata: ${expectedJSONType}
       }"
     `)
 
@@ -168,7 +173,7 @@ test.group('OrmSchemaBuilder | Basic Type Mapping', (group) => {
   test('handle JSONB type', async ({ assert }) => {
     const db = getDb()
     const connection = db.connection()
-    const generator = new OrmSchemaBuilder()
+    const generator = new OrmSchemaBuilder(connection)
 
     await connection.schema.dropTableIfExists('test_jsonb')
 
@@ -177,6 +182,11 @@ test.group('OrmSchemaBuilder | Basic Type Mapping', (group) => {
       table.jsonb('settings').notNullable()
       table.jsonb('preferences').nullable()
     })
+
+    /**
+     * There is no JSONB column type in SQL server, they use Nvarchar instead
+     */
+    const expectedJSONType = ['mssql'].includes(process.env.DB!) ? 'string' : 'JSONB<any>'
 
     const columns = await connection.knexQuery().from('test_jsonb').columnInfo()
     const schemas = generator.generateSchemas([{ name: 'test_jsonb', columns }])
@@ -189,9 +199,9 @@ test.group('OrmSchemaBuilder | Basic Type Mapping', (group) => {
         @column({ isPrimary: true })
         declare id: number
         @column()
-        declare settings: JSONB<any>
+        declare settings: ${expectedJSONType}
         @column()
-        declare preferences: JSONB<any> | null
+        declare preferences: ${expectedJSONType} | null
       }"
     `)
 
@@ -215,7 +225,7 @@ test.group('OrmSchemaBuilder | Column-Specific Rules', (group) => {
   test('apply primary key decorator to id column', async ({ assert }) => {
     const db = getDb()
     const connection = db.connection()
-    const generator = new OrmSchemaBuilder()
+    const generator = new OrmSchemaBuilder(connection)
 
     await connection.schema.dropTableIfExists('test_pk')
 
@@ -245,7 +255,7 @@ test.group('OrmSchemaBuilder | Column-Specific Rules', (group) => {
   test('apply serializeAs: null to password column', async ({ assert }) => {
     const db = getDb()
     const connection = db.connection()
-    const generator = new OrmSchemaBuilder()
+    const generator = new OrmSchemaBuilder(connection)
 
     await connection.schema.dropTableIfExists('test_password')
 
@@ -275,7 +285,7 @@ test.group('OrmSchemaBuilder | Column-Specific Rules', (group) => {
   test('apply autoCreate to created_at column', async ({ assert }) => {
     const db = getDb()
     const connection = db.connection()
-    const generator = new OrmSchemaBuilder()
+    const generator = new OrmSchemaBuilder(connection)
 
     await connection.schema.dropTableIfExists('test_created_at')
 
@@ -305,7 +315,7 @@ test.group('OrmSchemaBuilder | Column-Specific Rules', (group) => {
   test('apply autoCreate and autoUpdate to updated_at column', async ({ assert }) => {
     const db = getDb()
     const connection = db.connection()
-    const generator = new OrmSchemaBuilder()
+    const generator = new OrmSchemaBuilder(connection)
 
     await connection.schema.dropTableIfExists('test_updated_at')
 
@@ -349,7 +359,7 @@ test.group('OrmSchemaBuilder | Nullable Columns', (group) => {
   test('add null union type for nullable columns', async ({ assert }) => {
     const db = getDb()
     const connection = db.connection()
-    const generator = new OrmSchemaBuilder()
+    const generator = new OrmSchemaBuilder(connection)
 
     await connection.schema.dropTableIfExists('test_nullable')
 
@@ -382,7 +392,7 @@ test.group('OrmSchemaBuilder | Nullable Columns', (group) => {
   test('nullable timestamps should have null type', async ({ assert }) => {
     const db = getDb()
     const connection = db.connection()
-    const generator = new OrmSchemaBuilder()
+    const generator = new OrmSchemaBuilder(connection)
 
     await connection.schema.dropTableIfExists('test_nullable_ts')
 
@@ -426,7 +436,7 @@ test.group('OrmSchemaBuilder | Custom Rules', (group) => {
   test('apply custom column rules', async ({ assert }) => {
     const db = getDb()
     const connection = db.connection()
-    const generator = new OrmSchemaBuilder()
+    const generator = new OrmSchemaBuilder(connection)
 
     generator.loadRules([
       {
@@ -468,7 +478,7 @@ test.group('OrmSchemaBuilder | Custom Rules', (group) => {
   test('apply table-specific column rules', async ({ assert }) => {
     const db = getDb()
     const connection = db.connection()
-    const generator = new OrmSchemaBuilder()
+    const generator = new OrmSchemaBuilder(connection)
 
     generator.loadRules([
       {
@@ -514,7 +524,7 @@ test.group('OrmSchemaBuilder | Custom Rules', (group) => {
   test('table-specific rules override column rules', async ({ assert }) => {
     const db = getDb()
     const connection = db.connection()
-    const generator = new OrmSchemaBuilder()
+    const generator = new OrmSchemaBuilder(connection)
 
     generator.loadRules([
       {
@@ -600,7 +610,7 @@ test.group('OrmSchemaBuilder | Multiple Tables', (group) => {
   test('generate schemas for multiple tables', async ({ assert }) => {
     const db = getDb()
     const connection = db.connection()
-    const generator = new OrmSchemaBuilder()
+    const generator = new OrmSchemaBuilder(connection)
 
     await connection.schema.dropTableIfExists('test_users')
     await connection.schema.dropTableIfExists('test_posts')
@@ -644,7 +654,7 @@ test.group('OrmSchemaBuilder | Multiple Tables', (group) => {
   test('deduplicate imports across multiple tables', async ({ assert }) => {
     const db = getDb()
     const connection = db.connection()
-    const generator = new OrmSchemaBuilder()
+    const generator = new OrmSchemaBuilder(connection)
 
     await connection.schema.dropTableIfExists('test_users')
     await connection.schema.dropTableIfExists('test_posts')
@@ -699,7 +709,7 @@ test.group('OrmSchemaBuilder | Output Generation', (group) => {
   test('generate complete output string', async ({ assert }) => {
     const db = getDb()
     const connection = db.connection()
-    const generator = new OrmSchemaBuilder()
+    const generator = new OrmSchemaBuilder(connection)
 
     await connection.schema.dropTableIfExists('test_users')
 
@@ -754,7 +764,9 @@ test.group('OrmSchemaBuilder | Unknown Types', (group) => {
   })
 
   test('default to any type for unknown database types', async ({ assert }) => {
-    const generator = new OrmSchemaBuilder()
+    const db = getDb()
+    const connection = db.connection()
+    const generator = new OrmSchemaBuilder(connection)
 
     // Manually create a column info with an unknown type
     const columns = {
@@ -798,7 +810,7 @@ test.group('OrmSchemaBuilder | Enum Handling', (group) => {
   test('handle enum via column-level schema rules', async ({ assert }) => {
     const db = getDb()
     const connection = db.connection()
-    const generator = new OrmSchemaBuilder()
+    const generator = new OrmSchemaBuilder(connection)
 
     generator.loadRules([
       {
@@ -856,7 +868,7 @@ test.group('OrmSchemaBuilder | Enum Handling', (group) => {
   test('handle nullable enum', async ({ assert }) => {
     const db = getDb()
     const connection = db.connection()
-    const generator = new OrmSchemaBuilder()
+    const generator = new OrmSchemaBuilder(connection)
 
     generator.loadRules([
       {
@@ -914,7 +926,7 @@ test.group('OrmSchemaBuilder | Enum Handling', (group) => {
     .run(async ({ assert }) => {
       const db = getDb()
       const connection = db.connection()
-      const generator = new OrmSchemaBuilder()
+      const generator = new OrmSchemaBuilder(connection)
 
       await connection.rawQuery('DROP TYPE IF EXISTS status_enum CASCADE')
       await connection.rawQuery("CREATE TYPE status_enum AS ENUM ('draft', 'published')")
@@ -939,7 +951,7 @@ test.group('OrmSchemaBuilder | Enum Handling', (group) => {
   test('enum columns default to string type without custom schema rules', async ({ assert }) => {
     const db = getDb()
     const connection = db.connection()
-    const generator = new OrmSchemaBuilder()
+    const generator = new OrmSchemaBuilder(connection)
 
     await connection.schema.dropTableIfExists('test_enum_default')
     await connection.schema.createTable('test_enum_default', (table) => {
@@ -986,7 +998,7 @@ test.group('OrmSchemaBuilder | Name Conversion', (group) => {
   test('convert snake_case column names to camelCase properties', async ({ assert }) => {
     const db = getDb()
     const connection = db.connection()
-    const generator = new OrmSchemaBuilder()
+    const generator = new OrmSchemaBuilder(connection)
 
     await connection.schema.dropTableIfExists('test_profiles')
 
@@ -1022,7 +1034,7 @@ test.group('OrmSchemaBuilder | Name Conversion', (group) => {
   test('convert plural table names to singular class names', async ({ assert }) => {
     const db = getDb()
     const connection = db.connection()
-    const generator = new OrmSchemaBuilder()
+    const generator = new OrmSchemaBuilder(connection)
 
     await connection.schema.dropTableIfExists('test_users_plural')
     await connection.schema.dropTableIfExists('test_posts_plural')
@@ -1087,7 +1099,7 @@ test.group('OrmSchemaBuilder | Name Conversion', (group) => {
   test('convert snake_case table names to PascalCase class names', async ({ assert }) => {
     const db = getDb()
     const connection = db.connection()
-    const generator = new OrmSchemaBuilder()
+    const generator = new OrmSchemaBuilder(connection)
 
     await connection.schema.dropTableIfExists('user_profiles')
 
