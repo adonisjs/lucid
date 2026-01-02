@@ -30,11 +30,12 @@ test.group('MakeModel', (group) => {
     await command.exec()
 
     command.assertLog('green(DONE:)    create app/models/user.ts')
-    await assert.fileContains('app/models/user.ts', 'export default class User extends BaseModel {')
-    await assert.fileContains(
-      'app/models/user.ts',
-      `import { BaseModel, column } from '@adonisjs/lucid/orm'`
-    )
+    assert.snapshot(await fs.contents('app/models/user.ts')).matchInline(`
+      "import { UserSchema } from '#database/schemas'
+
+      export default class User extends UserSchema {
+      }"
+    `)
   })
 
   test('make a model with migration', async ({ fs, assert }) => {
@@ -51,11 +52,12 @@ test.group('MakeModel', (group) => {
 
     command.assertLog('green(DONE:)    create app/models/user.ts')
     command.assertLogMatches(/database\/migrations\/\d+_create_users_table/)
-    await assert.fileContains('app/models/user.ts', 'export default class User extends BaseModel {')
-    await assert.fileContains(
-      'app/models/user.ts',
-      `import { BaseModel, column } from '@adonisjs/lucid/orm'`
-    )
+    assert.snapshot(await fs.contents('app/models/user.ts')).matchInline(`
+      "import { UserSchema } from '#database/schemas'
+
+      export default class User extends UserSchema {
+      }"
+    `)
   })
 
   test('make a model with factory', async ({ fs, assert }) => {
@@ -72,10 +74,11 @@ test.group('MakeModel', (group) => {
 
     command.assertLog('green(DONE:)    create app/models/user.ts')
     command.assertLog('green(DONE:)    create database/factories/user_factory.ts')
-    await assert.fileContains('app/models/user.ts', 'export default class User extends BaseModel {')
-    await assert.fileContains(
-      'app/models/user.ts',
-      `import { BaseModel, column } from '@adonisjs/lucid/orm'`
-    )
+    assert.snapshot(await fs.contents('app/models/user.ts')).matchInline(`
+      "import { UserSchema } from '#database/schemas'
+
+      export default class User extends UserSchema {
+      }"
+    `)
   })
 })
