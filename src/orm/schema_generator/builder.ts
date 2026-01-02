@@ -90,7 +90,7 @@ export class OrmSchemaBuilder {
     }
 
     return {
-      imports: finalRule.imports,
+      imports: finalRule.imports ?? [],
       propertyName,
       column: `  ${finalRule.decorator}\n  declare ${propertyName}: ${tsType}`,
     }

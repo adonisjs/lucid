@@ -15,7 +15,7 @@ import { type ImportInfo } from '@poppinss/utils'
 export type ColumnInfo = {
   tsType: string
   decorator: string
-  imports: ImportInfo[]
+  imports?: ImportInfo[]
 }
 
 /**

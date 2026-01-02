@@ -150,7 +150,7 @@ test.group('OrmSchemaBuilder | Basic Type Mapping', (group) => {
     /**
      * There is no JSONB column type in SQL server, they use Nvarchar instead
      */
-    const expectedJSONType = ['mssql'].includes(process.env.DB!) ? 'string' : 'JSONB<any>'
+    const expectedJSONType = ['mssql'].includes(process.env.DB!) ? 'string' : 'any'
 
     const columns = await connection.knexQuery().from('test_json').columnInfo()
     const schemas = generator.generateSchemas([{ name: 'test_json', columns }])
@@ -186,7 +186,7 @@ test.group('OrmSchemaBuilder | Basic Type Mapping', (group) => {
     /**
      * There is no JSONB column type in SQL server, they use Nvarchar instead
      */
-    const expectedJSONType = ['mssql'].includes(process.env.DB!) ? 'string' : 'JSONB<any>'
+    const expectedJSONType = ['mssql'].includes(process.env.DB!) ? 'string' : 'any'
 
     const columns = await connection.knexQuery().from('test_jsonb').columnInfo()
     const schemas = generator.generateSchemas([{ name: 'test_jsonb', columns }])

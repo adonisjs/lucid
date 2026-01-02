@@ -56,13 +56,13 @@ export const DEFAULT_SCHEMA_RULES: Required<SchemaRules> = {
       decorator: '@column()',
     },
     [INTERNAL_TYPES.JSON]: {
-      tsType: 'JSONB<any>',
-      imports: [{ source: '#models/data_types', namedImports: ['JSONB'] }],
+      tsType: 'any',
+      imports: [],
       decorator: '@column()',
     },
     [INTERNAL_TYPES.JSONB]: {
-      tsType: 'JSONB<any>',
-      imports: [{ source: '#models/data_types', namedImports: ['JSONB'] }],
+      tsType: 'any',
+      imports: [],
       decorator: '@column()',
     },
     [INTERNAL_TYPES.DATE_TIME]: {
