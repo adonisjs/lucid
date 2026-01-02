@@ -58,7 +58,6 @@ test.group('Factory | BelongTo | make', (group) => {
       @belongsTo(() => User)
       declare user: BelongsTo<typeof User>
     }
-    Profile.boot()
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -116,7 +115,6 @@ test.group('Factory | BelongTo | make', (group) => {
       @belongsTo(() => User)
       declare user: BelongsTo<typeof User>
     }
-    Profile.boot()
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -180,7 +178,6 @@ test.group('Factory | BelongTo | make', (group) => {
       @belongsTo(() => User)
       declare user: BelongsTo<typeof User>
     }
-    Profile.boot()
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -192,7 +189,6 @@ test.group('Factory | BelongTo | make', (group) => {
       @column()
       points: number = 0
     }
-    User.boot()
 
     const profileFactory = factoryManager
       .define(Profile, () => {
@@ -260,7 +256,6 @@ test.group('Factory | BelongTo | create', (group) => {
       @belongsTo(() => User)
       declare user: BelongsTo<typeof User>
     }
-    Profile.boot()
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -320,7 +315,6 @@ test.group('Factory | BelongTo | create', (group) => {
       @belongsTo(() => User)
       declare user: BelongsTo<typeof User>
     }
-    Profile.boot()
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -378,7 +372,6 @@ test.group('Factory | BelongTo | create', (group) => {
       @belongsTo(() => User, { foreignKey: 'authorId' })
       declare user: BelongsTo<typeof User>
     }
-    Profile.boot()
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -438,7 +431,6 @@ test.group('Factory | BelongTo | create', (group) => {
       @belongsTo(() => User)
       declare user: BelongsTo<typeof User>
     }
-    Profile.boot()
 
     class User extends BaseModel {
       @column({ isPrimary: true })

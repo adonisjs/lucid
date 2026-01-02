@@ -103,6 +103,9 @@ export class HasManyThrough implements HasManyThroughRelationContract<LucidModel
       return
     }
 
+    this.relatedModel().boot()
+    this.throughModel().boot()
+
     /**
      * Extracting keys from the model and the relation model. The keys
      * extractor ensures all the required columns are defined on

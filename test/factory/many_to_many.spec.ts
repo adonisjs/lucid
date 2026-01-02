@@ -51,7 +51,6 @@ test.group('Factory | ManyToMany | make', (group) => {
       @column()
       declare name: string
     }
-    Skill.boot()
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -108,7 +107,6 @@ test.group('Factory | ManyToMany | make', (group) => {
       @column()
       declare name: string
     }
-    Skill.boot()
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -166,7 +164,6 @@ test.group('Factory | ManyToMany | make', (group) => {
       @column()
       declare name: string
     }
-    Skill.boot()
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -243,7 +240,6 @@ test.group('Factory | ManyToMany | create', (group) => {
       @column()
       declare name: string
     }
-    Skill.boot()
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -305,7 +301,6 @@ test.group('Factory | ManyToMany | create', (group) => {
       @column()
       declare name: string
     }
-    Skill.boot()
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -361,7 +356,6 @@ test.group('Factory | ManyToMany | create', (group) => {
       @column()
       declare name: string
     }
-    Skill.boot()
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -423,7 +417,6 @@ test.group('Factory | ManyToMany | create', (group) => {
       @column()
       declare name: string
     }
-    Skill.boot()
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -481,7 +474,6 @@ test.group('Factory | ManyToMany | create', (group) => {
       @column()
       declare name: string
     }
-    Skill.boot()
 
     class User extends BaseModel {
       @column({ isPrimary: true })

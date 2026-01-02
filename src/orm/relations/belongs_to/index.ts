@@ -101,6 +101,7 @@ export class BelongsTo implements BelongsToRelationContract<LucidModel, LucidMod
     }
 
     const relatedModel = this.relatedModel()
+    relatedModel.boot()
 
     /**
      * Extracting keys from the model and the relation model. The keys

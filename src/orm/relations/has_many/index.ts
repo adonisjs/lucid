@@ -103,6 +103,7 @@ export class HasMany implements HasManyRelationContract<LucidModel, LucidModel> 
     }
 
     const relatedModel = this.relatedModel()
+    relatedModel.boot()
 
     /**
      * Extracting keys from the model and the relation model. The keys

@@ -43,16 +43,13 @@ test.group('Model | Has Many Through | Options', (group) => {
 
     try {
       class User extends BaseModel {}
-      User.boot()
 
       class Post extends BaseModel {}
-      Post.boot()
 
       class Country extends BaseModel {
         @hasManyThrough([() => Post, () => User])
         declare posts: HasManyThrough<typeof Post>
       }
-      Country.boot()
 
       Country.$getRelation('posts')!.boot()
     } catch ({ message }) {
@@ -74,10 +71,8 @@ test.group('Model | Has Many Through | Options', (group) => {
 
     try {
       class User extends BaseModel {}
-      User.boot()
 
       class Post extends BaseModel {}
-      Post.boot()
 
       class Country extends BaseModel {
         @column({ isPrimary: true })
@@ -87,7 +82,6 @@ test.group('Model | Has Many Through | Options', (group) => {
         declare posts: HasManyThrough<typeof Post>
       }
 
-      Country.boot()
       Country.$getRelation('posts')!.boot()
     } catch ({ message }) {
       assert.equal(
@@ -111,10 +105,8 @@ test.group('Model | Has Many Through | Options', (group) => {
         @column()
         declare countryId: number
       }
-      User.boot()
 
       class Post extends BaseModel {}
-      Post.boot()
 
       class Country extends BaseModel {
         @column({ isPrimary: true })
@@ -124,7 +116,6 @@ test.group('Model | Has Many Through | Options', (group) => {
         declare posts: HasManyThrough<typeof Post>
       }
 
-      Country.boot()
       Country.$getRelation('posts')!.boot()
     } catch ({ message }) {
       assert.equal(
@@ -151,10 +142,8 @@ test.group('Model | Has Many Through | Options', (group) => {
         @column()
         declare countryId: number
       }
-      User.boot()
 
       class Post extends BaseModel {}
-      Post.boot()
 
       class Country extends BaseModel {
         @column({ isPrimary: true })
@@ -164,7 +153,6 @@ test.group('Model | Has Many Through | Options', (group) => {
         declare posts: HasManyThrough<typeof Post>
       }
 
-      Country.boot()
       Country.$getRelation('posts')!.boot()
     } catch ({ message }) {
       assert.equal(
@@ -188,13 +176,11 @@ test.group('Model | Has Many Through | Options', (group) => {
       @column()
       declare countryId: number
     }
-    User.boot()
 
     class Post extends BaseModel {
       @column()
       declare userId: number
     }
-    Post.boot()
 
     class Country extends BaseModel {
       @column({ isPrimary: true })
@@ -203,8 +189,6 @@ test.group('Model | Has Many Through | Options', (group) => {
       @hasManyThrough([() => Post, () => User])
       declare posts: HasManyThrough<typeof Post>
     }
-
-    Country.boot()
 
     const relation = Country.$getRelation('posts')!
     relation.boot()
@@ -236,13 +220,11 @@ test.group('Model | Has Many Through | Options', (group) => {
       @column()
       declare countryUid: number
     }
-    User.boot()
 
     class Post extends BaseModel {
       @column()
       declare userUid: number
     }
-    Post.boot()
 
     class Country extends BaseModel {
       @column({ isPrimary: true })
@@ -256,8 +238,6 @@ test.group('Model | Has Many Through | Options', (group) => {
       })
       declare posts: HasManyThrough<typeof Post>
     }
-
-    Country.boot()
 
     const relation = Country.$getRelation('posts')!
     relation.boot()
@@ -289,13 +269,11 @@ test.group('Model | Has Many Through | Options', (group) => {
       @column()
       declare countryUid: number
     }
-    User.boot()
 
     class Post extends BaseModel {
       @column()
       declare userUid: number
     }
-    Post.boot()
 
     class BaseCountry extends BaseModel {
       @column({ isPrimary: true })
@@ -311,7 +289,6 @@ test.group('Model | Has Many Through | Options', (group) => {
     }
 
     class Country extends BaseCountry {}
-    Country.boot()
 
     const relation = Country.$getRelation('posts')!
     relation.boot()
@@ -383,13 +360,11 @@ test.group('Model | Has Many Through | Set Relations', (group) => {
       @column()
       declare countryId: number
     }
-    User.boot()
 
     class Post extends BaseModel {
       @column()
       declare userId: number
     }
-    Post.boot()
 
     class Country extends BaseModel {
       @column({ isPrimary: true })
@@ -399,7 +374,6 @@ test.group('Model | Has Many Through | Set Relations', (group) => {
       declare posts: HasManyThrough<typeof Post>
     }
 
-    Country.boot()
     Country.$getRelation('posts')!.boot()
 
     const country = new Country()
@@ -423,13 +397,11 @@ test.group('Model | Has Many Through | Set Relations', (group) => {
       @column()
       declare countryId: number
     }
-    User.boot()
 
     class Post extends BaseModel {
       @column()
       declare userId: number
     }
-    Post.boot()
 
     class Country extends BaseModel {
       @column({ isPrimary: true })
@@ -439,7 +411,6 @@ test.group('Model | Has Many Through | Set Relations', (group) => {
       declare posts: HasManyThrough<typeof Post>
     }
 
-    Country.boot()
     Country.$getRelation('posts')!.boot()
 
     const country = new Country()
@@ -465,13 +436,11 @@ test.group('Model | Has Many Through | Set Relations', (group) => {
       @column()
       declare countryId: number
     }
-    User.boot()
 
     class Post extends BaseModel {
       @column()
       declare userId: number
     }
-    Post.boot()
 
     class Country extends BaseModel {
       @column({ isPrimary: true })
@@ -481,7 +450,6 @@ test.group('Model | Has Many Through | Set Relations', (group) => {
       declare posts: HasManyThrough<typeof Post>
     }
 
-    Country.boot()
     Country.$getRelation('posts')!.boot()
 
     const country = new Country()
@@ -548,13 +516,11 @@ test.group('Model | Has Many Through | bulk operations', (group) => {
       @column()
       declare countryId: number
     }
-    User.boot()
 
     class Post extends BaseModel {
       @column()
       declare userId: number
     }
-    Post.boot()
 
     class Country extends BaseModel {
       @column({ isPrimary: true })
@@ -564,7 +530,6 @@ test.group('Model | Has Many Through | bulk operations', (group) => {
       declare posts: HasManyThrough<typeof Post>
     }
 
-    Country.boot()
     await db.table('countries').insert({ name: 'India' })
 
     const country = await Country.find(1)
@@ -597,13 +562,11 @@ test.group('Model | Has Many Through | bulk operations', (group) => {
       @column()
       declare countryId: number
     }
-    User.boot()
 
     class Post extends BaseModel {
       @column()
       declare userId: number
     }
-    Post.boot()
 
     class Country extends BaseModel {
       @column({ isPrimary: true })
@@ -613,7 +576,6 @@ test.group('Model | Has Many Through | bulk operations', (group) => {
       declare posts: HasManyThrough<typeof Post>
     }
 
-    Country.boot()
     await db.table('countries').multiInsert([{ name: 'India' }, { name: 'UK' }])
 
     const countries = await Country.all()
@@ -649,13 +611,11 @@ test.group('Model | Has Many Through | bulk operations', (group) => {
       @column()
       declare countryId: number
     }
-    User.boot()
 
     class Post extends BaseModel {
       @column()
       declare userId: number
     }
-    Post.boot()
 
     class Country extends BaseModel {
       @column({ isPrimary: true })
@@ -665,7 +625,6 @@ test.group('Model | Has Many Through | bulk operations', (group) => {
       declare posts: HasManyThrough<typeof Post>
     }
 
-    Country.boot()
     await db.table('countries').insert({ name: 'India' })
 
     const country = await Country.find(1)
@@ -707,13 +666,11 @@ test.group('Model | Has Many Through | bulk operations', (group) => {
       @column()
       declare countryId: number
     }
-    User.boot()
 
     class Post extends BaseModel {
       @column()
       declare userId: number
     }
-    Post.boot()
 
     class Country extends BaseModel {
       @column({ isPrimary: true })
@@ -723,7 +680,6 @@ test.group('Model | Has Many Through | bulk operations', (group) => {
       declare posts: HasManyThrough<typeof Post>
     }
 
-    Country.boot()
     await db.table('countries').insert({ name: 'India' })
 
     const country = await Country.find(1)
@@ -771,13 +727,11 @@ test.group('Model | HasMany | sub queries', (group) => {
       @column()
       declare countryId: number
     }
-    User.boot()
 
     class Post extends BaseModel {
       @column()
       declare userId: number
     }
-    Post.boot()
 
     class Country extends BaseModel {
       @column({ isPrimary: true })
@@ -787,7 +741,6 @@ test.group('Model | HasMany | sub queries', (group) => {
       declare posts: HasManyThrough<typeof Post>
     }
 
-    Country.boot()
     Country.$getRelation('posts')!.boot()
 
     const { sql, bindings } = Country.$getRelation('posts')!.subQuery(db.connection()).toSQL()
@@ -817,13 +770,11 @@ test.group('Model | HasMany | sub queries', (group) => {
       @column()
       declare countryId: number
     }
-    User.boot()
 
     class Post extends BaseModel {
       @column()
       declare userId: number
     }
-    Post.boot()
 
     class Country extends BaseModel {
       @column({ isPrimary: true })
@@ -833,7 +784,6 @@ test.group('Model | HasMany | sub queries', (group) => {
       declare posts: HasManyThrough<typeof Post>
     }
 
-    Country.boot()
     Country.$getRelation('posts')!.boot()
 
     const { sql, bindings } = Country.$getRelation('posts')!
@@ -868,13 +818,11 @@ test.group('Model | HasMany | sub queries', (group) => {
       @column()
       declare countryId: number
     }
-    User.boot()
 
     class Post extends BaseModel {
       @column()
       declare userId: number
     }
-    Post.boot()
 
     class Country extends BaseModel {
       @column({ isPrimary: true })
@@ -884,7 +832,6 @@ test.group('Model | HasMany | sub queries', (group) => {
       declare posts: HasManyThrough<typeof Post>
     }
 
-    Country.boot()
     Country.$getRelation('posts')!.boot()
 
     const { sql, bindings } = Country.$getRelation('posts')!
@@ -919,7 +866,6 @@ test.group('Model | HasMany | sub queries', (group) => {
       @column()
       declare countryId: number
     }
-    User.boot()
 
     class Country extends BaseModel {
       @column({ isPrimary: true })
@@ -935,7 +881,6 @@ test.group('Model | HasMany | sub queries', (group) => {
       declare countries: HasManyThrough<typeof Country>
     }
 
-    Country.boot()
     Country.$getRelation('countries')!.boot()
 
     const { sql, bindings } = Country.$getRelation('countries')!
@@ -970,13 +915,11 @@ test.group('Model | HasMany | sub queries', (group) => {
       @column()
       declare countryId: number
     }
-    User.boot()
 
     class Post extends BaseModel {
       @column()
       declare userId: number
     }
-    Post.boot()
 
     class Country extends BaseModel {
       @column({ isPrimary: true })
@@ -986,7 +929,6 @@ test.group('Model | HasMany | sub queries', (group) => {
       declare posts: HasManyThrough<typeof Post>
     }
 
-    Country.boot()
     Country.$getRelation('posts')!.boot()
 
     const exec = () => Country.$getRelation('posts')!.subQuery(db.connection())['exec']()
@@ -1019,7 +961,6 @@ test.group('Model | HasMany | sub queries', (group) => {
       @column()
       declare countryId: number
     }
-    User.boot()
 
     class Post extends BaseModel {
       @column()
@@ -1028,7 +969,6 @@ test.group('Model | HasMany | sub queries', (group) => {
       @column()
       declare isPublished: boolean
     }
-    Post.boot()
 
     class Country extends BaseModel {
       @column({ isPrimary: true })
@@ -1040,7 +980,6 @@ test.group('Model | HasMany | sub queries', (group) => {
       declare posts: HasManyThrough<typeof Post>
     }
 
-    Country.boot()
     Country.$getRelation('posts')!.boot()
 
     const { sql, bindings } = Country.$getRelation('posts')!.subQuery(db.connection()).toSQL()
@@ -1085,13 +1024,11 @@ test.group('Model | Has Many Through | aggregates', (group) => {
       @column()
       declare countryId: number
     }
-    User.boot()
 
     class Post extends BaseModel {
       @column()
       declare userId: number
     }
-    Post.boot()
 
     class Country extends BaseModel {
       @column({ isPrimary: true })
@@ -1101,7 +1038,6 @@ test.group('Model | Has Many Through | aggregates', (group) => {
       declare posts: HasManyThrough<typeof Post>
     }
 
-    Country.boot()
     await db.table('countries').insert({ name: 'India' })
     await db.table('users').insert({
       username: 'virk',
@@ -1142,13 +1078,11 @@ test.group('Model | Has Many Through | aggregates', (group) => {
       @column()
       declare countryId: number
     }
-    User.boot()
 
     class Post extends BaseModel {
       @column()
       declare userId: number
     }
-    Post.boot()
 
     class Country extends BaseModel {
       @column({ isPrimary: true })
@@ -1158,7 +1092,6 @@ test.group('Model | Has Many Through | aggregates', (group) => {
       declare posts: HasManyThrough<typeof Post>
     }
 
-    Country.boot()
     await db.table('countries').insert({ name: 'India' })
     await db.table('users').insert({
       username: 'virk',
@@ -1223,7 +1156,6 @@ test.group('Model | Has Many Through | preload', (group) => {
       @column()
       declare countryId: number
     }
-    User.boot()
 
     class Post extends BaseModel {
       @column({ isPrimary: true })
@@ -1235,7 +1167,6 @@ test.group('Model | Has Many Through | preload', (group) => {
       @column()
       declare title: string
     }
-    Post.boot()
 
     class Country extends BaseModel {
       @column({ isPrimary: true })
@@ -1244,7 +1175,6 @@ test.group('Model | Has Many Through | preload', (group) => {
       @hasManyThrough([() => Post, () => User])
       declare posts: HasManyThrough<typeof Post>
     }
-    Country.boot()
 
     await db
       .insertQuery()
@@ -1295,7 +1225,6 @@ test.group('Model | Has Many Through | preload', (group) => {
       @column()
       declare countryId: number
     }
-    User.boot()
 
     class Post extends BaseModel {
       @column({ isPrimary: true })
@@ -1307,7 +1236,6 @@ test.group('Model | Has Many Through | preload', (group) => {
       @column()
       declare title: string
     }
-    Post.boot()
 
     class Country extends BaseModel {
       @column({ isPrimary: true })
@@ -1316,7 +1244,6 @@ test.group('Model | Has Many Through | preload', (group) => {
       @hasManyThrough([() => Post, () => User])
       declare posts: HasManyThrough<typeof Post>
     }
-    Country.boot()
 
     await db
       .insertQuery()
@@ -1369,7 +1296,6 @@ test.group('Model | Has Many Through | preload', (group) => {
       @column()
       declare countryId: number
     }
-    User.boot()
 
     class Post extends BaseModel {
       @column({ isPrimary: true })
@@ -1381,7 +1307,6 @@ test.group('Model | Has Many Through | preload', (group) => {
       @column()
       declare title: string
     }
-    Post.boot()
 
     class Country extends BaseModel {
       @column({ isPrimary: true })
@@ -1390,7 +1315,6 @@ test.group('Model | Has Many Through | preload', (group) => {
       @hasManyThrough([() => Post, () => User])
       declare posts: HasManyThrough<typeof Post>
     }
-    Country.boot()
 
     await db
       .insertQuery()
@@ -1447,7 +1371,6 @@ test.group('Model | Has Many Through | preload', (group) => {
       @column()
       declare countryId: number
     }
-    User.boot()
 
     class Post extends BaseModel {
       @column({ isPrimary: true })
@@ -1459,7 +1382,6 @@ test.group('Model | Has Many Through | preload', (group) => {
       @column()
       declare title: string
     }
-    Post.boot()
 
     class Country extends BaseModel {
       @column({ isPrimary: true })
@@ -1468,7 +1390,6 @@ test.group('Model | Has Many Through | preload', (group) => {
       @hasManyThrough([() => Post, () => User])
       declare posts: HasManyThrough<typeof Post>
     }
-    Country.boot()
 
     await db
       .insertQuery()
@@ -1524,7 +1445,6 @@ test.group('Model | Has Many Through | preload', (group) => {
       @column()
       declare countryId: number
     }
-    User.boot()
 
     class Post extends BaseModel {
       @column({ isPrimary: true })
@@ -1536,7 +1456,6 @@ test.group('Model | Has Many Through | preload', (group) => {
       @column()
       declare title: string
     }
-    Post.boot()
 
     class Country extends BaseModel {
       @column({ isPrimary: true })
@@ -1545,7 +1464,6 @@ test.group('Model | Has Many Through | preload', (group) => {
       @hasManyThrough([() => Post, () => User])
       declare posts: HasManyThrough<typeof Post>
     }
-    Country.boot()
 
     await db
       .insertQuery()
@@ -1590,7 +1508,6 @@ test.group('Model | Has Many Through | preload', (group) => {
       @column()
       declare countryId: number
     }
-    User.boot()
 
     class Post extends BaseModel {
       @column({ isPrimary: true })
@@ -1602,7 +1519,6 @@ test.group('Model | Has Many Through | preload', (group) => {
       @column()
       declare title: string
     }
-    Post.boot()
 
     class Country extends BaseModel {
       @column({ isPrimary: true })
@@ -1611,7 +1527,6 @@ test.group('Model | Has Many Through | preload', (group) => {
       @hasManyThrough([() => Post, () => User])
       declare posts: HasManyThrough<typeof Post>
     }
-    Country.boot()
 
     const countries = await Country.query().preload('posts', () => {
       throw new Error('not expected to be here')
@@ -1647,7 +1562,6 @@ test.group('Model | Has Many Through | withCount', (group) => {
       @column()
       declare countryId: number
     }
-    User.boot()
 
     class Post extends BaseModel {
       @column({ isPrimary: true })
@@ -1659,7 +1573,6 @@ test.group('Model | Has Many Through | withCount', (group) => {
       @column()
       declare title: string
     }
-    Post.boot()
 
     class Country extends BaseModel {
       @column({ isPrimary: true })
@@ -1668,7 +1581,6 @@ test.group('Model | Has Many Through | withCount', (group) => {
       @hasManyThrough([() => Post, () => User])
       declare posts: HasManyThrough<typeof Post>
     }
-    Country.boot()
 
     await db
       .insertQuery()
@@ -1717,7 +1629,6 @@ test.group('Model | Has Many Through | withCount', (group) => {
       @column()
       declare countryId: number
     }
-    User.boot()
 
     class Post extends BaseModel {
       @column({ isPrimary: true })
@@ -1729,7 +1640,6 @@ test.group('Model | Has Many Through | withCount', (group) => {
       @column()
       declare title: string
     }
-    Post.boot()
 
     class Country extends BaseModel {
       @column({ isPrimary: true })
@@ -1738,7 +1648,6 @@ test.group('Model | Has Many Through | withCount', (group) => {
       @hasManyThrough([() => Post, () => User])
       declare posts: HasManyThrough<typeof Post>
     }
-    Country.boot()
 
     await db
       .insertQuery()
@@ -1791,7 +1700,6 @@ test.group('Model | Has Many Through | withCount', (group) => {
       @column()
       declare countryId: number
     }
-    User.boot()
 
     class Post extends BaseModel {
       @column({ isPrimary: true })
@@ -1803,7 +1711,6 @@ test.group('Model | Has Many Through | withCount', (group) => {
       @column()
       declare title: string
     }
-    Post.boot()
 
     class Country extends BaseModel {
       @column({ isPrimary: true })
@@ -1812,7 +1719,6 @@ test.group('Model | Has Many Through | withCount', (group) => {
       @hasManyThrough([() => Post, () => User])
       declare posts: HasManyThrough<typeof Post>
     }
-    Country.boot()
 
     await db
       .insertQuery()
@@ -1865,7 +1771,6 @@ test.group('Model | Has Many Through | withCount', (group) => {
       @column()
       declare countryId: number
     }
-    User.boot()
 
     class Post extends BaseModel {
       @column({ isPrimary: true })
@@ -1877,7 +1782,6 @@ test.group('Model | Has Many Through | withCount', (group) => {
       @column()
       declare title: string
     }
-    Post.boot()
 
     class Country extends BaseModel {
       @column({ isPrimary: true })
@@ -1889,7 +1793,6 @@ test.group('Model | Has Many Through | withCount', (group) => {
       @hasManyThrough([() => Post, () => User])
       declare posts: HasManyThrough<typeof Post>
     }
-    Country.boot()
 
     await db
       .insertQuery()
@@ -1938,7 +1841,6 @@ test.group('Model | Has Many Through | withCount', (group) => {
       @column()
       declare countryId: number
     }
-    User.boot()
 
     class Post extends BaseModel {
       @column({ isPrimary: true })
@@ -1950,7 +1852,6 @@ test.group('Model | Has Many Through | withCount', (group) => {
       @column()
       declare title: string
     }
-    Post.boot()
 
     class Country extends BaseModel {
       @column({ isPrimary: true })
@@ -1962,7 +1863,6 @@ test.group('Model | Has Many Through | withCount', (group) => {
       @hasManyThrough([() => Post, () => User])
       declare posts: HasManyThrough<typeof Post>
     }
-    Country.boot()
 
     await db
       .insertQuery()
@@ -2016,7 +1916,6 @@ test.group('Model | Has Many Through | withCount', (group) => {
       @column()
       declare countryId: number
     }
-    User.boot()
 
     class Post extends BaseModel {
       @column({ isPrimary: true })
@@ -2028,7 +1927,6 @@ test.group('Model | Has Many Through | withCount', (group) => {
       @column()
       declare title: string
     }
-    Post.boot()
 
     class Country extends BaseModel {
       @column({ isPrimary: true })
@@ -2037,7 +1935,6 @@ test.group('Model | Has Many Through | withCount', (group) => {
       @hasManyThrough([() => Post, () => User])
       declare posts: HasManyThrough<typeof Post>
     }
-    Country.boot()
 
     await db
       .insertQuery()
@@ -2083,7 +1980,6 @@ test.group('Model | Has Many Through | withCount', (group) => {
       @column()
       declare countryId: number
     }
-    User.boot()
 
     class Post extends BaseModel {
       @column({ isPrimary: true })
@@ -2095,7 +1991,6 @@ test.group('Model | Has Many Through | withCount', (group) => {
       @column()
       declare title: string
     }
-    Post.boot()
 
     class Country extends BaseModel {
       @column({ isPrimary: true })
@@ -2104,7 +1999,6 @@ test.group('Model | Has Many Through | withCount', (group) => {
       @hasManyThrough([() => Post, () => User])
       declare posts: HasManyThrough<typeof Post>
     }
-    Country.boot()
 
     await db
       .insertQuery()
@@ -2166,7 +2060,6 @@ test.group('Model | Has Many Through | has', (group) => {
       @column()
       declare countryId: number
     }
-    User.boot()
 
     class Post extends BaseModel {
       @column({ isPrimary: true })
@@ -2178,7 +2071,6 @@ test.group('Model | Has Many Through | has', (group) => {
       @column()
       declare title: string
     }
-    Post.boot()
 
     class Country extends BaseModel {
       @column({ isPrimary: true })
@@ -2190,7 +2082,6 @@ test.group('Model | Has Many Through | has', (group) => {
       @hasManyThrough([() => Post, () => User])
       declare posts: HasManyThrough<typeof Post>
     }
-    Country.boot()
 
     await db
       .insertQuery()
@@ -2236,7 +2127,6 @@ test.group('Model | Has Many Through | has', (group) => {
       @column()
       declare countryId: number
     }
-    User.boot()
 
     class Post extends BaseModel {
       @column({ isPrimary: true })
@@ -2248,7 +2138,6 @@ test.group('Model | Has Many Through | has', (group) => {
       @column()
       declare title: string
     }
-    Post.boot()
 
     class Country extends BaseModel {
       @column({ isPrimary: true })
@@ -2260,7 +2149,6 @@ test.group('Model | Has Many Through | has', (group) => {
       @hasManyThrough([() => Post, () => User])
       declare posts: HasManyThrough<typeof Post>
     }
-    Country.boot()
 
     await db
       .insertQuery()
@@ -2322,7 +2210,6 @@ test.group('Model | Has Many Through | whereHas', (group) => {
       @column()
       declare countryId: number
     }
-    User.boot()
 
     class Post extends BaseModel {
       @column({ isPrimary: true })
@@ -2334,7 +2221,6 @@ test.group('Model | Has Many Through | whereHas', (group) => {
       @column()
       declare title: string
     }
-    Post.boot()
 
     class Country extends BaseModel {
       @column({ isPrimary: true })
@@ -2346,7 +2232,6 @@ test.group('Model | Has Many Through | whereHas', (group) => {
       @hasManyThrough([() => Post, () => User])
       declare posts: HasManyThrough<typeof Post>
     }
-    Country.boot()
 
     await db
       .insertQuery()
@@ -2398,7 +2283,6 @@ test.group('Model | Has Many Through | whereHas', (group) => {
       @column()
       declare countryId: number
     }
-    User.boot()
 
     class Post extends BaseModel {
       @column({ isPrimary: true })
@@ -2410,7 +2294,6 @@ test.group('Model | Has Many Through | whereHas', (group) => {
       @column()
       declare title: string
     }
-    Post.boot()
 
     class Country extends BaseModel {
       @column({ isPrimary: true })
@@ -2422,7 +2305,6 @@ test.group('Model | Has Many Through | whereHas', (group) => {
       @hasManyThrough([() => Post, () => User])
       declare posts: HasManyThrough<typeof Post>
     }
-    Country.boot()
 
     await db
       .insertQuery()
@@ -2494,7 +2376,6 @@ if (process.env.DB !== 'mysql_legacy') {
         @column()
         declare countryId: number
       }
-      User.boot()
 
       class Post extends BaseModel {
         @column({ isPrimary: true })
@@ -2506,7 +2387,6 @@ if (process.env.DB !== 'mysql_legacy') {
         @column()
         declare title: string
       }
-      Post.boot()
 
       class Country extends BaseModel {
         @column({ isPrimary: true })
@@ -2515,7 +2395,6 @@ if (process.env.DB !== 'mysql_legacy') {
         @hasManyThrough([() => Post, () => User])
         declare posts: HasManyThrough<typeof Post>
       }
-      Country.boot()
 
       await db
         .insertQuery()
@@ -2589,7 +2468,6 @@ if (process.env.DB !== 'mysql_legacy') {
         @column()
         declare countryId: number
       }
-      User.boot()
 
       class Post extends BaseModel {
         @column({ isPrimary: true })
@@ -2601,7 +2479,6 @@ if (process.env.DB !== 'mysql_legacy') {
         @column()
         declare title: string
       }
-      Post.boot()
 
       class Country extends BaseModel {
         @column({ isPrimary: true })
@@ -2610,7 +2487,6 @@ if (process.env.DB !== 'mysql_legacy') {
         @hasManyThrough([() => Post, () => User])
         declare posts: HasManyThrough<typeof Post>
       }
-      Country.boot()
 
       await db
         .insertQuery()
@@ -2686,7 +2562,6 @@ if (process.env.DB !== 'mysql_legacy') {
         @column()
         declare countryId: number
       }
-      User.boot()
 
       class Post extends BaseModel {
         @column({ isPrimary: true })
@@ -2701,7 +2576,6 @@ if (process.env.DB !== 'mysql_legacy') {
         @column()
         declare createdAt: Date
       }
-      Post.boot()
 
       class Country extends BaseModel {
         @column({ isPrimary: true })
@@ -2710,7 +2584,6 @@ if (process.env.DB !== 'mysql_legacy') {
         @hasManyThrough([() => Post, () => User])
         declare posts: HasManyThrough<typeof Post>
       }
-      Country.boot()
 
       await db
         .insertQuery()
@@ -2790,7 +2663,6 @@ if (process.env.DB !== 'mysql_legacy') {
         @column()
         declare countryId: number
       }
-      User.boot()
 
       class Post extends BaseModel {
         @column({ isPrimary: true })
@@ -2805,7 +2677,6 @@ if (process.env.DB !== 'mysql_legacy') {
         @column()
         declare createdAt: Date
       }
-      Post.boot()
 
       class Country extends BaseModel {
         @column({ isPrimary: true })
@@ -2814,7 +2685,6 @@ if (process.env.DB !== 'mysql_legacy') {
         @hasManyThrough([() => Post, () => User])
         declare posts: HasManyThrough<typeof Post>
       }
-      Country.boot()
 
       await db
         .insertQuery()
@@ -2894,7 +2764,6 @@ if (process.env.DB !== 'mysql_legacy') {
         @column()
         declare countryId: number
       }
-      User.boot()
 
       class Post extends BaseModel {
         @column({ isPrimary: true })
@@ -2906,7 +2775,6 @@ if (process.env.DB !== 'mysql_legacy') {
         @column()
         declare title: string
       }
-      Post.boot()
 
       class Country extends BaseModel {
         @column({ isPrimary: true })
@@ -2915,7 +2783,6 @@ if (process.env.DB !== 'mysql_legacy') {
         @hasManyThrough([() => Post, () => User])
         declare posts: HasManyThrough<typeof Post>
       }
-      Country.boot()
 
       await db
         .insertQuery()
@@ -2973,7 +2840,6 @@ if (process.env.DB !== 'mysql_legacy') {
         @column()
         declare countryId: number
       }
-      User.boot()
 
       class Post extends BaseModel {
         @column({ isPrimary: true })
@@ -2985,7 +2851,6 @@ if (process.env.DB !== 'mysql_legacy') {
         @column()
         declare title: string
       }
-      Post.boot()
 
       class Country extends BaseModel {
         @column({ isPrimary: true })
@@ -2994,7 +2859,6 @@ if (process.env.DB !== 'mysql_legacy') {
         @hasManyThrough([() => Post, () => User])
         declare posts: HasManyThrough<typeof Post>
       }
-      Country.boot()
 
       await db
         .insertQuery()
@@ -3074,13 +2938,11 @@ test.group('Model | Has Many Through | pagination', (group) => {
       @column()
       declare countryId: number
     }
-    User.boot()
 
     class Post extends BaseModel {
       @column()
       declare userId: number
     }
-    Post.boot()
 
     class Country extends BaseModel {
       @column({ isPrimary: true })
@@ -3089,7 +2951,6 @@ test.group('Model | Has Many Through | pagination', (group) => {
       @hasManyThrough([() => Post, () => User])
       declare posts: HasManyThrough<typeof Post>
     }
-    Country.boot()
 
     await db.table('countries').multiInsert([{ name: 'India' }, { name: 'Switzerland' }])
     await db.table('users').multiInsert([
@@ -3170,13 +3031,11 @@ test.group('Model | Has Many Through | pagination', (group) => {
       @column()
       declare countryId: number
     }
-    User.boot()
 
     class Post extends BaseModel {
       @column()
       declare userId: number
     }
-    Post.boot()
 
     class Country extends BaseModel {
       @column({ isPrimary: true })
@@ -3185,7 +3044,6 @@ test.group('Model | Has Many Through | pagination', (group) => {
       @hasManyThrough([() => Post, () => User])
       declare posts: HasManyThrough<typeof Post>
     }
-    Country.boot()
 
     await db.table('countries').insert({ name: 'India' })
 
@@ -3224,13 +3082,11 @@ test.group('Model | Has Many Through | clone', (group) => {
       @column()
       declare countryId: number
     }
-    User.boot()
 
     class Post extends BaseModel {
       @column()
       declare userId: number
     }
-    Post.boot()
 
     class Country extends BaseModel {
       @column({ isPrimary: true })
@@ -3239,7 +3095,6 @@ test.group('Model | Has Many Through | clone', (group) => {
       @hasManyThrough([() => Post, () => User])
       declare posts: HasManyThrough<typeof Post>
     }
-    Country.boot()
 
     await db.table('countries').multiInsert([{ name: 'India' }, { name: 'Switzerland' }])
     await db.table('users').multiInsert([
@@ -3309,7 +3164,6 @@ test.group('Model | Has Many Through | scopes', (group) => {
       @column()
       declare countryId: number
     }
-    User.boot()
 
     class Post extends BaseModel {
       @column()
@@ -3322,7 +3176,6 @@ test.group('Model | Has Many Through | scopes', (group) => {
         query.where('title', 'Adonis 101')
       })
     }
-    Post.boot()
 
     class Country extends BaseModel {
       @column({ isPrimary: true })
@@ -3331,7 +3184,6 @@ test.group('Model | Has Many Through | scopes', (group) => {
       @hasManyThrough([() => Post, () => User])
       declare posts: HasManyThrough<typeof Post>
     }
-    Country.boot()
 
     await db.table('countries').multiInsert([{ name: 'India' }, { name: 'Switzerland' }])
     await db.table('users').multiInsert([
@@ -3396,7 +3248,6 @@ test.group('Model | Has Many Through | scopes', (group) => {
       @column()
       declare countryId: number
     }
-    User.boot()
 
     class Post extends BaseModel {
       @column()
@@ -3409,7 +3260,6 @@ test.group('Model | Has Many Through | scopes', (group) => {
         query.where('title', 'Adonis 101')
       })
     }
-    Post.boot()
 
     class Country extends BaseModel {
       @column({ isPrimary: true })
@@ -3418,7 +3268,6 @@ test.group('Model | Has Many Through | scopes', (group) => {
       @hasManyThrough([() => Post, () => User])
       declare posts: HasManyThrough<typeof Post>
     }
-    Country.boot()
 
     await db.table('countries').multiInsert([{ name: 'India' }, { name: 'Switzerland' }])
     await db.table('users').multiInsert([
@@ -3495,7 +3344,6 @@ test.group('Model | Has Many Through | onQuery', (group) => {
       @column()
       declare countryId: number
     }
-    User.boot()
 
     class Post extends BaseModel {
       @column()
@@ -3504,7 +3352,6 @@ test.group('Model | Has Many Through | onQuery', (group) => {
       @column()
       declare title: string
     }
-    Post.boot()
 
     class Country extends BaseModel {
       @column({ isPrimary: true })
@@ -3515,7 +3362,6 @@ test.group('Model | Has Many Through | onQuery', (group) => {
       })
       declare posts: HasManyThrough<typeof Post>
     }
-    Country.boot()
 
     await db.table('countries').multiInsert([{ name: 'India' }, { name: 'Switzerland' }])
     await db.table('users').multiInsert([
@@ -3573,7 +3419,6 @@ test.group('Model | Has Many Through | onQuery', (group) => {
       @column()
       declare countryId: number
     }
-    User.boot()
 
     class Post extends BaseModel {
       @column()
@@ -3582,7 +3427,6 @@ test.group('Model | Has Many Through | onQuery', (group) => {
       @column()
       declare title: string
     }
-    Post.boot()
 
     class Country extends BaseModel {
       @column({ isPrimary: true })
@@ -3596,7 +3440,6 @@ test.group('Model | Has Many Through | onQuery', (group) => {
       })
       declare posts: HasManyThrough<typeof Post>
     }
-    Country.boot()
 
     await db.table('countries').multiInsert([{ name: 'India' }, { name: 'Switzerland' }])
     await db.table('users').multiInsert([
@@ -3656,7 +3499,6 @@ test.group('Model | Has Many Through | onQuery', (group) => {
       @column()
       declare countryId: number
     }
-    User.boot()
 
     class Post extends BaseModel {
       @column()
@@ -3665,7 +3507,6 @@ test.group('Model | Has Many Through | onQuery', (group) => {
       @column()
       declare title: string
     }
-    Post.boot()
 
     class Country extends BaseModel {
       @column({ isPrimary: true })
@@ -3676,7 +3517,6 @@ test.group('Model | Has Many Through | onQuery', (group) => {
       })
       declare posts: HasManyThrough<typeof Post>
     }
-    Country.boot()
 
     await db.table('countries').multiInsert([{ name: 'India' }, { name: 'Switzerland' }])
     await db.table('users').multiInsert([
@@ -3737,7 +3577,6 @@ test.group('Model | Has Many Through | onQuery', (group) => {
       @column()
       declare countryId: number
     }
-    User.boot()
 
     class Post extends BaseModel {
       @column()
@@ -3746,7 +3585,6 @@ test.group('Model | Has Many Through | onQuery', (group) => {
       @column()
       declare title: string
     }
-    Post.boot()
 
     class Country extends BaseModel {
       @column({ isPrimary: true })
@@ -3757,7 +3595,6 @@ test.group('Model | Has Many Through | onQuery', (group) => {
       })
       declare posts: HasManyThrough<typeof Post>
     }
-    Country.boot()
 
     await db.table('countries').multiInsert([{ name: 'India' }, { name: 'Switzerland' }])
     await db.table('users').multiInsert([
@@ -3943,10 +3780,6 @@ test.group('Model | HasManyThrough | Regressions', (group) => {
           createdAt: new Date(),
         },
       ])
-
-    Country.boot()
-    User.boot()
-    Post.boot()
 
     const countries = await Country.query().preload('posts', (query) => query.groupLimit(2))
 

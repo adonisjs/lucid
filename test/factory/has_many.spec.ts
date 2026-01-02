@@ -55,7 +55,6 @@ test.group('Factory | HasMany | make', (group) => {
       @column()
       declare title: string
     }
-    Post.boot()
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -112,7 +111,6 @@ test.group('Factory | HasMany | make', (group) => {
       @column()
       declare title: string
     }
-    Post.boot()
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -169,7 +167,6 @@ test.group('Factory | HasMany | make', (group) => {
       @column()
       declare title: string
     }
-    Post.boot()
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -232,7 +229,6 @@ test.group('Factory | HasMany | make', (group) => {
       @column()
       declare title: string
     }
-    Post.boot()
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -313,7 +309,6 @@ test.group('Factory | HasMany | create', (group) => {
       @column()
       declare title: string
     }
-    Post.boot()
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -374,7 +369,6 @@ test.group('Factory | HasMany | create', (group) => {
       @column()
       declare title: string
     }
-    Post.boot()
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -431,7 +425,6 @@ test.group('Factory | HasMany | create', (group) => {
       @column()
       declare title: string
     }
-    Post.boot()
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -495,7 +488,6 @@ test.group('Factory | HasMany | create', (group) => {
       @column()
       declare title: string
     }
-    Post.boot()
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -571,7 +563,6 @@ test.group('Factory | HasMany | create', (group) => {
       @column()
       declare title: string
     }
-    Post.boot()
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -630,7 +621,6 @@ test.group('Factory | HasMany | create', (group) => {
       @column()
       declare title: string
     }
-    Post.boot()
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -689,7 +679,6 @@ test.group('Factory | HasMany | create', (group) => {
       @column()
       declare title: string
     }
-    Post.boot()
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -755,7 +744,6 @@ test.group('Factory | HasMany | create', (group) => {
       @column()
       declare body: string
     }
-    Comment.boot()
 
     class Post extends BaseModel {
       @column({ isPrimary: true })
@@ -773,7 +761,6 @@ test.group('Factory | HasMany | create', (group) => {
       @hasMany(() => Comment)
       declare comments: HasMany<typeof Comment>
     }
-    Post.boot()
 
     class User extends BaseModel {
       @column({ isPrimary: true })

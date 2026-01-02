@@ -54,7 +54,6 @@ test.group('Model | ManyToMany | Options', (group) => {
         declare skills: ManyToMany<typeof Skill>
       }
 
-      User.boot()
       User.$getRelation('skills')!.boot()
     } catch ({ message }) {
       assert.equal(
@@ -113,7 +112,6 @@ test.group('Model | ManyToMany | Options', (group) => {
       declare skills: ManyToMany<typeof Skill>
     }
 
-    User.boot()
     User.$getRelation('skills')!.boot()
 
     assert.equal(User.$getRelation('skills')!['localKey'], 'uid')
@@ -131,7 +129,6 @@ test.group('Model | ManyToMany | Options', (group) => {
 
     try {
       class Skill extends BaseModel {}
-      Skill.boot()
 
       class User extends BaseModel {
         @column({ isPrimary: true })
@@ -141,7 +138,6 @@ test.group('Model | ManyToMany | Options', (group) => {
         declare skills: ManyToMany<typeof Skill>
       }
 
-      User.boot()
       User.$getRelation('skills')!.boot()
     } catch ({ message }) {
       assert.equal(
@@ -279,7 +275,6 @@ test.group('Model | ManyToMany | Options', (group) => {
       declare skills: ManyToMany<typeof Skill>
     }
 
-    User.boot()
     User.$getRelation('skills')!.boot()
 
     assert.equal(User.$getRelation('skills')!['pivotRelatedForeignKey'], 'skill_id')
@@ -305,7 +300,6 @@ test.group('Model | ManyToMany | Options', (group) => {
       declare skills: ManyToMany<typeof Skill>
     }
 
-    User.boot()
     User.$getRelation('skills')!.boot()
 
     assert.equal(User.$getRelation('skills')!['pivotRelatedForeignKey'], 'skill_uid')
@@ -332,7 +326,6 @@ test.group('Model | ManyToMany | Options', (group) => {
     }
 
     class User extends BaseUser {}
-    User.boot()
     User.$getRelation('skills')!.boot()
 
     assert.deepEqual(User.$getRelation('skills')!.model, User)
@@ -842,7 +835,6 @@ test.group('Model | ManyToMany | sub queries', (group) => {
       declare skills: ManyToMany<typeof Skill>
     }
 
-    User.boot()
     User.$getRelation('skills')!.boot()
 
     const { sql, bindings } = User.$getRelation('skills')!.subQuery(db.connection()).toSQL()
@@ -878,7 +870,6 @@ test.group('Model | ManyToMany | sub queries', (group) => {
       declare skills: ManyToMany<typeof Skill>
     }
 
-    User.boot()
     User.$getRelation('skills')!.boot()
 
     const { sql, bindings } = User.$getRelation('skills')!
@@ -919,7 +910,6 @@ test.group('Model | ManyToMany | sub queries', (group) => {
       declare skills: ManyToMany<typeof Skill>
     }
 
-    User.boot()
     User.$getRelation('skills')!.boot()
 
     const { sql, bindings } = User.$getRelation('skills')!
@@ -959,7 +949,6 @@ test.group('Model | ManyToMany | sub queries', (group) => {
       declare follows: ManyToMany<typeof User>
     }
 
-    User.boot()
     User.$getRelation('follows')!.boot()
 
     const { sql, bindings } = User.$getRelation('follows')!.subQuery(db.connection()).toSQL()
@@ -995,7 +984,6 @@ test.group('Model | ManyToMany | sub queries', (group) => {
       declare follows: ManyToMany<typeof User>
     }
 
-    User.boot()
     User.$getRelation('follows')!.boot()
 
     const { sql, bindings } = User.$getRelation('follows')!
@@ -1040,7 +1028,6 @@ test.group('Model | ManyToMany | sub queries', (group) => {
       declare skills: ManyToMany<typeof Skill>
     }
 
-    User.boot()
     User.$getRelation('skills')!.boot()
 
     const { sql, bindings } = User.$getRelation('skills')!
@@ -1086,7 +1073,6 @@ test.group('Model | ManyToMany | sub queries', (group) => {
       declare skills: ManyToMany<typeof Skill>
     }
 
-    User.boot()
     User.$getRelation('skills')!.boot()
 
     const { sql, bindings } = User.$getRelation('skills')!.subQuery(db.connection()).toSQL()
@@ -1287,7 +1273,6 @@ test.group('Model | ManyToMany | preload', (group) => {
       declare skills: ManyToMany<typeof Skill>
     }
 
-    User.boot()
     await db
       .insertQuery()
       .table('users')
@@ -1339,7 +1324,6 @@ test.group('Model | ManyToMany | preload', (group) => {
       declare skills: ManyToMany<typeof Skill>
     }
 
-    User.boot()
     await db
       .insertQuery()
       .table('users')
@@ -1392,8 +1376,6 @@ test.group('Model | ManyToMany | preload', (group) => {
       @manyToMany(() => Skill)
       declare skills: ManyToMany<typeof Skill>
     }
-
-    User.boot()
 
     await db
       .insertQuery()
@@ -1461,8 +1443,6 @@ test.group('Model | ManyToMany | preload', (group) => {
       @manyToMany(() => Skill)
       declare skills: ManyToMany<typeof Skill>
     }
-
-    User.boot()
 
     await db
       .insertQuery()
@@ -1540,7 +1520,6 @@ test.group('Model | ManyToMany | preload', (group) => {
       declare skills: ManyToMany<typeof Skill>
     }
 
-    User.boot()
     await db
       .insertQuery()
       .table('users')
@@ -1598,8 +1577,6 @@ test.group('Model | ManyToMany | preload', (group) => {
       @manyToMany(() => Skill, { pivotColumns: ['proficiency'] })
       declare skills: ManyToMany<typeof Skill>
     }
-
-    User.boot()
 
     await db
       .insertQuery()
@@ -1677,8 +1654,6 @@ test.group('Model | ManyToMany | preload', (group) => {
       declare skills: ManyToMany<typeof Skill>
     }
 
-    User.boot()
-
     await db
       .insertQuery()
       .table('users')
@@ -1755,7 +1730,6 @@ test.group('Model | ManyToMany | preload', (group) => {
       declare skills: ManyToMany<typeof Skill>
     }
 
-    User.boot()
     await db
       .insertQuery()
       .table('users')
@@ -1808,8 +1782,6 @@ test.group('Model | ManyToMany | preload', (group) => {
       @manyToMany(() => Skill)
       declare skills: ManyToMany<typeof Skill>
     }
-
-    User.boot()
 
     await db
       .insertQuery()
@@ -1867,8 +1839,6 @@ test.group('Model | ManyToMany | preload', (group) => {
       declare skills: ManyToMany<typeof Skill>
     }
 
-    User.boot()
-
     const users = await User.query().preload('skills', () => {
       throw new Error('not expected to be here')
     })
@@ -1912,7 +1882,6 @@ test.group('Model | ManyToMany | withCount', (group) => {
       declare skills: ManyToMany<typeof Skill>
     }
 
-    User.boot()
     await db
       .insertQuery()
       .table('users')
@@ -1971,7 +1940,6 @@ test.group('Model | ManyToMany | withCount', (group) => {
       declare skills: ManyToMany<typeof Skill>
     }
 
-    User.boot()
     await db
       .insertQuery()
       .table('users')
@@ -2034,7 +2002,6 @@ test.group('Model | ManyToMany | withCount', (group) => {
       declare skills: ManyToMany<typeof Skill>
     }
 
-    User.boot()
     await db
       .insertQuery()
       .table('users')
@@ -2100,7 +2067,6 @@ test.group('Model | ManyToMany | withCount', (group) => {
       declare skills: ManyToMany<typeof Skill>
     }
 
-    User.boot()
     await db
       .insertQuery()
       .table('users')
@@ -2154,8 +2120,6 @@ test.group('Model | ManyToMany | withCount', (group) => {
       })
       declare follows: ManyToMany<typeof User>
     }
-
-    User.boot()
 
     await db
       .insertQuery()
@@ -2220,7 +2184,6 @@ test.group('Model | ManyToMany | withCount', (group) => {
       declare skills: ManyToMany<typeof Skill>
     }
 
-    User.boot()
     await db
       .insertQuery()
       .table('users')
@@ -2291,8 +2254,6 @@ test.group('Model | ManyToMany | withCount', (group) => {
       @manyToMany(() => User)
       declare users: ManyToMany<typeof User>
     }
-
-    Group.boot()
 
     await db
       .insertQuery()
@@ -2399,7 +2360,6 @@ test.group('Model | ManyToMany | withCount', (group) => {
       declare skills: ManyToMany<typeof Skill>
     }
 
-    User.boot()
     await db
       .insertQuery()
       .table('users')
@@ -2453,7 +2413,6 @@ test.group('Model | ManyToMany | withCount', (group) => {
       declare skills: ManyToMany<typeof Skill>
     }
 
-    User.boot()
     await db
       .insertQuery()
       .table('users')
@@ -2526,7 +2485,6 @@ test.group('Model | ManyToMany | has', (group) => {
       declare skills: ManyToMany<typeof Skill>
     }
 
-    User.boot()
     await db
       .insertQuery()
       .table('users')
@@ -2582,7 +2540,6 @@ test.group('Model | ManyToMany | has', (group) => {
       declare skills: ManyToMany<typeof Skill>
     }
 
-    User.boot()
     await db
       .insertQuery()
       .table('users')
@@ -2656,7 +2613,6 @@ test.group('Model | ManyToMany | whereHas', (group) => {
       declare skills: ManyToMany<typeof Skill>
     }
 
-    User.boot()
     await db
       .insertQuery()
       .table('users')
@@ -2724,7 +2680,6 @@ test.group('Model | ManyToMany | whereHas', (group) => {
       declare skills: ManyToMany<typeof Skill>
     }
 
-    User.boot()
     await db
       .insertQuery()
       .table('users')
@@ -2808,7 +2763,6 @@ if (process.env.DB !== 'mysql_legacy') {
         declare skills: ManyToMany<typeof Skill>
       }
 
-      User.boot()
       await db
         .insertQuery()
         .table('users')
@@ -2893,7 +2847,6 @@ if (process.env.DB !== 'mysql_legacy') {
         declare skills: ManyToMany<typeof Skill>
       }
 
-      User.boot()
       await db
         .insertQuery()
         .table('users')
@@ -3022,7 +2975,6 @@ if (process.env.DB !== 'mysql_legacy') {
         declare skills: ManyToMany<typeof Skill>
       }
 
-      User.boot()
       await db
         .insertQuery()
         .table('users')
@@ -3159,7 +3111,6 @@ if (process.env.DB !== 'mysql_legacy') {
         declare skills: ManyToMany<typeof Skill>
       }
 
-      User.boot()
       await db
         .insertQuery()
         .table('users')
@@ -3297,7 +3248,6 @@ if (process.env.DB !== 'mysql_legacy') {
         declare skills: ManyToMany<typeof Skill>
       }
 
-      User.boot()
       await db
         .insertQuery()
         .table('users')
@@ -3370,7 +3320,6 @@ if (process.env.DB !== 'mysql_legacy') {
         declare skills: ManyToMany<typeof Skill>
       }
 
-      User.boot()
       await db
         .insertQuery()
         .table('users')
@@ -3458,7 +3407,6 @@ test.group('Model | ManyToMany | wherePivot', (group) => {
       declare skills: ManyToMany<typeof Skill>
     }
 
-    User.boot()
     const user = new User()
     const query = user!.related('skills').query()
 
@@ -3497,7 +3445,6 @@ test.group('Model | ManyToMany | wherePivot', (group) => {
       declare skills: ManyToMany<typeof Skill>
     }
 
-    User.boot()
     const user = new User()
     const query = user!.related('skills').query()
 
@@ -3538,7 +3485,6 @@ test.group('Model | ManyToMany | wherePivot', (group) => {
       declare skills: ManyToMany<typeof Skill>
     }
 
-    User.boot()
     const user = new User()
     const query = user!.related('skills').query()
 
@@ -3577,7 +3523,6 @@ test.group('Model | ManyToMany | wherePivot', (group) => {
       declare skills: ManyToMany<typeof Skill>
     }
 
-    User.boot()
     const user = new User()
     const query = user!.related('skills').query()
 
@@ -3622,7 +3567,6 @@ test.group('Model | ManyToMany | wherePivot', (group) => {
       declare skills: ManyToMany<typeof Skill>
     }
 
-    User.boot()
     const user = new User()
     const query = user!.related('skills').query()
 
@@ -3662,7 +3606,6 @@ test.group('Model | ManyToMany | wherePivot', (group) => {
       declare skills: ManyToMany<typeof Skill>
     }
 
-    User.boot()
     const user = new User()
     const query = user!.related('skills').query()
 
@@ -3719,7 +3662,6 @@ test.group('Model | ManyToMany | whereNotPivot', (group) => {
       declare skills: ManyToMany<typeof Skill>
     }
 
-    User.boot()
     const user = new User()
     const query = user!.related('skills').query()
 
@@ -3757,7 +3699,6 @@ test.group('Model | ManyToMany | whereNotPivot', (group) => {
       declare skills: ManyToMany<typeof Skill>
     }
 
-    User.boot()
     const user = new User()
     const query = user!.related('skills').query()
 
@@ -3796,7 +3737,6 @@ test.group('Model | ManyToMany | whereNotPivot', (group) => {
       declare skills: ManyToMany<typeof Skill>
     }
 
-    User.boot()
     const user = new User()
     const query = user!.related('skills').query()
 
@@ -3841,7 +3781,6 @@ test.group('Model | ManyToMany | whereNotPivot', (group) => {
       declare skills: ManyToMany<typeof Skill>
     }
 
-    User.boot()
     const user = new User()
     const query = user!.related('skills').query()
 
@@ -3891,7 +3830,6 @@ test.group('Model | ManyToMany | whereInPivot', (group) => {
       declare skills: ManyToMany<typeof Skill>
     }
 
-    User.boot()
     const user = new User()
     const query = user!.related('skills').query()
 
@@ -3930,7 +3868,6 @@ test.group('Model | ManyToMany | whereInPivot', (group) => {
       declare skills: ManyToMany<typeof Skill>
     }
 
-    User.boot()
     const user = new User()
     const query = user!.related('skills').query()
 
@@ -3975,7 +3912,6 @@ test.group('Model | ManyToMany | whereInPivot', (group) => {
       declare skills: ManyToMany<typeof Skill>
     }
 
-    User.boot()
     const user = new User()
     const query = user!.related('skills').query()
 
@@ -4021,7 +3957,6 @@ test.group('Model | ManyToMany | whereInPivot', (group) => {
       declare skills: ManyToMany<typeof Skill>
     }
 
-    User.boot()
     const user = new User()
     const query = user!.related('skills').query()
 
@@ -4067,7 +4002,6 @@ test.group('Model | ManyToMany | whereInPivot', (group) => {
       declare skills: ManyToMany<typeof Skill>
     }
 
-    User.boot()
     const user = new User()
     const query = user!.related('skills').query()
 
@@ -4111,7 +4045,6 @@ test.group('Model | ManyToMany | whereInPivot', (group) => {
       declare skills: ManyToMany<typeof Skill>
     }
 
-    User.boot()
     const user = new User()
     const query = user!.related('skills').query()
 
@@ -4150,7 +4083,6 @@ test.group('Model | ManyToMany | whereInPivot', (group) => {
       declare skills: ManyToMany<typeof Skill>
     }
 
-    User.boot()
     const user = new User()
     const query = user!.related('skills').query()
 
@@ -4193,7 +4125,6 @@ test.group('Model | ManyToMany | whereInPivot', (group) => {
       declare skills: ManyToMany<typeof Skill>
     }
 
-    User.boot()
     const user = new User()
     const query = user!.related('skills').query()
 
@@ -4254,7 +4185,6 @@ test.group('Model | ManyToMany | whereNotInPivot', (group) => {
       declare skills: ManyToMany<typeof Skill>
     }
 
-    User.boot()
     const user = new User()
     const query = user!.related('skills').query()
 
@@ -4293,7 +4223,6 @@ test.group('Model | ManyToMany | whereNotInPivot', (group) => {
       declare skills: ManyToMany<typeof Skill>
     }
 
-    User.boot()
     const user = new User()
     const query = user!.related('skills').query()
 
@@ -4338,7 +4267,6 @@ test.group('Model | ManyToMany | whereNotInPivot', (group) => {
       declare skills: ManyToMany<typeof Skill>
     }
 
-    User.boot()
     const user = new User()
     const query = user!.related('skills').query()
 
@@ -4382,7 +4310,6 @@ test.group('Model | ManyToMany | whereNotInPivot', (group) => {
       declare skills: ManyToMany<typeof Skill>
     }
 
-    User.boot()
     const user = new User()
     const query = user!.related('skills').query()
 
@@ -4421,7 +4348,6 @@ test.group('Model | ManyToMany | whereNotInPivot', (group) => {
       declare skills: ManyToMany<typeof Skill>
     }
 
-    User.boot()
     const user = new User()
     const query = user!.related('skills').query()
 
@@ -4464,7 +4390,6 @@ test.group('Model | ManyToMany | whereNotInPivot', (group) => {
       declare skills: ManyToMany<typeof Skill>
     }
 
-    User.boot()
     const user = new User()
     const query = user!.related('skills').query()
 
@@ -4525,7 +4450,6 @@ test.group('Model | ManyToMany | whereNullPivot', (group) => {
       declare skills: ManyToMany<typeof Skill>
     }
 
-    User.boot()
     const user = new User()
     const query = user!.related('skills').query()
 
@@ -4564,7 +4488,6 @@ test.group('Model | ManyToMany | whereNullPivot', (group) => {
       declare skills: ManyToMany<typeof Skill>
     }
 
-    User.boot()
     const user = new User()
     const query = user!.related('skills').query()
 
@@ -4605,7 +4528,6 @@ test.group('Model | ManyToMany | whereNullPivot', (group) => {
       declare skills: ManyToMany<typeof Skill>
     }
 
-    User.boot()
     const user = new User()
     const query = user!.related('skills').query()
 
@@ -4648,7 +4570,6 @@ test.group('Model | ManyToMany | whereNullPivot', (group) => {
       declare skills: ManyToMany<typeof Skill>
     }
 
-    User.boot()
     const user = new User()
     const query = user!.related('skills').query()
 
@@ -4705,7 +4626,6 @@ test.group('Model | ManyToMany | whereNotNullPivot', (group) => {
       declare skills: ManyToMany<typeof Skill>
     }
 
-    User.boot()
     const user = new User()
     const query = user!.related('skills').query()
 
@@ -4744,7 +4664,6 @@ test.group('Model | ManyToMany | whereNotNullPivot', (group) => {
       declare skills: ManyToMany<typeof Skill>
     }
 
-    User.boot()
     const user = new User()
     const query = user!.related('skills').query()
 
@@ -4785,7 +4704,6 @@ test.group('Model | ManyToMany | whereNotNullPivot', (group) => {
       declare skills: ManyToMany<typeof Skill>
     }
 
-    User.boot()
     const user = new User()
     const query = user!.related('skills').query()
 
@@ -4828,7 +4746,6 @@ test.group('Model | ManyToMany | whereNotNullPivot', (group) => {
       declare skills: ManyToMany<typeof Skill>
     }
 
-    User.boot()
     const user = new User()
     const query = user!.related('skills').query()
 
@@ -8058,9 +7975,6 @@ test.group('Model | ManyToMany | Regressions', (group) => {
         { userId: user0.id, skillId: skill0.id },
         { userId: user0.id, skillId: skill1.id },
       ])
-
-    User.boot()
-    Skill.boot()
 
     const users = await User.query().preload('skills', (query) => query.groupLimit(2))
 

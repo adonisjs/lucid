@@ -55,7 +55,6 @@ test.group('Factory | HasOne | make', (group) => {
       @column()
       declare displayName: string
     }
-    Profile.boot()
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -114,7 +113,6 @@ test.group('Factory | HasOne | make', (group) => {
       @column()
       declare displayName: string
     }
-    Profile.boot()
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -186,7 +184,6 @@ test.group('Factory | HasOne | create', (group) => {
       @column()
       declare displayName: string
     }
-    Profile.boot()
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -246,7 +243,6 @@ test.group('Factory | HasOne | create', (group) => {
       @column()
       declare displayName: string
     }
-    Profile.boot()
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -302,7 +298,6 @@ test.group('Factory | HasOne | create', (group) => {
       @column()
       declare displayName: string
     }
-    Profile.boot()
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -357,7 +352,6 @@ test.group('Factory | HasOne | create', (group) => {
       @column()
       declare displayName: string
     }
-    Profile.boot()
 
     class User extends BaseModel {
       @column({ isPrimary: true })

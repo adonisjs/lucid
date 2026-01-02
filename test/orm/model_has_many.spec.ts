@@ -52,7 +52,6 @@ test.group('Model | HasMany | Options', (group) => {
         declare posts: HasMany<typeof Post>
       }
 
-      User.boot()
       User.$getRelation('posts')!.boot()
     } catch ({ message }) {
       assert.equal(
@@ -73,7 +72,6 @@ test.group('Model | HasMany | Options', (group) => {
 
     try {
       class Post extends BaseModel {}
-      Post.boot()
 
       class User extends BaseModel {
         @column({ isPrimary: true })
@@ -83,7 +81,6 @@ test.group('Model | HasMany | Options', (group) => {
         declare posts: HasMany<typeof Post>
       }
 
-      User.boot()
       User.$getRelation('posts')!.boot()
     } catch ({ message }) {
       assert.equal(
@@ -113,7 +110,6 @@ test.group('Model | HasMany | Options', (group) => {
       declare posts: HasMany<typeof Post>
     }
 
-    User.boot()
     User.$getRelation('posts')!.boot()
 
     assert.equal(User.$getRelation('posts')!['localKey'], 'id')
@@ -142,7 +138,6 @@ test.group('Model | HasMany | Options', (group) => {
       declare posts: HasMany<typeof Post>
     }
 
-    User.boot()
     User.$getRelation('posts')!.boot()
 
     assert.equal(User.$getRelation('posts')!['localKey'], 'uid')
@@ -168,7 +163,6 @@ test.group('Model | HasMany | Options', (group) => {
       declare posts: HasMany<typeof Post>
     }
 
-    User.boot()
     User.$getRelation('posts')!.boot()
 
     assert.equal(User.$getRelation('posts')!['foreignKey'], 'userId')
@@ -194,7 +188,6 @@ test.group('Model | HasMany | Options', (group) => {
       declare posts: HasMany<typeof Post>
     }
 
-    User.boot()
     User.$getRelation('posts')!.boot()
 
     assert.equal(User.$getRelation('posts')!['foreignKey'], 'userUid')
@@ -222,7 +215,6 @@ test.group('Model | HasMany | Options', (group) => {
 
     class User extends BaseUser {}
 
-    User.boot()
     User.$getRelation('posts')!.boot()
 
     assert.deepEqual(User.$getRelation('posts')!.model, User)
@@ -282,7 +274,6 @@ test.group('Model | HasMany | Set Relations', (group) => {
       declare posts: HasMany<typeof Post>
     }
 
-    User.boot()
     User.$getRelation('posts')!.boot()
 
     const user = new User()
@@ -315,7 +306,6 @@ test.group('Model | HasMany | Set Relations', (group) => {
       declare posts: HasMany<typeof Post>
     }
 
-    User.boot()
     User.$getRelation('posts')!.boot()
 
     const user = new User()
@@ -353,7 +343,6 @@ test.group('Model | HasMany | Set Relations', (group) => {
       declare posts: HasMany<typeof Post>
     }
 
-    User.boot()
     User.$getRelation('posts')!.boot()
 
     const user = new User()
@@ -414,7 +403,6 @@ test.group('Model | HasMany | bulk operations', (group) => {
       declare posts: HasMany<typeof Post>
     }
 
-    User.boot()
     User.$getRelation('posts')!.boot()
 
     await db.table('users').insert({ username: 'virk' })
@@ -453,7 +441,6 @@ test.group('Model | HasMany | bulk operations', (group) => {
       declare posts: HasMany<typeof Post>
     }
 
-    User.boot()
     User.$getRelation('posts')!.boot()
 
     await db.table('users').multiInsert([{ username: 'virk' }, { username: 'nikk' }])
@@ -494,7 +481,6 @@ test.group('Model | HasMany | bulk operations', (group) => {
       declare posts: HasMany<typeof Post>
     }
 
-    User.boot()
     User.$getRelation('posts')!.boot()
 
     await db.table('users').insert({ username: 'virk' })
@@ -577,7 +563,6 @@ test.group('Model | HasMany | bulk operations', (group) => {
       declare posts: HasMany<typeof Post>
     }
 
-    User.boot()
     User.$getRelation('posts')!.boot()
 
     await db.table('users').insert({ username: 'virk' })
@@ -624,7 +609,6 @@ test.group('Model | HasMany | bulk operations', (group) => {
       declare posts: HasMany<typeof Post>
     }
 
-    User.boot()
     User.$getRelation('posts')!.boot()
 
     const [row] = await db
@@ -684,7 +668,6 @@ test.group('Model | HasMany | sub queries', (group) => {
       declare posts: HasMany<typeof Post>
     }
 
-    User.boot()
     User.$getRelation('posts')!.boot()
 
     const { sql, bindings } = User.$getRelation('posts')!.subQuery(db.connection()).toSQL()
@@ -722,7 +705,6 @@ test.group('Model | HasMany | sub queries', (group) => {
       declare posts: HasMany<typeof Post>
     }
 
-    User.boot()
     User.$getRelation('posts')!.boot()
 
     const { sql, bindings } = User.$getRelation('posts')!
@@ -765,7 +747,6 @@ test.group('Model | HasMany | sub queries', (group) => {
       declare posts: HasMany<typeof Post>
     }
 
-    User.boot()
     User.$getRelation('posts')!.boot()
 
     const { sql, bindings } = User.$getRelation('posts')!
@@ -806,7 +787,6 @@ test.group('Model | HasMany | sub queries', (group) => {
       declare parents: HasMany<typeof User>
     }
 
-    User.boot()
     User.$getRelation('parents')!.boot()
 
     const { sql, bindings } = User.$getRelation('parents')!
@@ -849,7 +829,6 @@ test.group('Model | HasMany | sub queries', (group) => {
       declare posts: HasMany<typeof Post>
     }
 
-    User.boot()
     User.$getRelation('posts')!.boot()
 
     const exec = () => User.$getRelation('posts')!.subQuery(db.connection())['exec']()
@@ -895,7 +874,6 @@ test.group('Model | HasMany | sub queries', (group) => {
       declare posts: HasMany<typeof Post>
     }
 
-    User.boot()
     User.$getRelation('posts')!.boot()
 
     const { sql, bindings } = User.$getRelation('posts')!.subQuery(db.connection()).toSQL()
@@ -947,7 +925,6 @@ test.group('Model | HasMany | aggregates', (group) => {
       declare posts: HasMany<typeof Post>
     }
 
-    User.boot()
     User.$getRelation('posts')!.boot()
 
     await db.table('users').insert({ username: 'virk' })
@@ -1016,8 +993,6 @@ test.group('Model | HasMany | preload', (group) => {
         },
       ])
 
-    User.boot()
-
     const users = await User.query().preload('posts')
     assert.lengthOf(users, 2)
 
@@ -1052,8 +1027,6 @@ test.group('Model | HasMany | preload', (group) => {
       .insertQuery()
       .table('users')
       .insert([{ username: 'virk' }, { username: 'nikk' }])
-
-    User.boot()
 
     const users = await User.query().preload('posts')
     assert.lengthOf(users, 2)
@@ -1110,7 +1083,6 @@ test.group('Model | HasMany | preload', (group) => {
         },
       ])
 
-    User.boot()
     const users = await User.query().preload('posts')
 
     assert.lengthOf(users[0]!.posts, 2)
@@ -1172,8 +1144,6 @@ test.group('Model | HasMany | preload', (group) => {
         },
       ])
 
-    User.boot()
-
     const users = await User.query().preload('posts', (builder) =>
       builder.where('title', 'Lucid 101')
     )
@@ -1232,8 +1202,6 @@ test.group('Model | HasMany | preload', (group) => {
         },
       ])
 
-    User.boot()
-
     const users = await User.query().preload('posts', (builder) => {
       return builder.select('title')
     })
@@ -1290,8 +1258,6 @@ test.group('Model | HasMany | preload', (group) => {
           title: 'Lucid 102',
         },
       ])
-
-    User.boot()
 
     const users = await User.query().preload('posts', (builder) => {
       return builder.select('title', 'user_id')
@@ -1638,8 +1604,6 @@ test.group('Model | HasMany | preload', (group) => {
       declare posts: HasMany<typeof Post>
     }
 
-    User.boot()
-
     const users = await User.query().preload('posts', () => {
       throw new Error('not expected to be here')
     })
@@ -1705,8 +1669,6 @@ test.group('Model | HasMany | withCount', (group) => {
         },
       ])
 
-    User.boot()
-
     const users = await User.query().withCount('posts')
     assert.lengthOf(users, 2)
 
@@ -1757,8 +1719,6 @@ test.group('Model | HasMany | withCount', (group) => {
           title: 'Lucid 101',
         },
       ])
-
-    User.boot()
 
     const users = await User.query().withCount('posts', (query) => {
       query.whereIn('title', ['Adonis 101', 'Lucid 101'])
@@ -1812,8 +1772,6 @@ test.group('Model | HasMany | withCount', (group) => {
           title: 'Lucid 101',
         },
       ])
-
-    User.boot()
 
     const users = await User.query().withAggregate('posts', (query) => {
       query.countDistinct('title').as('postsCount')
@@ -1871,8 +1829,6 @@ test.group('Model | HasMany | withCount', (group) => {
         },
       ])
 
-    User.boot()
-
     const users = await User.query().select('username').withCount('posts').orderBy('id', 'asc')
 
     assert.lengthOf(users, 2)
@@ -1904,7 +1860,6 @@ test.group('Model | HasMany | withCount', (group) => {
       declare parents: HasMany<typeof User>
     }
 
-    User.boot()
     User.$getRelation('parents')!.boot()
 
     await db
@@ -1930,8 +1885,6 @@ test.group('Model | HasMany | withCount', (group) => {
           username: 'tick',
         },
       ])
-
-    User.boot()
 
     const users = await User.query().withCount('parents', (query) => {
       query.countDistinct('parent_id')
@@ -1985,8 +1938,6 @@ test.group('Model | HasMany | withCount', (group) => {
           title: 'Lucid 101',
         },
       ])
-
-    User.boot()
 
     const users = await User.query()
       .withCount('posts', (query) => {
@@ -2083,8 +2034,6 @@ test.group('Model | HasMany | withCount', (group) => {
         },
       ])
 
-    User.boot()
-
     const user = await User.query().orderBy('id', 'asc').first()
     const query = user!.related('posts').query().withCount('comments')
 
@@ -2157,8 +2106,6 @@ test.group('Model | HasMany | withCount', (group) => {
         },
       ])
 
-    User.boot()
-
     const users = await User.query().withCount('posts', (query) => query.as('postsCount'))
     assert.lengthOf(users, 2)
 
@@ -2217,8 +2164,6 @@ test.group('Model | HasMany | withCount', (group) => {
         },
       ])
 
-    User.boot()
-
     const users = await User.query().withCount('posts', (query) => query.as('postsCount'))
     assert.lengthOf(users, 2)
 
@@ -2271,8 +2216,6 @@ test.group('Model | HasMany | withCount', (group) => {
         },
       ])
 
-    User.boot()
-
     const user = await User.firstOrFail()
     assert.equal(user.username, 'virk')
 
@@ -2321,8 +2264,6 @@ test.group('Model | HasMany | withCount', (group) => {
           title: 'Adonis 102',
         },
       ])
-
-    User.boot()
 
     const user = await User.query().firstOrFail()
     await user.loadCount('posts', (query) => {
@@ -2385,8 +2326,6 @@ test.group('Model | HasMany | has', (group) => {
           title: 'Adonis 102',
         },
       ])
-
-    User.boot()
 
     const query = User.query().has('posts')
     const connection = db.connection()
@@ -2453,8 +2392,6 @@ test.group('Model | HasMany | has', (group) => {
           title: 'Adonis 102',
         },
       ])
-
-    User.boot()
 
     const query = User.query().has('posts', '>', 1)
     const connection = db.connection()
@@ -2524,8 +2461,6 @@ test.group('Model | HasMany | has', (group) => {
           title: 'Adonis 102',
         },
       ])
-
-    User.boot()
 
     const query = User.query().has('posts', '>', 1).whereIn('username', ['virk', 'nikk'])
     const connection = db.connection()
@@ -2597,8 +2532,6 @@ test.group('Model | HasMany | has', (group) => {
         },
       ])
 
-    User.boot()
-
     const query = User.query().has('posts', '>', 1).orHas('posts', '=', 1)
     const connection = db.connection()
 
@@ -2668,8 +2601,6 @@ test.group('Model | HasMany | has', (group) => {
         },
       ])
 
-    User.boot()
-
     const query = User.query().doesntHave('posts')
     const connection = db.connection()
 
@@ -2736,8 +2667,6 @@ test.group('Model | HasMany | has', (group) => {
           title: 'Adonis 102',
         },
       ])
-
-    User.boot()
 
     const query = User.query().doesntHave('posts').orDoesntHave('posts', '>', 1)
     const connection = db.connection()
@@ -2829,8 +2758,6 @@ test.group('Model | HasMany | whereHas', (group) => {
         },
       ])
 
-    User.boot()
-
     const query = User.query().whereHas('posts', ($query) => {
       $query.where('title', 'Adonis 101')
     })
@@ -2910,8 +2837,6 @@ test.group('Model | HasMany | whereHas', (group) => {
           title: 'Lucid 101',
         },
       ])
-
-    User.boot()
 
     const query = User.query().whereHas(
       'posts',
@@ -2999,8 +2924,6 @@ test.group('Model | HasMany | whereHas', (group) => {
         },
       ])
 
-    User.boot()
-
     const query = User.query().whereHas(
       'posts',
       ($query) => {
@@ -3085,8 +3008,6 @@ test.group('Model | HasMany | whereHas', (group) => {
           title: 'Lucid 101',
         },
       ])
-
-    User.boot()
 
     const query = User.query()
       .whereHas(
@@ -3193,8 +3114,6 @@ test.group('Model | HasMany | whereHas', (group) => {
         },
       ])
 
-    User.boot()
-
     const query = User.query()
       .whereDoesntHave(
         'posts',
@@ -3300,8 +3219,6 @@ test.group('Model | HasMany | whereHas', (group) => {
           title: 'Lucid 101',
         },
       ])
-
-    User.boot()
 
     const query = User.query()
       .whereHas(
@@ -3469,8 +3386,6 @@ if (process.env.DB !== 'mysql_legacy') {
           },
         ])
 
-      User.boot()
-
       const users = await User.query().preload('posts', (query) => query.groupLimit(2))
       assert.lengthOf(users, 2)
 
@@ -3583,8 +3498,6 @@ if (process.env.DB !== 'mysql_legacy') {
           },
         ])
 
-      User.boot()
-
       const users = await User.query().preload('posts', (query) => {
         query.whereNotNull('created_at').groupLimit(2)
       })
@@ -3693,8 +3606,6 @@ if (process.env.DB !== 'mysql_legacy') {
             title: 'Lucid 105',
           },
         ])
-
-      User.boot()
 
       const users = await User.query().preload('posts', (query) => {
         query.select('title').groupLimit(2)
@@ -3813,8 +3724,6 @@ if (process.env.DB !== 'mysql_legacy') {
           },
         ])
 
-      User.boot()
-
       const users = await User.query().preload('posts', (query) => {
         query.groupLimit(2).groupOrderBy('created_at', 'asc')
       })
@@ -3899,8 +3808,6 @@ if (process.env.DB !== 'mysql_legacy') {
           },
         ])
 
-      User.boot()
-
       const user = await User.firstOrFail()
       const { sql, bindings } = user.related('posts').query().groupLimit(2).toSQL()
       const { sql: knexSql, bindings: knexBindings } = db
@@ -3979,8 +3886,6 @@ if (process.env.DB !== 'mysql_legacy') {
             created_at: new Date(),
           },
         ])
-
-      User.boot()
 
       const user = await User.firstOrFail()
       const { sql, bindings } = user
@@ -4114,7 +4019,6 @@ if (process.env.DB !== 'mysql_legacy') {
           },
         ])
 
-      User.boot()
       const posts = await Post.all()
 
       await Promise.all(
@@ -4252,7 +4156,6 @@ if (process.env.DB !== 'mysql_legacy') {
           },
         ])
 
-      User.boot()
       const posts = await Post.all()
 
       await Promise.all(
@@ -5294,7 +5197,6 @@ test.group('Model | HasMany | paginate', (group) => {
       declare posts: HasMany<typeof Post>
     }
 
-    User.boot()
     User.$getRelation('posts')!.boot()
 
     const [row] = await db
@@ -5353,7 +5255,6 @@ test.group('Model | HasMany | paginate', (group) => {
       declare posts: HasMany<typeof Post>
     }
 
-    User.boot()
     User.$getRelation('posts')!.boot()
 
     await db.table('users').insert({ username: 'virk' })
@@ -5401,7 +5302,6 @@ test.group('Model | HasMany | clone', (group) => {
       declare posts: HasMany<typeof Post>
     }
 
-    User.boot()
     User.$getRelation('posts')!.boot()
 
     await db.table('users').insert({ username: 'virk' }).returning('id')
@@ -5452,7 +5352,6 @@ test.group('Model | HasMany | scopes', (group) => {
       declare posts: HasMany<typeof Post>
     }
 
-    User.boot()
     User.$getRelation('posts')!.boot()
 
     const [row] = await db
@@ -5509,7 +5408,6 @@ test.group('Model | HasMany | scopes', (group) => {
       declare posts: HasMany<typeof Post>
     }
 
-    User.boot()
     User.$getRelation('posts')!.boot()
 
     const [row] = await db
@@ -5578,7 +5476,6 @@ test.group('Model | HasMany | onQuery', (group) => {
       declare posts: HasMany<typeof Post>
     }
 
-    User.boot()
     User.$getRelation('posts')!.boot()
 
     const [row] = await db
@@ -5630,7 +5527,6 @@ test.group('Model | HasMany | onQuery', (group) => {
       declare posts: HasMany<typeof Post>
     }
 
-    User.boot()
     User.$getRelation('posts')!.boot()
 
     const [row] = await db
@@ -5678,7 +5574,6 @@ test.group('Model | HasMany | onQuery', (group) => {
       declare posts: HasMany<typeof Post>
     }
 
-    User.boot()
     User.$getRelation('posts')!.boot()
 
     const [row] = await db
@@ -5726,7 +5621,6 @@ test.group('Model | HasMany | onQuery', (group) => {
       declare posts: HasMany<typeof Post>
     }
 
-    User.boot()
     User.$getRelation('posts')!.boot()
 
     const [row] = await db
@@ -5924,9 +5818,6 @@ test.group('Model | HasMany | Regressions', (group) => {
           createdAt: new Date(),
         },
       ])
-
-    User.boot()
-    Post.boot()
 
     const users = await User.query().preload('posts', (query) => query.groupLimit(2))
 

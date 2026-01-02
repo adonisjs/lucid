@@ -143,6 +143,7 @@ export class ManyToMany implements ManyToManyRelationContract<LucidModel, LucidM
     }
 
     const relatedModel = this.relatedModel()
+    relatedModel.boot()
 
     /**
      * Extracting keys from the model and the relation model. The keys

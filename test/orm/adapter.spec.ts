@@ -39,8 +39,6 @@ test.group('Adapter', (group) => {
       declare username: string
     }
 
-    User.boot()
-
     const user = new User()
     user.username = 'virk'
     await user.save()
@@ -67,7 +65,6 @@ test.group('Adapter', (group) => {
       @column()
       declare username: string
     }
-    User.boot()
 
     const user = new User()
     user.username = 'virk'
@@ -101,7 +98,6 @@ test.group('Adapter', (group) => {
       @column()
       declare username: string
     }
-    User.boot()
 
     const user = new User()
     user.username = 'virk'
@@ -135,7 +131,6 @@ test.group('Adapter', (group) => {
       @column()
       declare username: string
     }
-    User.boot()
 
     await db
       .table('users')
@@ -172,7 +167,6 @@ test.group('Adapter', (group) => {
       declare username: string
     }
 
-    User.boot()
     const trx = await db.transaction()
 
     const user = new User()
@@ -208,7 +202,6 @@ test.group('Adapter', (group) => {
       declare username: string
     }
 
-    User.boot()
     const trx = await db.transaction()
 
     const user = new User()
@@ -244,7 +237,6 @@ test.group('Adapter', (group) => {
       declare username: string
     }
 
-    User.boot()
     const trx = await db.transaction()
     const trx1 = await trx.transaction()
 
@@ -274,7 +266,6 @@ test.group('Adapter', (group) => {
       @column()
       declare username: string
     }
-    User.boot()
 
     const user = new User()
     user.username = 'virk'
@@ -312,7 +303,6 @@ test.group('Adapter', (group) => {
       @column()
       declare username: string
     }
-    User.boot()
 
     const user = new User()
     user.username = 'virk'
@@ -352,8 +342,6 @@ test.group('Adapter', (group) => {
       @column()
       declare username: string
     }
-
-    User.boot()
 
     const user = new User()
     user.username = 'virk'
@@ -409,8 +397,6 @@ test.group('Adapter', (group) => {
       @column()
       declare name: string
     }
-
-    Location.boot()
 
     // Test INSERT with Database.raw
     const location = new Location()

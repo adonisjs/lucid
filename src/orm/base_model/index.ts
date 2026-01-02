@@ -244,6 +244,7 @@ class BaseModelImpl implements LucidRow {
    * Returns the model query instance for the given model
    */
   static query(options?: ModelAdapterOptions): any {
+    this.boot()
     return this.$adapter.query(this, options)
   }
 
@@ -265,6 +266,7 @@ class BaseModelImpl implements LucidRow {
       | (ModelAdapterOptions & { isolationLevel?: IsolationLevels }),
     options?: ModelAdapterOptions & { isolationLevel?: IsolationLevels }
   ): Promise<TransactionClientContract | T> {
+    this.boot()
     if (typeof callbackOrOptions === 'function') {
       const client = this.$adapter.modelConstructorClient(this, options)
       return client.transaction(callbackOrOptions, options)
@@ -283,6 +285,7 @@ class BaseModelImpl implements LucidRow {
     sideloadAttributes?: ModelObject,
     options?: ModelAdapterOptions
   ): any | null {
+    this.boot()
     if (typeof adapterResult !== 'object' || Array.isArray(adapterResult)) {
       return null
     }
@@ -311,6 +314,7 @@ class BaseModelImpl implements LucidRow {
     sideloadAttributes?: ModelObject,
     options?: ModelAdapterOptions
   ): InstanceType<T>[] {
+    this.boot()
     if (!Array.isArray(adapterResults)) {
       return []
     }
@@ -331,6 +335,7 @@ class BaseModelImpl implements LucidRow {
    * - Returns: 'users_email'
    */
   static $getColumnAlias(columnName: string): string {
+    this.boot()
     return `${this.table}_${columnName}`
   }
 
@@ -352,6 +357,7 @@ class BaseModelImpl implements LucidRow {
    * @returns Object with alias as key and table.column as value
    */
   static columnsForSelect(): Record<string, string> {
+    this.boot()
     const columns: Record<string, string> = {}
 
     this.$columnsDefinitions.forEach((column) => {
@@ -413,6 +419,7 @@ class BaseModelImpl implements LucidRow {
    * Returns a boolean telling if column exists on the model
    */
   static $hasColumn(name: string): boolean {
+    this.boot()
     return this.$columnsDefinitions.has(name)
   }
 
@@ -420,6 +427,7 @@ class BaseModelImpl implements LucidRow {
    * Returns the column for a given name
    */
   static $getColumn(name: string): ModelColumnOptions | undefined {
+    this.boot()
     return this.$columnsDefinitions.get(name)
   }
 
@@ -442,6 +450,7 @@ class BaseModelImpl implements LucidRow {
    * Find if some property is marked as computed
    */
   static $hasComputed(name: string): boolean {
+    this.boot()
     return this.$computedDefinitions.has(name)
   }
 
@@ -449,6 +458,7 @@ class BaseModelImpl implements LucidRow {
    * Get computed node
    */
   static $getComputed(name: string): ComputedOptions | undefined {
+    this.boot()
     return this.$computedDefinitions.get(name)
   }
 
@@ -553,6 +563,7 @@ class BaseModelImpl implements LucidRow {
    * Find if some property is marked as a relation or not
    */
   static $hasRelation(name: any): boolean {
+    this.boot()
     return this.$relationsDefinitions.has(name)
   }
 
@@ -560,6 +571,7 @@ class BaseModelImpl implements LucidRow {
    * Returns relationship node for a given relation
    */
   static $getRelation(name: any): any {
+    this.boot()
     return this.$relationsDefinitions.get(name)!
   }
 
@@ -733,6 +745,7 @@ class BaseModelImpl implements LucidRow {
    * attributes to the model instance
    */
   static async create(values: any, options?: ModelAssignOptions): Promise<any> {
+    this.boot()
     const instance = this.newUpWithOptions(values, options, options?.allowExtraProperties)
     await instance.save()
     return instance
@@ -742,6 +755,7 @@ class BaseModelImpl implements LucidRow {
    * Same as [[BaseModel.create]] without invoking hooks.
    */
   static async createQuietly(values: any, options?: ModelAssignOptions): Promise<any> {
+    this.boot()
     const instance = this.newUpWithOptions(values, options, options?.allowExtraProperties)
     await instance.saveQuietly()
     return instance
@@ -754,6 +768,7 @@ class BaseModelImpl implements LucidRow {
    * will use that instead of create a new one.
    */
   static async createMany(values: any, options?: ModelAssignOptions): Promise<any[]> {
+    this.boot()
     const client = this.$adapter.modelConstructorClient(this, options)
 
     return managedTransaction(client, async (trx) => {
@@ -776,6 +791,7 @@ class BaseModelImpl implements LucidRow {
    * Same as [[BaseModel.createMany]] without invoking hooks.
    */
   static async createManyQuietly(values: any, options?: ModelAssignOptions): Promise<any[]> {
+    this.boot()
     const client = this.$adapter.modelConstructorClient(this, options)
 
     return managedTransaction(client, async (trx) => {
@@ -798,6 +814,7 @@ class BaseModelImpl implements LucidRow {
    * Find model instance using the primary key
    */
   static async find(value: any, options?: ModelAdapterOptions) {
+    this.boot()
     if (value === undefined) {
       throw new Exception('"find" expects a value. Received undefined')
     }
@@ -809,6 +826,7 @@ class BaseModelImpl implements LucidRow {
    * Find model instance using the primary key
    */
   static async findOrFail(value: any, options?: ModelAdapterOptions) {
+    this.boot()
     if (value === undefined) {
       throw new Exception('"findOrFail" expects a value. Received undefined')
     }
@@ -828,6 +846,7 @@ class BaseModelImpl implements LucidRow {
     value?: any | ModelAdapterOptions,
     options?: ModelAdapterOptions
   ) {
+    this.boot()
     if (typeof key === 'object') {
       return this.query(value as ModelAdapterOptions)
         .where(key)
@@ -853,6 +872,7 @@ class BaseModelImpl implements LucidRow {
     value?: any | ModelAdapterOptions,
     options?: ModelAdapterOptions
   ) {
+    this.boot()
     if (typeof key === 'object') {
       return this.query(value as ModelAdapterOptions)
         .where(key)
@@ -878,6 +898,7 @@ class BaseModelImpl implements LucidRow {
     value?: any[] | ModelAdapterOptions,
     options?: ModelAdapterOptions
   ) {
+    this.boot()
     if (typeof key === 'object') {
       return this.query(value as ModelAdapterOptions)
         .where(key)
@@ -895,6 +916,7 @@ class BaseModelImpl implements LucidRow {
    * Same as `query().first()`
    */
   static async first(options?: ModelAdapterOptions) {
+    this.boot()
     return this.query(options).first()
   }
 
@@ -902,6 +924,7 @@ class BaseModelImpl implements LucidRow {
    * Same as `query().firstOrFail()`
    */
   static async firstOrFail(options?: ModelAdapterOptions) {
+    this.boot()
     return this.query(options).firstOrFail()
   }
 
@@ -909,6 +932,7 @@ class BaseModelImpl implements LucidRow {
    * Find model instance using a key/value pair
    */
   static async findMany(value: any[], options?: ModelAdapterOptions) {
+    this.boot()
     if (value === undefined) {
       throw new Exception('"findMany" expects a value. Received undefined')
     }
@@ -928,6 +952,7 @@ class BaseModelImpl implements LucidRow {
     savePayload?: any,
     options?: ModelAssignOptions
   ): Promise<any> {
+    this.boot()
     /**
      * Search using the search payload and fetch the first row
      */
@@ -956,6 +981,7 @@ class BaseModelImpl implements LucidRow {
     savePayload?: any,
     options?: ModelAssignOptions
   ): Promise<any> {
+    this.boot()
     /**
      * Search using the search payload and fetch the first row
      */
@@ -985,6 +1011,7 @@ class BaseModelImpl implements LucidRow {
     updatedPayload: any,
     options?: ModelAssignOptions
   ): Promise<any> {
+    this.boot()
     const client = this.$adapter.modelConstructorClient(this as LucidModel, options)
 
     /**
@@ -1022,6 +1049,7 @@ class BaseModelImpl implements LucidRow {
     payload: any,
     options?: ModelAssignOptions
   ): Promise<any[]> {
+    this.boot()
     const client = this.$adapter.modelConstructorClient(this as LucidModel, options)
 
     uniqueKeys = Array.isArray(uniqueKeys) ? uniqueKeys : [uniqueKeys]
@@ -1068,6 +1096,7 @@ class BaseModelImpl implements LucidRow {
     payload: any,
     options?: ModelAssignOptions
   ): Promise<any[]> {
+    this.boot()
     const client = this.$adapter.modelConstructorClient(this as LucidModel, options)
 
     uniqueKeys = Array.isArray(uniqueKeys) ? uniqueKeys : [uniqueKeys]
@@ -1134,6 +1163,7 @@ class BaseModelImpl implements LucidRow {
     payload: any,
     options?: ModelAssignOptions
   ): Promise<any> {
+    this.boot()
     const client = this.$adapter.modelConstructorClient(this as LucidModel, options)
 
     uniqueKeys = Array.isArray(uniqueKeys) ? uniqueKeys : [uniqueKeys]
@@ -1182,6 +1212,7 @@ class BaseModelImpl implements LucidRow {
    * Returns all rows from the model table
    */
   static async all(options?: ModelAdapterOptions) {
+    this.boot()
     return this.query(options).orderBy(this.primaryKey, 'desc')
   }
 
@@ -1189,10 +1220,13 @@ class BaseModelImpl implements LucidRow {
    * Truncate model table
    */
   static truncate(cascade: boolean = false) {
+    this.boot()
     return this.query().client.truncate(this.table, cascade)
   }
 
   constructor() {
+    const modelConstructor = this.constructor as typeof BaseModel
+    modelConstructor.boot()
     return new Proxy(this, proxyHandler)
   }
 

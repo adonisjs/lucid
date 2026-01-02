@@ -52,7 +52,6 @@ test.group('Model query builder', (group) => {
       declare username: string
     }
 
-    User.boot()
     assert.instanceOf(User.query(), ModelQueryBuilder)
   })
 
@@ -71,7 +70,6 @@ test.group('Model query builder', (group) => {
       declare username: string
     }
 
-    User.boot()
     assert.equal((User.query().knexQuery as any)['_single'].table, 'users')
   })
 
@@ -90,7 +88,6 @@ test.group('Model query builder', (group) => {
       declare username: string
     }
 
-    User.boot()
     await db
       .insertQuery()
       .table('users')
@@ -117,7 +114,6 @@ test.group('Model query builder', (group) => {
       declare username: string
     }
 
-    User.boot()
     await db
       .insertQuery()
       .table('users')
@@ -145,7 +141,6 @@ test.group('Model query builder', (group) => {
       declare username: string
     }
 
-    User.boot()
     await db
       .insertQuery()
       .table('users')
@@ -176,7 +171,6 @@ test.group('Model query builder', (group) => {
       declare username: string
     }
 
-    User.boot()
     await db
       .insertQuery()
       .table('users')
@@ -205,7 +199,6 @@ test.group('Model query builder', (group) => {
       declare username: string
     }
 
-    User.boot()
     await db
       .insertQuery()
       .table('users')
@@ -234,7 +227,6 @@ test.group('Model query builder', (group) => {
       declare username: string
     }
 
-    User.boot()
     await db
       .insertQuery()
       .table('users')
@@ -263,7 +255,6 @@ test.group('Model query builder', (group) => {
       declare username: string
     }
 
-    User.boot()
     await db
       .insertQuery()
       .table('users')
@@ -292,8 +283,6 @@ test.group('Model query builder', (group) => {
       declare username: string
     }
 
-    User.boot()
-
     const query = User.query()
     const clonedQuery = query.clone()
     assert.instanceOf(clonedQuery, ModelQueryBuilder)
@@ -313,8 +302,6 @@ test.group('Model query builder', (group) => {
       @column()
       declare username: string
     }
-
-    User.boot()
 
     const query = User.query().groupBy('id')
     const clonedQuery = query.clone()
@@ -336,7 +323,6 @@ test.group('Model query builder', (group) => {
       declare username: string
     }
 
-    User.boot()
     await db
       .insertQuery()
       .table('users')
@@ -364,7 +350,6 @@ test.group('Model query builder', (group) => {
       @column()
       declare title: string
     }
-    Post.boot()
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -376,7 +361,6 @@ test.group('Model query builder', (group) => {
       @hasMany(() => Post)
       declare posts: HasMany<typeof Post>
     }
-    User.boot()
 
     const user = await User.create({ username: 'virk' })
     const posts = await user
@@ -406,7 +390,6 @@ test.group('Model query builder', (group) => {
       @column()
       declare title: string
     }
-    Post.boot()
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -418,7 +401,6 @@ test.group('Model query builder', (group) => {
       @hasMany(() => Post)
       declare posts: HasMany<typeof Post>
     }
-    User.boot()
 
     const user = await User.create({ username: 'virk' })
     await user.related('posts').createMany([{ title: 'Adonis 101' }, { title: 'Lucid 101' }])
@@ -453,7 +435,6 @@ test.group('Model query builder', (group) => {
       })
     }
 
-    User.boot()
     const { sql, bindings } = User.query()
       .apply((scopes) => {
         scopes.active()
@@ -490,7 +471,6 @@ test.group('Model query builder', (group) => {
       })
     }
 
-    User.boot()
     const { sql, bindings } = User.query()
       .where((builder) => {
         builder.apply((scopes) => scopes.active())
@@ -523,7 +503,6 @@ test.group('Model query builder', (group) => {
       declare username: string
     }
 
-    User.boot()
     await db
       .insertQuery()
       .table('users')
@@ -558,9 +537,6 @@ test.group('Model query builder', (group) => {
       @hasMany(() => Post)
       declare posts: HasMany<typeof Post>
     }
-
-    Post.boot()
-    User.boot()
 
     const users = await User.createMany([
       {

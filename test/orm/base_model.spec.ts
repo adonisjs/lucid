@@ -174,7 +174,6 @@ test.group('Base model | boot', (group) => {
       declare username: string
     }
 
-    User.boot()
     assert.equal(User.table, 'users')
   })
 
@@ -194,7 +193,6 @@ test.group('Base model | boot', (group) => {
       declare username: string
     }
 
-    User.boot()
     assert.equal(User.table, 'my_users')
   })
 
@@ -205,8 +203,8 @@ test.group('Base model | boot', (group) => {
     const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {}
-
     User.boot()
+
     assert.deepEqual(mapToObj(User.$columnsDefinitions), {})
     assert.deepEqual(mapToObj(User.$relationsDefinitions), {})
     assert.deepEqual(mapToObj(User.$computedDefinitions), {})
@@ -228,7 +226,6 @@ test.group('Base model | boot', (group) => {
       declare userName: string
     }
 
-    User.boot()
     assert.deepEqual(User.$keys.attributesToColumns.get('userName'), 'user_name')
   })
 
@@ -248,7 +245,6 @@ test.group('Base model | boot', (group) => {
       declare userName: string
     }
 
-    User.boot()
     assert.deepEqual(User.$keys.attributesToSerialized.get('userName'), 'userName')
   })
 
@@ -268,7 +264,6 @@ test.group('Base model | boot', (group) => {
       declare userName: string
     }
 
-    User.boot()
     assert.deepEqual(User.$keys.columnsToAttributes.get('user_name'), 'userName')
   })
 
@@ -288,7 +283,6 @@ test.group('Base model | boot', (group) => {
       declare userName: string
     }
 
-    User.boot()
     assert.deepEqual(User.$keys.columnsToSerialized.get('user_name'), 'userName')
   })
 
@@ -308,7 +302,6 @@ test.group('Base model | boot', (group) => {
       declare userName: string
     }
 
-    User.boot()
     assert.deepEqual(User.$keys.serializedToAttributes.get('userName'), 'userName')
   })
 
@@ -328,7 +321,6 @@ test.group('Base model | boot', (group) => {
       declare userName: string
     }
 
-    User.boot()
     assert.deepEqual(User.$keys.serializedToColumns.get('userName'), 'user_name')
   })
 })
@@ -423,7 +415,6 @@ test.group('Base Model | getter-setters', (group) => {
     class User extends BaseModel {
       declare username: string
     }
-    User.boot()
 
     const user = new User()
     user.username = 'virk'
@@ -484,7 +475,6 @@ test.group('Base Model | getter-setters', (group) => {
       username = 'virk'
     }
 
-    User.boot()
     const user = new User()
     assert.equal(user.username, 'virk')
   })
@@ -1421,8 +1411,6 @@ test.group('Base Model | persist', (group) => {
       declare updatedAt: string
     }
 
-    User.boot()
-
     const uuid = '2da96a33-57a0-4752-9d56-0e2485d4d2a4'
 
     const user = new User()
@@ -1467,8 +1455,6 @@ test.group('Base Model | persist', (group) => {
       declare updatedAt: string
     }
 
-    User.boot()
-
     const uuid = '2da96a33-57a0-4752-9d56-0e2485d4d2a4'
 
     const user = new User()
@@ -1509,8 +1495,6 @@ test.group('Base Model | persist', (group) => {
       @column({ columnName: 'updated_at' })
       declare updatedAt: string
     }
-
-    User.boot()
 
     const uuid = '2da96a33-57a0-4752-9d56-0e2485d4d2a4'
 
@@ -7656,9 +7640,6 @@ test.group('Base model | inheritance', (group) => {
       declare age: number
     }
 
-    MyBaseModel.boot()
-    User.boot()
-
     assert.equal(User.primaryKey, 'user_id')
   })
 
@@ -7684,9 +7665,6 @@ test.group('Base model | inheritance', (group) => {
       declare age: number
     }
 
-    MyBaseModel.boot()
-    User.boot()
-
     assert.equal(User.primaryKey, 'the_user_id')
   })
 
@@ -7709,9 +7687,6 @@ test.group('Base model | inheritance', (group) => {
       @column()
       declare age: number
     }
-
-    MyBaseModel.boot()
-    User.boot()
 
     assert.equal(User.table, 'users')
   })
@@ -7736,9 +7711,6 @@ test.group('Base model | inheritance', (group) => {
       @column()
       declare age: number
     }
-
-    MyBaseModel.boot()
-    User.boot()
 
     assert.deepEqual(
       User.$columnsDefinitions,
@@ -7843,9 +7815,6 @@ test.group('Base model | inheritance', (group) => {
       declare age: number
     }
 
-    MyBaseModel.boot()
-    User.boot()
-
     assert.deepEqual(
       User.$columnsDefinitions,
       new Map([
@@ -7949,9 +7918,6 @@ test.group('Base model | inheritance', (group) => {
       declare score: number
     }
 
-    MyBaseModel.boot()
-    User.boot()
-
     assert.deepEqual(
       User.$columnsDefinitions,
       new Map([
@@ -8051,9 +8017,6 @@ test.group('Base model | inheritance', (group) => {
       declare fullName: string
     }
 
-    MyBaseModel.boot()
-    User.boot()
-
     assert.deepEqual(
       User.$columnsDefinitions,
       new Map([
@@ -8139,9 +8102,6 @@ test.group('Base model | inheritance', (group) => {
       declare userId: number
     }
 
-    Profile.boot()
-    Email.boot()
-
     class MyBaseModel extends BaseModel {
       @column()
       declare id: number
@@ -8154,9 +8114,6 @@ test.group('Base model | inheritance', (group) => {
       @hasMany(() => Email)
       declare emails: HasMany<typeof Email>
     }
-
-    MyBaseModel.boot()
-    User.boot()
 
     assert.isTrue(User.$relationsDefinitions.has('emails'))
     assert.isTrue(User.$relationsDefinitions.has('profile'))
@@ -8190,10 +8147,6 @@ test.group('Base model | inheritance', (group) => {
       declare userId: number
     }
 
-    SocialProfile.boot()
-    Profile.boot()
-    Email.boot()
-
     class MyBaseModel extends BaseModel {
       @column()
       declare id: number
@@ -8209,9 +8162,6 @@ test.group('Base model | inheritance', (group) => {
       @hasOne(() => SocialProfile, { foreignKey: 'socialParentId' })
       declare profile: HasOne<typeof SocialProfile>
     }
-
-    MyBaseModel.boot()
-    User.boot()
 
     assert.deepEqual(User.$getRelation('profile').relatedModel(), SocialProfile)
     assert.deepEqual(User.$getRelation('profile').model, User)
@@ -8238,9 +8188,6 @@ test.group('Base model | inheritance', (group) => {
       declare userId: number
     }
 
-    Profile.boot()
-    Email.boot()
-
     class MyBaseModel extends BaseModel {
       @column()
       declare id: number
@@ -8258,9 +8205,6 @@ test.group('Base model | inheritance', (group) => {
       @hasMany(() => Email)
       declare emails: HasMany<typeof Email>
     }
-
-    MyBaseModel.boot()
-    User.boot()
 
     assert.isTrue(User.$relationsDefinitions.has('emails'))
     assert.isTrue(User.$relationsDefinitions.has('profile'))

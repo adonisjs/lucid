@@ -51,7 +51,6 @@ test.group('Model | HasOne | Options', (group) => {
         declare profile: HasOne<typeof Profile>
       }
 
-      User.boot()
       User.$getRelation('profile')!.boot()
     } catch ({ message }) {
       assert.equal(
@@ -72,7 +71,6 @@ test.group('Model | HasOne | Options', (group) => {
 
     try {
       class Profile extends BaseModel {}
-      Profile.boot()
 
       class User extends BaseModel {
         @column({ isPrimary: true })
@@ -82,7 +80,6 @@ test.group('Model | HasOne | Options', (group) => {
         declare profile: HasOne<typeof Profile>
       }
 
-      User.boot()
       User.$getRelation('profile')!.boot()
     } catch ({ message }) {
       assert.equal(
@@ -103,7 +100,6 @@ test.group('Model | HasOne | Options', (group) => {
       @column()
       declare userId: number
     }
-    Profile.boot()
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -113,7 +109,6 @@ test.group('Model | HasOne | Options', (group) => {
       declare profile: HasOne<typeof Profile>
     }
 
-    User.boot()
     User.$getRelation('profile')!.boot()
 
     assert.equal(User.$getRelation('profile')!['localKey'], 'id')
@@ -130,7 +125,6 @@ test.group('Model | HasOne | Options', (group) => {
       @column()
       declare userId: number
     }
-    Profile.boot()
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -143,7 +137,6 @@ test.group('Model | HasOne | Options', (group) => {
       declare profile: HasOne<typeof Profile>
     }
 
-    User.boot()
     User.$getRelation('profile')!.boot()
 
     assert.equal(User.$getRelation('profile')!['localKey'], 'uid')
@@ -160,7 +153,6 @@ test.group('Model | HasOne | Options', (group) => {
       @column()
       declare userId: number
     }
-    Profile.boot()
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -170,7 +162,6 @@ test.group('Model | HasOne | Options', (group) => {
       declare profile: HasOne<typeof Profile>
     }
 
-    User.boot()
     User.$getRelation('profile')!.boot()
 
     assert.equal(User.$getRelation('profile')!['foreignKey'], 'userId')
@@ -187,7 +178,6 @@ test.group('Model | HasOne | Options', (group) => {
       @column({ columnName: 'user_id' })
       declare userUid: number
     }
-    Profile.boot()
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -197,7 +187,6 @@ test.group('Model | HasOne | Options', (group) => {
       declare profile: HasOne<typeof Profile>
     }
 
-    User.boot()
     User.$getRelation('profile')!.boot()
 
     assert.equal(User.$getRelation('profile')!['foreignKey'], 'userUid')
@@ -214,7 +203,6 @@ test.group('Model | HasOne | Options', (group) => {
       @column({ columnName: 'user_id' })
       declare userUid: number
     }
-    Profile.boot()
 
     class BaseUser extends BaseModel {
       @column({ isPrimary: true })
@@ -226,7 +214,6 @@ test.group('Model | HasOne | Options', (group) => {
 
     class User extends BaseUser {}
 
-    User.boot()
     User.$getRelation('profile')!.boot()
 
     assert.equal(User.$getRelation('profile')!['foreignKey'], 'userUid')
@@ -298,7 +285,6 @@ test.group('Model | HasOne | Set Relations', (group) => {
       declare profile: HasOne<typeof Profile>
     }
 
-    User.boot()
     User.$getRelation('profile')!.boot()
 
     const user = new User()
@@ -327,7 +313,6 @@ test.group('Model | HasOne | Set Relations', (group) => {
       declare profile: HasOne<typeof Profile>
     }
 
-    User.boot()
     User.$getRelation('profile')!.boot()
 
     const user = new User()
@@ -356,7 +341,6 @@ test.group('Model | HasOne | Set Relations', (group) => {
       declare profile: HasOne<typeof Profile>
     }
 
-    User.boot()
     User.$getRelation('profile')!.boot()
 
     const user = new User()
@@ -629,7 +613,6 @@ test.group('Model | HasOne | sub queries', (group) => {
       declare profile: HasOne<typeof Profile>
     }
 
-    User.boot()
     User.$getRelation('profile')!.boot()
 
     const { sql, bindings } = User.$getRelation('profile')!.subQuery(db.connection()).toSQL()
@@ -673,7 +656,6 @@ test.group('Model | HasOne | sub queries', (group) => {
       declare profile: HasOne<typeof Profile>
     }
 
-    User.boot()
     User.$getRelation('profile')!.boot()
 
     const { sql, bindings } = User.$getRelation('profile')!
@@ -722,7 +704,6 @@ test.group('Model | HasOne | sub queries', (group) => {
       declare profile: HasOne<typeof Profile>
     }
 
-    User.boot()
     User.$getRelation('profile')!.boot()
 
     const { sql, bindings } = User.$getRelation('profile')!
@@ -763,7 +744,6 @@ test.group('Model | HasOne | sub queries', (group) => {
       declare parent: HasOne<typeof User>
     }
 
-    User.boot()
     User.$getRelation('parent')!.boot()
 
     const { sql, bindings } = User.$getRelation('parent')!
@@ -812,7 +792,6 @@ test.group('Model | HasOne | sub queries', (group) => {
       declare profile: HasOne<typeof Profile>
     }
 
-    User.boot()
     User.$getRelation('profile')!.boot()
 
     const exec = () => User.$getRelation('profile')!.subQuery(db.connection())['exec']()
@@ -865,7 +844,6 @@ test.group('Model | HasOne | sub queries', (group) => {
       declare profile: HasOne<typeof Profile>
     }
 
-    User.boot()
     User.$getRelation('profile')!.boot()
 
     const { sql, bindings } = User.$getRelation('profile')!.subQuery(db.connection()).toSQL()
@@ -943,8 +921,6 @@ test.group('Model | HasOne | preload', (group) => {
         },
       ])
 
-    User.boot()
-
     const users = await User.query().preload('profile')
     assert.lengthOf(users, 2)
 
@@ -985,8 +961,6 @@ test.group('Model | HasOne | preload', (group) => {
       .insertQuery()
       .table('users')
       .insert([{ username: 'virk' }, { username: 'nikk' }])
-
-    User.boot()
 
     const users = await User.query().preload('profile')
     assert.lengthOf(users, 2)
@@ -1067,8 +1041,6 @@ test.group('Model | HasOne | preload', (group) => {
         },
       ])
 
-    User.boot()
-
     const user = await User.query()
       .preload('profile', (builder) => builder.preload('identity'))
       .where('username', 'virk')
@@ -1127,8 +1099,6 @@ test.group('Model | HasOne | preload', (group) => {
         },
       ])
 
-    User.boot()
-
     const users = await User.query().preload('profile', (builder) => builder.preload('user'))
     assert.lengthOf(users, 2)
 
@@ -1181,8 +1151,6 @@ test.group('Model | HasOne | preload', (group) => {
           display_name: 'nikk',
         },
       ])
-
-    User.boot()
 
     const users = await User.query().preload('profile', (builder) =>
       builder.where('display_name', 'foo')
@@ -1239,8 +1207,6 @@ test.group('Model | HasOne | preload', (group) => {
         },
       ])
 
-    User.boot()
-
     const users = await User.query().preload('profile', (builder) => {
       return builder.select('display_name')
     })
@@ -1295,8 +1261,6 @@ test.group('Model | HasOne | preload', (group) => {
           display_name: 'nikk',
         },
       ])
-
-    User.boot()
 
     const users = await User.query().preload('profile', (builder) => {
       return builder.select('display_name', 'user_id')
@@ -1353,8 +1317,6 @@ test.group('Model | HasOne | preload', (group) => {
         },
       ])
 
-    User.boot()
-
     const users = await User.query().preload('profile').sideload({ id: 1 })
     assert.lengthOf(users, 2)
 
@@ -1407,8 +1369,6 @@ test.group('Model | HasOne | preload', (group) => {
           display_name: 'nikk',
         },
       ])
-
-    User.boot()
 
     const users = await User.all()
     assert.lengthOf(users, 2)
@@ -1547,8 +1507,6 @@ test.group('Model | HasOne | preload', (group) => {
         },
       ])
 
-    User.boot()
-
     const users = await User.all()
     assert.lengthOf(users, 2)
 
@@ -1639,8 +1597,6 @@ test.group('Model | HasOne | preload', (group) => {
         },
       ])
 
-    User.boot()
-
     const query = User.query({ connection: 'secondary' })
       .preload('profile', (builder) => builder.preload('identity'))
       .where('username', 'virk')
@@ -1679,8 +1635,6 @@ test.group('Model | HasOne | preload', (group) => {
       @hasOne(() => Profile)
       declare profile: HasOne<typeof Profile>
     }
-
-    User.boot()
 
     const users = await User.query().preload('profile', () => {
       throw new Error('not expected to be here')
@@ -1749,8 +1703,6 @@ test.group('Model | HasOne | withCount', (group) => {
         },
       ])
 
-    User.boot()
-
     const users = await User.query().withCount('profile')
     assert.lengthOf(users, 2)
 
@@ -1807,8 +1759,6 @@ test.group('Model | HasOne | withCount', (group) => {
         },
       ])
 
-    User.boot()
-
     const users = await User.query().select('username').withCount('profile').orderBy('id', 'asc')
 
     assert.lengthOf(users, 2)
@@ -1862,8 +1812,6 @@ test.group('Model | HasOne | withCount', (group) => {
         },
       ])
 
-    User.boot()
-
     const user = await User.firstOrFail()
     await user.loadCount('profile')
 
@@ -1892,8 +1840,6 @@ test.group('Model | HasOne | withCount', (group) => {
       .insertQuery()
       .table('users')
       .insert([{ username: 'virk' }, { username: 'nikk', parent_id: 1 }])
-
-    User.boot()
 
     const user = await User.firstOrFail()
     await user.loadCount('manager')
@@ -1959,8 +1905,6 @@ test.group('Model | HasOne | has', (group) => {
           display_name: 'virk',
         },
       ])
-
-    User.boot()
 
     const users = await User.query().has('profile')
 
@@ -2037,8 +1981,6 @@ test.group('Model | HasOne | whereHas', (group) => {
           type: 'personal',
         },
       ])
-
-    User.boot()
 
     const users = await User.query().whereHas('profile', (query) => {
       query.where('type', 'social')

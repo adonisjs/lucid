@@ -90,7 +90,6 @@ test.group('Factory | Factory Model', (group) => {
       @column()
       declare userId: number
     }
-    Profile.boot()
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -102,7 +101,6 @@ test.group('Factory | Factory Model', (group) => {
       @hasOne(() => Profile)
       declare profile: HasOne<typeof Profile>
     }
-    User.boot()
 
     function relatedFn() {}
     const factory = factoryManager.define(User, () => new User()).relation('profile', relatedFn)
@@ -163,7 +161,6 @@ test.group('Factory | Factory Model', (group) => {
       @column()
       declare userId: number
     }
-    Profile.boot()
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -175,7 +172,6 @@ test.group('Factory | Factory Model', (group) => {
       @hasOne(() => Profile)
       declare profile: HasOne<typeof Profile>
     }
-    User.boot()
 
     const profileFactory = factoryManager.define(Profile, () => new Profile()).build()
     function relatedFn() {
@@ -195,7 +191,6 @@ test.group('Factory | Factory Model', (group) => {
     const BaseModel = getBaseModel(adapter)
 
     class Profile extends BaseModel {}
-    Profile.boot()
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -249,7 +244,6 @@ test.group('Factory | Factory Model', (group) => {
     const BaseModel = getBaseModel(adapter)
 
     class Profile extends BaseModel {}
-    Profile.boot()
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -280,7 +274,6 @@ test.group('Factory | Factory Model', (group) => {
     const BaseModel = getBaseModel(adapter)
 
     class Profile extends BaseModel {}
-    Profile.boot()
 
     class User extends BaseModel {
       @column({ isPrimary: true })

@@ -44,14 +44,12 @@ test.group('Model | BelongsTo | Options', (group) => {
 
     try {
       class User extends BaseModel {}
-      User.boot()
 
       class Profile extends BaseModel {
         @belongsTo(() => User)
         declare user: BelongsTo<typeof User>
       }
 
-      Profile.boot()
       Profile.$getRelation('user')!.boot()
     } catch ({ message }) {
       assert.equal(
@@ -76,14 +74,11 @@ test.group('Model | BelongsTo | Options', (group) => {
         declare id: number
       }
 
-      User.boot()
-
       class Profile extends BaseModel {
         @belongsTo(() => User)
         declare user: BelongsTo<typeof User>
       }
 
-      Profile.boot()
       Profile.$getRelation('user')!.boot()
     } catch ({ message }) {
       assert.equal(
@@ -217,7 +212,6 @@ test.group('Model | BelongsTo | Options', (group) => {
     }
 
     class Profile extends BaseProfile {}
-    Profile.boot()
 
     Profile.$getRelation('user')!.boot()
 
@@ -600,7 +594,6 @@ test.group('Model | BelongsTo | sub queries', (group) => {
       declare username: string
     }
 
-    Profile.boot()
     Profile.$getRelation('user')!.boot()
 
     const { sql, bindings } = Profile.$getRelation('user')!.subQuery(db.connection()).toSQL()
@@ -644,7 +637,6 @@ test.group('Model | BelongsTo | sub queries', (group) => {
       declare username: string
     }
 
-    Profile.boot()
     Profile.$getRelation('user')!.boot()
 
     const { sql, bindings } = Profile.$getRelation('user')!
@@ -693,7 +685,6 @@ test.group('Model | BelongsTo | sub queries', (group) => {
       declare username: string
     }
 
-    Profile.boot()
     Profile.$getRelation('user')!.boot()
 
     const { sql, bindings } = Profile.$getRelation('user')!
@@ -734,7 +725,6 @@ test.group('Model | BelongsTo | sub queries', (group) => {
       declare child: BelongsTo<typeof User>
     }
 
-    User.boot()
     User.$getRelation('child')!.boot()
 
     const { sql, bindings } = User.$getRelation('child')!
@@ -783,7 +773,6 @@ test.group('Model | BelongsTo | sub queries', (group) => {
       declare username: string
     }
 
-    Profile.boot()
     Profile.$getRelation('user')!.boot()
 
     const exec = () => Profile.$getRelation('user')!.subQuery(db.connection())['exec']()
@@ -836,7 +825,6 @@ test.group('Model | BelongsTo | sub queries', (group) => {
       declare username: string
     }
 
-    Profile.boot()
     Profile.$getRelation('user')!.boot()
 
     const { sql, bindings } = Profile.$getRelation('user')!.subQuery(db.connection()).toSQL()
@@ -891,8 +879,6 @@ test.group('Model | BelongsTo | preload', (group) => {
     await db.insertQuery().table('users').insert({ username: 'virk' })
     await db.insertQuery().table('profiles').insert({ display_name: 'Hvirk', user_id: 1 })
 
-    Profile.boot()
-
     const profiles = await Profile.query().preload('user')
     assert.lengthOf(profiles, 1)
 
@@ -920,8 +906,6 @@ test.group('Model | BelongsTo | preload', (group) => {
 
     await db.insertQuery().table('users').insert({ username: 'virk' })
     await db.insertQuery().table('profiles').insert({ display_name: 'Hvirk', user_id: 1 })
-
-    Profile.boot()
 
     let callbackCalled = false
 
@@ -957,8 +941,6 @@ test.group('Model | BelongsTo | preload', (group) => {
 
     await db.insertQuery().table('profiles').insert({ display_name: 'Hvirk', user_id: null })
 
-    Profile.boot()
-
     const profiles = await Profile.query().preload('user')
     assert.lengthOf(profiles, 1)
 
@@ -986,8 +968,6 @@ test.group('Model | BelongsTo | preload', (group) => {
     }
 
     await db.insertQuery().table('profiles').insert({ display_name: 'Hvirk', user_id: null })
-
-    Profile.boot()
 
     const profiles = await Profile.query().preload('user')
     assert.lengthOf(profiles, 1)
@@ -1030,7 +1010,6 @@ test.group('Model | BelongsTo | preload', (group) => {
         },
       ])
 
-    Profile.boot()
     const profiles = await Profile.query().preload('user')
 
     assert.lengthOf(profiles, 2)
@@ -1073,7 +1052,6 @@ test.group('Model | BelongsTo | preload', (group) => {
         },
       ])
 
-    Profile.boot()
     const profiles = await Profile.query().preload('user', (builder) =>
       builder.where('username', 'foo')
     )
@@ -1121,8 +1099,6 @@ test.group('Model | BelongsTo | preload', (group) => {
         },
       ])
 
-    Profile.boot()
-
     const profiles = await Profile.query().preload('user', (builder) => {
       return builder.select('username')
     })
@@ -1169,8 +1145,6 @@ test.group('Model | BelongsTo | preload', (group) => {
           display_name: 'Nikk',
         },
       ])
-
-    Profile.boot()
 
     const profiles = await Profile.query().preload('user', (builder) => {
       return builder.select('username', 'id')
@@ -1220,8 +1194,6 @@ test.group('Model | BelongsTo | preload', (group) => {
           display_name: 'Nikk',
         },
       ])
-
-    Profile.boot()
 
     try {
       await Profile.query().select('display_name').preload('user')
@@ -1618,8 +1590,6 @@ test.group('Model | BelongsTo | preload', (group) => {
 
     await db.insertQuery().table('profiles').insert({ display_name: 'Hvirk', user_id: null })
 
-    Profile.boot()
-
     const profiles = await Profile.query().preload('user')
     assert.lengthOf(profiles, 1)
 
@@ -1648,8 +1618,6 @@ test.group('Model | BelongsTo | preload', (group) => {
 
     await db.insertQuery().table('profiles').insert({ display_name: 'Hvirk', user_id: null })
 
-    Profile.boot()
-
     const profiles = await Profile.query()
     assert.lengthOf(profiles, 1)
     await profiles[0].load('user')
@@ -1676,8 +1644,6 @@ test.group('Model | BelongsTo | preload', (group) => {
       @belongsTo(() => User)
       declare user: BelongsTo<typeof User>
     }
-
-    Profile.boot()
 
     const profiles = await Profile.query().preload('user', () => {
       throw new Error('not expected to be here')
@@ -1722,8 +1688,6 @@ test.group('Model | BelongsTo | withCount', (group) => {
     await db.insertQuery().table('users').insert({ username: 'virk' })
     await db.insertQuery().table('profiles').insert({ display_name: 'Hvirk', user_id: 1 })
 
-    Profile.boot()
-
     const profiles = await Profile.query().withCount('user')
 
     assert.lengthOf(profiles, 1)
@@ -1756,8 +1720,6 @@ test.group('Model | BelongsTo | withCount', (group) => {
     await db.insertQuery().table('users').insert({ username: 'virk' })
     await db.insertQuery().table('profiles').insert({ display_name: 'Hvirk', user_id: 1 })
 
-    Profile.boot()
-
     const profiles = await Profile.query().select('displayName').withCount('user')
 
     assert.lengthOf(profiles, 1)
@@ -1789,8 +1751,6 @@ test.group('Model | BelongsTo | withCount', (group) => {
 
     await db.insertQuery().table('users').insert({ username: 'virk' })
     await db.insertQuery().table('profiles').insert({ display_name: 'Hvirk', user_id: 1 })
-
-    Profile.boot()
 
     const profile = await Profile.query().firstOrFail()
     await profile.loadCount('user')
@@ -1841,8 +1801,6 @@ test.group('Model | BelongsTo | has', (group) => {
       .insertQuery()
       .table('profiles')
       .multiInsert([{ display_name: 'Virk', user_id: 1 }])
-
-    Profile.boot()
 
     const profiles = await Profile.query().has('user')
     assert.lengthOf(profiles, 1)
@@ -1900,8 +1858,6 @@ test.group('Model | BelongsTo | whereHas', (group) => {
         { display_name: 'Virk', user_id: 1 },
         { display_name: 'Nikk', user_id: 2 },
       ])
-
-    Profile.boot()
 
     const profiles = await Profile.query().whereHas(
       'user',
@@ -2153,7 +2109,6 @@ test.group('Model | BelongsTo | clone', (group) => {
       @column()
       declare username: string
     }
-    User.boot()
 
     class Profile extends BaseModel {
       @column()
@@ -2165,7 +2120,6 @@ test.group('Model | BelongsTo | clone', (group) => {
       @belongsTo(() => User)
       declare user: BelongsTo<typeof User>
     }
-    Profile.boot()
 
     await db.insertQuery().table('users').insert({ username: 'virk' })
     await db.insertQuery().table('profiles').insert({ display_name: 'Hvirk', user_id: 1 })
@@ -2208,7 +2162,6 @@ test.group('Model | BelongsTo | scopes', (group) => {
         query.where('country_id', countryId)
       })
     }
-    User.boot()
 
     class Profile extends BaseModel {
       @column()
@@ -2220,7 +2173,6 @@ test.group('Model | BelongsTo | scopes', (group) => {
       @belongsTo(() => User)
       declare user: BelongsTo<typeof User>
     }
-    Profile.boot()
 
     await db.insertQuery().table('users').insert({ username: 'virk' })
     await db.insertQuery().table('profiles').insert({ display_name: 'Hvirk', user_id: 1 })
@@ -2254,7 +2206,6 @@ test.group('Model | BelongsTo | scopes', (group) => {
         query.where('country_id', countryId)
       })
     }
-    User.boot()
 
     class Profile extends BaseModel {
       @column()
@@ -2266,7 +2217,6 @@ test.group('Model | BelongsTo | scopes', (group) => {
       @belongsTo(() => User)
       declare user: BelongsTo<typeof User>
     }
-    Profile.boot()
 
     await db.insertQuery().table('users').insert({ username: 'virk' })
     await db.insertQuery().table('profiles').insert({ display_name: 'Hvirk', user_id: 1 })
@@ -2313,7 +2263,6 @@ test.group('Model | BelongsTo | onQuery', (group) => {
       @column()
       declare username: string
     }
-    User.boot()
 
     class Profile extends BaseModel {
       @column()
@@ -2329,7 +2278,6 @@ test.group('Model | BelongsTo | onQuery', (group) => {
       })
       declare user: BelongsTo<typeof User>
     }
-    Profile.boot()
 
     await db.insertQuery().table('users').insert({ username: 'virk' })
     await db.insertQuery().table('profiles').insert({ display_name: 'Hvirk', user_id: 1 })
@@ -2354,7 +2302,6 @@ test.group('Model | BelongsTo | onQuery', (group) => {
       @column()
       declare username: string
     }
-    User.boot()
 
     class Profile extends BaseModel {
       @column()
@@ -2371,7 +2318,6 @@ test.group('Model | BelongsTo | onQuery', (group) => {
       })
       declare user: BelongsTo<typeof User>
     }
-    Profile.boot()
 
     await db.insertQuery().table('users').insert({ username: 'virk' })
     await db.insertQuery().table('profiles').insert({ display_name: 'Hvirk', user_id: 1 })
@@ -2399,7 +2345,6 @@ test.group('Model | BelongsTo | onQuery', (group) => {
       @column()
       declare username: string
     }
-    User.boot()
 
     class Profile extends BaseModel {
       @column()
@@ -2415,7 +2360,6 @@ test.group('Model | BelongsTo | onQuery', (group) => {
       })
       declare user: BelongsTo<typeof User>
     }
-    Profile.boot()
 
     await db.insertQuery().table('users').insert({ username: 'virk' })
     await db.insertQuery().table('profiles').insert({ display_name: 'Hvirk', user_id: 1 })
@@ -2438,7 +2382,6 @@ test.group('Model | BelongsTo | onQuery', (group) => {
       @column()
       declare username: string
     }
-    User.boot()
 
     class Profile extends BaseModel {
       @column()
@@ -2454,7 +2397,6 @@ test.group('Model | BelongsTo | onQuery', (group) => {
       })
       declare user: BelongsTo<typeof User>
     }
-    Profile.boot()
 
     await db.insertQuery().table('users').insert({ username: 'virk' })
     await db.insertQuery().table('profiles').insert({ display_name: 'Hvirk', user_id: 1 })
