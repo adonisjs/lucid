@@ -55,8 +55,12 @@ export default class DbTruncate extends BaseCommand {
   /**
    * Truncate all tables except adonis migrations table
    */
-  private async performTruncate(client: QueryClientContract, schemas: string[]) {
-    await client.truncateAllTables(['adonis_schema', 'adonis_schema_versions'], schemas)
+  private async performTruncate(
+    client: QueryClientContract,
+    schemas: string[],
+    excludeTables: string[]
+  ) {
+    await client.truncateAllTables(excludeTables, schemas)
     this.logger.success('Truncated tables successfully')
   }
 
@@ -100,7 +104,13 @@ export default class DbTruncate extends BaseCommand {
       schemas = managerConnection.config.searchPath
     }
 
-    await this.performTruncate(connection, schemas)
+    const migrationsTableName = managerConnection.config.migrations?.tableName ?? 'adonis_schema'
+    const migrationsVersionsTableName = `${migrationsTableName}_versions`
+
+    await this.performTruncate(connection, schemas, [
+      migrationsTableName,
+      migrationsVersionsTableName,
+    ])
   }
 
   /**

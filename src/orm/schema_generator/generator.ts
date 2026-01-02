@@ -90,7 +90,11 @@ export class OrmSchemaGenerator extends EventEmitter<{
     /**
      * Get list of all tables from the database
      */
-    const tables = await this.connection.getAllTables(this.config.schemas)
+    let tables = await this.connection.getAllTables(this.config.schemas)
+    if (this.config.excludeTables) {
+      tables = tables.filter((tableName) => !this.config.excludeTables?.includes(tableName))
+    }
+
     this.emit('collect:tables', tables)
 
     /**

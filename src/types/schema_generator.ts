@@ -76,6 +76,8 @@ export type OrmSchemaGeneratorConfig = {
    */
   connectionName?: string
 
+  excludeTables?: string[]
+
   schemas?: string[]
 
   /**

@@ -73,6 +73,8 @@ export default class SchemaGenerate extends BaseCommand {
       managerConnection.config.schemaGeneration?.outputPath ?? './database/schema.ts'
 
     let schemas: string[] = ['public']
+    const migrationsTableName = managerConnection.config.migrations?.tableName ?? 'adonis_schema'
+    const migrationsVersionsTableName = `${migrationsTableName}_versions`
     if ('searchPath' in managerConnection.config && managerConnection.config.searchPath) {
       schemas = managerConnection.config.searchPath
     }
@@ -85,6 +87,7 @@ export default class SchemaGenerate extends BaseCommand {
       connectionName: this.connection,
       schemas,
       ...managerConnection.config.schemaGeneration,
+      excludeTables: [migrationsTableName, migrationsVersionsTableName],
       outputPath: isAbsolute(outputPath) ? outputPath : this.app.makePath(outputPath),
     })
 
