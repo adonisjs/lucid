@@ -93,8 +93,15 @@ export const DEFAULT_SCHEMA_RULES: Required<SchemaRules> = {
   },
   columns: {
     id: (dataType: string) => {
+      const tsTypeMap: Record<string, string> = {
+        [INTERNAL_TYPES.NUMBER]: 'number',
+        [INTERNAL_TYPES.BIGINT]: 'bigint | number',
+        [INTERNAL_TYPES.STRING]: 'string',
+        [INTERNAL_TYPES.UUID]: 'string',
+      }
+
       return {
-        tsType: dataType,
+        tsType: tsTypeMap[dataType] ?? dataType,
         imports: [],
         decorator: '@column({ isPrimary: true })',
       }

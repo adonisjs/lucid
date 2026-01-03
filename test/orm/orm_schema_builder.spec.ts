@@ -252,6 +252,31 @@ test.group('OrmSchemaBuilder | Column-Specific Rules', (group) => {
     await connection.schema.dropTable('test_pk')
   })
 
+  test('apply primary key decorator to uuid id column with string type', async ({ assert }) => {
+    const db = getDb()
+    const connection = db.connection()
+    const generator = new OrmSchemaBuilder(connection)
+
+    const columns = {
+      id: { type: 'uuid', nullable: false },
+      name: { type: 'varchar', nullable: false },
+    }
+
+    const schemas = generator.generateSchemas([{ name: 'test_uuid_pk', columns }])
+    const output = schemas.classes.join('\n')
+
+    assert.snapshot(output).matchInline(`
+      "export class TestUuidPkSchema extends BaseModel {
+        static $columns = ['id', 'name'] as const
+        $columns = TestUuidPkSchema.$columns
+        @column({ isPrimary: true })
+        declare id: string
+        @column()
+        declare name: string
+      }"
+    `)
+  })
+
   test('apply serializeAs: null to password column', async ({ assert }) => {
     const db = getDb()
     const connection = db.connection()
