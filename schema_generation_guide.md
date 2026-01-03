@@ -138,6 +138,41 @@ Rules are applied in this order (most specific to least specific):
 4. Global type rule: `types.varchar`
 5. Default built-in mapping
 
+## Customizing Primary Key Types
+
+Some columns like `id` have default rules that take precedence over type rules. If you want to customize the type for UUID primary keys, you need to override the `columns.id` rule directly.
+
+If all your primary keys are UUIDs:
+
+```typescript
+export default {
+  columns: {
+    id: {
+      tsType: 'UUID',
+      decorator: '@column({ isPrimary: true })',
+      imports: [{ source: '#types', namedImports: ['UUID'] }]
+    }
+  }
+}
+```
+
+If you have mixed primary key types (some UUIDs, some integers), use a function:
+
+```typescript
+export default {
+  columns: {
+    id: (dataType) => ({
+      tsType: dataType === 'uuid' ? 'UUID' : dataType === 'bigint' ? 'bigint | number' : 'number',
+      decorator: '@column({ isPrimary: true })',
+      imports: dataType === 'uuid' ? [{ source: '#types', namedImports: ['UUID'] }] : []
+    })
+  }
+}
+```
+
+> [!NOTE]
+> Defining `types.uuid` alone will not affect the `id` column because `columns.id` has higher priority in the lookup hierarchy.
+
 ## Configuration Options
 
 ```typescript
