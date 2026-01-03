@@ -200,6 +200,56 @@ test.group('migration:run', (group) => {
     assert.equal(migrated[0].batch, 1)
   })
 
+  test('skip schema generation in production even with --force flag', async ({
+    fs,
+    assert,
+    cleanup,
+  }) => {
+    process.env.NODE_ENV = 'production'
+    cleanup(() => {
+      delete process.env.NODE_ENV
+    })
+
+    await fs.create(
+      'database/migrations/run_cmd_users_v7.ts',
+      `
+      import { BaseSchema as Schema } from '../../../../src/schema/main.js'
+      export default class User extends Schema {
+        public async up () {
+          this.schema.createTable('schema_users', (table) => {
+            table.increments()
+          })
+        }
+      }
+    `
+    )
+
+    const db = getDb()
+
+    const ace = await new AceFactory().make(fs.baseUrl, {
+      importer: (filePath) => {
+        return import(filePath)
+      },
+    })
+    await ace.app.init()
+    await ace.app.boot()
+    ace.app.container.singleton('lucid.db', () => db)
+    ace.ui.switchMode('raw')
+
+    ace.addLoader(new ListLoader([SchemaGenerate]))
+
+    const migrate = await ace.create(Migrate, ['--force'])
+    await migrate.exec()
+
+    const migrated = await db.connection().from('adonis_schema').select('*')
+    const hasUsersTable = await db.connection().schema.hasTable('schema_users')
+    const schemaFileExists = await fs.exists('database/schema.ts')
+
+    assert.lengthOf(migrated, 1)
+    assert.isTrue(hasUsersTable)
+    assert.isFalse(schemaFileExists)
+  })
+
   test('run migrations with compact output should display one line', async ({ fs }) => {
     await fs.create(
       'database/migrations/run_cmd_users_v4.ts',

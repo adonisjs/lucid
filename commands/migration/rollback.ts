@@ -102,9 +102,10 @@ export default class Rollback extends MigrationsBase {
    * Generate schema classes
    */
   private async generateSchemaClasses() {
-    if (this.schemaGenerate === false) {
+    if (this.schemaGenerate === false || this.app.inProduction) {
       return
     }
+
     const generate = await this.kernel.exec('schema:generate', this.getArgs())
     this.exitCode = generate.exitCode
     this.error = generate.error
