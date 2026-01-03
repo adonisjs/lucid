@@ -69,6 +69,14 @@ export default class SchemaGenerate extends BaseCommand {
       return
     }
 
+    /**
+     * Check if schema generation is disabled
+     */
+    if (managerConnection.config.schemaGeneration?.enabled === false) {
+      this.logger.info('Schema generation is disabled')
+      return
+    }
+
     const outputPath =
       managerConnection.config.schemaGeneration?.outputPath ?? './database/schema.ts'
 

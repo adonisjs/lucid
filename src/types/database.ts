@@ -348,7 +348,9 @@ export type SharedConfigNode = {
   revision?: number
   migrations?: MigratorConfig
   seeders?: SeedersConfig
-  schemaGeneration?: Pick<OrmSchemaGeneratorConfig, 'outputPath' | 'rulesPaths'>
+  schemaGeneration?: Partial<
+    Pick<OrmSchemaGeneratorConfig, 'enabled' | 'outputPath' | 'rulesPaths'>
+  >
   wipe?: { ignoreTables?: string[] }
   pool?: {
     afterCreate?: (conn: any, done: any) => void

@@ -62,4 +62,38 @@ test.group('schema:generate', (group) => {
     assert.equal(generate.exitCode, 0)
     generate.assertLogMatches(/Schema classes generated/)
   })
+
+  test('skip schema generation when enabled is false', async ({ fs, assert }) => {
+    const db = getDb()
+
+    // Override config to disable schema generation
+    const connection = db.manager.get(db.primaryConnectionName)!
+    const originalConfig = connection.config
+    connection.config = {
+      ...originalConfig,
+      schemaGeneration: {
+        enabled: false,
+      },
+    } as typeof originalConfig
+
+    const ace = await new AceFactory().make(fs.baseUrl, { importer: () => {} })
+    await ace.app.init()
+    ace.app.container.singleton('lucid.db', () => db)
+    ace.ui.switchMode('raw')
+
+    await db.connection().schema.createTable('schema_users', (table) => {
+      table.increments('id')
+    })
+
+    const generate = await ace.create(SchemaGenerate, [])
+    await generate.exec()
+
+    const schemaFileExists = await fs.exists('database/schema.ts')
+    assert.isFalse(schemaFileExists)
+    assert.equal(generate.exitCode, 0)
+    generate.assertLogMatches(/Schema generation is disabled/)
+
+    // Restore original config
+    connection.config = originalConfig
+  })
 })

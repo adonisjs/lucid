@@ -177,6 +177,9 @@ export default {
 
 ```typescript
 type OrmSchemaGeneratorConfig = {
+  // Enable or disable schema generation (defaults to true)
+  enabled?: boolean
+
   // Database connection name (defaults to primary connection)
   connectionName?: string
 
@@ -187,6 +190,28 @@ type OrmSchemaGeneratorConfig = {
   rulesPaths?: string[]
 }
 ```
+
+## Disabling Schema Generation
+
+To disable schema generation entirely, set `enabled: false` in your database configuration:
+
+```typescript
+// config/database.ts
+{
+  connection: 'postgres',
+  connections: {
+    postgres: {
+      client: 'pg',
+      // ...
+      schemaGeneration: {
+        enabled: false,
+      },
+    },
+  },
+}
+```
+
+When disabled, the `schema:generate` command and automatic generation after migrations will be skipped.
 
 ## Connection Handling
 

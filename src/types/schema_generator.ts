@@ -72,6 +72,14 @@ export type GeneratedSchemas = {
  */
 export type OrmSchemaGeneratorConfig = {
   /**
+   * Enable or disable schema generation.
+   * When set to false, the schema:generate command and automatic generation
+   * after migrations will be skipped.
+   * @default true
+   */
+  enabled?: boolean
+
+  /**
    * Connection name to use for fetching table information
    */
   connectionName?: string
