@@ -223,4 +223,42 @@ import type { UserStatus } from '#types/enums'
 import type { Priority } from '#types/priority'
 ```
 
-Type-only imports use `import type` syntax for optimal tree-shaking.
+### Import Options
+
+When defining custom rules, you can specify imports using the following options:
+
+```typescript
+imports: [
+  // Named import: import { Foo } from '#types'
+  { source: '#types', namedImports: ['Foo'] },
+
+  // Type-only import: import type { Bar } from '#types'
+  { source: '#types', typeImports: ['Bar'] },
+
+  // Default import: import Baz from '#types'
+  { source: '#types', defaultImport: 'Baz' },
+
+  // Combined: import Qux, { Foo } from '#types'
+  { source: '#types', defaultImport: 'Qux', namedImports: ['Foo'] },
+]
+```
+
+Use `typeImports` instead of `namedImports` when importing TypeScript types or interfaces to generate `import type` syntax for optimal tree-shaking.
+
+```typescript
+export default {
+  columns: {
+    id: {
+      tsType: 'UUID',
+      decorator: '@column({ isPrimary: true })',
+      imports: [{ source: '#types', typeImports: ['UUID'] }]
+    }
+  }
+}
+```
+
+This generates:
+
+```typescript
+import type { UUID } from '#types'
+```
