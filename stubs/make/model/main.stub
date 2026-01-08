@@ -6,7 +6,7 @@
     to: app.modelsPath(entity.path, modelFileName)
   })
 }}}
-import { {{ modelSchemaName }} } from '#database/schemas'
+import { {{ modelSchemaName }} } from '#database/schema'
 
 export default class {{ modelName }} extends {{ modelSchemaName }} {
 }
