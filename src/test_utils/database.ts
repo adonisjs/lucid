@@ -29,7 +29,9 @@ export class DatabaseTestUtils {
 
     const ace = await this.app.container.make('ace')
     const command = await ace.exec(commandName, args)
-    if (!command.exitCode) return
+    if (!command.exitCode) {
+      return
+    }
 
     if (command.error) {
       throw command.error
@@ -43,7 +45,7 @@ export class DatabaseTestUtils {
    * Return a function to truncate the whole database but keep the schema
    */
   async truncate() {
-    await this.#runCommand('migration:run', ['--compact-output'])
+    await this.#runCommand('migration:run', ['--compact-output', '--no-schema-generate'])
     return () => this.#runCommand('db:truncate')
   }
 
@@ -51,7 +53,7 @@ export class DatabaseTestUtils {
    * Testing hook for running seeds
    */
   async seed() {
-    await this.#runCommand('db:seed')
+    await this.#runCommand('db:seed', ['--compact-output'])
   }
 
   /**
@@ -62,17 +64,25 @@ export class DatabaseTestUtils {
    * has to run all migration in both directions when running tests
    */
   async migrate() {
-    await this.#runCommand('migration:run', ['--compact-output'])
-    return () => this.#runCommand('migration:reset', ['--compact-output'])
+    await this.#runCommand('migration:run', ['--compact-output', '--no-schema-generate'])
+    return () => this.#runCommand('migration:reset', ['--compact-output', '--no-schema-generate'])
   }
 
   /**
    * Testing hook for creating a global transaction
    */
-  async withGlobalTransaction() {
+  async wrapInGlobalTransaction() {
     const db = await this.app.container.make('lucid.db')
 
     await db.beginGlobalTransaction(this.connectionName)
     return () => db.rollbackGlobalTransaction(this.connectionName)
+  }
+
+  /**
+   * Testing hook for creating a global transaction
+   * @deprecated Use "wrapInGlobalTransaction"
+   */
+  async withGlobalTransaction() {
+    return this.wrapInGlobalTransaction()
   }
 }
