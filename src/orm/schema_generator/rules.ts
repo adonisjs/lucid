@@ -93,16 +93,14 @@ export const DEFAULT_SCHEMA_RULES: Required<SchemaRules> = {
   },
   columns: {
     id: (dataType: string) => {
-      const tsTypeMap: Record<string, string> = {
-        [INTERNAL_TYPES.NUMBER]: 'number',
-        [INTERNAL_TYPES.BIGINT]: 'bigint | number',
-        [INTERNAL_TYPES.STRING]: 'string',
-        [INTERNAL_TYPES.UUID]: 'string',
-      }
+      const inferredDataType =
+        typeof DEFAULT_SCHEMA_RULES.types[dataType] === 'function'
+          ? DEFAULT_SCHEMA_RULES.types[dataType](dataType)
+          : DEFAULT_SCHEMA_RULES.types[dataType]
 
       return {
-        tsType: tsTypeMap[dataType] ?? dataType,
-        imports: [],
+        tsType: inferredDataType?.tsType ?? dataType,
+        imports: inferredDataType?.imports ?? [],
         decorator: '@column({ isPrimary: true })',
       }
     },
