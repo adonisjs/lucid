@@ -60,9 +60,9 @@
     "index:commands": "adonis-kit index build/commands"
   },
   "devDependencies": {
-    "@adonisjs/assembler": "^8.0.0-next.27",
-    "@adonisjs/core": "^7.0.0-next.16",
-    "@adonisjs/eslint-config": "^3.0.0-next.7",
+    "@adonisjs/assembler": "^8.0.0-next.29",
+    "@adonisjs/core": "^7.0.0-next.21",
+    "@adonisjs/eslint-config": "^3.0.0-next.9",
     "@adonisjs/prettier-config": "^1.4.5",
     "@adonisjs/tsconfig": "^2.0.0-next.3",
     "@japa/assert": "^4.2.0",
@@ -92,14 +92,14 @@
     "pg": "^8.16.3",
     "prettier": "^3.7.4",
     "reflect-metadata": "^0.2.2",
-    "release-it": "^19.2.1",
+    "release-it": "^19.2.3",
     "sqlite3": "^5.1.7",
     "tedious": "^19.2.0",
     "typescript": "^5.9.3"
   },
   "dependencies": {
     "@adonisjs/presets": "^3.0.0-next.0",
-    "@faker-js/faker": "^10.1.0",
+    "@faker-js/faker": "^10.2.0",
     "@poppinss/hooks": "^7.3.0",
     "@poppinss/macroable": "^1.1.0",
     "@poppinss/qs": "^6.15.0",
@@ -115,8 +115,8 @@
     "tarn": "^3.0.2"
   },
   "peerDependencies": {
-    "@adonisjs/assembler": "^8.0.0-next.9",
-    "@adonisjs/core": "^7.0.0-next.1",
+    "@adonisjs/assembler": "^8.0.0-next.29",
+    "@adonisjs/core": "^7.0.0-next.21",
     "@vinejs/vine": "^3.0.0 || ^4.0.0",
     "luxon": "^3.4.4"
   },
