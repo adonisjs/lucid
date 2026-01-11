@@ -3333,6 +3333,35 @@ test.group('Base Model | sideloaded', (group) => {
     assert.deepEqual(user.$sideloaded, { loggedInUser: { id: 1 } })
   })
 
+  test('ignore internal properties during $consumeAdapterResult', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const adapter = new FakeAdapter()
+
+    const BaseModel = getBaseModel(adapter)
+
+    class User extends BaseModel {
+      @column()
+      declare username: string
+    }
+
+    const user = new User()
+    user.$consumeAdapterResult({
+      username: 'virk',
+      $original: { id: 1 },
+      $isPersisted: true,
+      modelOptions: { connection: 'evil' },
+      forceUpdate: true,
+    } as any)
+
+    assert.deepEqual(user.$attributes, { username: 'virk' })
+    assert.deepEqual(user.$original, {})
+    assert.isFalse(user.$isPersisted)
+    assert.isUndefined(user.$options)
+    assert.isFalse((user as any).forceUpdate)
+    assert.deepEqual(user.$extras, {})
+  })
+
   test('define sideloaded properties using $createFromAdapterResult method', async ({
     fs,
     assert,

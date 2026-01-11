@@ -1745,6 +1745,13 @@ class BaseModelImpl implements LucidRow {
         }
 
         /**
+         * Disallow overwriting internal properties via adapter result
+         */
+        if (INTERNAL_INSTANCE_PROPERTIES.has(key)) {
+          return
+        }
+
+        /**
          * Set directly on the model
          */
         if (this.hasOwnProperty(key)) {
