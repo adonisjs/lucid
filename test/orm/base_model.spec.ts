@@ -3131,6 +3131,35 @@ test.group('BaseModel | fill/merge', (group) => {
     assert.deepEqual(user.$attributes, { username: 'virk', age: 22 })
     assert.equal(user.foo, 'bar')
   })
+
+  test('ignore internal properties during merge', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const adapter = new FakeAdapter()
+
+    const BaseModel = getBaseModel(adapter)
+
+    class User extends BaseModel {
+      @column()
+      declare username: string
+    }
+
+    const user = new User()
+    user.merge({
+      username: 'virk',
+      $original: { id: 1 },
+      $isPersisted: true,
+      modelOptions: { connection: 'evil' },
+      forceUpdate: true,
+    } as any)
+
+    assert.deepEqual(user.$attributes, { username: 'virk' })
+    assert.deepEqual(user.$original, {})
+    assert.isFalse(user.$isPersisted)
+    assert.isUndefined(user.$options)
+    assert.isFalse((user as any).forceUpdate)
+    assert.deepEqual(user.$extras, {})
+  })
 })
 
 test.group('Base | apdater', (group) => {

@@ -76,6 +76,24 @@ const DATE_TIME_TYPES = {
   datetime: 'datetime',
 }
 
+const INTERNAL_INSTANCE_PROPERTIES = new Set([
+  '$columns',
+  '$attributes',
+  '$original',
+  '$preloaded',
+  '$extras',
+  '$sideloaded',
+  '$isPersisted',
+  '$isDeleted',
+  '$isLocal',
+  'modelOptions',
+  'modelTrx',
+  'transactionListener',
+  'fillInvoked',
+  'cachedGetters',
+  'forceUpdate',
+])
+
 function StaticImplements<T>() {
   return (_t: T) => {}
 }
@@ -1800,6 +1818,13 @@ class BaseModelImpl implements LucidRow {
          * must pass a qualified model to `this.$setRelated()`
          */
         if (Model.$relationsDefinitions.has(key)) {
+          return
+        }
+
+        /**
+         * Disallow overwriting internal properties via merge
+         */
+        if (INTERNAL_INSTANCE_PROPERTIES.has(key)) {
           return
         }
 
