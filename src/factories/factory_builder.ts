@@ -22,9 +22,10 @@ import { FactoryContext } from './factory_context.js'
 /**
  * Factory builder exposes the API to create/persist factory model instances.
  */
-export class FactoryBuilder
-  implements FactoryBuilderContract<LucidModel, FactoryModelContract<LucidModel>>
-{
+export class FactoryBuilder implements FactoryBuilderContract<
+  LucidModel,
+  FactoryModelContract<LucidModel>
+> {
   /**
    * Relationships to setup. Do note: It is possible to load one relationship
    * twice. A practical use case is to apply different states. For example:

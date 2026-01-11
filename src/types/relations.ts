@@ -850,8 +850,10 @@ export interface PivotQueryBuilderContract {
 /**
  * Base query builder for all relations
  */
-export interface RelationQueryBuilderContract<Related extends LucidModel, Result>
-  extends ModelQueryBuilderContract<Related, Result> {
+export interface RelationQueryBuilderContract<
+  Related extends LucidModel,
+  Result,
+> extends ModelQueryBuilderContract<Related, Result> {
   /**
    * Is query a relationship query obtained using `related('relation').query()`
    */
@@ -872,8 +874,10 @@ export interface RelationQueryBuilderContract<Related extends LucidModel, Result
 /**
  * Has many query builder contract
  */
-export interface HasManyQueryBuilderContract<Related extends LucidModel, Result>
-  extends RelationQueryBuilderContract<Related, Result> {
+export interface HasManyQueryBuilderContract<
+  Related extends LucidModel,
+  Result,
+> extends RelationQueryBuilderContract<Related, Result> {
   groupLimit(limit: number): this
   groupOrderBy(column: string, direction?: 'asc' | 'desc'): this
 }
@@ -881,8 +885,10 @@ export interface HasManyQueryBuilderContract<Related extends LucidModel, Result>
 /**
  * Has many query through builder contract
  */
-export interface HasManyThroughQueryBuilderContract<Related extends LucidModel, Result>
-  extends RelationQueryBuilderContract<Related, Result> {
+export interface HasManyThroughQueryBuilderContract<
+  Related extends LucidModel,
+  Result,
+> extends RelationQueryBuilderContract<Related, Result> {
   groupLimit(limit: number): this
   groupOrderBy(column: string, direction?: 'asc' | 'desc'): this
 }
@@ -918,8 +924,7 @@ interface WhereInPivot<Builder> {
  * model query builder
  */
 export interface ManyToManyQueryBuilderContract<Related extends LucidModel, Result>
-  extends RelationQueryBuilderContract<Related, Result>,
-    PivotQueryBuilderContract {
+  extends RelationQueryBuilderContract<Related, Result>, PivotQueryBuilderContract {
   isPivotOnlyQuery: boolean
   groupLimit(limit: number): this
   groupOrderBy(column: string, direction?: 'asc' | 'desc'): this
@@ -956,8 +961,9 @@ export type UnSupportedSubQueryMethods =
  * - withCount
  * - whereHas
  */
-export interface RelationSubQueryBuilderContract<Related extends LucidModel>
-  extends ModelQueryBuilderContract<Related, any> {
+export interface RelationSubQueryBuilderContract<
+  Related extends LucidModel,
+> extends ModelQueryBuilderContract<Related, any> {
   /**
    * Is query a relationship query obtained using `related('relation').query()`
    */
@@ -983,8 +989,7 @@ export interface RelationSubQueryBuilderContract<Related extends LucidModel>
  * SubQuery builder for many to many relationship
  */
 export interface ManyToManySubQueryBuilderContract<Related extends LucidModel>
-  extends RelationSubQueryBuilderContract<Related>,
-    PivotQueryBuilderContract {}
+  extends RelationSubQueryBuilderContract<Related>, PivotQueryBuilderContract {}
 
 /**
  * The withCount function
@@ -1069,8 +1074,10 @@ export interface PreloadWithoutCallback<Model extends LucidRow, Builder> {
   <Name extends ExtractModelRelations<Model>>(relation: Name): Builder
 }
 
-export interface PreloadOnce<Model extends LucidRow, Builder>
-  extends PreloadWithoutCallback<Model, Builder> {}
+export interface PreloadOnce<Model extends LucidRow, Builder> extends PreloadWithoutCallback<
+  Model,
+  Builder
+> {}
 
 /**
  * Shape of the preloader to preload relationships

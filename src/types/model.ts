@@ -321,8 +321,10 @@ export interface LucidRowPreload<Model extends LucidRow> extends Preload<Model, 
   (callback: (preloader: PreloaderContract<Model>) => void): Promise<void>
 }
 
-export interface LucidRowPreloadOnce<Model extends LucidRow>
-  extends PreloadWithoutCallback<Model, Promise<void>> {}
+export interface LucidRowPreloadOnce<Model extends LucidRow> extends PreloadWithoutCallback<
+  Model,
+  Promise<void>
+> {}
 
 export interface LucidRowAggregate<Model extends LucidRow> extends Preload<Model, Promise<void>> {
   (callback: (preloader: PreloaderContract<Model>) => void): Promise<void>
@@ -331,8 +333,10 @@ export interface LucidRowAggregate<Model extends LucidRow> extends Preload<Model
 /**
  * An extension of the simple paginator with support for serializing models
  */
-export interface ModelPaginatorContract<Result extends LucidRow>
-  extends Omit<SimplePaginatorContract<Result>, 'toJSON'> {
+export interface ModelPaginatorContract<Result extends LucidRow> extends Omit<
+  SimplePaginatorContract<Result>,
+  'toJSON'
+> {
   serialize(cherryPick?: CherryPick): { meta: any; data: ModelObject[] }
   toJSON(): { meta: any; data: ModelObject[] }
 }
@@ -356,8 +360,7 @@ export interface LazyLoadAggregatesContract<Model extends LucidRow> extends Prom
  * Model query builder will have extras methods on top of the Database query builder
  */
 export interface ModelQueryBuilderContract<Model extends LucidModel, Result = InstanceType<Model>>
-  extends ChainableContract,
-    ExcutableQueryBuilderContract<Result[]> {
+  extends ChainableContract, ExcutableQueryBuilderContract<Result[]> {
   model: Model
   returning: Returning<this>
 
