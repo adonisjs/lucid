@@ -98,7 +98,7 @@
     "typescript": "^5.9.3"
   },
   "dependencies": {
-    "@adonisjs/presets": "^3.0.0-next.0",
+    "@adonisjs/presets": "^3.0.0-next.1",
     "@faker-js/faker": "^10.2.0",
     "@poppinss/hooks": "^7.3.0",
     "@poppinss/macroable": "^1.1.0",
