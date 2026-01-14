@@ -8,7 +8,7 @@
  */
 
 import { test } from '@japa/runner'
-import { syncDiff } from '../src/utils/index.js'
+import { parseMigrationIntent, syncDiff } from '../src/utils/index.js'
 
 test.group('Utils | syncDiff', () => {
   test('return ids to be added', ({ assert }) => {
@@ -92,4 +92,44 @@ test.group('Utils | syncDiff', () => {
       updated: {},
     })
   })
+})
+
+test.group('Utils | parseMigrationIntent', () => {
+  test('parse migration name intent: {input}')
+    .with([
+      { input: 'create_users_table', output: { tableName: 'users', create: true, alter: false } },
+      { input: 'create_users', output: { tableName: 'users', create: true, alter: false } },
+      { input: 'users', output: null },
+      { input: 'user', output: null },
+      { input: 'add_email_to_users', output: { tableName: 'users', create: false, alter: true } },
+      {
+        input: 'add_email_to_users_table',
+        output: { tableName: 'users', create: false, alter: true },
+      },
+      {
+        input: 'add_email_in_users_table',
+        output: { tableName: 'users', create: false, alter: true },
+      },
+      {
+        input: 'remove_email_from_users_table',
+        output: { tableName: 'users', create: false, alter: true },
+      },
+      {
+        input: 'remove_email_from_users',
+        output: { tableName: 'users', create: false, alter: true },
+      },
+      {
+        input: 'alter_users_add_email_column',
+        output: { tableName: 'users', create: false, alter: true },
+      },
+      { input: 'alter_users', output: { tableName: 'users', create: false, alter: true } },
+      { input: 'alter_users_table', output: { tableName: 'users', create: false, alter: true } },
+      {
+        input: 'alter_users_add_email_column',
+        output: { tableName: 'users', create: false, alter: true },
+      },
+    ])
+    .run(({ assert }, { input, output }) => {
+      assert.deepEqual(parseMigrationIntent(input), output)
+    })
 })

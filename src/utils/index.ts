@@ -25,6 +25,15 @@ import * as errors from '../errors.js'
 import { DateTime } from 'luxon'
 import equal from 'fast-deep-equal'
 
+const CREATE_PATTERNS = [/^create_(\w+)_table$/, /^create_(\w+)$/]
+const CHANGE_PATTERNS = [
+  /.+_(?:to|from|in)_(\w+)_table$/,
+  /.+_(?:to|from|in)_(\w+)$/,
+  /^alter_(\w+)_table$/,
+  /^alter_(\w[^_]+)/,
+  /^alter_(\w+)$/,
+]
+
 /**
  * Ensure that relation is defined
  */
@@ -286,4 +295,26 @@ export async function sourceFiles(
       }
     }),
   }
+}
+
+export function parseMigrationIntent(name: string): {
+  tableName: string
+  create: boolean
+  alter: boolean
+} | null {
+  for (const pattern of CREATE_PATTERNS) {
+    const match = pattern.exec(name)
+    if (match) {
+      return { tableName: match[1], create: true, alter: false }
+    }
+  }
+
+  for (const pattern of CHANGE_PATTERNS) {
+    const match = pattern.exec(name)
+    if (match) {
+      return { tableName: match[1], alter: true, create: false }
+    }
+  }
+
+  return null
 }

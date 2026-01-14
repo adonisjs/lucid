@@ -31,7 +31,7 @@ test.group('MakeModel', (group) => {
 
     command.assertLog('green(DONE:)    create app/models/user.ts')
     assert.snapshot(await fs.contents('app/models/user.ts')).matchInline(`
-      "import { UserSchema } from '#database/schemas'
+      "import { UserSchema } from '#database/schema'
 
       export default class User extends UserSchema {
       }"
@@ -53,7 +53,7 @@ test.group('MakeModel', (group) => {
     command.assertLog('green(DONE:)    create app/models/user.ts')
     command.assertLogMatches(/database\/migrations\/\d+_create_users_table/)
     assert.snapshot(await fs.contents('app/models/user.ts')).matchInline(`
-      "import { UserSchema } from '#database/schemas'
+      "import { UserSchema } from '#database/schema'
 
       export default class User extends UserSchema {
       }"
@@ -75,7 +75,7 @@ test.group('MakeModel', (group) => {
     command.assertLog('green(DONE:)    create app/models/user.ts')
     command.assertLog('green(DONE:)    create database/factories/user_factory.ts')
     assert.snapshot(await fs.contents('app/models/user.ts')).matchInline(`
-      "import { UserSchema } from '#database/schemas'
+      "import { UserSchema } from '#database/schema'
 
       export default class User extends UserSchema {
       }"

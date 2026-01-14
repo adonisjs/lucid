@@ -8,8 +8,10 @@
  */
 
 import { type CommandOptions } from '@adonisjs/core/types/ace'
-import { stubsRoot } from '../stubs/main.js'
 import { args, BaseCommand, flags } from '@adonisjs/core/ace'
+import stringHelpers from '@adonisjs/core/helpers/string'
+import { stubsRoot } from '../stubs/main.js'
+import { parseMigrationIntent } from '../src/utils/index.ts'
 
 export default class MakeMigration extends BaseCommand {
   static commandName = 'make:migration'
@@ -77,6 +79,15 @@ export default class MakeMigration extends BaseCommand {
     }
 
     return this.prompt.choice('Select the migrations folder', directories, { name: 'folder' })
+  }
+
+  async prepare() {
+    const intent = parseMigrationIntent(stringHelpers.snakeCase(this.name))
+    if (intent) {
+      this.name = intent.tableName
+      this.create = intent.create
+      this.alter = intent.alter
+    }
   }
 
   /**
