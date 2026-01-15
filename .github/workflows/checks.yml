@@ -57,7 +57,10 @@ jobs:
       fail-fast: false
       matrix:
         mysql:
-          [{ version: '5.7', command: 'mysql_legacy' }, { version: '8.0.41', command: 'mysql' }]
+          [
+            { version: '5.7', command: 'mysql_legacy' },
+            { version: '8.0.44-1.el9', command: 'mysql' },
+          ]
         node-version: [24]
     services:
       mysql:
