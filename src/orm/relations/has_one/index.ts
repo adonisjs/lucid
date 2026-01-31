@@ -134,11 +134,7 @@ export class HasOne implements HasOneRelationContract<LucidModel, LucidModel> {
    */
   setRelated(parent: LucidRow, related: LucidRow | null): void {
     ensureRelationIsBooted(this)
-    if (related === undefined) {
-      return
-    }
-
-    parent.$setRelated(this.relationName as any, related)
+    parent.$setRelated(this.relationName as any, related ?? null)
   }
 
   /**
@@ -146,12 +142,7 @@ export class HasOne implements HasOneRelationContract<LucidModel, LucidModel> {
    */
   pushRelated(parent: LucidRow, related: LucidRow | null): void {
     ensureRelationIsBooted(this)
-
-    if (related === undefined) {
-      return
-    }
-
-    parent.$pushRelated(this.relationName as any, related)
+    parent.$pushRelated(this.relationName as any, related ?? null)
   }
 
   /**
