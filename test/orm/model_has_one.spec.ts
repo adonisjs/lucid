@@ -1380,6 +1380,72 @@ test.group('Model | HasOne | preload', (group) => {
     assert.equal(users[1].profile.userId, users[1].id)
   })
 
+  test('loadOnce should not re-query a preloaded hasOne with no match', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter)
+
+    let queryCount = 0
+
+    class Profile extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+
+      @column()
+      declare userId: number
+
+      @column()
+      declare displayName: string
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+
+      @hasOne(() => Profile, {
+        onQuery() {
+          queryCount++
+        },
+      })
+      declare profile: HasOne<typeof Profile>
+    }
+
+    /**
+     * User 1 has a profile, user 2 does not.
+     * When we preload profiles for both users, user 2 should get
+     * `$preloaded.profile = null`. Calling `loadOnce('profile')`
+     * afterwards should NOT fire an extra query because the relation
+     * was already resolved (to null) by the preloader.
+     */
+    await db
+      .insertQuery()
+      .table('users')
+      .insert([{ username: 'julr' }, { username: 'juliano' }])
+    await db.insertQuery().table('profiles').insert({ user_id: 1, display_name: 'julr' })
+
+    const users = await User.query().preload('profile')
+    assert.lengthOf(users, 2)
+
+    /**
+     * One query was fired by the preloader
+     */
+    assert.equal(queryCount, 1)
+
+    assert.instanceOf(users[0].profile, Profile)
+    assert.isNull(users[1].profile)
+
+    /**
+     * loadOnce should be a no-op for both users: the relation is
+     * already in `$preloaded`, regardless of the value being null.
+     */
+    await users[0].loadOnce('profile')
+    await users[1].loadOnce('profile')
+
+    assert.equal(queryCount, 1)
+  })
+
   test('raise exception when local key is not selected', async ({ fs, assert }) => {
     const app = new AppFactory().create(fs.baseUrl, () => {})
     await app.init()

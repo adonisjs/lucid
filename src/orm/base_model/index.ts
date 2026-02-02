@@ -2004,7 +2004,7 @@ class BaseModelImpl implements LucidRow {
    * already preloaded
    */
   async loadOnce(relationName: any) {
-    if (!this.$preloaded[relationName]) {
+    if (!(relationName in this.$preloaded)) {
       return this.load(relationName)
     }
   }

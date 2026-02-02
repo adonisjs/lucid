@@ -156,11 +156,7 @@ export class BelongsTo implements BelongsToRelationContract<LucidModel, LucidMod
    */
   setRelated(parent: LucidRow, related: LucidRow | null): void {
     ensureRelationIsBooted(this)
-    if (related === undefined) {
-      return
-    }
-
-    parent.$setRelated(this.relationName, related)
+    parent.$setRelated(this.relationName, related ?? null)
   }
 
   /**
@@ -168,11 +164,7 @@ export class BelongsTo implements BelongsToRelationContract<LucidModel, LucidMod
    */
   pushRelated(parent: LucidRow, related: LucidRow | null): void {
     ensureRelationIsBooted(this)
-    if (related === undefined) {
-      return
-    }
-
-    parent.$setRelated(this.relationName, related)
+    parent.$setRelated(this.relationName, related ?? null)
   }
 
   /**

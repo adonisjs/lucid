@@ -1322,6 +1322,73 @@ test.group('Model | BelongsTo | preload', (group) => {
     assert.equal(queryCount, 1)
   })
 
+  test('loadOnce should not re-query a preloaded belongsTo with no match', async ({
+    assert,
+    fs,
+  }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter)
+
+    let queryCount = 0
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+    }
+
+    class Profile extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+
+      @column()
+      declare userId: number
+
+      @column()
+      declare displayName: string
+
+      @belongsTo(() => User, {
+        onQuery() {
+          queryCount++
+        },
+      })
+      declare user: BelongsTo<typeof User>
+    }
+
+    /**
+     * Profile 1 has a matching user, profile 2 has a userId pointing
+     * to a non-existent user. After preloading, profile 2 should have
+     * `$preloaded.user = null`. Calling `loadOnce('user')` should NOT
+     * fire an extra query.
+     */
+    await db
+      .insertQuery()
+      .table('users')
+      .insert([{ username: 'jul' }])
+    await db
+      .insertQuery()
+      .table('profiles')
+      .insert([
+        { user_id: 1, display_name: 'jul' },
+        { user_id: 999, display_name: 'orphan' },
+      ])
+
+    const profiles = await Profile.query().preload('user')
+    assert.lengthOf(profiles, 2)
+
+    assert.equal(queryCount, 1)
+
+    assert.instanceOf(profiles[0].user, User)
+    assert.isNull(profiles[1].user)
+
+    await profiles[0].loadOnce('user')
+    await profiles[1].loadOnce('user')
+
+    assert.equal(queryCount, 1)
+  })
+
   test('preload nested relations', async ({ assert, fs }) => {
     const app = new AppFactory().create(fs.baseUrl, () => {})
     await app.init()
