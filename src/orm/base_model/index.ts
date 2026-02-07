@@ -1386,26 +1386,25 @@ class BaseModelImpl implements LucidRow {
    */
   protected prepareForAdapter(attributes: ModelObject) {
     const Model = this.constructor as typeof BaseModel
-
+    const blindWrites: Array<{
+      key: string
+      value: any
+      purpose: string
+      blindColumnName: string
+      driver?: string
+    }> = []
     const result = Object.keys(attributes).reduce((acc: any, key) => {
       const column = Model.$getColumn(key)!
+      const attributeValue = attributes[key]
 
-      const value =
+      acc[column.columnName] =
         typeof column.prepare === 'function'
-          ? column.prepare(attributes[key], key, this)
-          : attributes[key]
+          ? column.prepare(attributeValue, key, this)
+          : attributeValue
 
-      acc[column.columnName] = value
-
-      return acc
-    }, {})
-
-    Object.keys(attributes).forEach((key) => {
-      const column = Model.$getColumn(key)!
       const encryption = column.meta?.encryption
-
       if (encryption?.mode !== 'blind') {
-        return
+        return acc
       }
 
       const dottedAttribute = `${Model.name}.${key}`
@@ -1425,14 +1424,30 @@ class BaseModelImpl implements LucidRow {
         ])
       }
 
+      blindWrites.push({
+        key,
+        value: attributeValue,
+        purpose,
+        blindColumnName,
+        driver: encryption.driver,
+      })
+
+      return acc
+    }, {})
+
+    /**
+     * Apply blind writes after preparing base columns so computed blind indexes
+     * always win over any manually assigned blind column value.
+     */
+    blindWrites.forEach(({ key, value, purpose, blindColumnName, driver }) => {
       const encryptionProvider = Model.$getEncryption(key)
 
       result[blindColumnName] =
-        attributes[key] === null || attributes[key] === undefined
-          ? attributes[key]
-          : encryptionProvider.blindIndex(attributes[key], {
+        value === null || value === undefined
+          ? value
+          : encryptionProvider.blindIndex(value, {
               purpose,
-              driver: encryption.driver,
+              driver,
             })
     })
 
