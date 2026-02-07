@@ -258,7 +258,10 @@ export type EncryptedColumnMeta = {
 /**
  * Options accepted by the encrypted column decorator.
  */
-export type EncryptedColumnOptions = Partial<ColumnOptions> & {
+export type EncryptedColumnOptions = Omit<
+  Partial<ColumnOptions>,
+  'isPrimary' | 'prepare' | 'consume'
+> & {
   deterministic?: boolean
   driver?: string
   blind?: BlindEncryptedColumnOptions
