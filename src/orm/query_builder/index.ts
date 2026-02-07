@@ -48,6 +48,9 @@ type EncryptedQueryColumn = {
   encryption: EncryptedColumnMeta
 }
 
+type EncryptedWhereMethod = 'where' | 'orWhere' | 'whereNot' | 'orWhereNot'
+type EncryptedWhereInMethod = 'whereIn' | 'orWhereIn' | 'whereNotIn' | 'orWhereNotIn'
+
 /**
  * A wrapper to invoke scope methods on the query builder
  * underlying model
@@ -404,7 +407,7 @@ export class ModelQueryBuilder
    * Routes operator forms using IN/NOT IN through the dedicated methods.
    */
   private handleEncryptedInOperator(
-    method: 'where' | 'orWhere' | 'whereNot' | 'orWhereNot',
+    method: EncryptedWhereMethod,
     key: string,
     operator: any,
     value: any
@@ -419,22 +422,231 @@ export class ModelQueryBuilder
       return null
     }
 
-    const usePositiveIn =
-      this.isInOperator(normalizedOperator) === (method === 'where' || method === 'orWhere')
+    const whereInMethod = this.getEncryptedWhereInMethod(method)
+    const targetMethod = this.isInOperator(normalizedOperator)
+      ? whereInMethod
+      : this.getOppositeEncryptedWhereInMethod(whereInMethod)
 
+    return this.encryptedWhereIn(targetMethod, key, value)
+  }
+
+  /**
+   * Returns the IN method associated with a WHERE variant.
+   */
+  private getEncryptedWhereInMethod(method: EncryptedWhereMethod): EncryptedWhereInMethod {
     if (method === 'where') {
-      return usePositiveIn ? this.whereIn(key, value) : this.whereNotIn(key, value)
+      return 'whereIn'
     }
 
     if (method === 'orWhere') {
-      return usePositiveIn ? this.orWhereIn(key, value) : this.orWhereNotIn(key, value)
+      return 'orWhereIn'
     }
 
     if (method === 'whereNot') {
-      return usePositiveIn ? this.whereIn(key, value) : this.whereNotIn(key, value)
+      return 'whereNotIn'
     }
 
-    return usePositiveIn ? this.orWhereIn(key, value) : this.orWhereNotIn(key, value)
+    return 'orWhereNotIn'
+  }
+
+  /**
+   * Returns the opposite IN method (IN <-> NOT IN) preserving the boolean variant.
+   */
+  private getOppositeEncryptedWhereInMethod(
+    method: EncryptedWhereInMethod
+  ): EncryptedWhereInMethod {
+    if (method === 'whereIn') {
+      return 'whereNotIn'
+    }
+
+    if (method === 'orWhereIn') {
+      return 'orWhereNotIn'
+    }
+
+    if (method === 'whereNotIn') {
+      return 'whereIn'
+    }
+
+    return 'orWhereIn'
+  }
+
+  /**
+   * Calls the matching super where* method with a single argument.
+   */
+  private callSuperWhereUnary(method: EncryptedWhereMethod, key: any): this {
+    if (method === 'where') {
+      return super.where(key)
+    }
+
+    if (method === 'orWhere') {
+      return super.orWhere(key)
+    }
+
+    if (method === 'whereNot') {
+      return super.whereNot(key)
+    }
+
+    return super.orWhereNot(key)
+  }
+
+  /**
+   * Calls the matching super where* method with 2 arguments.
+   */
+  private callSuperWhereBinary(method: EncryptedWhereMethod, key: any, value: any): this {
+    if (method === 'where') {
+      return super.where(key, value)
+    }
+
+    if (method === 'orWhere') {
+      return super.orWhere(key, value)
+    }
+
+    if (method === 'whereNot') {
+      return super.whereNot(key, value)
+    }
+
+    return super.orWhereNot(key, value)
+  }
+
+  /**
+   * Calls the matching super where* method with 3 arguments.
+   */
+  private callSuperWhereTernary(
+    method: EncryptedWhereMethod,
+    key: any,
+    operator: any,
+    value: any
+  ): this {
+    if (method === 'where') {
+      return super.where(key, operator, value)
+    }
+
+    if (method === 'orWhere') {
+      return super.orWhere(key, operator, value)
+    }
+
+    if (method === 'whereNot') {
+      return super.whereNot(key, operator, value)
+    }
+
+    return super.orWhereNot(key, operator, value)
+  }
+
+  /**
+   * Calls the matching super where*In method.
+   */
+  private callSuperWhereIn(method: EncryptedWhereInMethod, columns: any, value: any): this {
+    if (method === 'whereIn') {
+      return super.whereIn(columns, value)
+    }
+
+    if (method === 'orWhereIn') {
+      return super.orWhereIn(columns, value)
+    }
+
+    if (method === 'whereNotIn') {
+      return super.whereNotIn(columns, value)
+    }
+
+    return super.orWhereNotIn(columns, value)
+  }
+
+  /**
+   * Shared implementation for where/orWhere/whereNot/orWhereNot.
+   */
+  private encryptedWhere(
+    method: EncryptedWhereMethod,
+    key: any,
+    operator?: any,
+    value?: any
+  ): this {
+    if (value !== undefined && typeof key === 'string') {
+      const column = this.getEncryptedQueryColumn(key)
+      const inOperatorResult = this.handleEncryptedInOperator(method, key, operator, value)
+      if (inOperatorResult) {
+        return inOperatorResult
+      }
+      this.ensureEncryptedEqualityOperator(column, operator, method)
+
+      if (column?.encryption.mode === 'blind') {
+        const encryptedValues = this.getEncryptedQueryValues(column, value)
+        const encryptedKey = this.getEncryptedQueryKey(column)
+        const whereInMethod = this.getEncryptedWhereInMethod(method)
+
+        return encryptedValues.length > 1
+          ? this.callSuperWhereIn(whereInMethod, encryptedKey, encryptedValues)
+          : this.callSuperWhereTernary(method, encryptedKey, operator, encryptedValues[0])
+      }
+
+      return this.callSuperWhereTernary(
+        method,
+        column ? this.getEncryptedQueryKey(column) : key,
+        operator,
+        column ? this.getEncryptedQueryValue(column, value) : value
+      )
+    }
+
+    if (operator !== undefined && typeof key === 'string') {
+      const column = this.getEncryptedQueryColumn(key)
+
+      if (column?.encryption.mode === 'blind') {
+        const encryptedValues = this.getEncryptedQueryValues(column, operator)
+        const encryptedKey = this.getEncryptedQueryKey(column)
+        const whereInMethod = this.getEncryptedWhereInMethod(method)
+
+        return encryptedValues.length > 1
+          ? this.callSuperWhereIn(whereInMethod, encryptedKey, encryptedValues)
+          : this.callSuperWhereBinary(method, encryptedKey, encryptedValues[0])
+      }
+
+      return this.callSuperWhereBinary(
+        method,
+        column ? this.getEncryptedQueryKey(column) : key,
+        column ? this.getEncryptedQueryValue(column, operator) : operator
+      )
+    }
+
+    if (isObject(key)) {
+      if (method === 'where') {
+        const clauses = Object.entries(key)
+
+        if (!clauses.length) {
+          return this.callSuperWhereUnary(method, key)
+        }
+
+        clauses.forEach(([clauseKey, clauseValue]) => {
+          this.where(clauseKey, clauseValue)
+        })
+
+        return this
+      }
+
+      return this.callSuperWhereUnary(method, this.transformWhereObjectClause(key))
+    }
+
+    return this.callSuperWhereTernary(method, key, operator, value)
+  }
+
+  /**
+   * Shared implementation for whereIn/orWhereIn/whereNotIn/orWhereNotIn.
+   */
+  private encryptedWhereIn(method: EncryptedWhereInMethod, columns: any, value: any): this {
+    if (typeof columns !== 'string') {
+      return this.callSuperWhereIn(method, columns, value)
+    }
+
+    const column = this.getEncryptedQueryColumn(columns)
+    if (!column) {
+      return this.callSuperWhereIn(method, columns, value)
+    }
+
+    const transformedValue = Array.isArray(value)
+      ? value.flatMap((item) => this.getEncryptedQueryValues(column, item))
+      : this.isQueryBuilderValue(value)
+        ? value
+        : this.getEncryptedQueryValues(column, value)
+
+    return this.callSuperWhereIn(method, this.getEncryptedQueryKey(column), transformedValue)
   }
 
   /**
@@ -568,281 +780,35 @@ export class ModelQueryBuilder
   }
 
   where(key: any, operator?: any, value?: any): this {
-    if (value !== undefined && typeof key === 'string') {
-      const column = this.getEncryptedQueryColumn(key)
-      const inOperatorResult = this.handleEncryptedInOperator('where', key, operator, value)
-      if (inOperatorResult) {
-        return inOperatorResult
-      }
-      this.ensureEncryptedEqualityOperator(column, operator, 'where')
-
-      if (column?.encryption.mode === 'blind') {
-        const encryptedValues = this.getEncryptedQueryValues(column, value)
-        const encryptedKey = this.getEncryptedQueryKey(column)
-        return encryptedValues.length > 1
-          ? super.whereIn(encryptedKey, encryptedValues)
-          : super.where(encryptedKey, operator, encryptedValues[0])
-      }
-
-      return super.where(
-        column ? this.getEncryptedQueryKey(column) : key,
-        operator,
-        column ? this.getEncryptedQueryValue(column, value) : value
-      )
-    }
-
-    if (operator !== undefined && typeof key === 'string') {
-      const column = this.getEncryptedQueryColumn(key)
-
-      if (column?.encryption.mode === 'blind') {
-        const encryptedValues = this.getEncryptedQueryValues(column, operator)
-        const encryptedKey = this.getEncryptedQueryKey(column)
-        return encryptedValues.length > 1
-          ? super.whereIn(encryptedKey, encryptedValues)
-          : super.where(encryptedKey, encryptedValues[0])
-      }
-
-      return super.where(
-        column ? this.getEncryptedQueryKey(column) : key,
-        column ? this.getEncryptedQueryValue(column, operator) : operator
-      )
-    }
-
-    if (isObject(key)) {
-      const clauses = Object.entries(key)
-
-      if (!clauses.length) {
-        return super.where(key)
-      }
-
-      clauses.forEach(([clauseKey, clauseValue]) => {
-        this.where(clauseKey, clauseValue)
-      })
-
-      return this
-    }
-
-    return super.where(key, operator, value)
+    return this.encryptedWhere('where', key, operator, value)
   }
 
   orWhere(key: any, operator?: any, value?: any): this {
-    if (value !== undefined && typeof key === 'string') {
-      const column = this.getEncryptedQueryColumn(key)
-      const inOperatorResult = this.handleEncryptedInOperator('orWhere', key, operator, value)
-      if (inOperatorResult) {
-        return inOperatorResult
-      }
-      this.ensureEncryptedEqualityOperator(column, operator, 'orWhere')
-
-      if (column?.encryption.mode === 'blind') {
-        const encryptedValues = this.getEncryptedQueryValues(column, value)
-        const encryptedKey = this.getEncryptedQueryKey(column)
-        return encryptedValues.length > 1
-          ? super.orWhereIn(encryptedKey, encryptedValues)
-          : super.orWhere(encryptedKey, operator, encryptedValues[0])
-      }
-
-      return super.orWhere(
-        column ? this.getEncryptedQueryKey(column) : key,
-        operator,
-        column ? this.getEncryptedQueryValue(column, value) : value
-      )
-    }
-
-    if (operator !== undefined && typeof key === 'string') {
-      const column = this.getEncryptedQueryColumn(key)
-
-      if (column?.encryption.mode === 'blind') {
-        const encryptedValues = this.getEncryptedQueryValues(column, operator)
-        const encryptedKey = this.getEncryptedQueryKey(column)
-        return encryptedValues.length > 1
-          ? super.orWhereIn(encryptedKey, encryptedValues)
-          : super.orWhere(encryptedKey, encryptedValues[0])
-      }
-
-      return super.orWhere(
-        column ? this.getEncryptedQueryKey(column) : key,
-        column ? this.getEncryptedQueryValue(column, operator) : operator
-      )
-    }
-
-    if (isObject(key)) {
-      return super.orWhere(this.transformWhereObjectClause(key))
-    }
-
-    return super.orWhere(key, operator, value)
+    return this.encryptedWhere('orWhere', key, operator, value)
   }
 
   whereNot(key: any, operator?: any, value?: any): this {
-    if (value !== undefined && typeof key === 'string') {
-      const column = this.getEncryptedQueryColumn(key)
-      const inOperatorResult = this.handleEncryptedInOperator('whereNot', key, operator, value)
-      if (inOperatorResult) {
-        return inOperatorResult
-      }
-      this.ensureEncryptedEqualityOperator(column, operator, 'whereNot')
-
-      if (column?.encryption.mode === 'blind') {
-        const encryptedValues = this.getEncryptedQueryValues(column, value)
-        const encryptedKey = this.getEncryptedQueryKey(column)
-        return encryptedValues.length > 1
-          ? super.whereNotIn(encryptedKey, encryptedValues)
-          : super.whereNot(encryptedKey, operator, encryptedValues[0])
-      }
-
-      return super.whereNot(
-        column ? this.getEncryptedQueryKey(column) : key,
-        operator,
-        column ? this.getEncryptedQueryValue(column, value) : value
-      )
-    }
-
-    if (operator !== undefined && typeof key === 'string') {
-      const column = this.getEncryptedQueryColumn(key)
-
-      if (column?.encryption.mode === 'blind') {
-        const encryptedValues = this.getEncryptedQueryValues(column, operator)
-        const encryptedKey = this.getEncryptedQueryKey(column)
-        return encryptedValues.length > 1
-          ? super.whereNotIn(encryptedKey, encryptedValues)
-          : super.whereNot(encryptedKey, encryptedValues[0])
-      }
-
-      return super.whereNot(
-        column ? this.getEncryptedQueryKey(column) : key,
-        column ? this.getEncryptedQueryValue(column, operator) : operator
-      )
-    }
-
-    if (isObject(key)) {
-      return super.whereNot(this.transformWhereObjectClause(key))
-    }
-
-    return super.whereNot(key, operator, value)
+    return this.encryptedWhere('whereNot', key, operator, value)
   }
 
   orWhereNot(key: any, operator?: any, value?: any): this {
-    if (value !== undefined && typeof key === 'string') {
-      const column = this.getEncryptedQueryColumn(key)
-      const inOperatorResult = this.handleEncryptedInOperator('orWhereNot', key, operator, value)
-      if (inOperatorResult) {
-        return inOperatorResult
-      }
-      this.ensureEncryptedEqualityOperator(column, operator, 'orWhereNot')
-
-      if (column?.encryption.mode === 'blind') {
-        const encryptedValues = this.getEncryptedQueryValues(column, value)
-        const encryptedKey = this.getEncryptedQueryKey(column)
-        return encryptedValues.length > 1
-          ? super.orWhereNotIn(encryptedKey, encryptedValues)
-          : super.orWhereNot(encryptedKey, operator, encryptedValues[0])
-      }
-
-      return super.orWhereNot(
-        column ? this.getEncryptedQueryKey(column) : key,
-        operator,
-        column ? this.getEncryptedQueryValue(column, value) : value
-      )
-    }
-
-    if (operator !== undefined && typeof key === 'string') {
-      const column = this.getEncryptedQueryColumn(key)
-
-      if (column?.encryption.mode === 'blind') {
-        const encryptedValues = this.getEncryptedQueryValues(column, operator)
-        const encryptedKey = this.getEncryptedQueryKey(column)
-        return encryptedValues.length > 1
-          ? super.orWhereNotIn(encryptedKey, encryptedValues)
-          : super.orWhereNot(encryptedKey, encryptedValues[0])
-      }
-
-      return super.orWhereNot(
-        column ? this.getEncryptedQueryKey(column) : key,
-        column ? this.getEncryptedQueryValue(column, operator) : operator
-      )
-    }
-
-    if (isObject(key)) {
-      return super.orWhereNot(this.transformWhereObjectClause(key))
-    }
-
-    return super.orWhereNot(key, operator, value)
+    return this.encryptedWhere('orWhereNot', key, operator, value)
   }
 
   whereIn(columns: any, value: any): this {
-    if (typeof columns !== 'string') {
-      return super.whereIn(columns, value)
-    }
-
-    const column = this.getEncryptedQueryColumn(columns)
-    if (!column) {
-      return super.whereIn(columns, value)
-    }
-
-    const transformedValue = Array.isArray(value)
-      ? value.flatMap((item) => this.getEncryptedQueryValues(column, item))
-      : this.isQueryBuilderValue(value)
-        ? value
-        : this.getEncryptedQueryValues(column, value)
-
-    return super.whereIn(this.getEncryptedQueryKey(column), transformedValue)
+    return this.encryptedWhereIn('whereIn', columns, value)
   }
 
   orWhereIn(columns: any, value: any): this {
-    if (typeof columns !== 'string') {
-      return super.orWhereIn(columns, value)
-    }
-
-    const column = this.getEncryptedQueryColumn(columns)
-    if (!column) {
-      return super.orWhereIn(columns, value)
-    }
-
-    const transformedValue = Array.isArray(value)
-      ? value.flatMap((item) => this.getEncryptedQueryValues(column, item))
-      : this.isQueryBuilderValue(value)
-        ? value
-        : this.getEncryptedQueryValues(column, value)
-
-    return super.orWhereIn(this.getEncryptedQueryKey(column), transformedValue)
+    return this.encryptedWhereIn('orWhereIn', columns, value)
   }
 
   whereNotIn(columns: any, value: any): this {
-    if (typeof columns !== 'string') {
-      return super.whereNotIn(columns, value)
-    }
-
-    const column = this.getEncryptedQueryColumn(columns)
-    if (!column) {
-      return super.whereNotIn(columns, value)
-    }
-
-    const transformedValue = Array.isArray(value)
-      ? value.flatMap((item) => this.getEncryptedQueryValues(column, item))
-      : this.isQueryBuilderValue(value)
-        ? value
-        : this.getEncryptedQueryValues(column, value)
-
-    return super.whereNotIn(this.getEncryptedQueryKey(column), transformedValue)
+    return this.encryptedWhereIn('whereNotIn', columns, value)
   }
 
   orWhereNotIn(columns: any, value: any): this {
-    if (typeof columns !== 'string') {
-      return super.orWhereNotIn(columns, value)
-    }
-
-    const column = this.getEncryptedQueryColumn(columns)
-    if (!column) {
-      return super.orWhereNotIn(columns, value)
-    }
-
-    const transformedValue = Array.isArray(value)
-      ? value.flatMap((item) => this.getEncryptedQueryValues(column, item))
-      : this.isQueryBuilderValue(value)
-        ? value
-        : this.getEncryptedQueryValues(column, value)
-
-    return super.orWhereNotIn(this.getEncryptedQueryKey(column), transformedValue)
+    return this.encryptedWhereIn('orWhereNotIn', columns, value)
   }
 
   whereLike(key: any, value: any): this {
