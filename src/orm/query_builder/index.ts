@@ -177,10 +177,12 @@ export class ModelQueryBuilder
   }
 
   /**
-   * Returns encrypted metadata for a query key when it references a
-   * deterministic or blind encrypted column.
+   * Returns encrypted metadata for a query key.
    */
-  private getEncryptedQueryColumn(key: any): EncryptedQueryColumn | null {
+  private getEncryptedQueryColumn(
+    key: any,
+    includeStandard: boolean = false
+  ): EncryptedQueryColumn | null {
     if (typeof key !== 'string') {
       return null
     }
@@ -198,7 +200,7 @@ export class ModelQueryBuilder
     const column = this.model.$getColumn(attributeName)!
     const encryption = column.meta?.encryption as EncryptedColumnMeta | undefined
 
-    if (!encryption || encryption.mode === 'standard') {
+    if (!encryption || (!includeStandard && encryption.mode === 'standard')) {
       return null
     }
 
@@ -363,6 +365,95 @@ export class ModelQueryBuilder
       }
 
       result[this.getEncryptedQueryKey(column)] = this.getEncryptedQueryValue(column, clause[key])
+      return result
+    }, {})
+  }
+
+  /**
+   * Encrypt value before writing it to an encrypted model column.
+   */
+  private getEncryptedWriteValue(column: EncryptedQueryColumn, value: any): any {
+    if (value === null || value === undefined || this.isQueryBuilderValue(value)) {
+      return value
+    }
+
+    const encryption = this.model.$getEncryption(column.attributeName)
+    if (column.encryption.mode === 'deterministic') {
+      return encryption.encrypt(value, {
+        deterministic: true,
+        driver: column.encryption.driver,
+      })
+    }
+
+    if (column.encryption.driver) {
+      return encryption.encrypt(value, {
+        driver: column.encryption.driver,
+      })
+    }
+
+    return encryption.encrypt(value)
+  }
+
+  /**
+   * Compute blind index value for writes.
+   */
+  private getBlindWriteValue(
+    column: EncryptedQueryColumn,
+    value: any
+  ): {
+    shouldWrite: boolean
+    value: any
+  } {
+    if (value === null || value === undefined) {
+      return { shouldWrite: true, value }
+    }
+
+    if (this.isQueryBuilderValue(value)) {
+      return { shouldWrite: false, value: null }
+    }
+
+    const purpose = column.encryption.purpose
+    if (!purpose) {
+      throw new errors.E_INVALID_ENCRYPTED_COLUMN_CONFIGURATION([
+        `${this.model.name}.${column.attributeName}`,
+        'Missing "blind.purpose"',
+      ])
+    }
+
+    const encryption = this.model.$getEncryption(column.attributeName)
+    return {
+      shouldWrite: true,
+      value: encryption.blindIndex(value, {
+        purpose,
+        driver: column.encryption.driver,
+      }),
+    }
+  }
+
+  /**
+   * Prepares update payload by applying encrypted column transforms.
+   */
+  private prepareUpdateValues(values: Dictionary<any, string>): Dictionary<any, string> {
+    return Object.keys(values).reduce((result: Dictionary<any, string>, key) => {
+      const column = this.getEncryptedQueryColumn(key, true)
+      if (!column) {
+        result[this.resolveKey(key)] = this.transformRaw(values[key])
+        return result
+      }
+
+      result[this.resolveKey(key)] = this.transformRaw(
+        this.getEncryptedWriteValue(column, values[key])
+      )
+
+      if (column.encryption.mode === 'blind') {
+        const blindResult = this.getBlindWriteValue(column, values[key])
+        if (blindResult.shouldWrite) {
+          result[this.resolveKey(this.getEncryptedQueryKey(column))] = this.transformRaw(
+            blindResult.value
+          )
+        }
+      }
+
       return result
     }, {})
   }
@@ -1280,21 +1371,30 @@ export class ModelQueryBuilder
   ): ModelQueryBuilderContract<LucidModel> {
     this.ensureCanPerformWrites()
 
-    if (value === undefined && returning === undefined) {
-      // Transform values in the object before passing to knex
-      if (column && typeof column === 'object') {
-        const columns = Object.keys(column).reduce((result: any, key) => {
-          result[this.resolveKey(key)] = this.transformRaw(column[key])
-          return result
-        }, {})
+    if (column && typeof column === 'object') {
+      const columns = this.prepareUpdateValues(column)
+      if (value === undefined) {
         this.knexQuery.update(columns)
       } else {
-        this.knexQuery.update(column)
+        this.knexQuery.update(columns, value)
       }
-    } else if (returning === undefined) {
-      this.knexQuery.update(this.resolveKey(column), this.transformRaw(value))
+
+      return this
+    }
+
+    if (value === undefined) {
+      this.knexQuery.update(column)
+      return this
+    }
+
+    const columns = this.prepareUpdateValues({
+      [column]: value,
+    })
+
+    if (returning === undefined) {
+      this.knexQuery.update(columns)
     } else {
-      this.knexQuery.update(this.resolveKey(column), this.transformRaw(value), returning)
+      this.knexQuery.update(columns, returning)
     }
 
     return this
