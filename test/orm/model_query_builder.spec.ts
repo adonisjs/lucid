@@ -751,6 +751,46 @@ test.group('Model query builder', (group) => {
     assert.equal(user!.email, 'enc:enc-v1:virk@adonisjs.com')
   })
 
+  test('encrypt key/value updates with returning for encrypted columns', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter)
+
+    BaseModel.useEncryption({
+      encrypt: (value, options) => `enc:${options?.driver || 'default'}:${value}`,
+      decrypt: (value) => String(value).replace(/^enc:/, ''),
+      blindIndex: (value, { purpose, driver }) =>
+        `blind:${driver || 'default'}:${purpose}:${value}`,
+      blindIndexes: () => ({}),
+    })
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+
+      @column.encrypted({ driver: 'enc-v1' })
+      declare email: string
+    }
+
+    const { sql, bindings } = User.query()
+      .where('id', 1)
+      .update('email', 'virk@adonisjs.com', ['id'])
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = db
+      .connection()
+      .getWriteClient()
+      .from('users')
+      .where('id', 1)
+      .update('email', 'enc:enc-v1:virk@adonisjs.com', ['id'])
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
   test('sync blind index when updating blind encrypted columns', async ({ fs, assert }) => {
     const app = new AppFactory().create(fs.baseUrl, () => {})
     await app.init()
