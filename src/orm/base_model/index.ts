@@ -1408,8 +1408,23 @@ class BaseModelImpl implements LucidRow {
         return
       }
 
-      const blindColumnName = encryption.blindColumnName as string
-      const purpose = encryption.purpose as string
+      const dottedAttribute = `${Model.name}.${key}`
+      const blindColumnName = encryption.blindColumnName?.trim()
+      if (!blindColumnName) {
+        throw new errors.E_INVALID_ENCRYPTED_COLUMN_CONFIGURATION([
+          dottedAttribute,
+          'Missing "blind.columnName"',
+        ])
+      }
+
+      const purpose = encryption.purpose?.trim()
+      if (!purpose) {
+        throw new errors.E_INVALID_ENCRYPTED_COLUMN_CONFIGURATION([
+          dottedAttribute,
+          'Missing "blind.purpose"',
+        ])
+      }
+
       const encryptionProvider = Model.$getEncryption(key)
 
       result[blindColumnName] =

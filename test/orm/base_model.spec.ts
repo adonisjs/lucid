@@ -1481,6 +1481,79 @@ test.group('Base Model | persist', (group) => {
     )
   })
 
+  test('raise exception when blind encrypted meta is missing blind.columnName at persistence time', async ({
+    fs,
+    assert,
+  }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const adapter = new FakeAdapter()
+    const BaseModel = getBaseModel(adapter)
+
+    BaseModel.useEncryption({
+      encrypt: (value) => `enc:${value}`,
+      decrypt: (value) => String(value).replace(/^enc:/, ''),
+      blindIndex: (value, { purpose }) => `blind:${purpose}:${value}`,
+      blindIndexes: () => ({}),
+    })
+
+    class User extends BaseModel {
+      @column({
+        meta: {
+          encryption: {
+            mode: 'blind',
+          },
+        },
+      } as any)
+      declare email: string
+    }
+
+    const user = new User()
+    user.email = 'virk@adonisjs.com'
+
+    await assert.rejects(
+      () => user.save(),
+      'Invalid encrypted column configuration for "User.email". Missing "blind.columnName"'
+    )
+  })
+
+  test('raise exception when blind encrypted meta is missing blind.purpose at persistence time', async ({
+    fs,
+    assert,
+  }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const adapter = new FakeAdapter()
+    const BaseModel = getBaseModel(adapter)
+
+    BaseModel.useEncryption({
+      encrypt: (value) => `enc:${value}`,
+      decrypt: (value) => String(value).replace(/^enc:/, ''),
+      blindIndex: (value, { purpose }) => `blind:${purpose}:${value}`,
+      blindIndexes: () => ({}),
+    })
+
+    class User extends BaseModel {
+      @column({
+        meta: {
+          encryption: {
+            mode: 'blind',
+            blindColumnName: 'email_blind',
+          },
+        },
+      } as any)
+      declare email: string
+    }
+
+    const user = new User()
+    user.email = 'virk@adonisjs.com'
+
+    await assert.rejects(
+      () => user.save(),
+      'Invalid encrypted column configuration for "User.email". Missing "blind.purpose"'
+    )
+  })
+
   test('raise exception when encryption provider is missing for encrypted columns', async ({
     fs,
     assert,
