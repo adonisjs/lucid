@@ -190,7 +190,17 @@ export class ModelQueryBuilder
       return null
     }
 
-    const normalizedKey = key.includes('.') ? key.split('.').pop()! : key
+    const lastDot = key.lastIndexOf('.')
+    const normalizedKey = lastDot >= 0 ? key.slice(lastDot + 1) : key
+
+    if (lastDot >= 0) {
+      const source = key.slice(0, lastDot)
+
+      if (!this.isModelColumnSource(source)) {
+        return null
+      }
+    }
+
     const attributeName =
       this.model.$keys.columnsToAttributes.get(normalizedKey) ??
       this.model.$keys.columnsToAttributes.get(key) ??
@@ -201,7 +211,7 @@ export class ModelQueryBuilder
     }
 
     const column = this.model.$getColumn(attributeName)!
-    if (!this.isModelColumnReference(key, attributeName, column.columnName)) {
+    if (!this.isModelColumnReference(normalizedKey, attributeName, column.columnName)) {
       return null
     }
 
@@ -220,21 +230,9 @@ export class ModelQueryBuilder
   }
 
   /**
-   * Returns true when the key references the current model table.
+   * Returns true when a dotted key source points to the current model table.
    */
-  private isModelColumnReference(key: string, attributeName: string, columnName: string): boolean {
-    if (!key.includes('.')) {
-      return true
-    }
-
-    const lastDot = key.lastIndexOf('.')
-    const source = key.slice(0, lastDot)
-    const column = key.slice(lastDot + 1)
-
-    if (column !== attributeName && column !== columnName) {
-      return false
-    }
-
+  private isModelColumnSource(source: string): boolean {
     if (source === this.model.table || source.endsWith(`.${this.model.table}`)) {
       return true
     }
@@ -244,6 +242,18 @@ export class ModelQueryBuilder
     }
 
     return false
+  }
+
+  /**
+   * Returns true when a key segment matches either the model attribute name
+   * or the underlying database column name.
+   */
+  private isModelColumnReference(
+    column: string,
+    attributeName: string,
+    columnName: string
+  ): boolean {
+    return column === attributeName || column === columnName
   }
 
   /**
