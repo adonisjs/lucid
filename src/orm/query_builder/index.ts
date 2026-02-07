@@ -532,27 +532,31 @@ export class ModelQueryBuilder
    * Prepares update payload by applying encrypted column transforms.
    */
   private prepareUpdateValues(values: Dictionary<any, string>): Dictionary<any, string> {
-    const result = Object.keys(values).reduce((acc: Dictionary<any, string>, key) => {
-      const column = this.getEncryptedQueryColumn(key, true)
-      if (!column) {
-        acc[this.resolveKey(key)] = this.transformRaw(values[key])
-        return acc
-      }
-
-      acc[this.resolveKey(key)] = this.transformRaw(
-        this.getEncryptedWriteValue(column, values[key])
-      )
-
-      return acc
-    }, {})
+    const result: Dictionary<any, string> = {}
+    const blindWrites: Array<{ value: any; column: EncryptedQueryColumn }> = []
 
     Object.keys(values).forEach((key) => {
+      const value = values[key]
       const column = this.getEncryptedQueryColumn(key, true)
-      if (column?.encryption.mode !== 'blind') {
+
+      if (!column) {
+        result[this.resolveKey(key)] = this.transformRaw(value)
         return
       }
 
-      const blindResult = this.getBlindWriteValue(column, values[key])
+      result[this.resolveKey(key)] = this.transformRaw(this.getEncryptedWriteValue(column, value))
+
+      if (column.encryption.mode === 'blind') {
+        blindWrites.push({ value, column })
+      }
+    })
+
+    /**
+     * Apply blind writes after processing the original payload so computed indexes
+     * always win over any manually provided blind column value, regardless of key order.
+     */
+    blindWrites.forEach(({ value, column }) => {
+      const blindResult = this.getBlindWriteValue(column, value)
       if (blindResult.shouldWrite) {
         result[this.resolveKey(this.getEncryptedQueryKey(column))] = this.transformRaw(
           blindResult.value
