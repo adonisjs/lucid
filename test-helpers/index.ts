@@ -191,8 +191,9 @@ export async function setup(destroyDb: boolean = true) {
     await db.schema.createTable('users_encrypted', (table) => {
       table.increments()
       table.string('username').unique()
-      table.string('email').nullable()
+      table.text('email').nullable()
       table.string('email_blind').nullable()
+      table.index(['email_blind'])
       table.timestamp('created_at').defaultTo(db.fn.now())
       table.timestamp('updated_at').nullable()
     })
