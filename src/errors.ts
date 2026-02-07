@@ -64,6 +64,12 @@ export const E_UNSUPPORTED_ENCRYPTED_COLUMN_QUERY = createError<[string, string]
   500
 )
 
+export const E_UNSUPPORTED_STANDARD_ENCRYPTED_COLUMN_QUERY = createError<[string, string]>(
+  'Cannot use "%s" on standard encrypted column "%s". Equality queries require deterministic or blind encryption',
+  'E_UNSUPPORTED_STANDARD_ENCRYPTED_COLUMN_QUERY',
+  500
+)
+
 /**
  * The "E_ROW_NOT_FOUND" exception is raised when
  * no row is found in a database single query

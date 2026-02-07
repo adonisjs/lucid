@@ -665,6 +665,15 @@ test.group('Model query builder', (group) => {
     }
 
     assert.throws(
+      () => User.query().where('token', 'super-secret'),
+      'Cannot use "where" on standard encrypted column "User.token". Equality queries require deterministic or blind encryption'
+    )
+    assert.throws(
+      () => User.query().whereIn('token', ['a', 'b']),
+      'Cannot use "whereIn" on standard encrypted column "User.token". Equality queries require deterministic or blind encryption'
+    )
+
+    assert.throws(
       () => User.query().whereLike('email', '%virk%'),
       'Cannot use "whereLike" on encrypted column "User.email". Only equality-based queries are supported'
     )

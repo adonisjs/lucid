@@ -414,6 +414,18 @@ export class ModelQueryBuilder
   }
 
   /**
+   * Raises when querying a standard encrypted column.
+   */
+  private ensureStandardEncryptedQuerySupport(column: EncryptedQueryColumn | null, method: string) {
+    if (column?.encryption.mode === 'standard') {
+      throw new errors.E_UNSUPPORTED_STANDARD_ENCRYPTED_COLUMN_QUERY([
+        method,
+        `${this.model.name}.${column.attributeName}`,
+      ])
+    }
+  }
+
+  /**
    * Routes operator forms using IN/NOT IN through the dedicated methods.
    */
   private handleEncryptedInOperator(
@@ -571,7 +583,8 @@ export class ModelQueryBuilder
     value?: any
   ): this {
     if (value !== undefined && typeof key === 'string') {
-      const column = this.getEncryptedQueryColumn(key)
+      const column = this.getEncryptedQueryColumn(key, true)
+      this.ensureStandardEncryptedQuerySupport(column, method)
       const inOperatorResult = this.handleEncryptedInOperator(method, key, operator, value)
       if (inOperatorResult) {
         return inOperatorResult
@@ -597,7 +610,8 @@ export class ModelQueryBuilder
     }
 
     if (operator !== undefined && typeof key === 'string') {
-      const column = this.getEncryptedQueryColumn(key)
+      const column = this.getEncryptedQueryColumn(key, true)
+      this.ensureStandardEncryptedQuerySupport(column, method)
 
       if (column?.encryption.mode === 'blind') {
         const encryptedValues = this.getEncryptedQueryValues(column, operator)
@@ -649,7 +663,8 @@ export class ModelQueryBuilder
       return this.callSuperWhereIn(method, columns, value)
     }
 
-    const column = this.getEncryptedQueryColumn(columns)
+    const column = this.getEncryptedQueryColumn(columns, true)
+    this.ensureStandardEncryptedQuerySupport(column, method)
     if (!column) {
       return this.callSuperWhereIn(method, columns, value)
     }
