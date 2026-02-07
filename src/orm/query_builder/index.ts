@@ -14,7 +14,6 @@ import {
   type LucidRow,
   type LucidModel,
   type ModelObject,
-  type EncryptedColumnMeta,
   type ModelAdapterOptions,
   type ModelQueryBuilderContract,
 } from '../../types/model.js'
@@ -40,16 +39,12 @@ import { QueryRunner } from '../../query_runner/index.js'
 import { Chainable } from '../../database/query_builder/chainable.js'
 import { SimplePaginator } from '../../database/paginator/simple_paginator.js'
 import * as errors from '../../errors.js'
-
-type EncryptedQueryColumn = {
-  key: string
-  attributeName: string
-  columnName: string
-  encryption: EncryptedColumnMeta
-}
-
-type EncryptedWhereMethod = 'where' | 'orWhere' | 'whereNot' | 'orWhereNot'
-type EncryptedWhereInMethod = 'whereIn' | 'orWhereIn' | 'whereNotIn' | 'orWhereNotIn'
+import {
+  EncryptedQuerySupport,
+  type EncryptedWhereMethod,
+  type EncryptedWhereInMethod,
+  type EncryptedWhereRewrite,
+} from './encrypted_query_support.js'
 
 /**
  * A wrapper to invoke scope methods on the query builder
@@ -141,6 +136,11 @@ export class ModelQueryBuilder
   isChildQuery = false
 
   /**
+   * Support class responsible for encrypted query rewrites and guards.
+   */
+  private encryptedSupport: EncryptedQuerySupport
+
+  /**
    * Side-loaded attributes that will be passed to the model instances
    */
   sideloaded: ModelObject = {}
@@ -166,6 +166,7 @@ export class ModelQueryBuilder
 
     this.preloader = new Preloader(this.model)
     this.debugQueries = this.client.debug
+    this.encryptedSupport = new EncryptedQuerySupport(this.model, () => this.tableAlias)
     this.clientOptions = {
       client: this.client,
       connection: this.client.connectionName,
@@ -180,397 +181,85 @@ export class ModelQueryBuilder
   }
 
   /**
-   * Returns encrypted metadata for a query key.
+   * Calls the matching super where* method.
    */
-  private getEncryptedQueryColumn(
+  private callSuperWhere(
+    method: EncryptedWhereMethod,
     key: any,
-    includeStandard: boolean = false
-  ): EncryptedQueryColumn | null {
-    if (typeof key !== 'string') {
-      return null
-    }
-
-    const lastDot = key.lastIndexOf('.')
-    const normalizedKey = lastDot >= 0 ? key.slice(lastDot + 1) : key
-
-    if (lastDot >= 0) {
-      const source = key.slice(0, lastDot)
-
-      if (!this.isModelColumnSource(source)) {
-        return null
+    operator?: any,
+    value?: any
+  ): this {
+    if (value !== undefined) {
+      switch (method) {
+        case 'where':
+          return super.where(key, operator, value)
+        case 'orWhere':
+          return super.orWhere(key, operator, value)
+        case 'whereNot':
+          return super.whereNot(key, operator, value)
+        case 'orWhereNot':
+          return super.orWhereNot(key, operator, value)
       }
     }
 
-    const attributeName =
-      this.model.$keys.columnsToAttributes.get(normalizedKey) ??
-      this.model.$keys.columnsToAttributes.get(key) ??
-      normalizedKey
-
-    if (!this.model.$hasColumn(attributeName)) {
-      return null
+    if (operator !== undefined) {
+      switch (method) {
+        case 'where':
+          return super.where(key, operator)
+        case 'orWhere':
+          return super.orWhere(key, operator)
+        case 'whereNot':
+          return super.whereNot(key, operator)
+        case 'orWhereNot':
+          return super.orWhereNot(key, operator)
+      }
     }
 
-    const column = this.model.$getColumn(attributeName)!
-    if (!this.isModelColumnReference(normalizedKey, attributeName, column.columnName)) {
-      return null
+    switch (method) {
+      case 'where':
+        return super.where(key)
+      case 'orWhere':
+        return super.orWhere(key)
+      case 'whereNot':
+        return super.whereNot(key)
+      case 'orWhereNot':
+        return super.orWhereNot(key)
     }
-
-    const encryption = column.meta?.encryption as EncryptedColumnMeta | undefined
-
-    if (!encryption || (!includeStandard && encryption.mode === 'standard')) {
-      return null
-    }
-
-    return {
-      key,
-      attributeName,
-      columnName: column.columnName,
-      encryption,
-    }
-  }
-
-  /**
-   * Returns true when a dotted key source points to the current model table.
-   */
-  private isModelColumnSource(source: string): boolean {
-    if (source === this.model.table || source.endsWith(`.${this.model.table}`)) {
-      return true
-    }
-
-    if (this.tableAlias && (source === this.tableAlias || source.endsWith(`.${this.tableAlias}`))) {
-      return true
-    }
-
-    return false
-  }
-
-  /**
-   * Returns true when a key segment matches either the model attribute name
-   * or the underlying database column name.
-   */
-  private isModelColumnReference(
-    column: string,
-    attributeName: string,
-    columnName: string
-  ): boolean {
-    return column === attributeName || column === columnName
-  }
-
-  /**
-   * Returns true when the value is a query/raw/reference value and should not be transformed.
-   */
-  private isQueryBuilderValue(value: any): boolean {
-    if (value instanceof Chainable || typeof value === 'function') {
-      return true
-    }
-
-    return !!value && typeof value === 'object' && ('knexQuery' in value || 'toKnex' in value)
-  }
-
-  /**
-   * Rewrites the query key for blind-index columns.
-   */
-  private getEncryptedQueryKey(column: EncryptedQueryColumn): string {
-    if (column.encryption.mode !== 'blind') {
-      return column.key
-    }
-
-    const blindColumnName = column.encryption.blindColumnName
-    if (!blindColumnName) {
-      throw new errors.E_INVALID_ENCRYPTED_COLUMN_CONFIGURATION([
-        `${this.model.name}.${column.attributeName}`,
-        'Missing "blind.columnName"',
-      ])
-    }
-
-    if (column.key === column.attributeName || column.key === column.columnName) {
-      return blindColumnName
-    }
-
-    if (
-      column.key.endsWith(`.${column.attributeName}`) ||
-      column.key.endsWith(`.${column.columnName}`)
-    ) {
-      const lastDot = column.key.lastIndexOf('.')
-      return `${column.key.slice(0, lastDot + 1)}${blindColumnName}`
-    }
-
-    return blindColumnName
-  }
-
-  private normalizeBlindIndexValues(indexes: any): any[] {
-    if (!indexes) {
-      return []
-    }
-
-    if (Array.isArray(indexes)) {
-      return indexes.filter((item) => item !== null && item !== undefined)
-    }
-
-    if (isObject(indexes)) {
-      return Object.values(indexes).filter((item) => item !== null && item !== undefined)
-    }
-
-    return [indexes]
-  }
-
-  /**
-   * Transforms a query value for deterministic/blind encrypted columns and
-   * returns one or many candidate values.
-   */
-  private getEncryptedQueryValues(column: EncryptedQueryColumn, value: any): any[] {
-    if (value === null || value === undefined || this.isQueryBuilderValue(value)) {
-      return [value]
-    }
-
-    const encryption = this.model.$getEncryption(column.attributeName)
-
-    if (column.encryption.mode === 'deterministic') {
-      return [
-        encryption.encrypt(value, {
-          deterministic: true,
-          driver: column.encryption.driver,
-        }),
-      ]
-    }
-
-    if (!column.encryption.purpose) {
-      throw new errors.E_INVALID_ENCRYPTED_COLUMN_CONFIGURATION([
-        `${this.model.name}.${column.attributeName}`,
-        'Missing "blind.purpose"',
-      ])
-    }
-
-    const blindIndexes = this.normalizeBlindIndexValues(
-      encryption.blindIndexes(value, {
-        purpose: column.encryption.purpose,
-        driver: column.encryption.driver,
-      })
-    )
-
-    if (blindIndexes.length) {
-      return blindIndexes
-    }
-
-    return [
-      encryption.blindIndex(value, {
-        purpose: column.encryption.purpose,
-        driver: column.encryption.driver,
-      }),
-    ]
-  }
-
-  /**
-   * Returns the first transformed query value.
-   */
-  private getEncryptedQueryValue(column: EncryptedQueryColumn, value: any): any {
-    return this.getEncryptedQueryValues(column, value)[0]
-  }
-
-  /**
-   * Normalize operators used by where/orWhere methods.
-   */
-  private normalizeOperator(operator: any): string {
-    return typeof operator === 'string' ? operator.trim().replace(/\s+/g, ' ').toLowerCase() : ''
-  }
-
-  /**
-   * Check if operator maps to an IN clause.
-   */
-  private isInOperator(operator: string): boolean {
-    return operator === 'in'
-  }
-
-  /**
-   * Check if operator maps to a NOT IN clause.
-   */
-  private isNotInOperator(operator: string): boolean {
-    return operator === 'not in'
-  }
-
-  /**
-   * Raises when using a non equality operator for deterministic/blind columns.
-   */
-  private ensureEncryptedEqualityOperator(
-    column: EncryptedQueryColumn | null,
-    operator: any,
-    method: string
-  ) {
-    if (!column) {
-      return
-    }
-
-    const normalizedOperator = this.normalizeOperator(operator)
-    if (
-      normalizedOperator !== '=' &&
-      !this.isInOperator(normalizedOperator) &&
-      !this.isNotInOperator(normalizedOperator)
-    ) {
-      throw new errors.E_UNSUPPORTED_ENCRYPTED_COLUMN_QUERY([
-        method,
-        `${this.model.name}.${column.attributeName}`,
-      ])
-    }
-  }
-
-  /**
-   * Raises when querying a standard encrypted column.
-   */
-  private ensureStandardEncryptedQuerySupport(column: EncryptedQueryColumn | null, method: string) {
-    if (column?.encryption.mode === 'standard') {
-      throw new errors.E_UNSUPPORTED_STANDARD_ENCRYPTED_COLUMN_QUERY([
-        method,
-        `${this.model.name}.${column.attributeName}`,
-      ])
-    }
-  }
-
-  /**
-   * Routes operator forms using IN/NOT IN through the dedicated methods.
-   */
-  private handleEncryptedInOperator(
-    method: EncryptedWhereMethod,
-    key: string,
-    operator: any,
-    value: any
-  ): this | null {
-    const column = this.getEncryptedQueryColumn(key)
-    if (!column) {
-      return null
-    }
-
-    const normalizedOperator = this.normalizeOperator(operator)
-    if (!this.isInOperator(normalizedOperator) && !this.isNotInOperator(normalizedOperator)) {
-      return null
-    }
-
-    const whereInMethod = this.getEncryptedWhereInMethod(method)
-    const targetMethod = this.isInOperator(normalizedOperator)
-      ? whereInMethod
-      : this.getOppositeEncryptedWhereInMethod(whereInMethod)
-
-    return this.encryptedWhereIn(targetMethod, key, value)
-  }
-
-  /**
-   * Returns the IN method associated with a WHERE variant.
-   */
-  private getEncryptedWhereInMethod(method: EncryptedWhereMethod): EncryptedWhereInMethod {
-    if (method === 'where') {
-      return 'whereIn'
-    }
-
-    if (method === 'orWhere') {
-      return 'orWhereIn'
-    }
-
-    if (method === 'whereNot') {
-      return 'whereNotIn'
-    }
-
-    return 'orWhereNotIn'
-  }
-
-  /**
-   * Returns the opposite IN method (IN <-> NOT IN) preserving the boolean variant.
-   */
-  private getOppositeEncryptedWhereInMethod(
-    method: EncryptedWhereInMethod
-  ): EncryptedWhereInMethod {
-    if (method === 'whereIn') {
-      return 'whereNotIn'
-    }
-
-    if (method === 'orWhereIn') {
-      return 'orWhereNotIn'
-    }
-
-    if (method === 'whereNotIn') {
-      return 'whereIn'
-    }
-
-    return 'orWhereIn'
-  }
-
-  /**
-   * Calls the matching super where* method with a single argument.
-   */
-  private callSuperWhereUnary(method: EncryptedWhereMethod, key: any): this {
-    if (method === 'where') {
-      return super.where(key)
-    }
-
-    if (method === 'orWhere') {
-      return super.orWhere(key)
-    }
-
-    if (method === 'whereNot') {
-      return super.whereNot(key)
-    }
-
-    return super.orWhereNot(key)
-  }
-
-  /**
-   * Calls the matching super where* method with 2 arguments.
-   */
-  private callSuperWhereBinary(method: EncryptedWhereMethod, key: any, value: any): this {
-    if (method === 'where') {
-      return super.where(key, value)
-    }
-
-    if (method === 'orWhere') {
-      return super.orWhere(key, value)
-    }
-
-    if (method === 'whereNot') {
-      return super.whereNot(key, value)
-    }
-
-    return super.orWhereNot(key, value)
-  }
-
-  /**
-   * Calls the matching super where* method with 3 arguments.
-   */
-  private callSuperWhereTernary(
-    method: EncryptedWhereMethod,
-    key: any,
-    operator: any,
-    value: any
-  ): this {
-    if (method === 'where') {
-      return super.where(key, operator, value)
-    }
-
-    if (method === 'orWhere') {
-      return super.orWhere(key, operator, value)
-    }
-
-    if (method === 'whereNot') {
-      return super.whereNot(key, operator, value)
-    }
-
-    return super.orWhereNot(key, operator, value)
   }
 
   /**
    * Calls the matching super where*In method.
    */
   private callSuperWhereIn(method: EncryptedWhereInMethod, columns: any, value: any): this {
-    if (method === 'whereIn') {
-      return super.whereIn(columns, value)
+    switch (method) {
+      case 'whereIn':
+        return super.whereIn(columns, value)
+      case 'orWhereIn':
+        return super.orWhereIn(columns, value)
+      case 'whereNotIn':
+        return super.whereNotIn(columns, value)
+      case 'orWhereNotIn':
+        return super.orWhereNotIn(columns, value)
+    }
+  }
+
+  /**
+   * Applies encrypted where rewrite instructions to the matching super method.
+   */
+  private applyWhereRewrite(rewrite: EncryptedWhereRewrite): this {
+    if (rewrite.target === 'whereIn') {
+      return this.callSuperWhereIn(rewrite.method, rewrite.columns, rewrite.value)
     }
 
-    if (method === 'orWhereIn') {
-      return super.orWhereIn(columns, value)
+    if (rewrite.args.length === 1) {
+      return this.callSuperWhere(rewrite.method, rewrite.args[0])
     }
 
-    if (method === 'whereNotIn') {
-      return super.whereNotIn(columns, value)
+    if (rewrite.args.length === 2) {
+      return this.callSuperWhere(rewrite.method, rewrite.args[0], rewrite.args[1])
     }
 
-    return super.orWhereNotIn(columns, value)
+    return this.callSuperWhere(rewrite.method, rewrite.args[0], rewrite.args[1], rewrite.args[2])
   }
 
   /**
@@ -582,113 +271,57 @@ export class ModelQueryBuilder
     operator?: any,
     value?: any
   ): this {
-    if (value !== undefined && typeof key === 'string') {
-      const column = this.getEncryptedQueryColumn(key, true)
-      this.ensureStandardEncryptedQuerySupport(column, method)
-      const inOperatorResult = this.handleEncryptedInOperator(method, key, operator, value)
-      if (inOperatorResult) {
-        return inOperatorResult
-      }
-      this.ensureEncryptedEqualityOperator(column, operator, method)
-
-      if (column?.encryption.mode === 'blind') {
-        const encryptedValues = this.getEncryptedQueryValues(column, value)
-        const encryptedKey = this.getEncryptedQueryKey(column)
-        const whereInMethod = this.getEncryptedWhereInMethod(method)
-
-        return encryptedValues.length > 1
-          ? this.callSuperWhereIn(whereInMethod, encryptedKey, encryptedValues)
-          : this.callSuperWhereTernary(method, encryptedKey, operator, encryptedValues[0])
+    if (typeof key === 'string') {
+      if (value !== undefined) {
+        return this.applyWhereRewrite(
+          this.encryptedSupport.rewriteWhereTernary(method, key, operator, value)
+        )
       }
 
-      return this.callSuperWhereTernary(
-        method,
-        column ? this.getEncryptedQueryKey(column) : key,
-        operator,
-        column ? this.getEncryptedQueryValue(column, value) : value
-      )
+      if (operator !== undefined) {
+        return this.applyWhereRewrite(
+          this.encryptedSupport.rewriteWhereBinary(method, key, operator)
+        )
+      }
     }
 
-    if (operator !== undefined && typeof key === 'string') {
-      const column = this.getEncryptedQueryColumn(key, true)
-      this.ensureStandardEncryptedQuerySupport(column, method)
-
-      if (column?.encryption.mode === 'blind') {
-        const encryptedValues = this.getEncryptedQueryValues(column, operator)
-        const encryptedKey = this.getEncryptedQueryKey(column)
-        const whereInMethod = this.getEncryptedWhereInMethod(method)
-
-        return encryptedValues.length > 1
-          ? this.callSuperWhereIn(whereInMethod, encryptedKey, encryptedValues)
-          : this.callSuperWhereBinary(method, encryptedKey, encryptedValues[0])
-      }
-
-      return this.callSuperWhereBinary(
-        method,
-        column ? this.getEncryptedQueryKey(column) : key,
-        column ? this.getEncryptedQueryValue(column, operator) : operator
-      )
+    if (!isObject(key)) {
+      return this.callSuperWhere(method, key, operator, value)
     }
 
-    if (isObject(key)) {
-      const clauses = Object.entries(key)
+    const clauses = Object.entries(key)
+    if (!clauses.length) {
+      return method === 'where' ? this.callSuperWhere(method, key) : this
+    }
 
-      if (!clauses.length) {
-        return method === 'where' ? this.callSuperWhereUnary(method, key) : this
-      }
-
-      if (method === 'orWhere') {
-        return this.callSuperWhereUnary(method, (query: ModelQueryBuilder) => {
-          clauses.forEach(([clauseKey, clauseValue]) => {
-            query.where(clauseKey, clauseValue)
-          })
+    if (method === 'orWhere') {
+      return this.callSuperWhere(method, (query: ModelQueryBuilder) => {
+        clauses.forEach(([clauseKey, clauseValue]) => {
+          query.where(clauseKey, clauseValue)
         })
-      }
-
-      clauses.forEach(([clauseKey, clauseValue]) => {
-        this.encryptedWhere(method, clauseKey, clauseValue)
       })
-
-      return this
     }
 
-    return this.callSuperWhereTernary(method, key, operator, value)
+    clauses.forEach(([clauseKey, clauseValue]) => {
+      this.encryptedWhere(method, clauseKey, clauseValue)
+    })
+
+    return this
   }
 
   /**
    * Shared implementation for whereIn/orWhereIn/whereNotIn/orWhereNotIn.
    */
   private encryptedWhereIn(method: EncryptedWhereInMethod, columns: any, value: any): this {
-    if (typeof columns !== 'string') {
-      return this.callSuperWhereIn(method, columns, value)
-    }
-
-    const column = this.getEncryptedQueryColumn(columns, true)
-    this.ensureStandardEncryptedQuerySupport(column, method)
-    if (!column) {
-      return this.callSuperWhereIn(method, columns, value)
-    }
-
-    const transformedValue = Array.isArray(value)
-      ? value.flatMap((item) => this.getEncryptedQueryValues(column, item))
-      : this.isQueryBuilderValue(value)
-        ? value
-        : this.getEncryptedQueryValues(column, value)
-
-    return this.callSuperWhereIn(method, this.getEncryptedQueryKey(column), transformedValue)
+    const rewrite = this.encryptedSupport.rewriteWhereIn(method, columns, value)
+    return this.callSuperWhereIn(rewrite.method, rewrite.columns, rewrite.value)
   }
 
   /**
    * Raises for unsupported encrypted column operators.
    */
   private ensureEncryptedMethodSupport(key: any, method: string) {
-    const column = this.getEncryptedQueryColumn(key, true)
-    if (column) {
-      throw new errors.E_UNSUPPORTED_ENCRYPTED_COLUMN_QUERY([
-        method,
-        `${this.model.name}.${column.attributeName}`,
-      ])
-    }
+    this.encryptedSupport.ensureMethodSupport(key, method)
   }
 
   /**
@@ -741,17 +374,7 @@ export class ModelQueryBuilder
    * Raises for unsupported arithmetic operations on encrypted columns.
    */
   private ensureEncryptedArithmeticSupport(key: any, method: string) {
-    const keys = typeof key === 'string' ? [key] : isObject(key) ? Object.keys(key) : []
-
-    for (const columnKey of keys) {
-      const column = this.getEncryptedQueryColumn(columnKey, true)
-      if (column) {
-        throw new errors.E_UNSUPPORTED_ENCRYPTED_COLUMN_QUERY([
-          method,
-          `${this.model.name}.${column.attributeName}`,
-        ])
-      }
-    }
+    this.encryptedSupport.ensureArithmeticSupport(key, method)
   }
 
   /**
@@ -762,108 +385,18 @@ export class ModelQueryBuilder
     column: any,
     comparisonColumn: any
   ) {
-    this.ensureEncryptedMethodSupport(column, method)
-    this.ensureEncryptedMethodSupport(comparisonColumn, method)
-  }
-
-  /**
-   * Encrypt value before writing it to an encrypted model column.
-   */
-  private getEncryptedWriteValue(column: EncryptedQueryColumn, value: any): any {
-    if (value === null || value === undefined || this.isQueryBuilderValue(value)) {
-      return value
-    }
-
-    const encryption = this.model.$getEncryption(column.attributeName)
-    if (column.encryption.mode === 'deterministic') {
-      return encryption.encrypt(value, {
-        deterministic: true,
-        driver: column.encryption.driver,
-      })
-    }
-
-    if (column.encryption.driver) {
-      return encryption.encrypt(value, {
-        driver: column.encryption.driver,
-      })
-    }
-
-    return encryption.encrypt(value)
-  }
-
-  /**
-   * Compute blind index value for writes.
-   */
-  private getBlindWriteValue(
-    column: EncryptedQueryColumn,
-    value: any
-  ): {
-    shouldWrite: boolean
-    value: any
-  } {
-    if (value === null || value === undefined) {
-      return { shouldWrite: true, value }
-    }
-
-    if (this.isQueryBuilderValue(value)) {
-      return { shouldWrite: false, value: null }
-    }
-
-    const purpose = column.encryption.purpose
-    if (!purpose) {
-      throw new errors.E_INVALID_ENCRYPTED_COLUMN_CONFIGURATION([
-        `${this.model.name}.${column.attributeName}`,
-        'Missing "blind.purpose"',
-      ])
-    }
-
-    const encryption = this.model.$getEncryption(column.attributeName)
-    return {
-      shouldWrite: true,
-      value: encryption.blindIndex(value, {
-        purpose,
-        driver: column.encryption.driver,
-      }),
-    }
+    this.encryptedSupport.ensureColumnComparisonSupport(method, column, comparisonColumn)
   }
 
   /**
    * Prepares update payload by applying encrypted column transforms.
    */
   private prepareUpdateValues(values: Dictionary<any, string>): Dictionary<any, string> {
-    const result: Dictionary<any, string> = {}
-    const blindWrites: Array<{ value: any; column: EncryptedQueryColumn }> = []
-
-    Object.keys(values).forEach((key) => {
-      const value = values[key]
-      const column = this.getEncryptedQueryColumn(key, true)
-
-      if (!column) {
-        result[this.resolveKey(key)] = this.transformRaw(value)
-        return
-      }
-
-      result[this.resolveKey(key)] = this.transformRaw(this.getEncryptedWriteValue(column, value))
-
-      if (column.encryption.mode === 'blind') {
-        blindWrites.push({ value, column })
-      }
-    })
-
-    /**
-     * Apply blind writes after processing the original payload so computed indexes
-     * always win over any manually provided blind column value, regardless of key order.
-     */
-    blindWrites.forEach(({ value, column }) => {
-      const blindResult = this.getBlindWriteValue(column, value)
-      if (blindResult.shouldWrite) {
-        result[this.resolveKey(this.getEncryptedQueryKey(column))] = this.transformRaw(
-          blindResult.value
-        )
-      }
-    })
-
-    return result
+    return this.encryptedSupport.prepareUpdateValues(
+      values,
+      (key) => this.resolveKey(key),
+      (rawValue) => this.transformRaw(rawValue)
+    )
   }
 
   where(key: any, operator?: any, value?: any): this {
