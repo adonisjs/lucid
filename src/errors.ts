@@ -59,7 +59,7 @@ export const E_INVALID_ENCRYPTED_COLUMN_CONFIGURATION = createError<[string, str
 )
 
 export const E_UNSUPPORTED_ENCRYPTED_COLUMN_QUERY = createError<[string, string]>(
-  'Cannot use "%s" on encrypted column "%s". Only equality-based queries are supported',
+  'Cannot use "%s" on encrypted column "%s". Encrypted columns can only be used with equality-based WHERE clauses',
   'E_UNSUPPORTED_ENCRYPTED_COLUMN_QUERY',
   500
 )

@@ -717,67 +717,67 @@ test.group('Model query builder', (group) => {
 
     assert.throws(
       () => User.query().whereLike('email', '%virk%'),
-      'Cannot use "whereLike" on encrypted column "User.email". Only equality-based queries are supported'
+      'Cannot use "whereLike" on encrypted column "User.email". Encrypted columns can only be used with equality-based WHERE clauses'
     )
     assert.throws(
       () => User.query().whereBetween('email', ['a', 'z']),
-      'Cannot use "whereBetween" on encrypted column "User.email". Only equality-based queries are supported'
+      'Cannot use "whereBetween" on encrypted column "User.email". Encrypted columns can only be used with equality-based WHERE clauses'
     )
     assert.throws(
       () => User.query().whereJson('email', { value: 'virk' }),
-      'Cannot use "whereJson" on encrypted column "User.email". Only equality-based queries are supported'
+      'Cannot use "whereJson" on encrypted column "User.email". Encrypted columns can only be used with equality-based WHERE clauses'
     )
 
     assert.throws(
       () => User.query().whereBetween('username', ['a', 'z']),
-      'Cannot use "whereBetween" on encrypted column "User.username". Only equality-based queries are supported'
+      'Cannot use "whereBetween" on encrypted column "User.username". Encrypted columns can only be used with equality-based WHERE clauses'
     )
     assert.throws(
       () => User.query().whereJson('username', { value: 'virk' }),
-      'Cannot use "whereJson" on encrypted column "User.username". Only equality-based queries are supported'
+      'Cannot use "whereJson" on encrypted column "User.username". Encrypted columns can only be used with equality-based WHERE clauses'
     )
 
     assert.throws(
       () => User.query().orderBy('token'),
-      'Cannot use "orderBy" on encrypted column "User.token". Only equality-based queries are supported'
+      'Cannot use "orderBy" on encrypted column "User.token". Encrypted columns can only be used with equality-based WHERE clauses'
     )
     assert.throws(
       () => User.query().groupBy('email'),
-      'Cannot use "groupBy" on encrypted column "User.email". Only equality-based queries are supported'
+      'Cannot use "groupBy" on encrypted column "User.email". Encrypted columns can only be used with equality-based WHERE clauses'
     )
     assert.throws(
       () => User.query().orderBy([{ column: 'username', order: 'asc' }]),
-      'Cannot use "orderBy" on encrypted column "User.username". Only equality-based queries are supported'
+      'Cannot use "orderBy" on encrypted column "User.username". Encrypted columns can only be used with equality-based WHERE clauses'
     )
 
     assert.throws(
       () => User.query().whereColumn('email', 'username'),
-      'Cannot use "whereColumn" on encrypted column "User.email". Only equality-based queries are supported'
+      'Cannot use "whereColumn" on encrypted column "User.email". Encrypted columns can only be used with equality-based WHERE clauses'
     )
     assert.throws(
       () => User.query().whereColumn('id', 'email'),
-      'Cannot use "whereColumn" on encrypted column "User.email". Only equality-based queries are supported'
+      'Cannot use "whereColumn" on encrypted column "User.email". Encrypted columns can only be used with equality-based WHERE clauses'
     )
     assert.throws(
       () => User.query().orWhereColumn('id', 'username'),
-      'Cannot use "orWhereColumn" on encrypted column "User.username". Only equality-based queries are supported'
+      'Cannot use "orWhereColumn" on encrypted column "User.username". Encrypted columns can only be used with equality-based WHERE clauses'
     )
     assert.throws(
       () => User.query().whereNotColumn('email', 'id'),
-      'Cannot use "whereNotColumn" on encrypted column "User.email". Only equality-based queries are supported'
+      'Cannot use "whereNotColumn" on encrypted column "User.email". Encrypted columns can only be used with equality-based WHERE clauses'
     )
     assert.throws(
       () => User.query().orWhereNotColumn('id', 'username'),
-      'Cannot use "orWhereNotColumn" on encrypted column "User.username". Only equality-based queries are supported'
+      'Cannot use "orWhereNotColumn" on encrypted column "User.username". Encrypted columns can only be used with equality-based WHERE clauses'
     )
 
     assert.throws(
       () => User.query().andWhereLike('email', '%virk%'),
-      'Cannot use "whereLike" on encrypted column "User.email". Only equality-based queries are supported'
+      'Cannot use "whereLike" on encrypted column "User.email". Encrypted columns can only be used with equality-based WHERE clauses'
     )
     assert.throws(
       () => User.query().andWhereBetween('username', ['a', 'z']),
-      'Cannot use "whereBetween" on encrypted column "User.username". Only equality-based queries are supported'
+      'Cannot use "whereBetween" on encrypted column "User.username". Encrypted columns can only be used with equality-based WHERE clauses'
     )
   })
 
@@ -1141,27 +1141,27 @@ test.group('Model query builder', (group) => {
 
     assert.throws(
       () => User.query().increment('points', 1),
-      'Cannot use "increment" on encrypted column "User.points". Only equality-based queries are supported'
+      'Cannot use "increment" on encrypted column "User.points". Encrypted columns can only be used with equality-based WHERE clauses'
     )
     assert.throws(
       () => User.query().decrement('score', 1),
-      'Cannot use "decrement" on encrypted column "User.score". Only equality-based queries are supported'
+      'Cannot use "decrement" on encrypted column "User.score". Encrypted columns can only be used with equality-based WHERE clauses'
     )
     assert.throws(
       () => User.query().increment('tokens', 1),
-      'Cannot use "increment" on encrypted column "User.tokens". Only equality-based queries are supported'
+      'Cannot use "increment" on encrypted column "User.tokens". Encrypted columns can only be used with equality-based WHERE clauses'
     )
     assert.throws(
       () => User.query().increment({ points: 1 }),
-      'Cannot use "increment" on encrypted column "User.points". Only equality-based queries are supported'
+      'Cannot use "increment" on encrypted column "User.points". Encrypted columns can only be used with equality-based WHERE clauses'
     )
     assert.throws(
       () => User.query().decrement({ score: 1 }),
-      'Cannot use "decrement" on encrypted column "User.score". Only equality-based queries are supported'
+      'Cannot use "decrement" on encrypted column "User.score". Encrypted columns can only be used with equality-based WHERE clauses'
     )
     assert.throws(
       () => User.query().increment({ tokens: 1 }),
-      'Cannot use "increment" on encrypted column "User.tokens". Only equality-based queries are supported'
+      'Cannot use "increment" on encrypted column "User.tokens". Encrypted columns can only be used with equality-based WHERE clauses'
     )
   })
 
