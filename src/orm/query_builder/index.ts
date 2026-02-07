@@ -611,12 +611,8 @@ export class ModelQueryBuilder
         return super.where(key)
       }
 
-      clauses.forEach(([clauseKey, clauseValue], index) => {
-        if (index === 0) {
-          this.where(clauseKey, clauseValue)
-        } else {
-          this.andWhere(clauseKey, clauseValue)
-        }
+      clauses.forEach(([clauseKey, clauseValue]) => {
+        this.where(clauseKey, clauseValue)
       })
 
       return this

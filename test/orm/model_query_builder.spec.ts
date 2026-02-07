@@ -137,6 +137,73 @@ test.group('Model query builder', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
+  test('rewrite encrypted andWhere/orWhere clauses for deterministic and blind columns', async ({
+    fs,
+    assert,
+  }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter)
+
+    BaseModel.useEncryption({
+      encrypt: (value, options) =>
+        options?.deterministic
+          ? `det:${options?.driver || 'default'}:${value}`
+          : `enc:${options?.driver || 'default'}:${value}`,
+      decrypt: (value) => String(value).replace(/^(enc:|det:)/, ''),
+      blindIndex: (value, { purpose, driver }) =>
+        `blind:${driver || 'default'}:${purpose}:${value}:single`,
+      blindIndexes: (value, options) => [
+        `blind:${options?.driver || 'default'}:${options?.purpose}:${value}:new`,
+        `blind:${options?.driver || 'default'}:${options?.purpose}:${value}:old`,
+      ],
+    })
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+
+      @column.encrypted({ deterministic: true, driver: 'det-v1' })
+      declare email: string
+
+      @column.encrypted({
+        driver: 'enc-v1',
+        blind: { columnName: 'username_blind', purpose: 'users:username' },
+      })
+      declare username: string
+    }
+
+    const { sql, bindings } = User.query()
+      .where('id', 1)
+      .andWhere('email', 'virk@adonisjs.com')
+      .andWhere('username', 'virk')
+      .orWhere('email', 'nikk@adonisjs.com')
+      .orWhere('username', 'nikk')
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = db
+      .connection()
+      .getWriteClient()
+      .from('users')
+      .where('id', 1)
+      .andWhere('email', 'det:det-v1:virk@adonisjs.com')
+      .whereIn('username_blind', [
+        'blind:enc-v1:users:username:virk:new',
+        'blind:enc-v1:users:username:virk:old',
+      ])
+      .orWhere('email', 'det:det-v1:nikk@adonisjs.com')
+      .orWhereIn('username_blind', [
+        'blind:enc-v1:users:username:nikk:new',
+        'blind:enc-v1:users:username:nikk:old',
+      ])
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
   test('do not rewrite joined table columns that match encrypted model column names', async ({
     fs,
     assert,
@@ -230,6 +297,61 @@ test.group('Model query builder', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
+  test('rewrite all encrypted keys when using object where clauses', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter)
+
+    BaseModel.useEncryption({
+      encrypt: (value, options) =>
+        options?.deterministic
+          ? `det:${options?.driver || 'default'}:${value}`
+          : `enc:${options?.driver || 'default'}:${value}`,
+      decrypt: (value) => String(value).replace(/^(enc:|det:)/, ''),
+      blindIndex: (value, { purpose, driver }) =>
+        `blind:${driver || 'default'}:${purpose}:${value}`,
+      blindIndexes: () => ({}),
+    })
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+
+      @column.encrypted({ deterministic: true, driver: 'det-v1' })
+      declare email: string
+
+      @column.encrypted({
+        driver: 'enc-v1',
+        blind: { columnName: 'username_blind', purpose: 'users:username' },
+      })
+      declare username: string
+    }
+
+    const { sql, bindings } = User.query()
+      .where({
+        id: 1,
+        email: 'virk@adonisjs.com',
+        username: 'virk',
+      })
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = db
+      .connection()
+      .getWriteClient()
+      .from('users')
+      .where({
+        id: 1,
+        email: 'det:det-v1:virk@adonisjs.com',
+        username_blind: 'blind:enc-v1:users:username:virk',
+      })
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
   test('rewrite encrypted where clauses using IN and NOT IN operators', async ({ fs, assert }) => {
     const app = new AppFactory().create(fs.baseUrl, () => {})
     await app.init()
@@ -277,6 +399,64 @@ test.group('Model query builder', (group) => {
       .whereNotIn('email', ['det:det-v1:tom@adonisjs.com'])
       .whereIn('username_blind', ['blind:enc-v1:users:username:virk'])
       .whereNotIn('username_blind', ['blind:enc-v1:users:username:nikk'])
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
+  test('rewrite encrypted andWhere/orWhere clauses using IN and NOT IN operators', async ({
+    fs,
+    assert,
+  }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter)
+
+    BaseModel.useEncryption({
+      encrypt: (value, options) =>
+        options?.deterministic
+          ? `det:${options?.driver || 'default'}:${value}`
+          : `enc:${options?.driver || 'default'}:${value}`,
+      decrypt: (value) => String(value).replace(/^(enc:|det:)/, ''),
+      blindIndex: (value, { purpose, driver }) =>
+        `blind:${driver || 'default'}:${purpose}:${value}`,
+      blindIndexes: () => ({}),
+    })
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+
+      @column.encrypted({ deterministic: true, driver: 'det-v1' })
+      declare email: string
+
+      @column.encrypted({
+        driver: 'enc-v1',
+        blind: { columnName: 'username_blind', purpose: 'users:username' },
+      })
+      declare username: string
+    }
+
+    const { sql, bindings } = User.query()
+      .where('id', 1)
+      .andWhere('email', 'IN', ['virk@adonisjs.com', 'nikk@adonisjs.com'])
+      .orWhere('email', 'Not In', ['tom@adonisjs.com'])
+      .andWhere('username', 'in', ['virk'])
+      .orWhere('username', 'NOT IN', ['nikk'])
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = db
+      .connection()
+      .getWriteClient()
+      .from('users')
+      .where('id', 1)
+      .whereIn('email', ['det:det-v1:virk@adonisjs.com', 'det:det-v1:nikk@adonisjs.com'])
+      .orWhereNotIn('email', ['det:det-v1:tom@adonisjs.com'])
+      .whereIn('username_blind', ['blind:enc-v1:users:username:virk'])
+      .orWhereNotIn('username_blind', ['blind:enc-v1:users:username:nikk'])
       .toSQL()
 
     assert.equal(sql, knexSql)
