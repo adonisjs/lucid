@@ -1035,6 +1035,57 @@ test.group('Model query builder', (group) => {
     assert.equal(user!.points, 2)
   })
 
+  test('raise when using increment/decrement on encrypted columns', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter)
+
+    BaseModel.useEncryption({
+      encrypt: (value, options) =>
+        options?.deterministic
+          ? `det:${options?.driver || 'default'}:${value}`
+          : `enc:${options?.driver || 'default'}:${value}`,
+      decrypt: (value) => String(value).replace(/^(enc:|det:)/, ''),
+      blindIndex: (value, { purpose, driver }) =>
+        `blind:${driver || 'default'}:${purpose}:${value}`,
+      blindIndexes: () => ({}),
+    })
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+
+      @column.encrypted()
+      declare points: number
+
+      @column.encrypted({ deterministic: true })
+      declare score: number
+
+      @column.encrypted({
+        blind: {
+          columnName: 'tokens_blind',
+          purpose: 'users:tokens',
+        },
+      })
+      declare tokens: string
+    }
+
+    assert.throws(
+      () => User.query().increment('points', 1),
+      'Cannot use "increment" on encrypted column "User.points". Only equality-based queries are supported'
+    )
+    assert.throws(
+      () => User.query().decrement('score', 1),
+      'Cannot use "decrement" on encrypted column "User.score". Only equality-based queries are supported'
+    )
+    assert.throws(
+      () => User.query().increment('tokens', 1),
+      'Cannot use "increment" on encrypted column "User.tokens". Only equality-based queries are supported'
+    )
+  })
+
   test('delete in bulk', async ({ fs, assert }) => {
     const app = new AppFactory().create(fs.baseUrl, () => {})
     await app.init()

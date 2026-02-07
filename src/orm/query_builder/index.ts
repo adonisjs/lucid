@@ -677,6 +677,19 @@ export class ModelQueryBuilder
   }
 
   /**
+   * Raises for unsupported arithmetic operations on encrypted columns.
+   */
+  private ensureEncryptedArithmeticSupport(key: any, method: string) {
+    const column = this.getEncryptedQueryColumn(key, true)
+    if (column) {
+      throw new errors.E_UNSUPPORTED_ENCRYPTED_COLUMN_QUERY([
+        method,
+        `${this.model.name}.${column.attributeName}`,
+      ])
+    }
+  }
+
+  /**
    * Raises for unsupported column-vs-column comparisons on encrypted columns.
    */
   private ensureEncryptedColumnComparisonSupport(
@@ -1474,6 +1487,7 @@ export class ModelQueryBuilder
    */
   increment(column: any, counter?: any): any {
     this.ensureCanPerformWrites()
+    this.ensureEncryptedArithmeticSupport(column, 'increment')
     this.knexQuery.increment(this.resolveKey(column, true), counter)
     return this
   }
@@ -1484,6 +1498,7 @@ export class ModelQueryBuilder
    */
   decrement(column: any, counter?: any): any {
     this.ensureCanPerformWrites()
+    this.ensureEncryptedArithmeticSupport(column, 'decrement')
     this.knexQuery.decrement(this.resolveKey(column, true), counter)
     return this
   }
