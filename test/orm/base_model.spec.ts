@@ -1408,6 +1408,55 @@ test.group('Base Model | persist', (group) => {
     })
   })
 
+  test('prefer computed blind index over manual blind column attributes regardless of assignment order', async ({
+    fs,
+    assert,
+  }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const adapter = new FakeAdapter()
+    const BaseModel = getBaseModel(adapter)
+
+    BaseModel.useEncryption({
+      encrypt: (value, options) => `enc:${options?.driver || 'default'}:${value}`,
+      decrypt: (value) => String(value).replace(/^enc:/, ''),
+      blindIndex: (value, { purpose, driver }) =>
+        `blind:${driver || 'default'}:${purpose}:${value}`,
+      blindIndexes: () => ({}),
+    })
+
+    class User extends BaseModel {
+      @column.encrypted({
+        driver: 'enc-v1',
+        blind: { columnName: 'email_blind', purpose: 'users:email' },
+      })
+      declare email: string
+
+      @column({ columnName: 'email_blind' })
+      declare emailBlind: string
+    }
+
+    const first = new User()
+    first.emailBlind = 'manual:first'
+    first.email = 'virk@adonisjs.com'
+    await first.save()
+
+    const second = new User()
+    second.email = 'nikk@adonisjs.com'
+    second.emailBlind = 'manual:second'
+    await second.save()
+
+    assert.deepEqual(adapter.operations[0].attributes, {
+      email: 'enc:enc-v1:virk@adonisjs.com',
+      email_blind: 'blind:enc-v1:users:email:virk@adonisjs.com',
+    })
+
+    assert.deepEqual(adapter.operations[1].attributes, {
+      email: 'enc:enc-v1:nikk@adonisjs.com',
+      email_blind: 'blind:enc-v1:users:email:nikk@adonisjs.com',
+    })
+  })
+
   test('raise exception when using blind encrypted columns without purpose', async ({
     fs,
     assert,

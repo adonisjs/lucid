@@ -186,6 +186,18 @@ export async function setup(destroyDb: boolean = true) {
     })
   }
 
+  const hasEncryptedUsersTable = await db.schema.hasTable('users_encrypted')
+  if (!hasEncryptedUsersTable) {
+    await db.schema.createTable('users_encrypted', (table) => {
+      table.increments()
+      table.string('username').unique()
+      table.string('email').nullable()
+      table.string('email_blind').nullable()
+      table.timestamp('created_at').defaultTo(db.fn.now())
+      table.timestamp('updated_at').nullable()
+    })
+  }
+
   const hasUuidUsers = await db.schema.hasTable('uuid_users')
   if (!hasUuidUsers) {
     await db.schema.createTable('uuid_users', (table) => {
@@ -329,6 +341,7 @@ export async function cleanup(customTables?: string[]) {
   }
 
   await db.schema.dropTableIfExists('users')
+  await db.schema.dropTableIfExists('users_encrypted')
   await db.schema.dropTableIfExists('uuid_users')
   await db.schema.dropTableIfExists('follows')
   await db.schema.dropTableIfExists('friends')
@@ -352,6 +365,7 @@ export async function cleanup(customTables?: string[]) {
 export async function resetTables() {
   const db = getKnex(Object.assign({}, getConfig(), { debug: false }))
   await db.table('users').truncate()
+  await db.table('users_encrypted').truncate()
   await db.table('uuid_users').truncate()
   await db.table('follows').truncate()
   await db.table('friends').truncate()

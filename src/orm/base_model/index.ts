@@ -1387,33 +1387,41 @@ class BaseModelImpl implements LucidRow {
   protected prepareForAdapter(attributes: ModelObject) {
     const Model = this.constructor as typeof BaseModel
 
-    return Object.keys(attributes).reduce((result: any, key) => {
+    const result = Object.keys(attributes).reduce((acc: any, key) => {
       const column = Model.$getColumn(key)!
-      const encryption = column.meta?.encryption
 
       const value =
         typeof column.prepare === 'function'
           ? column.prepare(attributes[key], key, this)
           : attributes[key]
 
-      result[column.columnName] = value
+      acc[column.columnName] = value
 
-      if (encryption?.mode === 'blind') {
-        const blindColumnName = encryption.blindColumnName as string
-        const purpose = encryption.purpose as string
-        const encryptionProvider = Model.$getEncryption(key)
+      return acc
+    }, {})
 
-        result[blindColumnName] =
-          attributes[key] === null || attributes[key] === undefined
-            ? attributes[key]
-            : encryptionProvider.blindIndex(attributes[key], {
-                purpose,
-                driver: encryption.driver,
-              })
+    Object.keys(attributes).forEach((key) => {
+      const column = Model.$getColumn(key)!
+      const encryption = column.meta?.encryption
+
+      if (encryption?.mode !== 'blind') {
+        return
       }
 
-      return result
-    }, {})
+      const blindColumnName = encryption.blindColumnName as string
+      const purpose = encryption.purpose as string
+      const encryptionProvider = Model.$getEncryption(key)
+
+      result[blindColumnName] =
+        attributes[key] === null || attributes[key] === undefined
+          ? attributes[key]
+          : encryptionProvider.blindIndex(attributes[key], {
+              purpose,
+              driver: encryption.driver,
+            })
+    })
+
+    return result
   }
 
   /**

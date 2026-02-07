@@ -465,28 +465,35 @@ export class ModelQueryBuilder
    * Prepares update payload by applying encrypted column transforms.
    */
   private prepareUpdateValues(values: Dictionary<any, string>): Dictionary<any, string> {
-    return Object.keys(values).reduce((result: Dictionary<any, string>, key) => {
+    const result = Object.keys(values).reduce((acc: Dictionary<any, string>, key) => {
       const column = this.getEncryptedQueryColumn(key, true)
       if (!column) {
-        result[this.resolveKey(key)] = this.transformRaw(values[key])
-        return result
+        acc[this.resolveKey(key)] = this.transformRaw(values[key])
+        return acc
       }
 
-      result[this.resolveKey(key)] = this.transformRaw(
+      acc[this.resolveKey(key)] = this.transformRaw(
         this.getEncryptedWriteValue(column, values[key])
       )
 
-      if (column.encryption.mode === 'blind') {
-        const blindResult = this.getBlindWriteValue(column, values[key])
-        if (blindResult.shouldWrite) {
-          result[this.resolveKey(this.getEncryptedQueryKey(column))] = this.transformRaw(
-            blindResult.value
-          )
-        }
+      return acc
+    }, {})
+
+    Object.keys(values).forEach((key) => {
+      const column = this.getEncryptedQueryColumn(key, true)
+      if (column?.encryption.mode !== 'blind') {
+        return
       }
 
-      return result
-    }, {})
+      const blindResult = this.getBlindWriteValue(column, values[key])
+      if (blindResult.shouldWrite) {
+        result[this.resolveKey(this.getEncryptedQueryKey(column))] = this.transformRaw(
+          blindResult.value
+        )
+      }
+    })
+
+    return result
   }
 
   where(key: any, operator?: any, value?: any): this {
