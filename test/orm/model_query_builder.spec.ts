@@ -331,7 +331,7 @@ test.group('Model query builder', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('raise when using non equality operators on deterministic encrypted columns', async ({
+  test('raise when using unsupported operators on deterministic and blind encrypted columns', async ({
     fs,
     assert,
   }) => {
@@ -354,11 +354,36 @@ test.group('Model query builder', (group) => {
 
       @column.encrypted({ deterministic: true })
       declare email: string
+
+      @column.encrypted({
+        blind: {
+          columnName: 'username_blind',
+          purpose: 'users:username',
+        },
+      })
+      declare username: string
     }
 
     assert.throws(
       () => User.query().whereLike('email', '%virk%'),
       'Cannot use "whereLike" on encrypted column "User.email". Only equality-based queries are supported'
+    )
+    assert.throws(
+      () => User.query().whereBetween('email', ['a', 'z']),
+      'Cannot use "whereBetween" on encrypted column "User.email". Only equality-based queries are supported'
+    )
+    assert.throws(
+      () => User.query().whereJson('email', { value: 'virk' }),
+      'Cannot use "whereJson" on encrypted column "User.email". Only equality-based queries are supported'
+    )
+
+    assert.throws(
+      () => User.query().whereBetween('username', ['a', 'z']),
+      'Cannot use "whereBetween" on encrypted column "User.username". Only equality-based queries are supported'
+    )
+    assert.throws(
+      () => User.query().whereJson('username', { value: 'virk' }),
+      'Cannot use "whereJson" on encrypted column "User.username". Only equality-based queries are supported'
     )
   })
 
