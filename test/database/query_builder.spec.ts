@@ -5456,8 +5456,8 @@ test.group('Query Builder | orderByRandom', (group) => {
     const connection = new Connection('primary', getConfig(), logger)
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
-    await getInsertBuilder(getQueryClient(connection))
+    const client = getQueryClient(connection)
+    await getInsertBuilder(client)
       .table('users')
       .multiInsert([
         {
@@ -5477,12 +5477,13 @@ test.group('Query Builder | orderByRandom', (group) => {
     const userResults: number[][] = []
 
     for (let i = 0; i < 10; i++) {
-      const result = await db.from('users').orderByRandom()
+      const result = await getQueryBuilder(client).from('users').orderByRandom()
 
       userResults.push(result.map((user) => user.id))
     }
 
-    assert.isTrue(userResults.some((users) => userResults[0] !== users))
+    const firstResult = userResults[0].join(',')
+    assert.isTrue(userResults.some((users) => users.join(',') !== firstResult))
 
     await connection.disconnect()
   })
