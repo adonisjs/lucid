@@ -45,8 +45,6 @@ test.group('Model query builder', (group) => {
     const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
-      static table = 'users_encrypted'
-
       @column({ isPrimary: true })
       declare id: number
 
