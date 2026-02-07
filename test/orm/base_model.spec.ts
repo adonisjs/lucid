@@ -2110,6 +2110,39 @@ test.group('Base Model | create from adapter results', (group) => {
     assert.deepEqual(user!.$original, { secret: 'top-secret' })
   })
 
+  test('pass encryption driver when decrypting encrypted columns during consume', async ({
+    fs,
+    assert,
+  }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const adapter = new FakeAdapter()
+
+    const BaseModel = getBaseModel(adapter)
+    let decryptOptions: any
+
+    BaseModel.useEncryption({
+      encrypt: (value, options) => `enc:${options?.driver || 'default'}:${value}`,
+      decrypt: (value, options) => {
+        decryptOptions = options
+        return String(value).replace(/^enc:[^:]+:/, '')
+      },
+      blindIndex: (value, { purpose }) => `blind:${purpose}:${value}`,
+      blindIndexes: () => ({}),
+    })
+
+    class User extends BaseModel {
+      @column.encrypted({ driver: 'enc-v1' })
+      declare secret: string
+    }
+
+    const user = User.$createFromAdapterResult({ secret: 'enc:enc-v1:top-secret' })
+
+    assert.deepEqual(user!.$attributes, { secret: 'top-secret' })
+    assert.deepEqual(user!.$original, { secret: 'top-secret' })
+    assert.deepEqual(decryptOptions, { driver: 'enc-v1' })
+  })
+
   test('original and attributes should not be shared', async ({ fs, assert }) => {
     const app = new AppFactory().create(fs.baseUrl, () => {})
     await app.init()

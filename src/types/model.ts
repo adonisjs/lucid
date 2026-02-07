@@ -227,7 +227,7 @@ export type ColumnOptions = {
  */
 export type ModelEncryptionContract = {
   encrypt(value: any, options?: { deterministic?: boolean; [key: string]: any }): any
-  decrypt(value: any): any
+  decrypt(value: any, options?: { [key: string]: any }): any
   blindIndexes(value: any, options?: { [key: string]: any }): any
   blindIndex(value: any, options: { purpose: string; [key: string]: any }): any
 }

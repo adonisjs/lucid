@@ -111,6 +111,11 @@ export const encryptedColumn: EncryptedColumnDecorator = (options?) => {
         }
 
         const encryption = (modelInstance.constructor as LucidModel).$getEncryption(attributeName)
+
+        if (encryptionMeta.driver) {
+          return encryption.decrypt(value, { driver: encryptionMeta.driver })
+        }
+
         return encryption.decrypt(value)
       },
     })
