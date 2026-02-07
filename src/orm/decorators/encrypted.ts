@@ -74,14 +74,13 @@ export const encryptedColumn: EncryptedColumnDecorator = (options?) => {
     const Model = target.constructor as LucidModel
     Model.boot()
 
-    const {
-      deterministic: droppedDeterministic,
-      blind: droppedBlind,
-      ...columnOptions
-    } = options || {}
-    void droppedDeterministic
-    void droppedBlind
-    const encryptionMeta = defineEncryptedMeta(Model, property, options)
+    const { deterministic, blind, driver, ...columnOptions } = options || {}
+
+    const encryptionMeta = defineEncryptedMeta(Model, property, {
+      deterministic,
+      blind,
+      driver,
+    })
     const meta = Object.assign({}, columnOptions.meta, { encryption: encryptionMeta })
 
     Model.$addColumn(property, {
