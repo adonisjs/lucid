@@ -22,6 +22,7 @@ function defineEncryptedMeta(
   options?: EncryptedColumnOptions
 ): EncryptedColumnMeta {
   const dottedAttribute = `${model.name}.${property}`
+  const driver = options?.driver
 
   if (options?.deterministic && options?.blind) {
     throw new errors.E_INVALID_ENCRYPTED_COLUMN_CONFIGURATION([
@@ -31,14 +32,17 @@ function defineEncryptedMeta(
   }
 
   if (options?.blind) {
-    if (!options.blind.columnName?.trim()) {
+    const blindColumnName = options.blind.columnName?.trim()
+    const purpose = options.blind.purpose?.trim()
+
+    if (!blindColumnName) {
       throw new errors.E_INVALID_ENCRYPTED_COLUMN_CONFIGURATION([
         dottedAttribute,
         'Missing "blind.columnName"',
       ])
     }
 
-    if (!options.blind.purpose?.trim()) {
+    if (!purpose) {
       throw new errors.E_INVALID_ENCRYPTED_COLUMN_CONFIGURATION([
         dottedAttribute,
         'Missing "blind.purpose"',
@@ -47,22 +51,22 @@ function defineEncryptedMeta(
 
     return {
       mode: 'blind',
-      driver: options.driver,
-      blindColumnName: options.blind.columnName,
-      purpose: options.blind.purpose,
+      driver,
+      blindColumnName,
+      purpose,
     }
   }
 
   if (options?.deterministic) {
     return {
       mode: 'deterministic',
-      driver: options.driver,
+      driver,
     }
   }
 
   return {
     mode: 'standard',
-    driver: options?.driver,
+    driver,
   }
 }
 

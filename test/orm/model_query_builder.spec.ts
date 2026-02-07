@@ -345,6 +345,48 @@ test.group('Model query builder', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
+  test('trim blind encrypted metadata values before rewriting where clauses', async ({
+    fs,
+    assert,
+  }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter)
+
+    BaseModel.useEncryption({
+      encrypt: (value, options) => `enc:${options?.driver || 'default'}:${value}`,
+      decrypt: (value) => String(value).replace(/^enc:/, ''),
+      blindIndex: (value, { purpose, driver }) =>
+        `blind:${driver || 'default'}:${purpose}:${value}`,
+      blindIndexes: () => ({}),
+    })
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+
+      @column.encrypted({
+        driver: 'enc-v1',
+        blind: { columnName: ' email_blind ', purpose: ' users:email ' },
+      })
+      declare email: string
+    }
+
+    const { sql, bindings } = User.query().where('email', 'virk@adonisjs.com').toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = db
+      .connection()
+      .getWriteClient()
+      .from('users')
+      .where('email_blind', 'blind:enc-v1:users:email:virk@adonisjs.com')
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
   test('rewrite all encrypted keys when using object where clauses', async ({ fs, assert }) => {
     const app = new AppFactory().create(fs.baseUrl, () => {})
     await app.init()
