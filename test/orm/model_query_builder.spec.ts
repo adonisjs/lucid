@@ -634,6 +634,36 @@ test.group('Model query builder', (group) => {
       () => User.query().whereJson('username', { value: 'virk' }),
       'Cannot use "whereJson" on encrypted column "User.username". Only equality-based queries are supported'
     )
+
+    assert.throws(
+      () => User.query().whereColumn('email', 'username'),
+      'Cannot use "whereColumn" on encrypted column "User.email". Only equality-based queries are supported'
+    )
+    assert.throws(
+      () => User.query().whereColumn('id', 'email'),
+      'Cannot use "whereColumn" on encrypted column "User.email". Only equality-based queries are supported'
+    )
+    assert.throws(
+      () => User.query().orWhereColumn('id', 'username'),
+      'Cannot use "orWhereColumn" on encrypted column "User.username". Only equality-based queries are supported'
+    )
+    assert.throws(
+      () => User.query().whereNotColumn('email', 'id'),
+      'Cannot use "whereNotColumn" on encrypted column "User.email". Only equality-based queries are supported'
+    )
+    assert.throws(
+      () => User.query().orWhereNotColumn('id', 'username'),
+      'Cannot use "orWhereNotColumn" on encrypted column "User.username". Only equality-based queries are supported'
+    )
+
+    assert.throws(
+      () => User.query().andWhereLike('email', '%virk%'),
+      'Cannot use "whereLike" on encrypted column "User.email". Only equality-based queries are supported'
+    )
+    assert.throws(
+      () => User.query().andWhereBetween('username', ['a', 'z']),
+      'Cannot use "whereBetween" on encrypted column "User.username". Only equality-based queries are supported'
+    )
   })
 
   test('encrypt encrypted column values when performing updates', async ({ fs, assert }) => {

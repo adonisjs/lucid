@@ -667,6 +667,18 @@ export class ModelQueryBuilder
   }
 
   /**
+   * Raises for unsupported column-vs-column comparisons on encrypted columns.
+   */
+  private ensureEncryptedColumnComparisonSupport(
+    method: string,
+    column: any,
+    comparisonColumn: any
+  ) {
+    this.ensureEncryptedMethodSupport(column, method)
+    this.ensureEncryptedMethodSupport(comparisonColumn, method)
+  }
+
+  /**
    * Encrypt value before writing it to an encrypted model column.
    */
   private getEncryptedWriteValue(column: EncryptedQueryColumn, value: any): any {
@@ -801,6 +813,46 @@ export class ModelQueryBuilder
   whereLike(key: any, value: any): this {
     this.ensureEncryptedMethodSupport(key, 'whereLike')
     return super.whereLike(key, value)
+  }
+
+  whereColumn(column: any, operator: any, comparisonColumn?: any): this {
+    if (comparisonColumn !== undefined) {
+      this.ensureEncryptedColumnComparisonSupport('whereColumn', column, comparisonColumn)
+      return super.whereColumn(column, operator, comparisonColumn)
+    }
+
+    this.ensureEncryptedColumnComparisonSupport('whereColumn', column, operator)
+    return super.whereColumn(column, operator)
+  }
+
+  orWhereColumn(column: any, operator: any, comparisonColumn?: any): this {
+    if (comparisonColumn !== undefined) {
+      this.ensureEncryptedColumnComparisonSupport('orWhereColumn', column, comparisonColumn)
+      return super.orWhereColumn(column, operator, comparisonColumn)
+    }
+
+    this.ensureEncryptedColumnComparisonSupport('orWhereColumn', column, operator)
+    return super.orWhereColumn(column, operator)
+  }
+
+  whereNotColumn(column: any, operator: any, comparisonColumn?: any): this {
+    if (comparisonColumn !== undefined) {
+      this.ensureEncryptedColumnComparisonSupport('whereNotColumn', column, comparisonColumn)
+      return super.whereNotColumn(column, operator, comparisonColumn)
+    }
+
+    this.ensureEncryptedColumnComparisonSupport('whereNotColumn', column, operator)
+    return super.whereNotColumn(column, operator)
+  }
+
+  orWhereNotColumn(column: any, operator: any, comparisonColumn?: any): this {
+    if (comparisonColumn !== undefined) {
+      this.ensureEncryptedColumnComparisonSupport('orWhereNotColumn', column, comparisonColumn)
+      return super.orWhereNotColumn(column, operator, comparisonColumn)
+    }
+
+    this.ensureEncryptedColumnComparisonSupport('orWhereNotColumn', column, operator)
+    return super.orWhereNotColumn(column, operator)
   }
 
   orWhereLike(key: any, value: any): this {
