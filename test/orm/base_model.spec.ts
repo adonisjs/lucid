@@ -1340,6 +1340,36 @@ test.group('Base Model | persist', (group) => {
     assert.deepEqual(adapter.operations[0].attributes, { secret: 'enc:super-secret' })
   })
 
+  test('allow models booted before useEncryption to pick encryption provider dynamically', async ({
+    fs,
+    assert,
+  }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const adapter = new FakeAdapter()
+    const BaseModel = getBaseModel(adapter)
+
+    BaseModel.useEncryption(undefined as any)
+
+    class User extends BaseModel {
+      @column.encrypted()
+      declare secret: string
+    }
+
+    BaseModel.useEncryption({
+      encrypt: (value) => `enc:${value}`,
+      decrypt: (value) => String(value).replace(/^enc:/, ''),
+      blindIndex: (value, { purpose }) => `blind:${purpose}:${value}`,
+      blindIndexes: () => ({}),
+    })
+
+    const user = new User()
+    user.secret = 'super-secret'
+    await user.save()
+
+    assert.deepEqual(adapter.operations[0].attributes, { secret: 'enc:super-secret' })
+  })
+
   test('encrypt deterministic value before passing encrypted columns to the adapter', async ({
     fs,
     assert,

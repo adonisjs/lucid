@@ -675,11 +675,6 @@ class BaseModelImpl implements LucidRow {
     this.$defineProperty('selfAssignPrimaryKey', false, 'inherit')
 
     /**
-     * Inherit encryption provider.
-     */
-    this.$defineProperty('$encryption', undefined, 'inherit')
-
-    /**
      * Define the keys' property. This allows looking up variations
      * for model keys
      */
