@@ -1100,6 +1100,18 @@ test.group('Model query builder', (group) => {
       () => User.query().increment('tokens', 1),
       'Cannot use "increment" on encrypted column "User.tokens". Only equality-based queries are supported'
     )
+    assert.throws(
+      () => User.query().increment({ points: 1 }),
+      'Cannot use "increment" on encrypted column "User.points". Only equality-based queries are supported'
+    )
+    assert.throws(
+      () => User.query().decrement({ score: 1 }),
+      'Cannot use "decrement" on encrypted column "User.score". Only equality-based queries are supported'
+    )
+    assert.throws(
+      () => User.query().increment({ tokens: 1 }),
+      'Cannot use "increment" on encrypted column "User.tokens". Only equality-based queries are supported'
+    )
   })
 
   test('delete in bulk', async ({ fs, assert }) => {

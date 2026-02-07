@@ -734,12 +734,16 @@ export class ModelQueryBuilder
    * Raises for unsupported arithmetic operations on encrypted columns.
    */
   private ensureEncryptedArithmeticSupport(key: any, method: string) {
-    const column = this.getEncryptedQueryColumn(key, true)
-    if (column) {
-      throw new errors.E_UNSUPPORTED_ENCRYPTED_COLUMN_QUERY([
-        method,
-        `${this.model.name}.${column.attributeName}`,
-      ])
+    const keys = typeof key === 'string' ? [key] : isObject(key) ? Object.keys(key) : []
+
+    for (const columnKey of keys) {
+      const column = this.getEncryptedQueryColumn(columnKey, true)
+      if (column) {
+        throw new errors.E_UNSUPPORTED_ENCRYPTED_COLUMN_QUERY([
+          method,
+          `${this.model.name}.${column.attributeName}`,
+        ])
+      }
     }
   }
 
