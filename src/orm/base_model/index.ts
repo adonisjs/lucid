@@ -35,6 +35,8 @@ import {
   type ModelKeysContract,
   type ModelAssignOptions,
   type ModelAdapterOptions,
+  type EncryptedColumnMode,
+  type ModelEncryptionConfig,
   type ModelEncryptionContract,
   type ModelRelationOptions,
   type ModelQueryBuilderContract,
@@ -116,7 +118,7 @@ class BaseModelImpl implements LucidRow {
   /**
    * Encryption provider used by encrypted columns.
    */
-  static $encryption?: ModelEncryptionContract
+  static $encryption?: ModelEncryptionConfig
 
   /**
    * Define an adapter to use for interacting with
@@ -129,8 +131,8 @@ class BaseModelImpl implements LucidRow {
   /**
    * Define encryption provider to use for encrypted columns.
    */
-  static useEncryption(encryption: ModelEncryptionContract) {
-    this.$encryption = encryption
+  static useEncryption(config: ModelEncryptionConfig) {
+    this.$encryption = config
   }
 
   /**
@@ -139,12 +141,38 @@ class BaseModelImpl implements LucidRow {
   static $getEncryption(attributeName?: string): ModelEncryptionContract {
     this.boot()
 
-    if (this.$encryption) {
-      return this.$encryption
+    if (this.$encryption?.provider) {
+      return this.$encryption.provider
     }
 
     const dottedAttribute = attributeName ? `${this.name}.${attributeName}` : this.name
     throw new errors.E_MISSING_MODEL_ENCRYPTION([dottedAttribute])
+  }
+
+  /**
+   * Returns encryption provider and driver for a given encrypted column mode.
+   */
+  static $resolveEncryption(
+    attributeName: string | undefined,
+    mode: EncryptedColumnMode,
+    columnDriver?: string
+  ): {
+    provider: ModelEncryptionContract
+    driver?: string
+  } {
+    const provider = this.$getEncryption(attributeName)
+    const defaults = this.$encryption?.defaults
+    const defaultDriver =
+      mode === 'deterministic'
+        ? defaults?.deterministicDriver
+        : mode === 'blind'
+          ? defaults?.blindDriver
+          : defaults?.standardDriver
+
+    return {
+      provider,
+      driver: columnDriver ?? defaultDriver,
+    }
   }
 
   /**
@@ -1435,14 +1463,14 @@ class BaseModelImpl implements LucidRow {
      * always win over any manually assigned blind column value.
      */
     blindWrites.forEach(({ key, value, purpose, blindColumnName, driver }) => {
-      const encryptionProvider = Model.$getEncryption(key)
+      const encryption = Model.$resolveEncryption(key, 'blind', driver)
 
       result[blindColumnName] =
         value === null || value === undefined
           ? value
-          : encryptionProvider.blindIndex(value, {
+          : encryption.provider.blindIndex(value, {
               purpose,
-              driver,
+              driver: encryption.driver,
             })
     })
 

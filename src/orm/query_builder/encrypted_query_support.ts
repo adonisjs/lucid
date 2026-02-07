@@ -423,13 +423,22 @@ export class EncryptedQuerySupport {
       return [value]
     }
 
-    const encryption = this.#model.$getEncryption(column.attributeName)
     if (column.encryption.mode === 'deterministic') {
+      const encryption = this.#model.$resolveEncryption(
+        column.attributeName,
+        'deterministic',
+        column.encryption.driver
+      )
+
       return [
-        encryption.encrypt(value, {
-          deterministic: true,
-          driver: column.encryption.driver,
-        }),
+        encryption.driver
+          ? encryption.provider.encrypt(value, {
+              deterministic: true,
+              driver: encryption.driver,
+            })
+          : encryption.provider.encrypt(value, {
+              deterministic: true,
+            }),
       ]
     }
 
@@ -440,10 +449,16 @@ export class EncryptedQuerySupport {
       ])
     }
 
+    const encryption = this.#model.$resolveEncryption(
+      column.attributeName,
+      'blind',
+      column.encryption.driver
+    )
+
     const blindIndexes = this.#normalizeBlindIndexValues(
-      encryption.blindIndexes(value, {
+      encryption.provider.blindIndexes(value, {
         purpose: column.encryption.purpose,
-        driver: column.encryption.driver,
+        driver: encryption.driver,
       })
     )
 
@@ -452,9 +467,9 @@ export class EncryptedQuerySupport {
     }
 
     return [
-      encryption.blindIndex(value, {
+      encryption.provider.blindIndex(value, {
         purpose: column.encryption.purpose,
-        driver: column.encryption.driver,
+        driver: encryption.driver,
       }),
     ]
   }
@@ -515,21 +530,34 @@ export class EncryptedQuerySupport {
       return value
     }
 
-    const encryption = this.#model.$getEncryption(column.attributeName)
     if (column.encryption.mode === 'deterministic') {
-      return encryption.encrypt(value, {
-        deterministic: true,
-        driver: column.encryption.driver,
-      })
+      const encryption = this.#model.$resolveEncryption(
+        column.attributeName,
+        'deterministic',
+        column.encryption.driver
+      )
+
+      return encryption.driver
+        ? encryption.provider.encrypt(value, {
+            deterministic: true,
+            driver: encryption.driver,
+          })
+        : encryption.provider.encrypt(value, {
+            deterministic: true,
+          })
     }
 
-    if (column.encryption.driver) {
-      return encryption.encrypt(value, {
-        driver: column.encryption.driver,
-      })
-    }
+    const encryption = this.#model.$resolveEncryption(
+      column.attributeName,
+      column.encryption.mode,
+      column.encryption.driver
+    )
 
-    return encryption.encrypt(value)
+    return encryption.driver
+      ? encryption.provider.encrypt(value, {
+          driver: encryption.driver,
+        })
+      : encryption.provider.encrypt(value)
   }
 
   #getBlindWriteValue(
@@ -555,12 +583,17 @@ export class EncryptedQuerySupport {
       ])
     }
 
-    const encryption = this.#model.$getEncryption(column.attributeName)
+    const encryption = this.#model.$resolveEncryption(
+      column.attributeName,
+      'blind',
+      column.encryption.driver
+    )
+
     return {
       shouldWrite: true,
-      value: encryption.blindIndex(value, {
+      value: encryption.provider.blindIndex(value, {
         purpose,
-        driver: column.encryption.driver,
+        driver: encryption.driver,
       }),
     }
   }

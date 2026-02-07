@@ -233,6 +233,23 @@ export type ModelEncryptionContract = {
 }
 
 /**
+ * Default drivers used when encrypted columns do not define one.
+ */
+export type ModelEncryptionDefaults = {
+  standardDriver?: string
+  deterministicDriver?: string
+  blindDriver?: string
+}
+
+/**
+ * Encryption configuration for Lucid models.
+ */
+export type ModelEncryptionConfig = {
+  provider?: ModelEncryptionContract
+  defaults?: ModelEncryptionDefaults
+}
+
+/**
  * Supported encryption strategies for columns.
  */
 export type EncryptedColumnMode = 'standard' | 'deterministic' | 'blind'
@@ -876,7 +893,7 @@ export interface LucidModel {
   /**
    * Encryption provider used by encrypted columns.
    */
-  $encryption?: ModelEncryptionContract
+  $encryption?: ModelEncryptionConfig
 
   /**
    * Define an adapter to use for interacting with
@@ -887,12 +904,21 @@ export interface LucidModel {
   /**
    * Define encryption provider to use for encrypted columns.
    */
-  useEncryption(encryption: ModelEncryptionContract): void
+  useEncryption(config: ModelEncryptionConfig): void
 
   /**
    * Returns the encryption provider.
    */
   $getEncryption(attributeName?: string): ModelEncryptionContract
+
+  /**
+   * Returns encryption provider along with the resolved driver for a given mode.
+   */
+  $resolveEncryption(
+    attributeName: string | undefined,
+    mode: EncryptedColumnMode,
+    columnDriver?: string
+  ): { provider: ModelEncryptionContract; driver?: string }
 
   /**
    * Reference to hooks

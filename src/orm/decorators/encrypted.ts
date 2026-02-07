@@ -95,32 +95,48 @@ export const encryptedColumn: EncryptedColumnDecorator = (options?) => {
           return value
         }
 
-        const encryption = (modelInstance.constructor as LucidModel).$getEncryption(attributeName)
+        const model = modelInstance.constructor as LucidModel
         if (encryptionMeta.mode === 'deterministic') {
-          return encryption.encrypt(value, {
-            deterministic: true,
-            driver: encryptionMeta.driver,
-          })
+          const encryption = model.$resolveEncryption(
+            attributeName,
+            'deterministic',
+            encryptionMeta.driver
+          )
+
+          return encryption.driver
+            ? encryption.provider.encrypt(value, {
+                deterministic: true,
+                driver: encryption.driver,
+              })
+            : encryption.provider.encrypt(value, {
+                deterministic: true,
+              })
         }
 
-        if (encryptionMeta.driver) {
-          return encryption.encrypt(value, { driver: encryptionMeta.driver })
-        }
+        const encryption = model.$resolveEncryption(
+          attributeName,
+          encryptionMeta.mode,
+          encryptionMeta.driver
+        )
 
-        return encryption.encrypt(value)
+        return encryption.driver
+          ? encryption.provider.encrypt(value, { driver: encryption.driver })
+          : encryption.provider.encrypt(value)
       },
       consume(value: any, attributeName: string, modelInstance: LucidRow) {
         if (value === null || value === undefined) {
           return value
         }
 
-        const encryption = (modelInstance.constructor as LucidModel).$getEncryption(attributeName)
+        const encryption = (modelInstance.constructor as LucidModel).$resolveEncryption(
+          attributeName,
+          encryptionMeta.mode,
+          encryptionMeta.driver
+        )
 
-        if (encryptionMeta.driver) {
-          return encryption.decrypt(value, { driver: encryptionMeta.driver })
-        }
-
-        return encryption.decrypt(value)
+        return encryption.driver
+          ? encryption.provider.decrypt(value, { driver: encryption.driver })
+          : encryption.provider.decrypt(value)
       },
     })
   }

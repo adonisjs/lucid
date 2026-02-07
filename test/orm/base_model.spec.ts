@@ -1322,10 +1322,12 @@ test.group('Base Model | persist', (group) => {
     const BaseModel = getBaseModel(adapter)
 
     BaseModel.useEncryption({
-      encrypt: (value) => `enc:${value}`,
-      decrypt: (value) => String(value).replace(/^enc:/, ''),
-      blindIndex: (value, { purpose }) => `blind:${purpose}:${value}`,
-      blindIndexes: () => ({}),
+      provider: {
+        encrypt: (value) => `enc:${value}`,
+        decrypt: (value) => String(value).replace(/^enc:/, ''),
+        blindIndex: (value, { purpose }) => `blind:${purpose}:${value}`,
+        blindIndexes: () => ({}),
+      },
     })
 
     class User extends BaseModel {
@@ -1340,6 +1342,41 @@ test.group('Base Model | persist', (group) => {
     assert.deepEqual(adapter.operations[0].attributes, { secret: 'enc:super-secret' })
   })
 
+  test('use standard default driver when encrypted standard columns omit driver', async ({
+    fs,
+    assert,
+  }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const adapter = new FakeAdapter()
+    const BaseModel = getBaseModel(adapter)
+
+    BaseModel.useEncryption({
+      provider: {
+        encrypt: (value, options) => `enc:${options?.driver || 'default'}:${value}`,
+        decrypt: (value) => String(value).replace(/^enc:/, ''),
+        blindIndex: (value, { purpose }) => `blind:${purpose}:${value}`,
+        blindIndexes: () => ({}),
+      },
+      defaults: {
+        standardDriver: 'std-default',
+      },
+    })
+
+    class User extends BaseModel {
+      @column.encrypted()
+      declare secret: string
+    }
+
+    const user = new User()
+    user.secret = 'super-secret'
+    await user.save()
+
+    assert.deepEqual(adapter.operations[0].attributes, {
+      secret: 'enc:std-default:super-secret',
+    })
+  })
+
   test('allow models booted before useEncryption to pick encryption provider dynamically', async ({
     fs,
     assert,
@@ -1349,7 +1386,7 @@ test.group('Base Model | persist', (group) => {
     const adapter = new FakeAdapter()
     const BaseModel = getBaseModel(adapter)
 
-    BaseModel.useEncryption(undefined as any)
+    BaseModel.useEncryption({ provider: undefined as any })
 
     class User extends BaseModel {
       @column.encrypted()
@@ -1357,10 +1394,12 @@ test.group('Base Model | persist', (group) => {
     }
 
     BaseModel.useEncryption({
-      encrypt: (value) => `enc:${value}`,
-      decrypt: (value) => String(value).replace(/^enc:/, ''),
-      blindIndex: (value, { purpose }) => `blind:${purpose}:${value}`,
-      blindIndexes: () => ({}),
+      provider: {
+        encrypt: (value) => `enc:${value}`,
+        decrypt: (value) => String(value).replace(/^enc:/, ''),
+        blindIndex: (value, { purpose }) => `blind:${purpose}:${value}`,
+        blindIndexes: () => ({}),
+      },
     })
 
     const user = new User()
@@ -1380,13 +1419,18 @@ test.group('Base Model | persist', (group) => {
     const BaseModel = getBaseModel(adapter)
 
     BaseModel.useEncryption({
-      encrypt: (value, options) =>
-        options?.deterministic
-          ? `det:${options?.driver || 'default'}:${value}`
-          : `enc:${options?.driver || 'default'}:${value}`,
-      decrypt: (value) => String(value).replace(/^(enc:|det:)/, ''),
-      blindIndex: (value, { purpose }) => `blind:${purpose}:${value}`,
-      blindIndexes: () => ({}),
+      provider: {
+        encrypt: (value, options) =>
+          options?.deterministic
+            ? `det:${options?.driver || 'default'}:${value}`
+            : `enc:${options?.driver || 'default'}:${value}`,
+        decrypt: (value) => String(value).replace(/^(enc:|det:)/, ''),
+        blindIndex: (value, { purpose }) => `blind:${purpose}:${value}`,
+        blindIndexes: () => ({}),
+      },
+      defaults: {
+        deterministicDriver: 'det-default',
+      },
     })
 
     class User extends BaseModel {
@@ -1403,6 +1447,44 @@ test.group('Base Model | persist', (group) => {
     })
   })
 
+  test('use deterministic default driver when encrypted deterministic columns omit driver', async ({
+    fs,
+    assert,
+  }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const adapter = new FakeAdapter()
+    const BaseModel = getBaseModel(adapter)
+
+    BaseModel.useEncryption({
+      provider: {
+        encrypt: (value, options) =>
+          options?.deterministic
+            ? `det:${options?.driver || 'default'}:${value}`
+            : `enc:${options?.driver || 'default'}:${value}`,
+        decrypt: (value) => String(value).replace(/^(enc:|det:)/, ''),
+        blindIndex: (value, { purpose }) => `blind:${purpose}:${value}`,
+        blindIndexes: () => ({}),
+      },
+      defaults: {
+        deterministicDriver: 'det-default',
+      },
+    })
+
+    class User extends BaseModel {
+      @column.encrypted({ deterministic: true })
+      declare email: string
+    }
+
+    const user = new User()
+    user.email = 'virk@adonisjs.com'
+    await user.save()
+
+    assert.deepEqual(adapter.operations[0].attributes, {
+      email: 'det:det-default:virk@adonisjs.com',
+    })
+  })
+
   test('persist blind index in a dedicated column when using blind encrypted columns', async ({
     fs,
     assert,
@@ -1413,11 +1495,16 @@ test.group('Base Model | persist', (group) => {
     const BaseModel = getBaseModel(adapter)
 
     BaseModel.useEncryption({
-      encrypt: (value, options) => `enc:${options?.driver || 'default'}:${value}`,
-      decrypt: (value) => String(value).replace(/^enc:/, ''),
-      blindIndex: (value, { purpose, driver }) =>
-        `blind:${driver || 'default'}:${purpose}:${value}`,
-      blindIndexes: () => ({}),
+      provider: {
+        encrypt: (value, options) => `enc:${options?.driver || 'default'}:${value}`,
+        decrypt: (value) => String(value).replace(/^enc:/, ''),
+        blindIndex: (value, { purpose, driver }) =>
+          `blind:${driver || 'default'}:${purpose}:${value}`,
+        blindIndexes: () => ({}),
+      },
+      defaults: {
+        blindDriver: 'blind-default',
+      },
     })
 
     class User extends BaseModel {
@@ -1438,6 +1525,45 @@ test.group('Base Model | persist', (group) => {
     })
   })
 
+  test('use blind default driver when encrypted blind columns omit driver', async ({
+    fs,
+    assert,
+  }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const adapter = new FakeAdapter()
+    const BaseModel = getBaseModel(adapter)
+
+    BaseModel.useEncryption({
+      provider: {
+        encrypt: (value, options) => `enc:${options?.driver || 'default'}:${value}`,
+        decrypt: (value) => String(value).replace(/^enc:/, ''),
+        blindIndex: (value, { purpose, driver }) =>
+          `blind:${driver || 'default'}:${purpose}:${value}`,
+        blindIndexes: () => ({}),
+      },
+      defaults: {
+        blindDriver: 'blind-default',
+      },
+    })
+
+    class User extends BaseModel {
+      @column.encrypted({
+        blind: { columnName: 'email_blind', purpose: 'users:email' },
+      })
+      declare email: string
+    }
+
+    const user = new User()
+    user.email = 'virk@adonisjs.com'
+    await user.save()
+
+    assert.deepEqual(adapter.operations[0].attributes, {
+      email: 'enc:blind-default:virk@adonisjs.com',
+      email_blind: 'blind:blind-default:users:email:virk@adonisjs.com',
+    })
+  })
+
   test('prefer computed blind index over manual blind column attributes regardless of assignment order', async ({
     fs,
     assert,
@@ -1448,11 +1574,13 @@ test.group('Base Model | persist', (group) => {
     const BaseModel = getBaseModel(adapter)
 
     BaseModel.useEncryption({
-      encrypt: (value, options) => `enc:${options?.driver || 'default'}:${value}`,
-      decrypt: (value) => String(value).replace(/^enc:/, ''),
-      blindIndex: (value, { purpose, driver }) =>
-        `blind:${driver || 'default'}:${purpose}:${value}`,
-      blindIndexes: () => ({}),
+      provider: {
+        encrypt: (value, options) => `enc:${options?.driver || 'default'}:${value}`,
+        decrypt: (value) => String(value).replace(/^enc:/, ''),
+        blindIndex: (value, { purpose, driver }) =>
+          `blind:${driver || 'default'}:${purpose}:${value}`,
+        blindIndexes: () => ({}),
+      },
     })
 
     class User extends BaseModel {
@@ -1521,10 +1649,12 @@ test.group('Base Model | persist', (group) => {
     const BaseModel = getBaseModel(adapter)
 
     BaseModel.useEncryption({
-      encrypt: (value) => `enc:${value}`,
-      decrypt: (value) => String(value).replace(/^enc:/, ''),
-      blindIndex: (value, { purpose }) => `blind:${purpose}:${value}`,
-      blindIndexes: () => ({}),
+      provider: {
+        encrypt: (value) => `enc:${value}`,
+        decrypt: (value) => String(value).replace(/^enc:/, ''),
+        blindIndex: (value, { purpose }) => `blind:${purpose}:${value}`,
+        blindIndexes: () => ({}),
+      },
     })
 
     class User extends BaseModel {
@@ -1557,10 +1687,12 @@ test.group('Base Model | persist', (group) => {
     const BaseModel = getBaseModel(adapter)
 
     BaseModel.useEncryption({
-      encrypt: (value) => `enc:${value}`,
-      decrypt: (value) => String(value).replace(/^enc:/, ''),
-      blindIndex: (value, { purpose }) => `blind:${purpose}:${value}`,
-      blindIndexes: () => ({}),
+      provider: {
+        encrypt: (value) => `enc:${value}`,
+        decrypt: (value) => String(value).replace(/^enc:/, ''),
+        blindIndex: (value, { purpose }) => `blind:${purpose}:${value}`,
+        blindIndexes: () => ({}),
+      },
     })
 
     class User extends BaseModel {
@@ -1592,7 +1724,7 @@ test.group('Base Model | persist', (group) => {
     await app.init()
     const adapter = new FakeAdapter()
     const BaseModel = getBaseModel(adapter)
-    BaseModel.useEncryption(undefined as any)
+    BaseModel.useEncryption({ provider: undefined as any })
 
     class User extends BaseModel {
       @column.encrypted()
@@ -2120,10 +2252,12 @@ test.group('Base Model | create from adapter results', (group) => {
 
     const BaseModel = getBaseModel(adapter)
     BaseModel.useEncryption({
-      encrypt: (value) => `enc:${value}`,
-      decrypt: (value) => String(value).replace(/^enc:/, ''),
-      blindIndex: (value, { purpose }) => `blind:${purpose}:${value}`,
-      blindIndexes: () => ({}),
+      provider: {
+        encrypt: (value) => `enc:${value}`,
+        decrypt: (value) => String(value).replace(/^enc:/, ''),
+        blindIndex: (value, { purpose }) => `blind:${purpose}:${value}`,
+        blindIndexes: () => ({}),
+      },
     })
 
     class User extends BaseModel {
@@ -2152,13 +2286,15 @@ test.group('Base Model | create from adapter results', (group) => {
     let decryptOptions: any
 
     BaseModel.useEncryption({
-      encrypt: (value, options) => `enc:${options?.driver || 'default'}:${value}`,
-      decrypt: (value, options) => {
-        decryptOptions = options
-        return String(value).replace(/^enc:[^:]+:/, '')
+      provider: {
+        encrypt: (value, options) => `enc:${options?.driver || 'default'}:${value}`,
+        decrypt: (value, options) => {
+          decryptOptions = options
+          return String(value).replace(/^enc:[^:]+:/, '')
+        },
+        blindIndex: (value, { purpose }) => `blind:${purpose}:${value}`,
+        blindIndexes: () => ({}),
       },
-      blindIndex: (value, { purpose }) => `blind:${purpose}:${value}`,
-      blindIndexes: () => ({}),
     })
 
     class User extends BaseModel {
