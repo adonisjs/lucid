@@ -511,6 +511,75 @@ test.group('Model query builder', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
+  test('rewrite object where variants for blind columns when blindIndexes returns multiple values', async ({
+    fs,
+    assert,
+  }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter)
+
+    BaseModel.useEncryption({
+      encrypt: (value, options) => `enc:${options?.driver || 'default'}:${value}`,
+      decrypt: (value) => String(value).replace(/^enc:/, ''),
+      blindIndex: (value, { purpose, driver }) =>
+        `blind:${driver || 'default'}:${purpose}:${value}:single`,
+      blindIndexes: (value, options) => [
+        `blind:${options?.driver || 'default'}:${options?.purpose}:${value}:new`,
+        `blind:${options?.driver || 'default'}:${options?.purpose}:${value}:old`,
+      ],
+    })
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+
+      @column.encrypted({
+        driver: 'enc-v1',
+        blind: { columnName: 'email_blind', purpose: 'users:email' },
+      })
+      declare email: string
+    }
+
+    const { sql, bindings } = User.query()
+      .where('id', 1)
+      .where({ email: 'a@adonisjs.com' })
+      .orWhere({ email: 'b@adonisjs.com' })
+      .whereNot({ email: 'c@adonisjs.com' })
+      .orWhereNot({ email: 'd@adonisjs.com' })
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = db
+      .connection()
+      .getWriteClient()
+      .from('users')
+      .where('id', 1)
+      .whereIn('email_blind', [
+        'blind:enc-v1:users:email:a@adonisjs.com:new',
+        'blind:enc-v1:users:email:a@adonisjs.com:old',
+      ])
+      .orWhere((query) => {
+        query.whereIn('email_blind', [
+          'blind:enc-v1:users:email:b@adonisjs.com:new',
+          'blind:enc-v1:users:email:b@adonisjs.com:old',
+        ])
+      })
+      .whereNotIn('email_blind', [
+        'blind:enc-v1:users:email:c@adonisjs.com:new',
+        'blind:enc-v1:users:email:c@adonisjs.com:old',
+      ])
+      .orWhereNotIn('email_blind', [
+        'blind:enc-v1:users:email:d@adonisjs.com:new',
+        'blind:enc-v1:users:email:d@adonisjs.com:old',
+      ])
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
   test('raise when using unsupported operators on deterministic and blind encrypted columns', async ({
     fs,
     assert,

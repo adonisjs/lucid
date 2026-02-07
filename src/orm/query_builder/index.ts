@@ -607,21 +607,25 @@ export class ModelQueryBuilder
     }
 
     if (isObject(key)) {
-      if (method === 'where') {
-        const clauses = Object.entries(key)
+      const clauses = Object.entries(key)
 
-        if (!clauses.length) {
-          return this.callSuperWhereUnary(method, key)
-        }
-
-        clauses.forEach(([clauseKey, clauseValue]) => {
-          this.where(clauseKey, clauseValue)
-        })
-
-        return this
+      if (!clauses.length) {
+        return method === 'where' ? this.callSuperWhereUnary(method, key) : this
       }
 
-      return this.callSuperWhereUnary(method, this.transformWhereObjectClause(key))
+      if (method === 'orWhere') {
+        return this.callSuperWhereUnary(method, (query: ModelQueryBuilder) => {
+          clauses.forEach(([clauseKey, clauseValue]) => {
+            query.where(clauseKey, clauseValue)
+          })
+        })
+      }
+
+      clauses.forEach(([clauseKey, clauseValue]) => {
+        this.encryptedWhere(method, clauseKey, clauseValue)
+      })
+
+      return this
     }
 
     return this.callSuperWhereTernary(method, key, operator, value)
@@ -660,23 +664,6 @@ export class ModelQueryBuilder
         `${this.model.name}.${column.attributeName}`,
       ])
     }
-  }
-
-  /**
-   * Transforms an object where clause for deterministic/blind encrypted columns.
-   */
-  private transformWhereObjectClause(clause: Dictionary<any, string>) {
-    return Object.keys(clause).reduce((result: Dictionary<any, string>, key) => {
-      const column = this.getEncryptedQueryColumn(key)
-
-      if (!column) {
-        result[key] = clause[key]
-        return result
-      }
-
-      result[this.getEncryptedQueryKey(column)] = this.getEncryptedQueryValue(column, clause[key])
-      return result
-    }, {})
   }
 
   /**
