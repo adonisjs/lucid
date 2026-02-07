@@ -649,6 +649,9 @@ test.group('Model query builder', (group) => {
       @column({ isPrimary: true })
       declare id: number
 
+      @column.encrypted()
+      declare token: string
+
       @column.encrypted({ deterministic: true })
       declare email: string
 
@@ -681,6 +684,19 @@ test.group('Model query builder', (group) => {
     assert.throws(
       () => User.query().whereJson('username', { value: 'virk' }),
       'Cannot use "whereJson" on encrypted column "User.username". Only equality-based queries are supported'
+    )
+
+    assert.throws(
+      () => User.query().orderBy('token'),
+      'Cannot use "orderBy" on encrypted column "User.token". Only equality-based queries are supported'
+    )
+    assert.throws(
+      () => User.query().groupBy('email'),
+      'Cannot use "groupBy" on encrypted column "User.email". Only equality-based queries are supported'
+    )
+    assert.throws(
+      () => User.query().orderBy([{ column: 'username', order: 'asc' }]),
+      'Cannot use "orderBy" on encrypted column "User.username". Only equality-based queries are supported'
     )
 
     assert.throws(
