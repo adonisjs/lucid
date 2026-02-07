@@ -250,6 +250,7 @@ export type BlindEncryptedColumnOptions = {
  */
 export type EncryptedColumnMeta = {
   mode: EncryptedColumnMode
+  driver?: string
   blindColumnName?: string
   purpose?: string
 }
@@ -259,6 +260,7 @@ export type EncryptedColumnMeta = {
  */
 export type EncryptedColumnOptions = Partial<ColumnOptions> & {
   deterministic?: boolean
+  driver?: string
   blind?: BlindEncryptedColumnOptions
 }
 

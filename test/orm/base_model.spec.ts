@@ -1350,14 +1350,17 @@ test.group('Base Model | persist', (group) => {
     const BaseModel = getBaseModel(adapter)
 
     BaseModel.useEncryption({
-      encrypt: (value, options) => (options?.deterministic ? `det:${value}` : `enc:${value}`),
+      encrypt: (value, options) =>
+        options?.deterministic
+          ? `det:${options?.driver || 'default'}:${value}`
+          : `enc:${options?.driver || 'default'}:${value}`,
       decrypt: (value) => String(value).replace(/^(enc:|det:)/, ''),
       blindIndex: (value, { purpose }) => `blind:${purpose}:${value}`,
       blindIndexes: () => ({}),
     })
 
     class User extends BaseModel {
-      @column.encrypted({ deterministic: true })
+      @column.encrypted({ deterministic: true, driver: 'det-v1' })
       declare email: string
     }
 
@@ -1365,7 +1368,9 @@ test.group('Base Model | persist', (group) => {
     user.email = 'virk@adonisjs.com'
     await user.save()
 
-    assert.deepEqual(adapter.operations[0].attributes, { email: 'det:virk@adonisjs.com' })
+    assert.deepEqual(adapter.operations[0].attributes, {
+      email: 'det:det-v1:virk@adonisjs.com',
+    })
   })
 
   test('persist blind index in a dedicated column when using blind encrypted columns', async ({
@@ -1378,14 +1383,18 @@ test.group('Base Model | persist', (group) => {
     const BaseModel = getBaseModel(adapter)
 
     BaseModel.useEncryption({
-      encrypt: (value) => `enc:${value}`,
+      encrypt: (value, options) => `enc:${options?.driver || 'default'}:${value}`,
       decrypt: (value) => String(value).replace(/^enc:/, ''),
-      blindIndex: (value, { purpose }) => `blind:${purpose}:${value}`,
+      blindIndex: (value, { purpose, driver }) =>
+        `blind:${driver || 'default'}:${purpose}:${value}`,
       blindIndexes: () => ({}),
     })
 
     class User extends BaseModel {
-      @column.encrypted({ blind: { columnName: 'email_blind', purpose: 'users:email' } })
+      @column.encrypted({
+        driver: 'enc-v1',
+        blind: { columnName: 'email_blind', purpose: 'users:email' },
+      })
       declare email: string
     }
 
@@ -1394,8 +1403,8 @@ test.group('Base Model | persist', (group) => {
     await user.save()
 
     assert.deepEqual(adapter.operations[0].attributes, {
-      email: 'enc:virk@adonisjs.com',
-      email_blind: 'blind:users:email:virk@adonisjs.com',
+      email: 'enc:enc-v1:virk@adonisjs.com',
+      email_blind: 'blind:enc-v1:users:email:virk@adonisjs.com',
     })
   })
 

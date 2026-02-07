@@ -252,18 +252,40 @@ export class ModelQueryBuilder
     return blindColumnName
   }
 
+  private normalizeBlindIndexValues(indexes: any): any[] {
+    if (!indexes) {
+      return []
+    }
+
+    if (Array.isArray(indexes)) {
+      return indexes.filter((item) => item !== null && item !== undefined)
+    }
+
+    if (isObject(indexes)) {
+      return Object.values(indexes).filter((item) => item !== null && item !== undefined)
+    }
+
+    return [indexes]
+  }
+
   /**
-   * Transforms a query value for deterministic/blind encrypted columns.
+   * Transforms a query value for deterministic/blind encrypted columns and
+   * returns one or many candidate values.
    */
-  private getEncryptedQueryValue(column: EncryptedQueryColumn, value: any): any {
+  private getEncryptedQueryValues(column: EncryptedQueryColumn, value: any): any[] {
     if (value === null || value === undefined || this.isQueryBuilderValue(value)) {
-      return value
+      return [value]
     }
 
     const encryption = this.model.$getEncryption(column.attributeName)
 
     if (column.encryption.mode === 'deterministic') {
-      return encryption.encrypt(value, { deterministic: true })
+      return [
+        encryption.encrypt(value, {
+          deterministic: true,
+          driver: column.encryption.driver,
+        }),
+      ]
     }
 
     if (!column.encryption.purpose) {
@@ -273,7 +295,30 @@ export class ModelQueryBuilder
       ])
     }
 
-    return encryption.blindIndex(value, { purpose: column.encryption.purpose })
+    const blindIndexes = this.normalizeBlindIndexValues(
+      encryption.blindIndexes(value, {
+        purpose: column.encryption.purpose,
+        driver: column.encryption.driver,
+      })
+    )
+
+    if (blindIndexes.length) {
+      return blindIndexes
+    }
+
+    return [
+      encryption.blindIndex(value, {
+        purpose: column.encryption.purpose,
+        driver: column.encryption.driver,
+      }),
+    ]
+  }
+
+  /**
+   * Returns the first transformed query value.
+   */
+  private getEncryptedQueryValue(column: EncryptedQueryColumn, value: any): any {
+    return this.getEncryptedQueryValues(column, value)[0]
   }
 
   /**
@@ -326,6 +371,15 @@ export class ModelQueryBuilder
     if (value !== undefined && typeof key === 'string') {
       const column = this.getEncryptedQueryColumn(key)
       this.ensureEncryptedEqualityOperator(column, operator, 'where')
+
+      if (column?.encryption.mode === 'blind') {
+        const encryptedValues = this.getEncryptedQueryValues(column, value)
+        const encryptedKey = this.getEncryptedQueryKey(column)
+        return encryptedValues.length > 1
+          ? super.whereIn(encryptedKey, encryptedValues)
+          : super.where(encryptedKey, operator, encryptedValues[0])
+      }
+
       return super.where(
         column ? this.getEncryptedQueryKey(column) : key,
         operator,
@@ -335,6 +389,15 @@ export class ModelQueryBuilder
 
     if (operator !== undefined && typeof key === 'string') {
       const column = this.getEncryptedQueryColumn(key)
+
+      if (column?.encryption.mode === 'blind') {
+        const encryptedValues = this.getEncryptedQueryValues(column, operator)
+        const encryptedKey = this.getEncryptedQueryKey(column)
+        return encryptedValues.length > 1
+          ? super.whereIn(encryptedKey, encryptedValues)
+          : super.where(encryptedKey, encryptedValues[0])
+      }
+
       return super.where(
         column ? this.getEncryptedQueryKey(column) : key,
         column ? this.getEncryptedQueryValue(column, operator) : operator
@@ -342,7 +405,21 @@ export class ModelQueryBuilder
     }
 
     if (isObject(key)) {
-      return super.where(this.transformWhereObjectClause(key))
+      const clauses = Object.entries(key)
+
+      if (!clauses.length) {
+        return super.where(key)
+      }
+
+      clauses.forEach(([clauseKey, clauseValue], index) => {
+        if (index === 0) {
+          this.where(clauseKey, clauseValue)
+        } else {
+          this.andWhere(clauseKey, clauseValue)
+        }
+      })
+
+      return this
     }
 
     return super.where(key, operator, value)
@@ -352,6 +429,15 @@ export class ModelQueryBuilder
     if (value !== undefined && typeof key === 'string') {
       const column = this.getEncryptedQueryColumn(key)
       this.ensureEncryptedEqualityOperator(column, operator, 'orWhere')
+
+      if (column?.encryption.mode === 'blind') {
+        const encryptedValues = this.getEncryptedQueryValues(column, value)
+        const encryptedKey = this.getEncryptedQueryKey(column)
+        return encryptedValues.length > 1
+          ? super.orWhereIn(encryptedKey, encryptedValues)
+          : super.orWhere(encryptedKey, operator, encryptedValues[0])
+      }
+
       return super.orWhere(
         column ? this.getEncryptedQueryKey(column) : key,
         operator,
@@ -361,6 +447,15 @@ export class ModelQueryBuilder
 
     if (operator !== undefined && typeof key === 'string') {
       const column = this.getEncryptedQueryColumn(key)
+
+      if (column?.encryption.mode === 'blind') {
+        const encryptedValues = this.getEncryptedQueryValues(column, operator)
+        const encryptedKey = this.getEncryptedQueryKey(column)
+        return encryptedValues.length > 1
+          ? super.orWhereIn(encryptedKey, encryptedValues)
+          : super.orWhere(encryptedKey, encryptedValues[0])
+      }
+
       return super.orWhere(
         column ? this.getEncryptedQueryKey(column) : key,
         column ? this.getEncryptedQueryValue(column, operator) : operator
@@ -378,6 +473,15 @@ export class ModelQueryBuilder
     if (value !== undefined && typeof key === 'string') {
       const column = this.getEncryptedQueryColumn(key)
       this.ensureEncryptedEqualityOperator(column, operator, 'whereNot')
+
+      if (column?.encryption.mode === 'blind') {
+        const encryptedValues = this.getEncryptedQueryValues(column, value)
+        const encryptedKey = this.getEncryptedQueryKey(column)
+        return encryptedValues.length > 1
+          ? super.whereNotIn(encryptedKey, encryptedValues)
+          : super.whereNot(encryptedKey, operator, encryptedValues[0])
+      }
+
       return super.whereNot(
         column ? this.getEncryptedQueryKey(column) : key,
         operator,
@@ -387,6 +491,15 @@ export class ModelQueryBuilder
 
     if (operator !== undefined && typeof key === 'string') {
       const column = this.getEncryptedQueryColumn(key)
+
+      if (column?.encryption.mode === 'blind') {
+        const encryptedValues = this.getEncryptedQueryValues(column, operator)
+        const encryptedKey = this.getEncryptedQueryKey(column)
+        return encryptedValues.length > 1
+          ? super.whereNotIn(encryptedKey, encryptedValues)
+          : super.whereNot(encryptedKey, encryptedValues[0])
+      }
+
       return super.whereNot(
         column ? this.getEncryptedQueryKey(column) : key,
         column ? this.getEncryptedQueryValue(column, operator) : operator
@@ -404,6 +517,15 @@ export class ModelQueryBuilder
     if (value !== undefined && typeof key === 'string') {
       const column = this.getEncryptedQueryColumn(key)
       this.ensureEncryptedEqualityOperator(column, operator, 'orWhereNot')
+
+      if (column?.encryption.mode === 'blind') {
+        const encryptedValues = this.getEncryptedQueryValues(column, value)
+        const encryptedKey = this.getEncryptedQueryKey(column)
+        return encryptedValues.length > 1
+          ? super.orWhereNotIn(encryptedKey, encryptedValues)
+          : super.orWhereNot(encryptedKey, operator, encryptedValues[0])
+      }
+
       return super.orWhereNot(
         column ? this.getEncryptedQueryKey(column) : key,
         operator,
@@ -413,6 +535,15 @@ export class ModelQueryBuilder
 
     if (operator !== undefined && typeof key === 'string') {
       const column = this.getEncryptedQueryColumn(key)
+
+      if (column?.encryption.mode === 'blind') {
+        const encryptedValues = this.getEncryptedQueryValues(column, operator)
+        const encryptedKey = this.getEncryptedQueryKey(column)
+        return encryptedValues.length > 1
+          ? super.orWhereNotIn(encryptedKey, encryptedValues)
+          : super.orWhereNot(encryptedKey, encryptedValues[0])
+      }
+
       return super.orWhereNot(
         column ? this.getEncryptedQueryKey(column) : key,
         column ? this.getEncryptedQueryValue(column, operator) : operator
@@ -437,8 +568,10 @@ export class ModelQueryBuilder
     }
 
     const transformedValue = Array.isArray(value)
-      ? value.map((item) => this.getEncryptedQueryValue(column, item))
-      : value
+      ? value.flatMap((item) => this.getEncryptedQueryValues(column, item))
+      : this.isQueryBuilderValue(value)
+        ? value
+        : this.getEncryptedQueryValues(column, value)
 
     return super.whereIn(this.getEncryptedQueryKey(column), transformedValue)
   }
@@ -454,8 +587,10 @@ export class ModelQueryBuilder
     }
 
     const transformedValue = Array.isArray(value)
-      ? value.map((item) => this.getEncryptedQueryValue(column, item))
-      : value
+      ? value.flatMap((item) => this.getEncryptedQueryValues(column, item))
+      : this.isQueryBuilderValue(value)
+        ? value
+        : this.getEncryptedQueryValues(column, value)
 
     return super.orWhereIn(this.getEncryptedQueryKey(column), transformedValue)
   }
@@ -471,8 +606,10 @@ export class ModelQueryBuilder
     }
 
     const transformedValue = Array.isArray(value)
-      ? value.map((item) => this.getEncryptedQueryValue(column, item))
-      : value
+      ? value.flatMap((item) => this.getEncryptedQueryValues(column, item))
+      : this.isQueryBuilderValue(value)
+        ? value
+        : this.getEncryptedQueryValues(column, value)
 
     return super.whereNotIn(this.getEncryptedQueryKey(column), transformedValue)
   }
@@ -488,8 +625,10 @@ export class ModelQueryBuilder
     }
 
     const transformedValue = Array.isArray(value)
-      ? value.map((item) => this.getEncryptedQueryValue(column, item))
-      : value
+      ? value.flatMap((item) => this.getEncryptedQueryValues(column, item))
+      : this.isQueryBuilderValue(value)
+        ? value
+        : this.getEncryptedQueryValues(column, value)
 
     return super.orWhereNotIn(this.getEncryptedQueryKey(column), transformedValue)
   }

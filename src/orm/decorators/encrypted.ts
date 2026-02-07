@@ -47,6 +47,7 @@ function defineEncryptedMeta(
 
     return {
       mode: 'blind',
+      driver: options.driver,
       blindColumnName: options.blind.columnName,
       purpose: options.blind.purpose,
     }
@@ -55,11 +56,13 @@ function defineEncryptedMeta(
   if (options?.deterministic) {
     return {
       mode: 'deterministic',
+      driver: options.driver,
     }
   }
 
   return {
     mode: 'standard',
+    driver: options?.driver,
   }
 }
 
@@ -91,7 +94,14 @@ export const encryptedColumn: EncryptedColumnDecorator = (options?) => {
 
         const encryption = (modelInstance.constructor as LucidModel).$getEncryption(attributeName)
         if (encryptionMeta.mode === 'deterministic') {
-          return encryption.encrypt(value, { deterministic: true })
+          return encryption.encrypt(value, {
+            deterministic: true,
+            driver: encryptionMeta.driver,
+          })
+        }
+
+        if (encryptionMeta.driver) {
+          return encryption.encrypt(value, { driver: encryptionMeta.driver })
         }
 
         return encryption.encrypt(value)

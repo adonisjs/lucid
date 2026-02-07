@@ -1406,7 +1406,10 @@ class BaseModelImpl implements LucidRow {
         result[blindColumnName] =
           attributes[key] === null || attributes[key] === undefined
             ? attributes[key]
-            : encryptionProvider.blindIndex(attributes[key], { purpose })
+            : encryptionProvider.blindIndex(attributes[key], {
+                purpose,
+                driver: encryption.driver,
+              })
       }
 
       return result

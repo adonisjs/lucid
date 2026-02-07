@@ -107,7 +107,10 @@ test.group('Model query builder', (group) => {
     const BaseModel = getBaseModel(adapter)
 
     BaseModel.useEncryption({
-      encrypt: (value, options) => (options?.deterministic ? `det:${value}` : `enc:${value}`),
+      encrypt: (value, options) =>
+        options?.deterministic
+          ? `det:${options?.driver || 'default'}:${value}`
+          : `enc:${options?.driver || 'default'}:${value}`,
       decrypt: (value) => String(value).replace(/^(enc:|det:)/, ''),
       blindIndex: (value, { purpose }) => `blind:${purpose}:${value}`,
       blindIndexes: () => ({}),
@@ -117,7 +120,7 @@ test.group('Model query builder', (group) => {
       @column({ isPrimary: true })
       declare id: number
 
-      @column.encrypted({ deterministic: true })
+      @column.encrypted({ deterministic: true, driver: 'det-v1' })
       declare email: string
     }
 
@@ -127,7 +130,7 @@ test.group('Model query builder', (group) => {
       .connection()
       .getWriteClient()
       .from('users')
-      .where('email', 'det:virk@adonisjs.com')
+      .where('email', 'det:det-v1:virk@adonisjs.com')
       .toSQL()
 
     assert.equal(sql, knexSql)
@@ -142,9 +145,10 @@ test.group('Model query builder', (group) => {
     const BaseModel = getBaseModel(adapter)
 
     BaseModel.useEncryption({
-      encrypt: (value) => `enc:${value}`,
+      encrypt: (value, options) => `enc:${options?.driver || 'default'}:${value}`,
       decrypt: (value) => String(value).replace(/^enc:/, ''),
-      blindIndex: (value, { purpose }) => `blind:${purpose}:${value}`,
+      blindIndex: (value, { purpose, driver }) =>
+        `blind:${driver || 'default'}:${purpose}:${value}`,
       blindIndexes: () => ({}),
     })
 
@@ -152,7 +156,10 @@ test.group('Model query builder', (group) => {
       @column({ isPrimary: true })
       declare id: number
 
-      @column.encrypted({ blind: { columnName: 'email_blind', purpose: 'users:email' } })
+      @column.encrypted({
+        driver: 'enc-v1',
+        blind: { columnName: 'email_blind', purpose: 'users:email' },
+      })
       declare email: string
     }
 
@@ -165,10 +172,58 @@ test.group('Model query builder', (group) => {
       .connection()
       .getWriteClient()
       .from('users')
-      .where('email_blind', 'blind:users:email:virk@adonisjs.com')
+      .where('email_blind', 'blind:enc-v1:users:email:virk@adonisjs.com')
       .whereIn('email_blind', [
-        'blind:users:email:virk@adonisjs.com',
-        'blind:users:email:nikk@adonisjs.com',
+        'blind:enc-v1:users:email:virk@adonisjs.com',
+        'blind:enc-v1:users:email:nikk@adonisjs.com',
+      ])
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
+  test('rewrite blind encrypted where to whereIn when blindIndexes returns multiple values', async ({
+    fs,
+    assert,
+  }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter)
+
+    BaseModel.useEncryption({
+      encrypt: (value, options) => `enc:${options?.driver || 'default'}:${value}`,
+      decrypt: (value) => String(value).replace(/^enc:/, ''),
+      blindIndex: (value, { purpose, driver }) =>
+        `blind:${driver || 'default'}:${purpose}:${value}:single`,
+      blindIndexes: (value, options) => [
+        `blind:${options?.driver || 'default'}:${options?.purpose}:${value}:new`,
+        `blind:${options?.driver || 'default'}:${options?.purpose}:${value}:old`,
+      ],
+    })
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+
+      @column.encrypted({
+        driver: 'enc-v1',
+        blind: { columnName: 'email_blind', purpose: 'users:email' },
+      })
+      declare email: string
+    }
+
+    const { sql, bindings } = User.query().where('email', 'virk@adonisjs.com').toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = db
+      .connection()
+      .getWriteClient()
+      .from('users')
+      .whereIn('email_blind', [
+        'blind:enc-v1:users:email:virk@adonisjs.com:new',
+        'blind:enc-v1:users:email:virk@adonisjs.com:old',
       ])
       .toSQL()
 
