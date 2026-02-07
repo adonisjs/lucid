@@ -670,10 +670,7 @@ test.group('Model query builder', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('raise when using unsupported operators on deterministic and blind encrypted columns', async ({
-    fs,
-    assert,
-  }) => {
+  test('raise when using unsupported operators on encrypted columns', async ({ fs, assert }) => {
     const app = new AppFactory().create(fs.baseUrl, () => {})
     await app.init()
     const db = getDb()
@@ -713,6 +710,15 @@ test.group('Model query builder', (group) => {
     assert.throws(
       () => User.query().whereIn('token', ['a', 'b']),
       'Cannot use "whereIn" on standard encrypted column "User.token". Equality queries require deterministic or blind encryption'
+    )
+
+    assert.throws(
+      () => User.query().whereLike('token', '%secret%'),
+      'Cannot use "whereLike" on encrypted column "User.token". Encrypted columns can only be used with equality-based WHERE clauses'
+    )
+    assert.throws(
+      () => User.query().whereColumn('token', 'id'),
+      'Cannot use "whereColumn" on encrypted column "User.token". Encrypted columns can only be used with equality-based WHERE clauses'
     )
 
     assert.throws(

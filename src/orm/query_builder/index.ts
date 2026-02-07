@@ -681,16 +681,8 @@ export class ModelQueryBuilder
   /**
    * Raises for unsupported encrypted column operators.
    */
-  private ensureEncryptedMethodSupport({
-    key,
-    method,
-    includeStandard = false,
-  }: {
-    key: any
-    method: string
-    includeStandard?: boolean
-  }) {
-    const column = this.getEncryptedQueryColumn(key, includeStandard)
+  private ensureEncryptedMethodSupport(key: any, method: string) {
+    const column = this.getEncryptedQueryColumn(key, true)
     if (column) {
       throw new errors.E_UNSUPPORTED_ENCRYPTED_COLUMN_QUERY([
         method,
@@ -770,8 +762,8 @@ export class ModelQueryBuilder
     column: any,
     comparisonColumn: any
   ) {
-    this.ensureEncryptedMethodSupport({ key: column, method })
-    this.ensureEncryptedMethodSupport({ key: comparisonColumn, method })
+    this.ensureEncryptedMethodSupport(column, method)
+    this.ensureEncryptedMethodSupport(comparisonColumn, method)
   }
 
   /**
@@ -907,13 +899,13 @@ export class ModelQueryBuilder
   }
 
   whereLike(key: any, value: any): this {
-    this.ensureEncryptedMethodSupport({ key, method: 'whereLike' })
+    this.ensureEncryptedMethodSupport(key, 'whereLike')
     return super.whereLike(key, value)
   }
 
   groupBy(...columns: any[]): this {
     this.getGroupByColumns(columns).forEach((column) => {
-      this.ensureEncryptedMethodSupport({ key: column, method: 'groupBy', includeStandard: true })
+      this.ensureEncryptedMethodSupport(column, 'groupBy')
     })
 
     return super.groupBy(...columns)
@@ -921,7 +913,7 @@ export class ModelQueryBuilder
 
   orderBy(column: any, direction?: any): this {
     this.getOrderByColumns(column).forEach((item) => {
-      this.ensureEncryptedMethodSupport({ key: item, method: 'orderBy', includeStandard: true })
+      this.ensureEncryptedMethodSupport(item, 'orderBy')
     })
 
     return super.orderBy(column, direction)
@@ -968,107 +960,107 @@ export class ModelQueryBuilder
   }
 
   orWhereLike(key: any, value: any): this {
-    this.ensureEncryptedMethodSupport({ key, method: 'orWhereLike' })
+    this.ensureEncryptedMethodSupport(key, 'orWhereLike')
     return super.orWhereLike(key, value)
   }
 
   whereILike(key: any, value: any): this {
-    this.ensureEncryptedMethodSupport({ key, method: 'whereILike' })
+    this.ensureEncryptedMethodSupport(key, 'whereILike')
     return super.whereILike(key, value)
   }
 
   orWhereILike(key: any, value: any): this {
-    this.ensureEncryptedMethodSupport({ key, method: 'orWhereILike' })
+    this.ensureEncryptedMethodSupport(key, 'orWhereILike')
     return super.orWhereILike(key, value)
   }
 
   whereBetween(key: any, value: [any, any]): this {
-    this.ensureEncryptedMethodSupport({ key, method: 'whereBetween' })
+    this.ensureEncryptedMethodSupport(key, 'whereBetween')
     return super.whereBetween(key, value)
   }
 
   orWhereBetween(key: any, value: [any, any]): this {
-    this.ensureEncryptedMethodSupport({ key, method: 'orWhereBetween' })
+    this.ensureEncryptedMethodSupport(key, 'orWhereBetween')
     return super.orWhereBetween(key, value)
   }
 
   whereNotBetween(key: any, value: [any, any]): this {
-    this.ensureEncryptedMethodSupport({ key, method: 'whereNotBetween' })
+    this.ensureEncryptedMethodSupport(key, 'whereNotBetween')
     return super.whereNotBetween(key, value)
   }
 
   orWhereNotBetween(key: any, value: [any, any]): this {
-    this.ensureEncryptedMethodSupport({ key, method: 'orWhereNotBetween' })
+    this.ensureEncryptedMethodSupport(key, 'orWhereNotBetween')
     return super.orWhereNotBetween(key, value)
   }
 
   whereJson(column: string, value: any) {
-    this.ensureEncryptedMethodSupport({ key: column, method: 'whereJson' })
+    this.ensureEncryptedMethodSupport(column, 'whereJson')
     return super.whereJson(column, value)
   }
 
   orWhereJson(column: string, value: any) {
-    this.ensureEncryptedMethodSupport({ key: column, method: 'orWhereJson' })
+    this.ensureEncryptedMethodSupport(column, 'orWhereJson')
     return super.orWhereJson(column, value)
   }
 
   whereNotJson(column: string, value: any) {
-    this.ensureEncryptedMethodSupport({ key: column, method: 'whereNotJson' })
+    this.ensureEncryptedMethodSupport(column, 'whereNotJson')
     return super.whereNotJson(column, value)
   }
 
   orWhereNotJson(column: string, value: any) {
-    this.ensureEncryptedMethodSupport({ key: column, method: 'orWhereNotJson' })
+    this.ensureEncryptedMethodSupport(column, 'orWhereNotJson')
     return super.orWhereNotJson(column, value)
   }
 
   whereJsonSuperset(column: string, value: any) {
-    this.ensureEncryptedMethodSupport({ key: column, method: 'whereJsonSuperset' })
+    this.ensureEncryptedMethodSupport(column, 'whereJsonSuperset')
     return super.whereJsonSuperset(column, value)
   }
 
   orWhereJsonSuperset(column: string, value: any) {
-    this.ensureEncryptedMethodSupport({ key: column, method: 'orWhereJsonSuperset' })
+    this.ensureEncryptedMethodSupport(column, 'orWhereJsonSuperset')
     return super.orWhereJsonSuperset(column, value)
   }
 
   whereNotJsonSuperset(column: string, value: any) {
-    this.ensureEncryptedMethodSupport({ key: column, method: 'whereNotJsonSuperset' })
+    this.ensureEncryptedMethodSupport(column, 'whereNotJsonSuperset')
     return super.whereNotJsonSuperset(column, value)
   }
 
   orWhereNotJsonSuperset(column: string, value: any) {
-    this.ensureEncryptedMethodSupport({ key: column, method: 'orWhereNotJsonSuperset' })
+    this.ensureEncryptedMethodSupport(column, 'orWhereNotJsonSuperset')
     return super.orWhereNotJsonSuperset(column, value)
   }
 
   whereJsonSubset(column: string, value: any) {
-    this.ensureEncryptedMethodSupport({ key: column, method: 'whereJsonSubset' })
+    this.ensureEncryptedMethodSupport(column, 'whereJsonSubset')
     return super.whereJsonSubset(column, value)
   }
 
   orWhereJsonSubset(column: string, value: any) {
-    this.ensureEncryptedMethodSupport({ key: column, method: 'orWhereJsonSubset' })
+    this.ensureEncryptedMethodSupport(column, 'orWhereJsonSubset')
     return super.orWhereJsonSubset(column, value)
   }
 
   whereNotJsonSubset(column: string, value: any) {
-    this.ensureEncryptedMethodSupport({ key: column, method: 'whereNotJsonSubset' })
+    this.ensureEncryptedMethodSupport(column, 'whereNotJsonSubset')
     return super.whereNotJsonSubset(column, value)
   }
 
   orWhereNotJsonSubset(column: string, value: any) {
-    this.ensureEncryptedMethodSupport({ key: column, method: 'orWhereNotJsonSubset' })
+    this.ensureEncryptedMethodSupport(column, 'orWhereNotJsonSubset')
     return super.orWhereNotJsonSubset(column, value)
   }
 
   whereJsonPath(column: string, jsonPath: string, operator: any, value?: any): this {
-    this.ensureEncryptedMethodSupport({ key: column, method: 'whereJsonPath' })
+    this.ensureEncryptedMethodSupport(column, 'whereJsonPath')
     return super.whereJsonPath(column, jsonPath, operator, value)
   }
 
   orWhereJsonPath(column: string, jsonPath: string, operator: any, value?: any): this {
-    this.ensureEncryptedMethodSupport({ key: column, method: 'orWhereJsonPath' })
+    this.ensureEncryptedMethodSupport(column, 'orWhereJsonPath')
     return super.orWhereJsonPath(column, jsonPath, operator, value)
   }
 
