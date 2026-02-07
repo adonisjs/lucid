@@ -17,6 +17,7 @@ import { RawQueryBuilder } from './raw.js'
 import { RawBuilder } from '../static_builder/raw.js'
 import { ReferenceBuilder } from '../static_builder/reference.js'
 import type { DialectContract } from '../../types/database.js'
+import * as errors from '../../errors.js'
 
 /**
  * The chainable query builder to construct SQL queries for selecting, updating and
@@ -1706,7 +1707,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
   /**
    * Order results by random value.
    */
-  orderByRandom(seed = '') {
+  orderByRandom(seed?: number) {
     switch (this.dialect.name) {
       case 'sqlite3':
       case 'better-sqlite3':
@@ -1714,7 +1715,15 @@ export abstract class Chainable extends Macroable implements ChainableContract {
       case 'redshift':
         return this.orderByRaw('RANDOM()')
       case 'mysql':
-        return this.orderByRaw(`RAND(${seed})`)
+        if (seed === undefined) {
+          return this.orderByRaw('RAND()')
+        }
+
+        if (!Number.isFinite(seed)) {
+          throw new errors.E_INVALID_ORDER_BY_RANDOM_SEED()
+        }
+
+        return this.orderByRaw('RAND(?)', [seed])
       case 'mssql':
         return this.orderByRaw('NEWID()')
       case 'oracledb':

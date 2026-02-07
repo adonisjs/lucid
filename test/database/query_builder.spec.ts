@@ -5457,36 +5457,59 @@ test.group('Query Builder | orderByRandom', (group) => {
     connection.connect()
 
     const client = getQueryClient(connection)
-    await getInsertBuilder(client)
-      .table('users')
-      .multiInsert([
-        {
-          username: 'virk',
-          email: 'virk@adonisjs.com',
-        },
-        {
-          username: 'romain',
-          email: 'romain@adonisjs.com',
-        },
-        {
-          username: 'nikk',
-          email: 'nikk@adonisjs.com',
-        },
-      ])
+    const { sql, bindings } = getQueryBuilder(client).from('users').orderByRandom().toSQL()
+    const normalizedSql = sql.toLowerCase()
 
-    const userResults: number[][] = []
-
-    for (let i = 0; i < 10; i++) {
-      const result = await getQueryBuilder(client).from('users').orderByRandom()
-
-      userResults.push(result.map((user) => user.id))
+    switch (client.dialect.name) {
+      case 'sqlite3':
+      case 'better-sqlite3':
+      case 'postgres':
+      case 'redshift':
+        assert.include(normalizedSql, 'random()')
+        break
+      case 'mysql':
+        assert.include(normalizedSql, 'rand()')
+        break
+      case 'mssql':
+        assert.include(normalizedSql, 'newid()')
+        break
+      case 'oracledb':
+        assert.include(normalizedSql, 'dbms_random.value')
+        break
+      default:
+        throw new Error(`Unsupported dialect "${client.dialect.name}" for test assertions`)
     }
 
-    const firstResult = userResults[0].join(',')
-    assert.isTrue(userResults.some((users) => users.join(',') !== firstResult))
+    assert.deepEqual(bindings, [])
 
     await connection.disconnect()
   })
+
+  test('define order by random value with seed', async ({ assert }) => {
+    const connection = new Connection('primary', getConfig(), logger)
+    connection.connect()
+
+    const db = getQueryBuilder(getQueryClient(connection))
+    const { sql, bindings } = db.from('users').orderByRandom(10).toSQL()
+    assert.include(sql.toLowerCase(), 'rand(?)')
+    assert.deepEqual(bindings, [10])
+
+    await connection.disconnect()
+  }).skip(!['mysql', 'mysql_legacy'].includes(process.env.DB!), 'Only for MySQL')
+
+  test('reject non numeric seed for orderByRandom', async ({ assert }) => {
+    const connection = new Connection('primary', getConfig(), logger)
+    connection.connect()
+
+    const db = getQueryBuilder(getQueryClient(connection))
+
+    assert.throws(
+      () => db.from('users').orderByRandom('0) DESC; --' as any),
+      '".orderByRandom" expects seed to be a finite number'
+    )
+
+    await connection.disconnect()
+  }).skip(!['mysql', 'mysql_legacy'].includes(process.env.DB!), 'Only for MySQL')
 })
 
 test.group('Query Builder | offset', (group) => {

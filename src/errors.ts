@@ -104,3 +104,9 @@ export const E_UNSUPPORTED_CLIENT = createError<[string]>(
   'E_UNSUPPORTED_CLIENT',
   500
 )
+
+export const E_INVALID_ORDER_BY_RANDOM_SEED = createError(
+  '".orderByRandom" expects seed to be a finite number',
+  'E_INVALID_ORDER_BY_RANDOM_SEED',
+  500
+)
