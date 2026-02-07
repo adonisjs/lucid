@@ -355,19 +355,86 @@ export class ModelQueryBuilder
   }
 
   /**
+   * Normalize operators used by where/orWhere methods.
+   */
+  private normalizeOperator(operator: any): string {
+    return typeof operator === 'string' ? operator.trim().replace(/\s+/g, ' ').toLowerCase() : ''
+  }
+
+  /**
+   * Check if operator maps to an IN clause.
+   */
+  private isInOperator(operator: string): boolean {
+    return operator === 'in'
+  }
+
+  /**
+   * Check if operator maps to a NOT IN clause.
+   */
+  private isNotInOperator(operator: string): boolean {
+    return operator === 'not in'
+  }
+
+  /**
    * Raises when using a non equality operator for deterministic/blind columns.
    */
   private ensureEncryptedEqualityOperator(
     column: EncryptedQueryColumn | null,
-    operator: string,
+    operator: any,
     method: string
   ) {
-    if (column && operator !== '=') {
+    if (!column) {
+      return
+    }
+
+    const normalizedOperator = this.normalizeOperator(operator)
+    if (
+      normalizedOperator !== '=' &&
+      !this.isInOperator(normalizedOperator) &&
+      !this.isNotInOperator(normalizedOperator)
+    ) {
       throw new errors.E_UNSUPPORTED_ENCRYPTED_COLUMN_QUERY([
         method,
         `${this.model.name}.${column.attributeName}`,
       ])
     }
+  }
+
+  /**
+   * Routes operator forms using IN/NOT IN through the dedicated methods.
+   */
+  private handleEncryptedInOperator(
+    method: 'where' | 'orWhere' | 'whereNot' | 'orWhereNot',
+    key: string,
+    operator: any,
+    value: any
+  ): this | null {
+    const column = this.getEncryptedQueryColumn(key)
+    if (!column) {
+      return null
+    }
+
+    const normalizedOperator = this.normalizeOperator(operator)
+    if (!this.isInOperator(normalizedOperator) && !this.isNotInOperator(normalizedOperator)) {
+      return null
+    }
+
+    const usePositiveIn =
+      this.isInOperator(normalizedOperator) === (method === 'where' || method === 'orWhere')
+
+    if (method === 'where') {
+      return usePositiveIn ? this.whereIn(key, value) : this.whereNotIn(key, value)
+    }
+
+    if (method === 'orWhere') {
+      return usePositiveIn ? this.orWhereIn(key, value) : this.orWhereNotIn(key, value)
+    }
+
+    if (method === 'whereNot') {
+      return usePositiveIn ? this.whereIn(key, value) : this.whereNotIn(key, value)
+    }
+
+    return usePositiveIn ? this.orWhereIn(key, value) : this.orWhereNotIn(key, value)
   }
 
   /**
@@ -499,6 +566,10 @@ export class ModelQueryBuilder
   where(key: any, operator?: any, value?: any): this {
     if (value !== undefined && typeof key === 'string') {
       const column = this.getEncryptedQueryColumn(key)
+      const inOperatorResult = this.handleEncryptedInOperator('where', key, operator, value)
+      if (inOperatorResult) {
+        return inOperatorResult
+      }
       this.ensureEncryptedEqualityOperator(column, operator, 'where')
 
       if (column?.encryption.mode === 'blind') {
@@ -557,6 +628,10 @@ export class ModelQueryBuilder
   orWhere(key: any, operator?: any, value?: any): this {
     if (value !== undefined && typeof key === 'string') {
       const column = this.getEncryptedQueryColumn(key)
+      const inOperatorResult = this.handleEncryptedInOperator('orWhere', key, operator, value)
+      if (inOperatorResult) {
+        return inOperatorResult
+      }
       this.ensureEncryptedEqualityOperator(column, operator, 'orWhere')
 
       if (column?.encryption.mode === 'blind') {
@@ -601,6 +676,10 @@ export class ModelQueryBuilder
   whereNot(key: any, operator?: any, value?: any): this {
     if (value !== undefined && typeof key === 'string') {
       const column = this.getEncryptedQueryColumn(key)
+      const inOperatorResult = this.handleEncryptedInOperator('whereNot', key, operator, value)
+      if (inOperatorResult) {
+        return inOperatorResult
+      }
       this.ensureEncryptedEqualityOperator(column, operator, 'whereNot')
 
       if (column?.encryption.mode === 'blind') {
@@ -645,6 +724,10 @@ export class ModelQueryBuilder
   orWhereNot(key: any, operator?: any, value?: any): this {
     if (value !== undefined && typeof key === 'string') {
       const column = this.getEncryptedQueryColumn(key)
+      const inOperatorResult = this.handleEncryptedInOperator('orWhereNot', key, operator, value)
+      if (inOperatorResult) {
+        return inOperatorResult
+      }
       this.ensureEncryptedEqualityOperator(column, operator, 'orWhereNot')
 
       if (column?.encryption.mode === 'blind') {

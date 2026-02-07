@@ -230,6 +230,59 @@ test.group('Model query builder', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
+  test('rewrite encrypted where clauses using IN and NOT IN operators', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter)
+
+    BaseModel.useEncryption({
+      encrypt: (value, options) =>
+        options?.deterministic
+          ? `det:${options?.driver || 'default'}:${value}`
+          : `enc:${options?.driver || 'default'}:${value}`,
+      decrypt: (value) => String(value).replace(/^(enc:|det:)/, ''),
+      blindIndex: (value, { purpose, driver }) =>
+        `blind:${driver || 'default'}:${purpose}:${value}`,
+      blindIndexes: () => ({}),
+    })
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+
+      @column.encrypted({ deterministic: true, driver: 'det-v1' })
+      declare email: string
+
+      @column.encrypted({
+        driver: 'enc-v1',
+        blind: { columnName: 'username_blind', purpose: 'users:username' },
+      })
+      declare username: string
+    }
+
+    const { sql, bindings } = User.query()
+      .where('email', 'IN', ['virk@adonisjs.com', 'nikk@adonisjs.com'])
+      .where('email', 'not in', ['tom@adonisjs.com'])
+      .where('username', 'iN', ['virk'])
+      .where('username', 'NoT   In', ['nikk'])
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = db
+      .connection()
+      .getWriteClient()
+      .from('users')
+      .whereIn('email', ['det:det-v1:virk@adonisjs.com', 'det:det-v1:nikk@adonisjs.com'])
+      .whereNotIn('email', ['det:det-v1:tom@adonisjs.com'])
+      .whereIn('username_blind', ['blind:enc-v1:users:username:virk'])
+      .whereNotIn('username_blind', ['blind:enc-v1:users:username:nikk'])
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
   test('rewrite blind encrypted where to whereIn when blindIndexes returns multiple values', async ({
     fs,
     assert,
