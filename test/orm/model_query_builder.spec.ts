@@ -137,6 +137,53 @@ test.group('Model query builder', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
+  test('do not rewrite joined table columns that match encrypted model column names', async ({
+    fs,
+    assert,
+  }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter)
+
+    BaseModel.useEncryption({
+      encrypt: (value, options) =>
+        options?.deterministic
+          ? `det:${options?.driver || 'default'}:${value}`
+          : `enc:${options?.driver || 'default'}:${value}`,
+      decrypt: (value) => String(value).replace(/^(enc:|det:)/, ''),
+      blindIndex: (value, { purpose }) => `blind:${purpose}:${value}`,
+      blindIndexes: () => ({}),
+    })
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+
+      @column.encrypted({ deterministic: true, driver: 'det-v1' })
+      declare email: string
+    }
+
+    const { sql, bindings } = User.query()
+      .join('contacts', 'contacts.user_id', 'users.id')
+      .where('contacts.email', 'virk@adonisjs.com')
+      .where('users.email', 'virk@adonisjs.com')
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = db
+      .connection()
+      .getWriteClient()
+      .from('users')
+      .join('contacts', 'contacts.user_id', 'users.id')
+      .where('contacts.email', 'virk@adonisjs.com')
+      .where('users.email', 'det:det-v1:virk@adonisjs.com')
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
   test('rewrite blind encrypted where and whereIn clauses', async ({ fs, assert }) => {
     const app = new AppFactory().create(fs.baseUrl, () => {})
     await app.init()

@@ -198,6 +198,10 @@ export class ModelQueryBuilder
     }
 
     const column = this.model.$getColumn(attributeName)!
+    if (!this.isModelColumnReference(key, attributeName, column.columnName)) {
+      return null
+    }
+
     const encryption = column.meta?.encryption as EncryptedColumnMeta | undefined
 
     if (!encryption || (!includeStandard && encryption.mode === 'standard')) {
@@ -210,6 +214,33 @@ export class ModelQueryBuilder
       columnName: column.columnName,
       encryption,
     }
+  }
+
+  /**
+   * Returns true when the key references the current model table.
+   */
+  private isModelColumnReference(key: string, attributeName: string, columnName: string): boolean {
+    if (!key.includes('.')) {
+      return true
+    }
+
+    const lastDot = key.lastIndexOf('.')
+    const source = key.slice(0, lastDot)
+    const column = key.slice(lastDot + 1)
+
+    if (column !== attributeName && column !== columnName) {
+      return false
+    }
+
+    if (source === this.model.table || source.endsWith(`.${this.model.table}`)) {
+      return true
+    }
+
+    if (this.tableAlias && (source === this.tableAlias || source.endsWith(`.${this.tableAlias}`))) {
+      return true
+    }
+
+    return false
   }
 
   /**
