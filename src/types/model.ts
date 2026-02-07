@@ -221,6 +221,48 @@ export type ColumnOptions = {
 }
 
 /**
+ * Encryption contract used by encrypted columns.
+ * The shape is intentionally aligned with the
+ * boringnode/encryption package.
+ */
+export type ModelEncryptionContract = {
+  encrypt(value: any, options?: { deterministic?: boolean; [key: string]: any }): any
+  decrypt(value: any): any
+  blindIndexes(value: any, options?: { [key: string]: any }): any
+  blindIndex(value: any, options: { purpose: string; [key: string]: any }): any
+}
+
+/**
+ * Supported encryption strategies for columns.
+ */
+export type EncryptedColumnMode = 'standard' | 'deterministic' | 'blind'
+
+/**
+ * Configuration for blind indexes.
+ */
+export type BlindEncryptedColumnOptions = {
+  columnName: string
+  purpose: string
+}
+
+/**
+ * Metadata persisted on encrypted columns.
+ */
+export type EncryptedColumnMeta = {
+  mode: EncryptedColumnMode
+  blindColumnName?: string
+  purpose?: string
+}
+
+/**
+ * Options accepted by the encrypted column decorator.
+ */
+export type EncryptedColumnOptions = Partial<ColumnOptions> & {
+  deterministic?: boolean
+  blind?: BlindEncryptedColumnOptions
+}
+
+/**
  * Shape of column options after they have set on the model
  */
 export type ModelColumnOptions = ColumnOptions & {
@@ -248,6 +290,11 @@ export type ModelRelationOptions =
  * Signature for column decorator function
  */
 export type ColumnDecorator = (options?: Partial<ColumnOptions>) => DecoratorFn
+
+/**
+ * Signature for encrypted column decorator function
+ */
+export type EncryptedColumnDecorator = (options?: EncryptedColumnOptions) => DecoratorFn
 
 /**
  * Signature for computed decorator function
@@ -822,10 +869,25 @@ export interface LucidModel {
   $adapter: AdapterContract
 
   /**
+   * Encryption provider used by encrypted columns.
+   */
+  $encryption?: ModelEncryptionContract
+
+  /**
    * Define an adapter to use for interacting with
    * the database
    */
   useAdapter(adapter: AdapterContract): void
+
+  /**
+   * Define encryption provider to use for encrypted columns.
+   */
+  useEncryption(encryption: ModelEncryptionContract): void
+
+  /**
+   * Returns the encryption provider.
+   */
+  $getEncryption(attributeName?: string): ModelEncryptionContract
 
   /**
    * Reference to hooks

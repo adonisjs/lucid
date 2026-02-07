@@ -14,6 +14,7 @@ import {
   type LucidRow,
   type LucidModel,
   type ModelObject,
+  type EncryptedColumnMeta,
   type ModelAdapterOptions,
   type ModelQueryBuilderContract,
 } from '../../types/model.js'
@@ -39,6 +40,13 @@ import { QueryRunner } from '../../query_runner/index.js'
 import { Chainable } from '../../database/query_builder/chainable.js'
 import { SimplePaginator } from '../../database/paginator/simple_paginator.js'
 import * as errors from '../../errors.js'
+
+type EncryptedQueryColumn = {
+  key: string
+  attributeName: string
+  columnName: string
+  encryption: EncryptedColumnMeta
+}
 
 /**
  * A wrapper to invoke scope methods on the query builder
@@ -166,6 +174,434 @@ export class ModelQueryBuilder
     if (!(builder as any)['_single'] || !(builder as any)['_single'].table) {
       builder.table(model.table)
     }
+  }
+
+  /**
+   * Returns encrypted metadata for a query key when it references a
+   * deterministic or blind encrypted column.
+   */
+  private getEncryptedQueryColumn(key: any): EncryptedQueryColumn | null {
+    if (typeof key !== 'string') {
+      return null
+    }
+
+    const normalizedKey = key.includes('.') ? key.split('.').pop()! : key
+    const attributeName =
+      this.model.$keys.columnsToAttributes.get(normalizedKey) ??
+      this.model.$keys.columnsToAttributes.get(key) ??
+      normalizedKey
+
+    if (!this.model.$hasColumn(attributeName)) {
+      return null
+    }
+
+    const column = this.model.$getColumn(attributeName)!
+    const encryption = column.meta?.encryption as EncryptedColumnMeta | undefined
+
+    if (!encryption || encryption.mode === 'standard') {
+      return null
+    }
+
+    return {
+      key,
+      attributeName,
+      columnName: column.columnName,
+      encryption,
+    }
+  }
+
+  /**
+   * Returns true when the value is a query/raw/reference value and should not be transformed.
+   */
+  private isQueryBuilderValue(value: any): boolean {
+    if (value instanceof Chainable || typeof value === 'function') {
+      return true
+    }
+
+    return !!value && typeof value === 'object' && ('knexQuery' in value || 'toKnex' in value)
+  }
+
+  /**
+   * Rewrites the query key for blind-index columns.
+   */
+  private getEncryptedQueryKey(column: EncryptedQueryColumn): string {
+    if (column.encryption.mode !== 'blind') {
+      return column.key
+    }
+
+    const blindColumnName = column.encryption.blindColumnName
+    if (!blindColumnName) {
+      throw new errors.E_INVALID_ENCRYPTED_COLUMN_CONFIGURATION([
+        `${this.model.name}.${column.attributeName}`,
+        'Missing "blind.columnName"',
+      ])
+    }
+
+    if (column.key === column.attributeName || column.key === column.columnName) {
+      return blindColumnName
+    }
+
+    if (
+      column.key.endsWith(`.${column.attributeName}`) ||
+      column.key.endsWith(`.${column.columnName}`)
+    ) {
+      const lastDot = column.key.lastIndexOf('.')
+      return `${column.key.slice(0, lastDot + 1)}${blindColumnName}`
+    }
+
+    return blindColumnName
+  }
+
+  /**
+   * Transforms a query value for deterministic/blind encrypted columns.
+   */
+  private getEncryptedQueryValue(column: EncryptedQueryColumn, value: any): any {
+    if (value === null || value === undefined || this.isQueryBuilderValue(value)) {
+      return value
+    }
+
+    const encryption = this.model.$getEncryption(column.attributeName)
+
+    if (column.encryption.mode === 'deterministic') {
+      return encryption.encrypt(value, { deterministic: true })
+    }
+
+    if (!column.encryption.purpose) {
+      throw new errors.E_INVALID_ENCRYPTED_COLUMN_CONFIGURATION([
+        `${this.model.name}.${column.attributeName}`,
+        'Missing "blind.purpose"',
+      ])
+    }
+
+    return encryption.blindIndex(value, { purpose: column.encryption.purpose })
+  }
+
+  /**
+   * Raises when using a non equality operator for deterministic/blind columns.
+   */
+  private ensureEncryptedEqualityOperator(
+    column: EncryptedQueryColumn | null,
+    operator: string,
+    method: string
+  ) {
+    if (column && operator !== '=') {
+      throw new errors.E_UNSUPPORTED_ENCRYPTED_COLUMN_QUERY([
+        method,
+        `${this.model.name}.${column.attributeName}`,
+      ])
+    }
+  }
+
+  /**
+   * Raises for unsupported encrypted column operators.
+   */
+  private ensureEncryptedMethodSupport(key: any, method: string) {
+    const column = this.getEncryptedQueryColumn(key)
+    if (column) {
+      throw new errors.E_UNSUPPORTED_ENCRYPTED_COLUMN_QUERY([
+        method,
+        `${this.model.name}.${column.attributeName}`,
+      ])
+    }
+  }
+
+  /**
+   * Transforms an object where clause for deterministic/blind encrypted columns.
+   */
+  private transformWhereObjectClause(clause: Dictionary<any, string>) {
+    return Object.keys(clause).reduce((result: Dictionary<any, string>, key) => {
+      const column = this.getEncryptedQueryColumn(key)
+
+      if (!column) {
+        result[key] = clause[key]
+        return result
+      }
+
+      result[this.getEncryptedQueryKey(column)] = this.getEncryptedQueryValue(column, clause[key])
+      return result
+    }, {})
+  }
+
+  where(key: any, operator?: any, value?: any): this {
+    if (value !== undefined && typeof key === 'string') {
+      const column = this.getEncryptedQueryColumn(key)
+      this.ensureEncryptedEqualityOperator(column, operator, 'where')
+      return super.where(
+        column ? this.getEncryptedQueryKey(column) : key,
+        operator,
+        column ? this.getEncryptedQueryValue(column, value) : value
+      )
+    }
+
+    if (operator !== undefined && typeof key === 'string') {
+      const column = this.getEncryptedQueryColumn(key)
+      return super.where(
+        column ? this.getEncryptedQueryKey(column) : key,
+        column ? this.getEncryptedQueryValue(column, operator) : operator
+      )
+    }
+
+    if (isObject(key)) {
+      return super.where(this.transformWhereObjectClause(key))
+    }
+
+    return super.where(key, operator, value)
+  }
+
+  orWhere(key: any, operator?: any, value?: any): this {
+    if (value !== undefined && typeof key === 'string') {
+      const column = this.getEncryptedQueryColumn(key)
+      this.ensureEncryptedEqualityOperator(column, operator, 'orWhere')
+      return super.orWhere(
+        column ? this.getEncryptedQueryKey(column) : key,
+        operator,
+        column ? this.getEncryptedQueryValue(column, value) : value
+      )
+    }
+
+    if (operator !== undefined && typeof key === 'string') {
+      const column = this.getEncryptedQueryColumn(key)
+      return super.orWhere(
+        column ? this.getEncryptedQueryKey(column) : key,
+        column ? this.getEncryptedQueryValue(column, operator) : operator
+      )
+    }
+
+    if (isObject(key)) {
+      return super.orWhere(this.transformWhereObjectClause(key))
+    }
+
+    return super.orWhere(key, operator, value)
+  }
+
+  whereNot(key: any, operator?: any, value?: any): this {
+    if (value !== undefined && typeof key === 'string') {
+      const column = this.getEncryptedQueryColumn(key)
+      this.ensureEncryptedEqualityOperator(column, operator, 'whereNot')
+      return super.whereNot(
+        column ? this.getEncryptedQueryKey(column) : key,
+        operator,
+        column ? this.getEncryptedQueryValue(column, value) : value
+      )
+    }
+
+    if (operator !== undefined && typeof key === 'string') {
+      const column = this.getEncryptedQueryColumn(key)
+      return super.whereNot(
+        column ? this.getEncryptedQueryKey(column) : key,
+        column ? this.getEncryptedQueryValue(column, operator) : operator
+      )
+    }
+
+    if (isObject(key)) {
+      return super.whereNot(this.transformWhereObjectClause(key))
+    }
+
+    return super.whereNot(key, operator, value)
+  }
+
+  orWhereNot(key: any, operator?: any, value?: any): this {
+    if (value !== undefined && typeof key === 'string') {
+      const column = this.getEncryptedQueryColumn(key)
+      this.ensureEncryptedEqualityOperator(column, operator, 'orWhereNot')
+      return super.orWhereNot(
+        column ? this.getEncryptedQueryKey(column) : key,
+        operator,
+        column ? this.getEncryptedQueryValue(column, value) : value
+      )
+    }
+
+    if (operator !== undefined && typeof key === 'string') {
+      const column = this.getEncryptedQueryColumn(key)
+      return super.orWhereNot(
+        column ? this.getEncryptedQueryKey(column) : key,
+        column ? this.getEncryptedQueryValue(column, operator) : operator
+      )
+    }
+
+    if (isObject(key)) {
+      return super.orWhereNot(this.transformWhereObjectClause(key))
+    }
+
+    return super.orWhereNot(key, operator, value)
+  }
+
+  whereIn(columns: any, value: any): this {
+    if (typeof columns !== 'string') {
+      return super.whereIn(columns, value)
+    }
+
+    const column = this.getEncryptedQueryColumn(columns)
+    if (!column) {
+      return super.whereIn(columns, value)
+    }
+
+    const transformedValue = Array.isArray(value)
+      ? value.map((item) => this.getEncryptedQueryValue(column, item))
+      : value
+
+    return super.whereIn(this.getEncryptedQueryKey(column), transformedValue)
+  }
+
+  orWhereIn(columns: any, value: any): this {
+    if (typeof columns !== 'string') {
+      return super.orWhereIn(columns, value)
+    }
+
+    const column = this.getEncryptedQueryColumn(columns)
+    if (!column) {
+      return super.orWhereIn(columns, value)
+    }
+
+    const transformedValue = Array.isArray(value)
+      ? value.map((item) => this.getEncryptedQueryValue(column, item))
+      : value
+
+    return super.orWhereIn(this.getEncryptedQueryKey(column), transformedValue)
+  }
+
+  whereNotIn(columns: any, value: any): this {
+    if (typeof columns !== 'string') {
+      return super.whereNotIn(columns, value)
+    }
+
+    const column = this.getEncryptedQueryColumn(columns)
+    if (!column) {
+      return super.whereNotIn(columns, value)
+    }
+
+    const transformedValue = Array.isArray(value)
+      ? value.map((item) => this.getEncryptedQueryValue(column, item))
+      : value
+
+    return super.whereNotIn(this.getEncryptedQueryKey(column), transformedValue)
+  }
+
+  orWhereNotIn(columns: any, value: any): this {
+    if (typeof columns !== 'string') {
+      return super.orWhereNotIn(columns, value)
+    }
+
+    const column = this.getEncryptedQueryColumn(columns)
+    if (!column) {
+      return super.orWhereNotIn(columns, value)
+    }
+
+    const transformedValue = Array.isArray(value)
+      ? value.map((item) => this.getEncryptedQueryValue(column, item))
+      : value
+
+    return super.orWhereNotIn(this.getEncryptedQueryKey(column), transformedValue)
+  }
+
+  whereLike(key: any, value: any): this {
+    this.ensureEncryptedMethodSupport(key, 'whereLike')
+    return super.whereLike(key, value)
+  }
+
+  orWhereLike(key: any, value: any): this {
+    this.ensureEncryptedMethodSupport(key, 'orWhereLike')
+    return super.orWhereLike(key, value)
+  }
+
+  whereILike(key: any, value: any): this {
+    this.ensureEncryptedMethodSupport(key, 'whereILike')
+    return super.whereILike(key, value)
+  }
+
+  orWhereILike(key: any, value: any): this {
+    this.ensureEncryptedMethodSupport(key, 'orWhereILike')
+    return super.orWhereILike(key, value)
+  }
+
+  whereBetween(key: any, value: [any, any]): this {
+    this.ensureEncryptedMethodSupport(key, 'whereBetween')
+    return super.whereBetween(key, value)
+  }
+
+  orWhereBetween(key: any, value: [any, any]): this {
+    this.ensureEncryptedMethodSupport(key, 'orWhereBetween')
+    return super.orWhereBetween(key, value)
+  }
+
+  whereNotBetween(key: any, value: [any, any]): this {
+    this.ensureEncryptedMethodSupport(key, 'whereNotBetween')
+    return super.whereNotBetween(key, value)
+  }
+
+  orWhereNotBetween(key: any, value: [any, any]): this {
+    this.ensureEncryptedMethodSupport(key, 'orWhereNotBetween')
+    return super.orWhereNotBetween(key, value)
+  }
+
+  whereJson(column: string, value: any) {
+    this.ensureEncryptedMethodSupport(column, 'whereJson')
+    return super.whereJson(column, value)
+  }
+
+  orWhereJson(column: string, value: any) {
+    this.ensureEncryptedMethodSupport(column, 'orWhereJson')
+    return super.orWhereJson(column, value)
+  }
+
+  whereNotJson(column: string, value: any) {
+    this.ensureEncryptedMethodSupport(column, 'whereNotJson')
+    return super.whereNotJson(column, value)
+  }
+
+  orWhereNotJson(column: string, value: any) {
+    this.ensureEncryptedMethodSupport(column, 'orWhereNotJson')
+    return super.orWhereNotJson(column, value)
+  }
+
+  whereJsonSuperset(column: string, value: any) {
+    this.ensureEncryptedMethodSupport(column, 'whereJsonSuperset')
+    return super.whereJsonSuperset(column, value)
+  }
+
+  orWhereJsonSuperset(column: string, value: any) {
+    this.ensureEncryptedMethodSupport(column, 'orWhereJsonSuperset')
+    return super.orWhereJsonSuperset(column, value)
+  }
+
+  whereNotJsonSuperset(column: string, value: any) {
+    this.ensureEncryptedMethodSupport(column, 'whereNotJsonSuperset')
+    return super.whereNotJsonSuperset(column, value)
+  }
+
+  orWhereNotJsonSuperset(column: string, value: any) {
+    this.ensureEncryptedMethodSupport(column, 'orWhereNotJsonSuperset')
+    return super.orWhereNotJsonSuperset(column, value)
+  }
+
+  whereJsonSubset(column: string, value: any) {
+    this.ensureEncryptedMethodSupport(column, 'whereJsonSubset')
+    return super.whereJsonSubset(column, value)
+  }
+
+  orWhereJsonSubset(column: string, value: any) {
+    this.ensureEncryptedMethodSupport(column, 'orWhereJsonSubset')
+    return super.orWhereJsonSubset(column, value)
+  }
+
+  whereNotJsonSubset(column: string, value: any) {
+    this.ensureEncryptedMethodSupport(column, 'whereNotJsonSubset')
+    return super.whereNotJsonSubset(column, value)
+  }
+
+  orWhereNotJsonSubset(column: string, value: any) {
+    this.ensureEncryptedMethodSupport(column, 'orWhereNotJsonSubset')
+    return super.orWhereNotJsonSubset(column, value)
+  }
+
+  whereJsonPath(column: string, jsonPath: string, operator: any, value?: any): this {
+    this.ensureEncryptedMethodSupport(column, 'whereJsonPath')
+    return super.whereJsonPath(column, jsonPath, operator, value)
+  }
+
+  orWhereJsonPath(column: string, jsonPath: string, operator: any, value?: any): this {
+    this.ensureEncryptedMethodSupport(column, 'orWhereJsonPath')
+    return super.orWhereJsonPath(column, jsonPath, operator, value)
   }
 
   /**

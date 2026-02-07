@@ -35,6 +35,7 @@ import {
   type ModelKeysContract,
   type ModelAssignOptions,
   type ModelAdapterOptions,
+  type ModelEncryptionContract,
   type ModelRelationOptions,
   type ModelQueryBuilderContract,
   type ModelPaginatorContract,
@@ -113,11 +114,37 @@ class BaseModelImpl implements LucidRow {
   static $adapter: AdapterContract
 
   /**
+   * Encryption provider used by encrypted columns.
+   */
+  static $encryption?: ModelEncryptionContract
+
+  /**
    * Define an adapter to use for interacting with
    * the database
    */
   static useAdapter(adapter: AdapterContract) {
     this.$adapter = adapter
+  }
+
+  /**
+   * Define encryption provider to use for encrypted columns.
+   */
+  static useEncryption(encryption: ModelEncryptionContract) {
+    this.$encryption = encryption
+  }
+
+  /**
+   * Returns encryption provider and raises when missing.
+   */
+  static $getEncryption(attributeName?: string): ModelEncryptionContract {
+    this.boot()
+
+    if (this.$encryption) {
+      return this.$encryption
+    }
+
+    const dottedAttribute = attributeName ? `${this.name}.${attributeName}` : this.name
+    throw new errors.E_MISSING_MODEL_ENCRYPTION([dottedAttribute])
   }
 
   /**
@@ -646,6 +673,11 @@ class BaseModelImpl implements LucidRow {
      * Inherit selfAssignPrimaryKey or default to "false"
      */
     this.$defineProperty('selfAssignPrimaryKey', false, 'inherit')
+
+    /**
+     * Inherit encryption provider.
+     */
+    this.$defineProperty('$encryption', undefined, 'inherit')
 
     /**
      * Define the keys' property. This allows looking up variations
@@ -1357,6 +1389,7 @@ class BaseModelImpl implements LucidRow {
 
     return Object.keys(attributes).reduce((result: any, key) => {
       const column = Model.$getColumn(key)!
+      const encryption = column.meta?.encryption
 
       const value =
         typeof column.prepare === 'function'
@@ -1364,6 +1397,18 @@ class BaseModelImpl implements LucidRow {
           : attributes[key]
 
       result[column.columnName] = value
+
+      if (encryption?.mode === 'blind') {
+        const blindColumnName = encryption.blindColumnName as string
+        const purpose = encryption.purpose as string
+        const encryptionProvider = Model.$getEncryption(key)
+
+        result[blindColumnName] =
+          attributes[key] === null || attributes[key] === undefined
+            ? attributes[key]
+            : encryptionProvider.blindIndex(attributes[key], { purpose })
+      }
+
       return result
     }, {})
   }

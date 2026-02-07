@@ -46,6 +46,24 @@ export const E_MODEL_DELETED = createError(
   500
 )
 
+export const E_MISSING_MODEL_ENCRYPTION = createError<[string]>(
+  'Cannot use encrypted column "%s" without a configured encryption provider. Call "BaseModel.useEncryption()" before querying or persisting encrypted columns',
+  'E_MISSING_MODEL_ENCRYPTION',
+  500
+)
+
+export const E_INVALID_ENCRYPTED_COLUMN_CONFIGURATION = createError<[string, string]>(
+  'Invalid encrypted column configuration for "%s". %s',
+  'E_INVALID_ENCRYPTED_COLUMN_CONFIGURATION',
+  500
+)
+
+export const E_UNSUPPORTED_ENCRYPTED_COLUMN_QUERY = createError<[string, string]>(
+  'Cannot use "%s" on encrypted column "%s". Only equality-based queries are supported',
+  'E_UNSUPPORTED_ENCRYPTED_COLUMN_QUERY',
+  500
+)
+
 /**
  * The "E_ROW_NOT_FOUND" exception is raised when
  * no row is found in a database single query

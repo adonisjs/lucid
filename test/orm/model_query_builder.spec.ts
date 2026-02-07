@@ -99,6 +99,114 @@ test.group('Model query builder', (group) => {
     assert.deepEqual(users[0].$attributes, { id: 1, username: 'virk' })
   })
 
+  test('rewrite deterministic encrypted where clauses', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter)
+
+    BaseModel.useEncryption({
+      encrypt: (value, options) => (options?.deterministic ? `det:${value}` : `enc:${value}`),
+      decrypt: (value) => String(value).replace(/^(enc:|det:)/, ''),
+      blindIndex: (value, { purpose }) => `blind:${purpose}:${value}`,
+      blindIndexes: () => ({}),
+    })
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+
+      @column.encrypted({ deterministic: true })
+      declare email: string
+    }
+
+    const { sql, bindings } = User.query().where('email', 'virk@adonisjs.com').toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = db
+      .connection()
+      .getWriteClient()
+      .from('users')
+      .where('email', 'det:virk@adonisjs.com')
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
+  test('rewrite blind encrypted where and whereIn clauses', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter)
+
+    BaseModel.useEncryption({
+      encrypt: (value) => `enc:${value}`,
+      decrypt: (value) => String(value).replace(/^enc:/, ''),
+      blindIndex: (value, { purpose }) => `blind:${purpose}:${value}`,
+      blindIndexes: () => ({}),
+    })
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+
+      @column.encrypted({ blind: { columnName: 'email_blind', purpose: 'users:email' } })
+      declare email: string
+    }
+
+    const { sql, bindings } = User.query()
+      .where({ email: 'virk@adonisjs.com' })
+      .whereIn('email', ['virk@adonisjs.com', 'nikk@adonisjs.com'])
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = db
+      .connection()
+      .getWriteClient()
+      .from('users')
+      .where('email_blind', 'blind:users:email:virk@adonisjs.com')
+      .whereIn('email_blind', [
+        'blind:users:email:virk@adonisjs.com',
+        'blind:users:email:nikk@adonisjs.com',
+      ])
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
+  test('raise when using non equality operators on deterministic encrypted columns', async ({
+    fs,
+    assert,
+  }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter)
+
+    BaseModel.useEncryption({
+      encrypt: (value, options) => (options?.deterministic ? `det:${value}` : `enc:${value}`),
+      decrypt: (value) => String(value).replace(/^(enc:|det:)/, ''),
+      blindIndex: (value, { purpose }) => `blind:${purpose}:${value}`,
+      blindIndexes: () => ({}),
+    })
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+
+      @column.encrypted({ deterministic: true })
+      declare email: string
+    }
+
+    assert.throws(
+      () => User.query().whereLike('email', '%virk%'),
+      'Cannot use "whereLike" on encrypted column "User.email". Only equality-based queries are supported'
+    )
+  })
+
   test('pass custom connection to the model instance', async ({ fs, assert }) => {
     const app = new AppFactory().create(fs.baseUrl, () => {})
     await app.init()

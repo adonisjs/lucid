@@ -11,6 +11,7 @@ import {
   type LucidModel,
   type HooksDecorator,
   type ColumnDecorator,
+  type EncryptedColumnDecorator,
   type ComputedDecorator,
   type DateColumnDecorator,
   type DateTimeColumnDecorator,
@@ -26,6 +27,7 @@ import {
 
 import { dateColumn } from './date.js'
 import { dateTimeColumn } from './date_time.js'
+import { encryptedColumn } from './encrypted.js'
 
 /**
  * Define property on a model as a column. The decorator needs a
@@ -34,6 +36,7 @@ import { dateTimeColumn } from './date_time.js'
 export const column: ColumnDecorator & {
   date: DateColumnDecorator
   dateTime: DateTimeColumnDecorator
+  encrypted: EncryptedColumnDecorator
 } = (options?) => {
   return function decorateAsColumn(target, property) {
     const Model = target.constructor as LucidModel
@@ -44,6 +47,7 @@ export const column: ColumnDecorator & {
 
 column.date = dateColumn
 column.dateTime = dateTimeColumn
+column.encrypted = encryptedColumn
 
 /**
  * Define computed property on a model. The decorator needs a

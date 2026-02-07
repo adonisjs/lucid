@@ -1315,6 +1315,143 @@ test.group('Base Model | persist', (group) => {
     assert.deepEqual(user.$original, { username: 'virk', fullName: 'H virk' })
   })
 
+  test('encrypt value before passing encrypted columns to the adapter', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const adapter = new FakeAdapter()
+    const BaseModel = getBaseModel(adapter)
+
+    BaseModel.useEncryption({
+      encrypt: (value) => `enc:${value}`,
+      decrypt: (value) => String(value).replace(/^enc:/, ''),
+      blindIndex: (value, { purpose }) => `blind:${purpose}:${value}`,
+      blindIndexes: () => ({}),
+    })
+
+    class User extends BaseModel {
+      @column.encrypted()
+      declare secret: string
+    }
+
+    const user = new User()
+    user.secret = 'super-secret'
+    await user.save()
+
+    assert.deepEqual(adapter.operations[0].attributes, { secret: 'enc:super-secret' })
+  })
+
+  test('encrypt deterministic value before passing encrypted columns to the adapter', async ({
+    fs,
+    assert,
+  }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const adapter = new FakeAdapter()
+    const BaseModel = getBaseModel(adapter)
+
+    BaseModel.useEncryption({
+      encrypt: (value, options) => (options?.deterministic ? `det:${value}` : `enc:${value}`),
+      decrypt: (value) => String(value).replace(/^(enc:|det:)/, ''),
+      blindIndex: (value, { purpose }) => `blind:${purpose}:${value}`,
+      blindIndexes: () => ({}),
+    })
+
+    class User extends BaseModel {
+      @column.encrypted({ deterministic: true })
+      declare email: string
+    }
+
+    const user = new User()
+    user.email = 'virk@adonisjs.com'
+    await user.save()
+
+    assert.deepEqual(adapter.operations[0].attributes, { email: 'det:virk@adonisjs.com' })
+  })
+
+  test('persist blind index in a dedicated column when using blind encrypted columns', async ({
+    fs,
+    assert,
+  }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const adapter = new FakeAdapter()
+    const BaseModel = getBaseModel(adapter)
+
+    BaseModel.useEncryption({
+      encrypt: (value) => `enc:${value}`,
+      decrypt: (value) => String(value).replace(/^enc:/, ''),
+      blindIndex: (value, { purpose }) => `blind:${purpose}:${value}`,
+      blindIndexes: () => ({}),
+    })
+
+    class User extends BaseModel {
+      @column.encrypted({ blind: { columnName: 'email_blind', purpose: 'users:email' } })
+      declare email: string
+    }
+
+    const user = new User()
+    user.email = 'virk@adonisjs.com'
+    await user.save()
+
+    assert.deepEqual(adapter.operations[0].attributes, {
+      email: 'enc:virk@adonisjs.com',
+      email_blind: 'blind:users:email:virk@adonisjs.com',
+    })
+  })
+
+  test('raise exception when using blind encrypted columns without purpose', async ({
+    fs,
+    assert,
+  }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const adapter = new FakeAdapter()
+    const BaseModel = getBaseModel(adapter)
+
+    const fn = () => {
+      class User extends BaseModel {
+        @column.encrypted({ blind: { columnName: 'email_blind' } } as any)
+        declare email: string
+      }
+
+      return User
+    }
+
+    assert.throws(
+      fn,
+      'Invalid encrypted column configuration for "User.email". Missing "blind.purpose"'
+    )
+  })
+
+  test('raise exception when encryption provider is missing for encrypted columns', async ({
+    fs,
+    assert,
+  }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const adapter = new FakeAdapter()
+    const BaseModel = getBaseModel(adapter)
+    BaseModel.useEncryption(undefined as any)
+
+    class User extends BaseModel {
+      @column.encrypted()
+      declare secret: string
+    }
+
+    const user = new User()
+    user.secret = 'super-secret'
+
+    try {
+      await user.save()
+      assert.fail('Expected save to fail when encryption provider is missing')
+    } catch (error: any) {
+      assert.equal(
+        error.message,
+        'Cannot use encrypted column "User.secret" without a configured encryption provider. Call "BaseModel.useEncryption()" before querying or persisting encrypted columns'
+      )
+    }
+  })
+
   test('send values mutated by the hooks to the adapter', async ({ fs, assert }) => {
     const app = new AppFactory().create(fs.baseUrl, () => {})
     await app.init()
@@ -1813,6 +1950,33 @@ test.group('Base Model | create from adapter results', (group) => {
     assert.isFalse(user!.$isLocal)
     assert.deepEqual(user!.$attributes, { fullName: 'VIRK' })
     assert.deepEqual(user!.$original, { fullName: 'VIRK' })
+  })
+
+  test('decrypt value when consuming encrypted columns', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const adapter = new FakeAdapter()
+
+    const BaseModel = getBaseModel(adapter)
+    BaseModel.useEncryption({
+      encrypt: (value) => `enc:${value}`,
+      decrypt: (value) => String(value).replace(/^enc:/, ''),
+      blindIndex: (value, { purpose }) => `blind:${purpose}:${value}`,
+      blindIndexes: () => ({}),
+    })
+
+    class User extends BaseModel {
+      @column.encrypted()
+      declare secret: string
+    }
+
+    const user = User.$createFromAdapterResult({ secret: 'enc:top-secret' })
+
+    assert.isTrue(user!.$isPersisted)
+    assert.isFalse(user!.$isDirty)
+    assert.isFalse(user!.$isLocal)
+    assert.deepEqual(user!.$attributes, { secret: 'top-secret' })
+    assert.deepEqual(user!.$original, { secret: 'top-secret' })
   })
 
   test('original and attributes should not be shared', async ({ fs, assert }) => {

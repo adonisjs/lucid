@@ -10,6 +10,7 @@
 export * from './decorators/index.js'
 export * from './decorators/date.js'
 export * from './decorators/date_time.js'
+export * from './decorators/encrypted.js'
 export { BaseModel, scope } from './base_model/index.js'
 export { ModelQueryBuilder } from './query_builder/index.js'
 export { ModelPaginator } from './paginator/index.js'
