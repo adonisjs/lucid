@@ -569,6 +569,7 @@ test.group('Query client | get tables', (group) => {
         'skill_user',
         'skills',
         'users',
+        'users_encrypted',
         'uuid_users',
       ])
     } else {
@@ -585,6 +586,7 @@ test.group('Query client | get tables', (group) => {
         'skills',
         'skill_user',
         'users',
+        'users_encrypted',
         'uuid_users',
       ])
     }
