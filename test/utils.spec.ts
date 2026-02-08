@@ -8,7 +8,13 @@
  */
 
 import { test } from '@japa/runner'
-import { parseMigrationIntent, syncDiff } from '../src/utils/index.js'
+import {
+  parseMigrationIntent,
+  syncDiff,
+  getPropertyTsType,
+  getRelationTypeName,
+  getInverseRelation,
+} from '../src/utils/index.js'
 
 test.group('Utils | syncDiff', () => {
   test('return ids to be added', ({ assert }) => {
@@ -132,4 +138,75 @@ test.group('Utils | parseMigrationIntent', () => {
     .run(({ assert }, { input, output }) => {
       assert.deepEqual(parseMigrationIntent(input), output)
     })
+})
+
+test.group('Utils | getPropertyTsType', () => {
+  test('return correct TypeScript type for property types')
+    .with([
+      { input: 'string', output: 'string' },
+      { input: 'number', output: 'number' },
+      { input: 'boolean', output: 'boolean' },
+      { input: 'date', output: 'DateTime' },
+      { input: 'dateTime', output: 'DateTime' },
+    ] as const)
+    .run(({ assert }, { input, output }) => {
+      assert.equal(getPropertyTsType(input), output)
+    })
+})
+
+test.group('Utils | getRelationTypeName', () => {
+  test('return correct relation type name')
+    .with([
+      { input: 'belongsTo', output: 'BelongsTo' },
+      { input: 'hasOne', output: 'HasOne' },
+      { input: 'hasMany', output: 'HasMany' },
+      { input: 'manyToMany', output: 'ManyToMany' },
+      { input: 'hasManyThrough', output: 'HasManyThrough' },
+    ] as const)
+    .run(({ assert }, { input, output }) => {
+      assert.equal(getRelationTypeName(input), output)
+    })
+})
+
+test.group('Utils | getInverseRelation', () => {
+  test('return correct inverse relation for belongsTo', ({ assert }) => {
+    const result = getInverseRelation('belongsTo', 'Post')
+    assert.deepEqual(result, {
+      decorator: 'hasMany',
+      type: 'HasMany',
+      propertyName: 'posts',
+    })
+  })
+
+  test('return correct inverse relation for hasOne', ({ assert }) => {
+    const result = getInverseRelation('hasOne', 'Profile')
+    assert.deepEqual(result, {
+      decorator: 'belongsTo',
+      type: 'BelongsTo',
+      propertyName: 'profile',
+    })
+  })
+
+  test('return correct inverse relation for hasMany', ({ assert }) => {
+    const result = getInverseRelation('hasMany', 'User')
+    assert.deepEqual(result, {
+      decorator: 'belongsTo',
+      type: 'BelongsTo',
+      propertyName: 'user',
+    })
+  })
+
+  test('return correct inverse relation for manyToMany', ({ assert }) => {
+    const result = getInverseRelation('manyToMany', 'Tag')
+    assert.deepEqual(result, {
+      decorator: 'manyToMany',
+      type: 'ManyToMany',
+      propertyName: 'tags',
+    })
+  })
+
+  test('return null for hasManyThrough', ({ assert }) => {
+    const result = getInverseRelation('hasManyThrough', 'Post')
+    assert.isNull(result)
+  })
 })

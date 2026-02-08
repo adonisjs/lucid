@@ -318,3 +318,87 @@ export function parseMigrationIntent(name: string): {
 
   return null
 }
+
+/**
+ * Model property types for interactive mode
+ */
+export type ModelPropertyType = 'string' | 'number' | 'boolean' | 'date' | 'dateTime'
+
+/**
+ * Model relation types for interactive mode
+ */
+export type ModelRelationType = 'belongsTo' | 'hasOne' | 'hasMany' | 'manyToMany' | 'hasManyThrough'
+
+/**
+ * Get TypeScript type for a model property type
+ */
+export function getPropertyTsType(type: ModelPropertyType): string {
+  switch (type) {
+    case 'date':
+    case 'dateTime':
+      return 'DateTime'
+    case 'number':
+      return 'number'
+    case 'boolean':
+      return 'boolean'
+    default:
+      return 'string'
+  }
+}
+
+/**
+ * Get relation type name for TypeScript imports
+ */
+export function getRelationTypeName(type: ModelRelationType): string {
+  switch (type) {
+    case 'belongsTo':
+      return 'BelongsTo'
+    case 'hasOne':
+      return 'HasOne'
+    case 'hasMany':
+      return 'HasMany'
+    case 'manyToMany':
+      return 'ManyToMany'
+    case 'hasManyThrough':
+      return 'HasManyThrough'
+    default:
+      return 'HasOne'
+  }
+}
+
+/**
+ * Get inverse relation info for a given relation type
+ */
+export function getInverseRelation(
+  relationType: ModelRelationType,
+  currentModel: string
+): { decorator: string; type: string; propertyName: string } | null {
+  switch (relationType) {
+    case 'belongsTo':
+      return {
+        decorator: 'hasMany',
+        type: 'HasMany',
+        propertyName: currentModel.toLowerCase() + 's',
+      }
+    case 'hasOne':
+      return {
+        decorator: 'belongsTo',
+        type: 'BelongsTo',
+        propertyName: currentModel.toLowerCase(),
+      }
+    case 'hasMany':
+      return {
+        decorator: 'belongsTo',
+        type: 'BelongsTo',
+        propertyName: currentModel.toLowerCase(),
+      }
+    case 'manyToMany':
+      return {
+        decorator: 'manyToMany',
+        type: 'ManyToMany',
+        propertyName: currentModel.toLowerCase() + 's',
+      }
+    default:
+      return null
+  }
+}

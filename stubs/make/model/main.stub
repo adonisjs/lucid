@@ -7,6 +7,25 @@
   })
 }}}
 import { {{ modelSchemaName }} } from '#database/schema'
+{{#if hasProperties}}
+{{#if hasRelations}}
+import { column, {{#each relationDecorators as decorator, index}}{{#if index}}, {{/if}}{{decorator}}{{/each}} } from '@adonisjs/lucid/orm'
+{{#else}}
+import { column } from '@adonisjs/lucid/orm'
+{{/if}}
+{{#elif hasRelations}}
+import { {{#each relationDecorators as decorator, index}}{{#if index}}, {{/if}}{{decorator}}{{/each}} } from '@adonisjs/lucid/orm'
+{{/if}}
+{{#if hasRelations}}
+import type { {{#each relationTypes as relationType, index}}{{#if index}}, {{/if}}{{relationType}}{{/each}} } from '@adonisjs/lucid/types/relations'
+{{/if}}
+{{#if hasDateColumns}}
+import type { DateTime } from 'luxon'
+{{/if}}
+{{#each relatedModelImports as modelImport}}
+import {{modelImport.className}} from '#models/{{modelImport.fileName}}'
+{{/each}}
 
 export default class {{ modelName }} extends {{ modelSchemaName }} {
+{{{ classBody }}}
 }
