@@ -8504,3 +8504,219 @@ test.group('Base Model | transaction', (group) => {
     assert.deepEqual(user.$extras, {})
   })
 })
+
+test.group('Base Model | toAttributes', () => {
+  test('return all attributes when $columns is not defined', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const adapter = new FakeAdapter()
+
+    const BaseModel = getBaseModel(adapter)
+
+    class User extends BaseModel {
+      @column()
+      declare id: number
+
+      @column()
+      declare username: string
+
+      @column()
+      declare email: string
+    }
+
+    const user = new User()
+    user.id = 1
+    user.username = 'virk'
+    user.email = 'virk@adonisjs.com'
+
+    const attrs = user.toAttributes()
+    assert.deepEqual(attrs, {
+      id: 1,
+      username: 'virk',
+      email: 'virk@adonisjs.com',
+    })
+  })
+
+  test('return only specified columns when $columns is defined', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const adapter = new FakeAdapter()
+
+    const BaseModel = getBaseModel(adapter)
+
+    class User extends BaseModel {
+      $columns = ['id', 'username'] as const
+
+      @column()
+      declare id: number
+
+      @column()
+      declare username: string
+
+      @column()
+      declare email: string
+    }
+
+    const user = new User()
+    user.id = 1
+    user.username = 'virk'
+    user.email = 'virk@adonisjs.com'
+
+    const attrs = user.toAttributes()
+    assert.deepEqual(attrs, {
+      id: 1,
+      username: 'virk',
+    })
+    assert.notProperty(attrs, 'email')
+  })
+
+  test('skip columns that are not in attributes', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const adapter = new FakeAdapter()
+
+    const BaseModel = getBaseModel(adapter)
+
+    class User extends BaseModel {
+      $columns = ['id', 'username', 'age'] as const
+
+      @column()
+      declare id: number
+
+      @column()
+      declare username: string
+
+      @column()
+      declare age: number
+    }
+
+    const user = new User()
+    user.id = 1
+    user.username = 'virk'
+    // age is not set
+
+    const attrs = user.toAttributes()
+    assert.deepEqual(attrs, {
+      id: 1,
+      username: 'virk',
+    })
+    assert.notProperty(attrs, 'age')
+  })
+
+  test('use getter when accessing column value', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const adapter = new FakeAdapter()
+
+    const BaseModel = getBaseModel(adapter)
+
+    class User extends BaseModel {
+      $columns = ['id', 'username'] as const
+
+      @column()
+      declare id: number
+
+      @column()
+      get username() {
+        return this.$getAttribute('username')?.toUpperCase()
+      }
+
+      set username(value: string) {
+        this.$setAttribute('username', value)
+      }
+    }
+
+    const user = new User()
+    user.id = 1
+    user.username = 'virk'
+
+    const attrs = user.toAttributes()
+    assert.deepEqual(attrs, {
+      id: 1,
+      username: 'VIRK',
+    })
+  })
+
+  test('return empty object when $columns is empty array', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const adapter = new FakeAdapter()
+
+    const BaseModel = getBaseModel(adapter)
+
+    class User extends BaseModel {
+      $columns = [] as const
+
+      @column()
+      declare id: number
+
+      @column()
+      declare username: string
+    }
+
+    const user = new User()
+    user.id = 1
+    user.username = 'virk'
+
+    const attrs = user.toAttributes()
+    assert.deepEqual(attrs, {})
+  })
+
+  test('return copy of attributes, not reference', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const adapter = new FakeAdapter()
+
+    const BaseModel = getBaseModel(adapter)
+
+    class User extends BaseModel {
+      @column()
+      declare id: number
+
+      @column()
+      declare username: string
+    }
+
+    const user = new User()
+    user.id = 1
+    user.username = 'virk'
+
+    const attrs = user.toAttributes()
+    attrs.username = 'modified'
+
+    assert.equal(user.username, 'virk')
+    assert.notDeepEqual(attrs, user.$attributes)
+  })
+
+  test('handle null and undefined values in columns', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const adapter = new FakeAdapter()
+
+    const BaseModel = getBaseModel(adapter)
+
+    class User extends BaseModel {
+      $columns = ['id', 'username', 'email'] as const
+
+      @column()
+      declare id: number
+
+      @column()
+      declare username: string | null
+
+      @column()
+      declare email: string | undefined
+    }
+
+    const user = new User()
+    user.id = 1
+    user.username = null
+    user.email = undefined
+
+    const attrs = user.toAttributes()
+    assert.deepEqual(attrs, {
+      id: 1,
+      username: null,
+    })
+  })
+})

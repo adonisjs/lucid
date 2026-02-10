@@ -106,6 +106,18 @@ export type ModelAttributes<Model extends LucidRow> = {
   }[keyof Model]]: Model[Filtered]
 }
 
+/**
+ * Creates a type-safe object based on the $columns instance property of a model.
+ * Only includes the columns specified in the $columns array.
+ */
+export type ExtractModelColumns<Model extends LucidRow> = Model extends {
+  $columns: readonly string[]
+}
+  ? {
+      [K in Model['$columns'][number]]: K extends keyof Model ? Model[K] : never
+    }
+  : Record<string, any>
+
 export type ExtractScopes<Model extends LucidModel> = {
   [Scope in keyof PickProperties<Model, QueryScope<Model, QueryScopeCallback<Model>>>]: (
     ...args: Model[Scope] extends QueryScopeCallback<Model> ? OmitFirst<Model[Scope]> : never
@@ -743,6 +755,12 @@ export interface LucidRow {
    * Serialize everything
    */
   toJSON(): ModelObject
+
+  /**
+   * Returns a type-safe object containing only the columns specified
+   * in the model's $columns property
+   */
+  toAttributes(): ExtractModelColumns<this>
 
   /**
    * Returns related model for a given relationship

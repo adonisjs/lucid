@@ -2355,6 +2355,29 @@ class BaseModelImpl implements LucidRow {
   }
 
   /**
+   * Returns a type-safe object containing only the columns specified
+   * in the model's $columns property. If $columns is not defined,
+   * returns all model attributes.
+   */
+  toAttributes(): any {
+    if (!this.$columns || !Array.isArray(this.$columns)) {
+      return { ...this.$attributes }
+    }
+
+    const result: any = {}
+    for (const column of this.$columns) {
+      if (column in this.$attributes) {
+        const value = (this as any)[column]
+        if (value !== undefined) {
+          result[column] = value
+        }
+      }
+    }
+
+    return result
+  }
+
+  /**
    * Returns the query for `insert`, `update` or `delete` actions.
    * Since the query builder for these actions are not exposed to
    * the end user, this method gives a way to compose queries.

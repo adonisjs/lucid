@@ -923,3 +923,231 @@ test.group('Model Types | Complex Scenarios', (group) => {
     expectTypeOf(post.$columns).toEqualTypeOf<readonly ['id', 'userId', 'title', 'content']>()
   })
 })
+
+test.group('Model Types | toAttributes', (group) => {
+  group.setup(async () => {
+    await setup()
+  })
+
+  group.teardown(async () => {
+    await cleanup()
+  })
+
+  test('toAttributes returns type-safe object when $columns is defined', async ({
+    fs,
+    expectTypeOf,
+  }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter)
+
+    class User extends BaseModel {
+      static $columns = ['id', 'username'] as const
+      $columns = User.$columns
+
+      @column({ isPrimary: true })
+      declare id: number
+
+      @column()
+      declare username: string
+
+      @column()
+      declare email: string
+    }
+
+    const user = new User()
+    const attrs = user.toAttributes()
+
+    // Should only include id and username, not email
+    expectTypeOf(attrs).toEqualTypeOf<{
+      id: number
+      username: string
+    }>()
+
+    // Should have id property
+    expectTypeOf(attrs.id).toEqualTypeOf<number>()
+
+    // Should have username property
+    expectTypeOf(attrs.username).toEqualTypeOf<string>()
+
+    // @ts-expect-error - email should not be accessible
+    attrs.email
+  })
+
+  test('toAttributes returns Record<string, any> when $columns is not defined', async ({
+    fs,
+    expectTypeOf,
+  }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter)
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+
+      @column()
+      declare username: string
+
+      @column()
+      declare email: string
+    }
+
+    const user = new User()
+    const attrs = user.toAttributes()
+
+    // Should return Record<string, any> when $columns is not defined
+    expectTypeOf(attrs).toEqualTypeOf<Record<string, any>>()
+  })
+
+  test('toAttributes with nullable columns has correct types', async ({ fs, expectTypeOf }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter)
+
+    class User extends BaseModel {
+      static $columns = ['id', 'username', 'bio'] as const
+      $columns = User.$columns
+
+      @column({ isPrimary: true })
+      declare id: number
+
+      @column()
+      declare username: string
+
+      @column()
+      declare bio: string | null
+    }
+
+    const user = new User()
+    const attrs = user.toAttributes()
+
+    expectTypeOf(attrs).toEqualTypeOf<{
+      id: number
+      username: string
+      bio: string | null
+    }>()
+
+    expectTypeOf(attrs.bio).toEqualTypeOf<string | null>()
+  })
+
+  test('toAttributes with DateTime columns has correct types', async ({ fs, expectTypeOf }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter)
+
+    class User extends BaseModel {
+      static $columns = ['id', 'username', 'createdAt', 'updatedAt'] as const
+      $columns = User.$columns
+
+      @column({ isPrimary: true })
+      declare id: number
+
+      @column()
+      declare username: string
+
+      @column.dateTime({ autoCreate: true })
+      declare createdAt: DateTime
+
+      @column.dateTime({ autoCreate: true, autoUpdate: true })
+      declare updatedAt: DateTime
+    }
+
+    const user = new User()
+    const attrs = user.toAttributes()
+
+    expectTypeOf(attrs).toEqualTypeOf<{
+      id: number
+      username: string
+      createdAt: DateTime
+      updatedAt: DateTime
+    }>()
+
+    expectTypeOf(attrs.createdAt).toEqualTypeOf<DateTime>()
+    expectTypeOf(attrs.updatedAt).toEqualTypeOf<DateTime>()
+  })
+
+  test('toAttributes with subset of columns has correct types', async ({ fs, expectTypeOf }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter)
+
+    class User extends BaseModel {
+      static $columns = ['id', 'username', 'email', 'isActive'] as const
+      $columns = User.$columns
+
+      @column({ isPrimary: true })
+      declare id: number
+
+      @column()
+      declare username: string
+
+      @column()
+      declare email: string
+
+      @column()
+      declare isActive: boolean
+
+      @column()
+      declare password: string
+    }
+
+    const user = new User()
+    const attrs = user.toAttributes()
+
+    // Should only include columns specified in $columns
+    expectTypeOf(attrs).toEqualTypeOf<{
+      id: number
+      username: string
+      email: string
+      isActive: boolean
+    }>()
+
+    // @ts-expect-error - password should not be accessible
+    attrs.password
+  })
+
+  test('toAttributes with empty $columns array returns empty object type', async ({
+    fs,
+    expectTypeOf,
+  }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter)
+
+    class User extends BaseModel {
+      static $columns = [] as const
+      $columns = User.$columns
+
+      @column({ isPrimary: true })
+      declare id: number
+
+      @column()
+      declare username: string
+    }
+
+    const user = new User()
+    const attrs = user.toAttributes()
+
+    // Empty $columns should result in empty object type
+    expectTypeOf(attrs).toEqualTypeOf<{}>()
+
+    // @ts-expect-error - id should not be accessible
+    attrs.id
+
+    // @ts-expect-error - username should not be accessible
+    attrs.username
+  })
+})
