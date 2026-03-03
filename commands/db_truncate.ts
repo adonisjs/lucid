@@ -32,6 +32,19 @@ export default class DbTruncate extends BaseCommand {
   declare force: boolean
 
   /**
+   * Define a specific table to truncate. Otherwise truncate all
+   * tables
+   */
+  @flags.string({ description: 'Define a specific table to truncate' })
+  declare table: string
+
+  /**
+   * Cascade truncation to related tables
+   */
+  @flags.boolean({ description: 'Cascade truncation to related tables' })
+  declare cascade: boolean
+
+  /**
    * Not a valid connection
    */
   private printNotAValidConnection(connection: string) {
@@ -60,7 +73,11 @@ export default class DbTruncate extends BaseCommand {
     schemas: string[],
     excludeTables: string[]
   ) {
-    await client.truncateAllTables(excludeTables, schemas)
+    if (this.table) {
+      await client.truncate(this.table, this.cascade)
+    } else {
+      await client.truncateAllTables(excludeTables, schemas)
+    }
     this.logger.success('Truncated tables successfully')
   }
 

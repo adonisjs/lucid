@@ -44,6 +44,27 @@ test.group('db:truncate', (group) => {
     assert.equal(friendsCount[0]['total'], 0)
   })
 
+  test('should truncate a single table when --table flag is provided', async ({ fs, assert }) => {
+    const db = getDb()
+    const ace = await new AceFactory().make(fs.baseUrl, { importer: () => {} })
+    await ace.app.init()
+    ace.app.container.singleton('lucid.db', () => db)
+    ace.ui.switchMode('raw')
+
+    await db.table('users').insert({ username: 'bonjour' })
+    await db.table('users').insert({ username: 'bonjour2' })
+    await db.table('friends').insert({ username: 'bonjour' })
+
+    const command = await ace.create(DbTruncate, ['--table=users'])
+    await command.exec()
+
+    const usersCount = await db.from('users').count('*', 'total')
+    const friendsCount = await db.from('friends').count('*', 'total')
+
+    assert.equal(usersCount[0]['total'], 0)
+    assert.equal(friendsCount[0]['total'], 1)
+  })
+
   test('should not truncate adonis migrations tables', async ({ fs, assert }) => {
     const db = getDb()
     const ace = await new AceFactory().make(fs.baseUrl, { importer: () => {} })
