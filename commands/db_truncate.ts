@@ -76,6 +76,9 @@ export default class DbTruncate extends BaseCommand {
     if (this.table) {
       await client.truncate(this.table, this.cascade)
     } else {
+      if (this.cascade) {
+        this.logger.warning('--cascade is only supported with --table. Ignoring --cascade')
+      }
       await client.truncateAllTables(excludeTables, schemas)
     }
     this.logger.success('Truncated tables successfully')

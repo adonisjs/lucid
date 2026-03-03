@@ -420,7 +420,9 @@ node ace db:truncate
 
 # Options
 --connection=<name>     # Use specific connection
---force                # Force in production
+--force                 # Force in production
+--table=<table name>    # Define a specific table to truncate
+--cascade               # Cascade truncation to related tables. Only works when specifying --table
 ```
 
 **Examples:**
