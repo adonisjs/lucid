@@ -123,156 +123,6 @@ test.group('Query Builder | insert', (group) => {
     await connection.disconnect()
   })
 
-  test('define on conflict ignore', async ({ assert }) => {
-    const connection = new Connection('primary', getConfig(), logger)
-    connection.connect()
-
-    const db = getInsertBuilder(getQueryClient(connection))
-    const { sql, bindings } = db
-      .table('users')
-      .insert({ username: 'virk' })
-      .onConflict()
-      .ignore()
-      .toSQL()
-
-    const { sql: knexSql, bindings: knexBindings } = connection
-      .client!.from('users')
-      .insert({ username: 'virk' })
-      .onConflict()
-      .ignore()
-      .toSQL()
-
-    assert.equal(sql, knexSql)
-    assert.deepEqual(bindings, knexBindings)
-
-    await connection.disconnect()
-  })
-
-  test('define on conflict ignore with column', async ({ assert }) => {
-    const connection = new Connection('primary', getConfig(), logger)
-    connection.connect()
-
-    const db = getInsertBuilder(getQueryClient(connection))
-    const { sql, bindings } = db
-      .table('users')
-      .insert({ username: 'virk' })
-      .onConflict('username')
-      .ignore()
-      .toSQL()
-
-    const { sql: knexSql, bindings: knexBindings } = connection
-      .client!.from('users')
-      .insert({ username: 'virk' })
-      .onConflict('username')
-      .ignore()
-      .toSQL()
-
-    assert.equal(sql, knexSql)
-    assert.deepEqual(bindings, knexBindings)
-
-    await connection.disconnect()
-  })
-
-  test('define on conflict ignore with multiple columns', async ({ assert }) => {
-    const connection = new Connection('primary', getConfig(), logger)
-    connection.connect()
-
-    const db = getInsertBuilder(getQueryClient(connection))
-    const { sql, bindings } = db
-      .table('users')
-      .insert({ username: 'virk', email: 'virk@adonisjs.com' })
-      .onConflict(['username', 'email'])
-      .ignore()
-      .toSQL()
-
-    const { sql: knexSql, bindings: knexBindings } = connection
-      .client!.from('users')
-      .insert({ username: 'virk', email: 'virk@adonisjs.com' })
-      .onConflict(['username', 'email'])
-      .ignore()
-      .toSQL()
-
-    assert.equal(sql, knexSql)
-    assert.deepEqual(bindings, knexBindings)
-
-    await connection.disconnect()
-  })
-
-  test('define on conflict merge', async ({ assert }) => {
-    const connection = new Connection('primary', getConfig(), logger)
-    connection.connect()
-
-    const db = getInsertBuilder(getQueryClient(connection))
-    const { sql, bindings } = db
-      .table('users')
-      .insert({ username: 'virk' })
-      .onConflict('username')
-      .merge()
-      .toSQL()
-
-    const { sql: knexSql, bindings: knexBindings } = connection
-      .client!.from('users')
-      .insert({ username: 'virk' })
-      .onConflict('username')
-      .merge()
-      .toSQL()
-
-    assert.equal(sql, knexSql)
-    assert.deepEqual(bindings, knexBindings)
-
-    await connection.disconnect()
-  })
-
-  test('define on conflict merge with columns', async ({ assert }) => {
-    const connection = new Connection('primary', getConfig(), logger)
-    connection.connect()
-
-    const db = getInsertBuilder(getQueryClient(connection))
-    const { sql, bindings } = db
-      .table('users')
-      .insert({ username: 'virk', email: 'virk@adonisjs.com' })
-      .onConflict('username')
-      .merge(['email'])
-      .toSQL()
-
-    const { sql: knexSql, bindings: knexBindings } = connection
-      .client!.from('users')
-      .insert({ username: 'virk', email: 'virk@adonisjs.com' })
-      .onConflict('username')
-      .merge(['email'])
-      .toSQL()
-
-    assert.equal(sql, knexSql)
-    assert.deepEqual(bindings, knexBindings)
-
-    await connection.disconnect()
-  })
-
-  test('define on conflict merge with values', async ({ assert }) => {
-    const connection = new Connection('primary', getConfig(), logger)
-    connection.connect()
-
-    const db = getInsertBuilder(getQueryClient(connection))
-    const { sql, bindings } = db
-      .table('users')
-      .insert({ username: 'virk' })
-      .onConflict('username')
-      .merge({ username: 'nikk' })
-      .toSQL()
-
-    const { sql: knexSql, bindings: knexBindings } = connection
-      .client!.from('users')
-      .insert({ username: 'virk' })
-      .onConflict('username')
-      .merge({ username: 'nikk' })
-      .toSQL()
-
-    assert.equal(sql, knexSql)
-    assert.deepEqual(bindings, knexBindings)
-
-    await connection.disconnect()
-  })
-
   test('define with clause for insert', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), logger)
     connection.connect()
@@ -291,7 +141,10 @@ test.group('Query Builder | insert', (group) => {
 
     const { sql: knexSql, bindings: knexBindings } = connection
       .client!.from('users')
-      .with('active_users', connection.client!.raw('select * from users where is_active = ?', [true]))
+      .with(
+        'active_users',
+        connection.client!.raw('select * from users where is_active = ?', [true])
+      )
       .insert({ username: 'virk' })
       .toSQL()
 
@@ -327,64 +180,6 @@ test.group('Query Builder | insert', (group) => {
     await connection.disconnect()
   })
 
-  test('define withMaterialized clause for insert', async ({ assert }) => {
-    const connection = new Connection('primary', getConfig(), logger)
-    connection.connect()
-
-    const db = getInsertBuilder(getQueryClient(connection))
-    const { sql, bindings } = db
-      .table('users')
-      .withMaterialized(
-        'active_users',
-        getRawQueryBuilder(getQueryClient(connection), 'select * from users where is_active = 1')
-      )
-      .insert({ username: 'virk' })
-      .toSQL()
-
-    const { sql: knexSql, bindings: knexBindings } = connection
-      .client!.from('users')
-      .withMaterialized(
-        'active_users',
-        connection.client!.raw('select * from users where is_active = 1')
-      )
-      .insert({ username: 'virk' })
-      .toSQL()
-
-    assert.equal(sql, knexSql)
-    assert.deepEqual(bindings, knexBindings)
-
-    await connection.disconnect()
-  })
-
-  test('define withNotMaterialized clause for insert', async ({ assert }) => {
-    const connection = new Connection('primary', getConfig(), logger)
-    connection.connect()
-
-    const db = getInsertBuilder(getQueryClient(connection))
-    const { sql, bindings } = db
-      .table('users')
-      .withNotMaterialized(
-        'active_users',
-        getRawQueryBuilder(getQueryClient(connection), 'select * from users where is_active = 1')
-      )
-      .insert({ username: 'virk' })
-      .toSQL()
-
-    const { sql: knexSql, bindings: knexBindings } = connection
-      .client!.from('users')
-      .withNotMaterialized(
-        'active_users',
-        connection.client!.raw('select * from users where is_active = 1')
-      )
-      .insert({ username: 'virk' })
-      .toSQL()
-
-    assert.equal(sql, knexSql)
-    assert.deepEqual(bindings, knexBindings)
-
-    await connection.disconnect()
-  })
-
   test('define comment for insert', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), logger)
     connection.connect()
@@ -408,3 +203,235 @@ test.group('Query Builder | insert', (group) => {
     await connection.disconnect()
   })
 })
+
+if (['pg', 'sqlite', 'better_sqlite', 'libsql', 'mysql', 'mysql_legacy'].includes(process.env.DB!)) {
+  test.group('Query Builder | insert | onConflict', (group) => {
+    group.setup(async () => {
+      await setup()
+    })
+
+    group.teardown(async () => {
+      await cleanup()
+    })
+
+    test('define on conflict ignore', async ({ assert }) => {
+      const connection = new Connection('primary', getConfig(), logger)
+      connection.connect()
+
+      const db = getInsertBuilder(getQueryClient(connection))
+      const { sql, bindings } = db
+        .table('users')
+        .insert({ username: 'virk' })
+        .onConflict()
+        .ignore()
+        .toSQL()
+
+      const { sql: knexSql, bindings: knexBindings } = connection
+        .client!.from('users')
+        .insert({ username: 'virk' })
+        .onConflict()
+        .ignore()
+        .toSQL()
+
+      assert.equal(sql, knexSql)
+      assert.deepEqual(bindings, knexBindings)
+
+      await connection.disconnect()
+    })
+
+    test('define on conflict ignore with column', async ({ assert }) => {
+      const connection = new Connection('primary', getConfig(), logger)
+      connection.connect()
+
+      const db = getInsertBuilder(getQueryClient(connection))
+      const { sql, bindings } = db
+        .table('users')
+        .insert({ username: 'virk' })
+        .onConflict('username')
+        .ignore()
+        .toSQL()
+
+      const { sql: knexSql, bindings: knexBindings } = connection
+        .client!.from('users')
+        .insert({ username: 'virk' })
+        .onConflict('username')
+        .ignore()
+        .toSQL()
+
+      assert.equal(sql, knexSql)
+      assert.deepEqual(bindings, knexBindings)
+
+      await connection.disconnect()
+    })
+
+    test('define on conflict ignore with multiple columns', async ({ assert }) => {
+      const connection = new Connection('primary', getConfig(), logger)
+      connection.connect()
+
+      const db = getInsertBuilder(getQueryClient(connection))
+      const { sql, bindings } = db
+        .table('users')
+        .insert({ username: 'virk', email: 'virk@adonisjs.com' })
+        .onConflict(['username', 'email'])
+        .ignore()
+        .toSQL()
+
+      const { sql: knexSql, bindings: knexBindings } = connection
+        .client!.from('users')
+        .insert({ username: 'virk', email: 'virk@adonisjs.com' })
+        .onConflict(['username', 'email'])
+        .ignore()
+        .toSQL()
+
+      assert.equal(sql, knexSql)
+      assert.deepEqual(bindings, knexBindings)
+
+      await connection.disconnect()
+    })
+
+    test('define on conflict merge', async ({ assert }) => {
+      const connection = new Connection('primary', getConfig(), logger)
+      connection.connect()
+
+      const db = getInsertBuilder(getQueryClient(connection))
+      const { sql, bindings } = db
+        .table('users')
+        .insert({ username: 'virk' })
+        .onConflict('username')
+        .merge()
+        .toSQL()
+
+      const { sql: knexSql, bindings: knexBindings } = connection
+        .client!.from('users')
+        .insert({ username: 'virk' })
+        .onConflict('username')
+        .merge()
+        .toSQL()
+
+      assert.equal(sql, knexSql)
+      assert.deepEqual(bindings, knexBindings)
+
+      await connection.disconnect()
+    })
+
+    test('define on conflict merge with columns', async ({ assert }) => {
+      const connection = new Connection('primary', getConfig(), logger)
+      connection.connect()
+
+      const db = getInsertBuilder(getQueryClient(connection))
+      const { sql, bindings } = db
+        .table('users')
+        .insert({ username: 'virk', email: 'virk@adonisjs.com' })
+        .onConflict('username')
+        .merge(['email'])
+        .toSQL()
+
+      const { sql: knexSql, bindings: knexBindings } = connection
+        .client!.from('users')
+        .insert({ username: 'virk', email: 'virk@adonisjs.com' })
+        .onConflict('username')
+        .merge(['email'])
+        .toSQL()
+
+      assert.equal(sql, knexSql)
+      assert.deepEqual(bindings, knexBindings)
+
+      await connection.disconnect()
+    })
+
+    test('define on conflict merge with values', async ({ assert }) => {
+      const connection = new Connection('primary', getConfig(), logger)
+      connection.connect()
+
+      const db = getInsertBuilder(getQueryClient(connection))
+      const { sql, bindings } = db
+        .table('users')
+        .insert({ username: 'virk' })
+        .onConflict('username')
+        .merge({ username: 'nikk' })
+        .toSQL()
+
+      const { sql: knexSql, bindings: knexBindings } = connection
+        .client!.from('users')
+        .insert({ username: 'virk' })
+        .onConflict('username')
+        .merge({ username: 'nikk' })
+        .toSQL()
+
+      assert.equal(sql, knexSql)
+      assert.deepEqual(bindings, knexBindings)
+
+      await connection.disconnect()
+    })
+  })
+}
+
+if (['pg', 'sqlite', 'better_sqlite', 'libsql'].includes(process.env.DB!)) {
+  test.group('Query Builder | insert | withMaterialized', (group) => {
+    group.setup(async () => {
+      await setup()
+    })
+
+    group.teardown(async () => {
+      await cleanup()
+    })
+
+    test('define withMaterialized clause for insert', async ({ assert }) => {
+      const connection = new Connection('primary', getConfig(), logger)
+      connection.connect()
+
+      const db = getInsertBuilder(getQueryClient(connection))
+      const { sql, bindings } = db
+        .table('users')
+        .withMaterialized(
+          'active_users',
+          getRawQueryBuilder(getQueryClient(connection), 'select * from users where is_active = 1')
+        )
+        .insert({ username: 'virk' })
+        .toSQL()
+
+      const { sql: knexSql, bindings: knexBindings } = connection
+        .client!.from('users')
+        .withMaterialized(
+          'active_users',
+          connection.client!.raw('select * from users where is_active = 1')
+        )
+        .insert({ username: 'virk' })
+        .toSQL()
+
+      assert.equal(sql, knexSql)
+      assert.deepEqual(bindings, knexBindings)
+
+      await connection.disconnect()
+    })
+
+    test('define withNotMaterialized clause for insert', async ({ assert }) => {
+      const connection = new Connection('primary', getConfig(), logger)
+      connection.connect()
+
+      const db = getInsertBuilder(getQueryClient(connection))
+      const { sql, bindings } = db
+        .table('users')
+        .withNotMaterialized(
+          'active_users',
+          getRawQueryBuilder(getQueryClient(connection), 'select * from users where is_active = 1')
+        )
+        .insert({ username: 'virk' })
+        .toSQL()
+
+      const { sql: knexSql, bindings: knexBindings } = connection
+        .client!.from('users')
+        .withNotMaterialized(
+          'active_users',
+          connection.client!.raw('select * from users where is_active = 1')
+        )
+        .insert({ username: 'virk' })
+        .toSQL()
+
+      assert.equal(sql, knexSql)
+      assert.deepEqual(bindings, knexBindings)
+
+      await connection.disconnect()
+    })
+  })
+}
