@@ -204,7 +204,9 @@ test.group('Query Builder | insert', (group) => {
   })
 })
 
-if (['pg', 'sqlite', 'better_sqlite', 'libsql', 'mysql', 'mysql_legacy'].includes(process.env.DB!)) {
+if (
+  ['pg', 'sqlite', 'better_sqlite', 'libsql', 'mysql', 'mysql_legacy'].includes(process.env.DB!)
+) {
   test.group('Query Builder | insert | onConflict', (group) => {
     group.setup(async () => {
       await setup()
