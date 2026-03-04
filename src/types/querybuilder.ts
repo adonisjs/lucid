@@ -865,6 +865,15 @@ export interface DatabaseQueryBuilderContract<Result = Dictionary<any, string>>
 }
 
 /**
+ * OnConflict query builder contract returned by InsertQueryBuilder.onConflict()
+ */
+export interface OnConflictQueryBuilderContract<Builder extends InsertQueryBuilderContract> {
+  ignore(): Builder
+  merge(columns?: OneOrMany<string>): Builder
+  merge(values: Dictionary<any, string>): Builder
+}
+
+/**
  * Insert query builder to perform database inserts.
  */
 export interface InsertQueryBuilderContract<
@@ -893,6 +902,26 @@ export interface InsertQueryBuilderContract<
    * Inserting multiple columns at once
    */
   multiInsert: MultiInsert<this>
+
+  /**
+   * Define an on conflict clause
+   */
+  onConflict(column: string): OnConflictQueryBuilderContract<this>
+  onConflict(columns: string[]): OnConflictQueryBuilderContract<this>
+  onConflict(): OnConflictQueryBuilderContract<this>
+
+  /**
+   * Define a CTE (common table expression)
+   */
+  with(alias: string, query: RawQuery, columns?: string[]): this
+  withRecursive(alias: string, query: RawQuery, columns?: string[]): this
+  withMaterialized(alias: string, query: RawQuery, columns?: string[]): this
+  withNotMaterialized(alias: string, query: RawQuery, columns?: string[]): this
+
+  /**
+   * Add a comment to the query
+   */
+  comment(comment: string): this
 }
 
 /**

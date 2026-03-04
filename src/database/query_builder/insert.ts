@@ -15,6 +15,7 @@ import { type QueryClientContract, type TransactionClientContract } from '../../
 
 import { RawQueryBuilder } from './raw.js'
 import { RawBuilder } from '../static_builder/raw.js'
+import { OnConflictQueryBuilder } from './on_conflict.js'
 import { QueryRunner } from '../../query_runner/index.js'
 import { ReferenceBuilder } from '../static_builder/reference.js'
 
@@ -154,6 +155,72 @@ export class InsertQueryBuilder extends Macroable implements InsertQueryBuilderC
    */
   multiInsert(columns: any): this {
     return this.insert(columns)
+  }
+
+  /**
+   * Define an on conflict clause
+   */
+  onConflict(column?: any): any {
+    if (column) {
+      return new OnConflictQueryBuilder(this.knexQuery.onConflict(column), this)
+    }
+    return new OnConflictQueryBuilder(this.knexQuery.onConflict(), this)
+  }
+
+  /**
+   * Define a CTE (common table expression)
+   */
+  with(alias: any, query: any, columns: string[] = []): this {
+    if (columns.length > 0) {
+      this.knexQuery.with(alias, columns, this.transformValue(query))
+    } else {
+      this.knexQuery.with(alias, this.transformValue(query))
+    }
+    return this
+  }
+
+  /**
+   * Define `with` CTE with recursive keyword
+   */
+  withRecursive(alias: any, query: any, columns: string[] = []): this {
+    if (columns.length > 0) {
+      this.knexQuery.withRecursive(alias, columns, this.transformValue(query))
+    } else {
+      this.knexQuery.withRecursive(alias, this.transformValue(query))
+    }
+    return this
+  }
+
+  /**
+   * Define `with materialized` CTE
+   */
+  withMaterialized(alias: any, query: any, columns: string[] = []): this {
+    if (columns.length > 0) {
+      this.knexQuery.withMaterialized(alias, columns, this.transformValue(query))
+    } else {
+      this.knexQuery.withMaterialized(alias, this.transformValue(query))
+    }
+    return this
+  }
+
+  /**
+   * Define not `with materialized` CTE
+   */
+  withNotMaterialized(alias: any, query: any, columns: string[] = []): this {
+    if (columns.length > 0) {
+      this.knexQuery.withNotMaterialized(alias, columns, this.transformValue(query))
+    } else {
+      this.knexQuery.withNotMaterialized(alias, this.transformValue(query))
+    }
+    return this
+  }
+
+  /**
+   * Add a comment to the query
+   */
+  comment(comment: string): this {
+    this.knexQuery.comment(comment)
+    return this
   }
 
   /**
