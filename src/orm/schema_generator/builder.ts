@@ -104,7 +104,8 @@ export class OrmSchemaBuilder {
     columns: Record<string, DatabaseColumn>,
     importsBag: ImportsBag
   ): string {
-    const schema = Object.keys(columns).map((columnName) => {
+    const columnNames = Object.keys(columns).sort((a, b) => a.localeCompare(b))
+    const schema = columnNames.map((columnName) => {
       const column = columns[columnName]
       return this.generateColumnSchema(columnName, column, tableName)
     })

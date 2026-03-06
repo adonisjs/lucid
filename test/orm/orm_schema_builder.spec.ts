@@ -45,18 +45,18 @@ test.group('OrmSchemaBuilder | Basic Type Mapping', (group) => {
 
     assert.snapshot(output).matchInline(`
       "export class TestBasicTypeSchema extends BaseModel {
-        static $columns = ['id', 'name', 'age', 'isActive', 'bio'] as const
+        static $columns = ['age', 'bio', 'id', 'isActive', 'name'] as const
         $columns = TestBasicTypeSchema.$columns
-        @column({ isPrimary: true })
-        declare id: number
-        @column()
-        declare name: string
         @column()
         declare age: number
         @column()
+        declare bio: string
+        @column({ isPrimary: true })
+        declare id: number
+        @column()
         declare isActive: boolean
         @column()
-        declare bio: string
+        declare name: string
       }"
     `)
 
@@ -86,16 +86,16 @@ test.group('OrmSchemaBuilder | Basic Type Mapping', (group) => {
 
     assert.snapshot(output).matchInline(`
       "export class TestNumberSchema extends BaseModel {
-        static $columns = ['id', 'smallNum', 'bigNum', 'decimalNum'] as const
+        static $columns = ['bigNum', 'decimalNum', 'id', 'smallNum'] as const
         $columns = TestNumberSchema.$columns
-        @column({ isPrimary: true })
-        declare id: number
-        @column()
-        declare smallNum: number
         @column()
         declare bigNum: bigint | number
         @column()
         declare decimalNum: ${expectedDecilamNumType}
+        @column({ isPrimary: true })
+        declare id: number
+        @column()
+        declare smallNum: number
       }"
     `)
 
@@ -121,14 +121,14 @@ test.group('OrmSchemaBuilder | Basic Type Mapping', (group) => {
 
     assert.snapshot(output).matchInline(`
       "export class TestDateSchema extends BaseModel {
-        static $columns = ['id', 'birthDate', 'createdAt'] as const
+        static $columns = ['birthDate', 'createdAt', 'id'] as const
         $columns = TestDateSchema.$columns
-        @column({ isPrimary: true })
-        declare id: number
         @column.date()
         declare birthDate: DateTime
         @column.dateTime({ autoCreate: true })
         declare createdAt: DateTime
+        @column({ isPrimary: true })
+        declare id: number
       }"
     `)
 
@@ -194,14 +194,14 @@ test.group('OrmSchemaBuilder | Basic Type Mapping', (group) => {
 
     assert.snapshot(output).matchInline(`
       "export class TestJsonbSchema extends BaseModel {
-        static $columns = ['id', 'settings', 'preferences'] as const
+        static $columns = ['id', 'preferences', 'settings'] as const
         $columns = TestJsonbSchema.$columns
         @column({ isPrimary: true })
         declare id: number
         @column()
-        declare settings: ${expectedJSONType}
-        @column()
         declare preferences: ${expectedJSONType} | null
+        @column()
+        declare settings: ${expectedJSONType}
       }"
     `)
 
@@ -325,12 +325,12 @@ test.group('OrmSchemaBuilder | Column-Specific Rules', (group) => {
 
     assert.snapshot(output).matchInline(`
       "export class TestCreatedAtSchema extends BaseModel {
-        static $columns = ['id', 'createdAt'] as const
+        static $columns = ['createdAt', 'id'] as const
         $columns = TestCreatedAtSchema.$columns
-        @column({ isPrimary: true })
-        declare id: number
         @column.dateTime({ autoCreate: true })
         declare createdAt: DateTime
+        @column({ isPrimary: true })
+        declare id: number
       }"
     `)
 
@@ -400,14 +400,14 @@ test.group('OrmSchemaBuilder | Nullable Columns', (group) => {
 
     assert.snapshot(output).matchInline(`
       "export class TestNullableSchema extends BaseModel {
-        static $columns = ['id', 'middleName', 'age'] as const
+        static $columns = ['age', 'id', 'middleName'] as const
         $columns = TestNullableSchema.$columns
+        @column()
+        declare age: number | null
         @column({ isPrimary: true })
         declare id: number
         @column()
         declare middleName: string | null
-        @column()
-        declare age: number | null
       }"
     `)
 
@@ -432,12 +432,12 @@ test.group('OrmSchemaBuilder | Nullable Columns', (group) => {
 
     assert.snapshot(output).matchInline(`
       "export class TestNullableTSchema extends BaseModel {
-        static $columns = ['id', 'deletedAt'] as const
+        static $columns = ['deletedAt', 'id'] as const
         $columns = TestNullableTSchema.$columns
-        @column({ isPrimary: true })
-        declare id: number
         @column.dateTime()
         declare deletedAt: DateTime | null
+        @column({ isPrimary: true })
+        declare id: number
       }"
     `)
 
@@ -759,14 +759,14 @@ test.group('OrmSchemaBuilder | Output Generation', (group) => {
       import { DateTime } from 'luxon'
 
       export class TestUserSchema extends BaseModel {
-        static $columns = ['id', 'name', 'createdAt'] as const
+        static $columns = ['createdAt', 'id', 'name'] as const
         $columns = TestUserSchema.$columns
+        @column.dateTime({ autoCreate: true })
+        declare createdAt: DateTime
         @column({ isPrimary: true })
         declare id: number
         @column()
         declare name: string
-        @column.dateTime({ autoCreate: true })
-        declare createdAt: DateTime
       }
       "
     `)
@@ -806,14 +806,14 @@ test.group('OrmSchemaBuilder | Unknown Types', (group) => {
     // Unknown types should default to 'any'
     assert.snapshot(output).matchInline(`
       "export class TestSchema extends BaseModel {
-        static $columns = ['id', 'weirdField', 'exoticNullable'] as const
+        static $columns = ['exoticNullable', 'id', 'weirdField'] as const
         $columns = TestSchema.$columns
+        @column()
+        declare exoticNullable: any | null
         @column({ isPrimary: true })
         declare id: number
         @column()
         declare weirdField: any
-        @column()
-        declare exoticNullable: any | null
       }"
     `)
   })
@@ -992,14 +992,14 @@ test.group('OrmSchemaBuilder | Enum Handling', (group) => {
     // Without custom schema rules, enum should default to string type
     assert.snapshot(output).matchInline(`
       "export class TestEnumDefaultSchema extends BaseModel {
-        static $columns = ['id', 'status', 'priority'] as const
+        static $columns = ['id', 'priority', 'status'] as const
         $columns = TestEnumDefaultSchema.$columns
         @column({ isPrimary: true })
         declare id: number
         @column()
-        declare status: string
-        @column()
         declare priority: string | null
+        @column()
+        declare status: string
       }"
     `)
 
@@ -1040,16 +1040,16 @@ test.group('OrmSchemaBuilder | Name Conversion', (group) => {
 
     assert.snapshot(output).matchInline(`
       "export class TestProfileSchema extends BaseModel {
-        static $columns = ['id', 'userProfileId', 'firstName', 'lastNameSuffix'] as const
+        static $columns = ['firstName', 'id', 'lastNameSuffix', 'userProfileId'] as const
         $columns = TestProfileSchema.$columns
+        @column()
+        declare firstName: string
         @column({ isPrimary: true })
         declare id: number
         @column()
-        declare userProfileId: number
-        @column()
-        declare firstName: string
-        @column()
         declare lastNameSuffix: string
+        @column()
+        declare userProfileId: number
       }"
     `)
 
