@@ -337,11 +337,7 @@ test.group('OrmSchemaGenerator | Custom Schema Rules', (group) => {
     await connection.schema.dropTable('test_members')
   })
 
-  test('handle rules with column aware decorators', async ({
-    fs,
-    assert,
-    cleanup: testCleanup,
-  }) => {
+  test('handle rules with multiple decorators', async ({ fs, assert, cleanup: testCleanup }) => {
     const app = new AppFactory().create(fs.baseUrl, (identifier) => {
       return import(new URL(identifier, fs.baseUrl).href)
     })
@@ -358,7 +354,7 @@ test.group('OrmSchemaGenerator | Custom Schema Rules', (group) => {
         types: {
           string: (dataType, column) => ({
             tsType: 'string',
-            decorator: [\`@column({ meta: { type: "\${column.type}" } })\`],
+            decorator: [\`@column({ meta: { nullable: \${column.nullable}, maxLength: \${column.maxLength} } })\`],
             imports: []
           }),
         },
@@ -369,7 +365,7 @@ test.group('OrmSchemaGenerator | Custom Schema Rules', (group) => {
     await connection.schema.dropTableIfExists('test_members')
     await connection.schema.createTable('test_members', (table) => {
       table.increments('id')
-      table.string('role').notNullable()
+      table.string('role', 15).notNullable()
     })
 
     const outputPath = join(fs.basePath, 'member_schema.ts')
@@ -386,10 +382,10 @@ test.group('OrmSchemaGenerator | Custom Schema Rules', (group) => {
     const output = await readFile(outputPath, 'utf-8')
     // Since there's no default export, it should use the module itself
     assert.include(output, 'export class TestMemberSchema extends BaseModel')
-    assert.include(output, '@column({ meta: { type: "varchar" } })')
+    assert.include(output, '@column({ meta: { nullable: false, maxLength: 15 } })')
 
     await connection.schema.dropTable('test_members')
-  }).tags(['@dec'])
+  })
 
   test('merge multiple rules files', async ({ fs, assert, cleanup: testCleanup }) => {
     const app = new AppFactory().create(fs.baseUrl, (identifier) => {

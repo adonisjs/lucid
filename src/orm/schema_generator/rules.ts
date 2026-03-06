@@ -123,7 +123,7 @@ export const DEFAULT_SCHEMA_RULES: Required<SchemaRules> = {
     const internalType = DATA_TYPES_MAPPING[column.type] ?? column.type
     const inferredDataType =
       typeof DEFAULT_SCHEMA_RULES.types[internalType] === 'function'
-        ? DEFAULT_SCHEMA_RULES.types[internalType](internalType)
+        ? DEFAULT_SCHEMA_RULES.types[internalType](internalType, column)
         : DEFAULT_SCHEMA_RULES.types[internalType]
 
     return {
