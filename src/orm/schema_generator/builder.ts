@@ -73,7 +73,7 @@ export class OrmSchemaBuilder {
       this.schema.columns[columnName] ??
       this.schema.types[typeLookupKey]
 
-    const rule = typeof ruleDef === 'function' ? ruleDef(typeLookupKey) : ruleDef
+    const rule = typeof ruleDef === 'function' ? ruleDef(typeLookupKey, column) : ruleDef
 
     // Default to 'any' type if no rule is defined
     const finalRule = rule ?? {
@@ -89,10 +89,12 @@ export class OrmSchemaBuilder {
       tsType += ' | null'
     }
 
+    const decorators = [finalRule.decorator].flat().join('\n  ')
+
     return {
       imports: finalRule.imports ?? [],
       propertyName,
-      column: `  ${finalRule.decorator}\n  declare ${propertyName}: ${tsType}`,
+      column: `  ${decorators}\n  declare ${propertyName}: ${tsType}`,
     }
   }
 

@@ -9,12 +9,14 @@
 
 import { type ImportInfo } from '@poppinss/utils'
 
+type Arrayable<T> = T | T[]
+
 /**
  * Column information with TypeScript type, decorator, and imports
  */
 export type ColumnInfo = {
   tsType: string
-  decorator: string
+  decorator: Arrayable<string>
   imports?: ImportInfo[]
 }
 
@@ -23,18 +25,18 @@ export type ColumnInfo = {
  */
 export type SchemaRules = {
   types?: {
-    [type: string]: ColumnInfo | ((dataType: string) => ColumnInfo)
+    [type: string]: ColumnInfo | ((dataType: string, column: DatabaseColumn) => ColumnInfo)
   }
   columns?: {
-    [column: string]: ColumnInfo | ((dataType: string) => ColumnInfo)
+    [column: string]: ColumnInfo | ((dataType: string, column: DatabaseColumn) => ColumnInfo)
   }
   tables?: {
     [table: string]: {
       types?: {
-        [type: string]: ColumnInfo | ((dataType: string) => ColumnInfo)
+        [type: string]: ColumnInfo | ((dataType: string, column: DatabaseColumn) => ColumnInfo)
       }
       columns?: {
-        [column: string]: ColumnInfo | ((dataType: string) => ColumnInfo)
+        [column: string]: ColumnInfo | ((dataType: string, column: DatabaseColumn) => ColumnInfo)
       }
     }
   }

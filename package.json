@@ -27,6 +27,7 @@
     "./database": "./build/src/database/main.js",
     "./orm": "./build/src/orm/main.js",
     "./orm/relations": "./build/src/orm/relations/main.js",
+    "./orm/schema_generator": "./build/src/orm/schema_generator/main.js",
     "./seeders": "./build/src/seeders/main.js",
     "./services/*": "./build/services/*.js",
     "./types/*": "./build/src/types/*.js",

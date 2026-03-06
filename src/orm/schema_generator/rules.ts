@@ -92,10 +92,10 @@ export const DEFAULT_SCHEMA_RULES: Required<SchemaRules> = {
     },
   },
   columns: {
-    id: (dataType: string) => {
+    id: (dataType, column) => {
       const inferredDataType =
         typeof DEFAULT_SCHEMA_RULES.types[dataType] === 'function'
-          ? DEFAULT_SCHEMA_RULES.types[dataType](dataType)
+          ? DEFAULT_SCHEMA_RULES.types[dataType](dataType, column)
           : DEFAULT_SCHEMA_RULES.types[dataType]
 
       return {
