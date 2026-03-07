@@ -490,6 +490,14 @@ export function getDb(eventEmitter?: Emitter<any>, config?: DatabaseConfig) {
 }
 
 /**
+ * Returns true when the current test database dialect supports schema dump
+ * creation/restoration via external CLI tools.
+ */
+export const supportsSchemaDump = ['sqlite', 'better_sqlite', 'mysql', 'pg'].includes(
+  process.env.DB || ''
+)
+
+/**
  * Returns the orm adapter
  */
 export function ormAdapter(db: Database) {

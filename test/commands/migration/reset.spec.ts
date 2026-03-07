@@ -23,6 +23,7 @@ import {
   cleanupSchemaArtifacts,
   createMigrationFile,
   getDb,
+  supportsSchemaDump,
 } from '../../../test-helpers/index.js'
 
 test.group('migration:reset', (group) => {
@@ -198,5 +199,5 @@ test.group('migration:reset', (group) => {
       migrated.map(({ name }) => name),
       ['database/migrations/reset_cmd_users_dump']
     )
-  })
+  }).skip(!supportsSchemaDump, 'Schema dumps are not supported for the current database dialect')
 })

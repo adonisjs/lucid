@@ -20,6 +20,7 @@ import {
   cleanupSchemaArtifacts,
   createMigrationFile,
   getDb,
+  supportsSchemaDump,
 } from '../../../test-helpers/index.js'
 
 function getRenderedTableRows(command: Status) {
@@ -104,7 +105,7 @@ test.group('migration:status', (group) => {
       rows[1][3],
       'The migration file was pruned after being squashed into a schema dump'
     )
-  })
+  }).skip(!supportsSchemaDump, 'Schema dumps are not supported for the current database dialect')
 
   test('keep missing migrations as corrupt when they are not part of a schema dump', async ({
     fs,

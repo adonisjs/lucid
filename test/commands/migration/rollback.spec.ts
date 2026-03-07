@@ -22,6 +22,7 @@ import {
   cleanupSchemaArtifacts,
   createMigrationFile,
   getDb,
+  supportsSchemaDump,
 } from '../../../test-helpers/index.js'
 
 test.group('migration:rollback', (group) => {
@@ -180,5 +181,5 @@ test.group('migration:rollback', (group) => {
       migrated.map(({ name }) => name),
       ['database/migrations/rollback_cmd_users_dump']
     )
-  })
+  }).skip(!supportsSchemaDump, 'Schema dumps are not supported for the current database dialect')
 })

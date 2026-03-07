@@ -24,6 +24,7 @@ import {
   cleanupSchemaArtifacts,
   createMigrationFile,
   getDb,
+  supportsSchemaDump,
 } from '../../../test-helpers/index.js'
 import SchemaGenerate from '../../../commands/schema_generate.ts'
 
@@ -261,5 +262,5 @@ test.group('migration:refresh', (group) => {
         'database/migrations/refresh_cmd_accounts_after_dump',
       ]
     )
-  })
+  }).skip(!supportsSchemaDump, 'Schema dumps are not supported for the current database dialect')
 })

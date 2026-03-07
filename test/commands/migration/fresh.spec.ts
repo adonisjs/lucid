@@ -22,6 +22,7 @@ import {
   createMigrationFile,
   getConfig,
   getDb,
+  supportsSchemaDump,
 } from '../../../test-helpers/index.js'
 import { ListLoader } from '@adonisjs/core/ace'
 import DbWipe from '../../../commands/db_wipe.js'
@@ -189,7 +190,7 @@ test.group('migrate:fresh', (group) => {
     assert.isTrue(
       fresh.logger.getLogs().some((log) => log.message.includes('Schema dump restored'))
     )
-  })
+  }).skip(!supportsSchemaDump, 'Schema dumps are not supported for the current database dialect')
 
   if (process.env.DB === 'pg') {
     test('migration:fresh should restore dumps when custom postgres schemas already exist', async ({

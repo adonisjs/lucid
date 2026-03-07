@@ -26,6 +26,7 @@ import {
   createMigrationFile,
   getDb,
   setup,
+  supportsSchemaDump,
 } from '../test-helpers/index.js'
 
 test.group('Database Test Utils', (group) => {
@@ -375,7 +376,7 @@ test.group('Database Test Utils', (group) => {
       migratedAfterReset.map(({ name }) => name),
       ['database/migrations/test_utils_users_dump']
     )
-  })
+  }).skip(!supportsSchemaDump, 'Schema dumps are not supported for the current database dialect')
 
   test('truncate() should bootstrap from a schema dump and keep the schema intact', async ({
     fs,
@@ -459,5 +460,5 @@ test.group('Database Test Utils', (group) => {
         'database/migrations/test_utils_truncate_accounts_after_dump',
       ]
     )
-  })
+  }).skip(!supportsSchemaDump, 'Schema dumps are not supported for the current database dialect')
 })

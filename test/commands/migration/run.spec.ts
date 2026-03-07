@@ -21,6 +21,7 @@ import {
   cleanupSchemaArtifacts,
   createMigrationFile,
   getDb,
+  supportsSchemaDump,
 } from '../../../test-helpers/index.js'
 
 test.group('migration:run', (group) => {
@@ -414,7 +415,7 @@ test.group('migration:run', (group) => {
     assert.isTrue(
       migrate.logger.getLogs().some((log) => log.message.includes('Schema dump restored'))
     )
-  })
+  }).skip(!supportsSchemaDump, 'Schema dumps are not supported for the current database dialect')
 
   test('do not load stored schema dump during dry-run', async ({ fs, assert }) => {
     await createMigrationFile({
@@ -471,7 +472,7 @@ test.group('migration:run', (group) => {
     assert.isFalse(
       migrate.logger.getLogs().some((log) => log.message.includes('Restoring schema dump from'))
     )
-  })
+  }).skip(!supportsSchemaDump, 'Schema dumps are not supported for the current database dialect')
 
   test('ignore missing schema dump paths and run pending migrations normally', async ({
     fs,
@@ -565,5 +566,5 @@ test.group('migration:run', (group) => {
     assert.isFalse(
       migrate.logger.getLogs().some((log) => log.message.includes('Restoring schema dump from'))
     )
-  })
+  }).skip(!supportsSchemaDump, 'Schema dumps are not supported for the current database dialect')
 })

@@ -14,7 +14,13 @@ import { test } from '@japa/runner'
 import { AceFactory } from '@adonisjs/core/factories'
 
 import SchemaDump from '../../commands/schema_dump.js'
-import { setup, cleanupTestDatabase, getConfig, getDb } from '../../test-helpers/index.js'
+import {
+  setup,
+  cleanupTestDatabase,
+  getConfig,
+  getDb,
+  supportsSchemaDump,
+} from '../../test-helpers/index.js'
 
 test.group('schema:dump', (group) => {
   group.each.setup(async () => {
@@ -73,7 +79,7 @@ test.group('schema:dump', (group) => {
     assert.equal(manifest.schemaTableName, 'adonis_schema')
     assert.equal(manifest.schemaVersionsTableName, 'adonis_schema_versions')
     assert.deepEqual(manifest.squashedMigrationNames, ['database/migrations/1_create_users'])
-  })
+  }).skip(!supportsSchemaDump, 'Schema dumps are not supported for the current database dialect')
 
   test('use custom dump path when provided', async ({ fs, assert }) => {
     const db = getDb()
@@ -92,7 +98,7 @@ test.group('schema:dump', (group) => {
     assert.equal(command.exitCode, 0)
     assert.isTrue(await fs.exists('tmp/schema/custom.sql'))
     assert.isTrue(await fs.exists('tmp/schema/custom.meta.json'))
-  })
+  }).skip(!supportsSchemaDump, 'Schema dumps are not supported for the current database dialect')
 
   test('prune configured migration paths after dumping schema', async ({ fs, assert }) => {
     const baseConfig = getConfig()
@@ -124,7 +130,7 @@ test.group('schema:dump', (group) => {
     assert.equal(command.exitCode, 0)
     assert.deepEqual(await readdir(join(fs.basePath, 'database/primary')), [])
     assert.deepEqual(await readdir(join(fs.basePath, 'database/secondary')), [])
-  })
+  }).skip(!supportsSchemaDump, 'Schema dumps are not supported for the current database dialect')
 
   test('error on invalid connection', async ({ fs, assert }) => {
     const db = getDb()
