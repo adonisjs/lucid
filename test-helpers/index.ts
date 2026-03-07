@@ -12,7 +12,7 @@ import { Chance } from 'chance'
 import { join } from 'node:path'
 import knex, { type Knex } from 'knex'
 import { fileURLToPath } from 'node:url'
-import { getActiveTest } from '@japa/runner'
+import { getActiveTest, getActiveTestOrFail } from '@japa/runner'
 import { Logger } from '@adonisjs/core/logger'
 import { Emitter } from '@adonisjs/core/events'
 import { type Application } from '@adonisjs/core/app'
@@ -43,6 +43,7 @@ import { RawQueryBuilder } from '../src/database/query_builder/raw.js'
 import { InsertQueryBuilder } from '../src/database/query_builder/insert.js'
 import { type LucidRow, type LucidModel, type AdapterContract } from '../src/types/model.js'
 import { DatabaseQueryBuilder } from '../src/database/query_builder/database.js'
+import { type FileSystem } from '@japa/file-system'
 
 dotenv.config()
 export const APP_ROOT = new URL('./tmp', import.meta.url)
@@ -52,11 +53,6 @@ const app = new AppFactory().create(APP_ROOT, () => {})
 export const emitter = new Emitter<any>(app)
 export const logger = new Logger({})
 export const createEmitter = () => new Emitter<any>(app)
-
-type TestFs = {
-  remove(path: string): Promise<void>
-  create(path: string, contents: string): Promise<void>
-}
 
 /**
  * Returns config based upon DB set in environment variables
@@ -365,20 +361,6 @@ export async function cleanupTestDatabase(extraTables: string[] = []) {
 }
 
 /**
- * Access the active Japa file-system sandbox.
- */
-function getTestFs() {
-  const test = getActiveTest()
-  const fs = test?.context.fs
-
-  if (!fs) {
-    throw new Error('This helper must be called from a Japa test using the file-system plugin')
-  }
-
-  return fs
-}
-
-/**
  * Create a migration file inside the active Japa file-system sandbox.
  */
 export async function createMigrationFile(options: {
@@ -387,7 +369,7 @@ export async function createMigrationFile(options: {
   up: string
   down?: string
 }) {
-  const fs = getTestFs()
+  const fs = getActiveTestOrFail().context.fs
   const downMethod = options.down
     ? `public async down () {
         ${options.down}
@@ -411,7 +393,7 @@ export async function createMigrationFile(options: {
 /**
  * Remove schema dump artifacts created inside tests
  */
-export async function cleanupSchemaArtifacts(fs: TestFs, extraPaths: string[] = []) {
+export async function cleanupSchemaArtifacts(fs: FileSystem, extraPaths: string[] = []) {
   for (let path of [
     'database/migrations',
     'database/schema',
