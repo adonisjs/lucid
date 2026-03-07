@@ -16,6 +16,7 @@ export type MigratorOptions =
   | {
       direction: 'up'
       connectionName?: string
+      schemaPath?: string
       dryRun?: boolean
       disableLocks?: boolean
     }
@@ -43,7 +44,7 @@ export type MigratedFileNode = {
  */
 export type MigrationListNode = {
   name: string
-  status: 'pending' | 'migrated' | 'corrupt'
+  status: 'pending' | 'migrated' | 'corrupt' | 'squashed'
   batch?: number
   migrationTime?: Date
 }

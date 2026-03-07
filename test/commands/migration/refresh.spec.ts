@@ -17,63 +17,78 @@ import Reset from '../../../commands/migration/reset.js'
 import Migrate from '../../../commands/migration/run.js'
 import Refresh from '../../../commands/migration/refresh.js'
 import Rollback from '../../../commands/migration/rollback.js'
-import { cleanup, getDb } from '../../../test-helpers/index.js'
+import SchemaDump from '../../../commands/schema_dump.js'
+import {
+  setup,
+  cleanupTestDatabase,
+  cleanupSchemaArtifacts,
+  createMigrationFile,
+  getDb,
+} from '../../../test-helpers/index.js'
 import SchemaGenerate from '../../../commands/schema_generate.ts'
 
 test.group('migration:refresh', (group) => {
-  group.each.setup(async () => {
+  group.each.disableTimeout()
+
+  group.each.setup(async ({ context }) => {
+    await cleanupSchemaArtifacts(context.fs, ['database/seeders'])
+    await cleanupTestDatabase([
+      'adonis_schema',
+      'adonis_schema_versions',
+      'schema_users',
+      'schema_accounts',
+    ])
+    await setup()
+
     return async () => {
-      await cleanup()
-      await cleanup(['adonis_schema', 'adonis_schema_versions', 'schema_users', 'schema_accounts'])
+      await cleanupSchemaArtifacts(context.fs, ['database/seeders'])
+      await cleanupTestDatabase([
+        'adonis_schema',
+        'adonis_schema_versions',
+        'schema_users',
+        'schema_accounts',
+      ])
     }
   })
 
   test('rollback to batch 0 and migrate database', async ({ fs, assert }) => {
-    await fs.create(
-      'database/migrations/refresh_cmd_users.ts',
-      `
-        import { BaseSchema as Schema } from '../../../../src/schema/main.js'
-        export default class User extends Schema {
-          public async up () {
-            this.schema.createTable('schema_users', (table) => {
-              table.increments()
-            })
-          }
+    await createMigrationFile({
+      filePath: 'database/migrations/refresh_cmd_users.ts',
+      className: 'User',
+      up: `
+        this.schema.createTable('schema_users', (table) => {
+          table.increments()
+        })
+      `,
+      down: `
+        this.schema.dropTable('schema_users')
+      `,
+    })
 
-          public async down() {
-            this.schema.dropTable('schema_users')
-          }
-        }
-      `
-    )
-
-    await fs.create(
-      'database/migrations/refresh_cmd_posts.ts',
-      `
-        import { BaseSchema as Schema } from '../../../../src/schema/main.js'
-        export default class Account extends Schema {
-          public async up () {
-            this.schema.createTable('schema_accounts', (table) => {
-              table.increments()
-            })
-          }
-
-          public async down() {
-            this.schema.dropTable('schema_accounts')
-          }
-        }
-      `
-    )
+    await createMigrationFile({
+      filePath: 'database/migrations/refresh_cmd_posts.ts',
+      className: 'Account',
+      up: `
+        this.schema.createTable('schema_accounts', (table) => {
+          table.increments()
+        })
+      `,
+      down: `
+        this.schema.dropTable('schema_accounts')
+      `,
+    })
 
     const db = getDb()
-    const ace = await new AceFactory().make(fs.baseUrl, { importer: () => {} })
+    const ace = await new AceFactory().make(fs.baseUrl, {
+      importer: (filePath) => import(filePath),
+    })
     await ace.app.init()
     ace.app.container.singleton('lucid.db', () => db)
     ace.ui.switchMode('raw')
 
     ace.addLoader(new ListLoader([Reset, DbSeed, Migrate, Rollback, SchemaGenerate]))
 
-    const migrate = await ace.create(Migrate, [])
+    const migrate = await ace.create(Migrate, ['--no-schema-generate'])
     await migrate.exec()
 
     const refresh = await ace.create(Refresh, [])
@@ -100,44 +115,36 @@ test.group('migration:refresh', (group) => {
       }`
     )
 
-    await fs.create(
-      'database/migrations/refresh_cmd_users_v1.ts',
-      `
-        import { BaseSchema as Schema } from '../../../../src/schema/main.js'
-        export default class User extends Schema {
-          public async up () {
-            this.schema.createTable('schema_users', (table) => {
-              table.increments()
-            })
-          }
+    await createMigrationFile({
+      filePath: 'database/migrations/refresh_cmd_users_v1.ts',
+      className: 'User',
+      up: `
+        this.schema.createTable('schema_users', (table) => {
+          table.increments()
+        })
+      `,
+      down: `
+        this.schema.dropTable('schema_users')
+      `,
+    })
 
-          public async down() {
-            this.schema.dropTable('schema_users')
-          }
-        }
-      `
-    )
-
-    await fs.create(
-      'database/migrations/posts.ts',
-      `
-        import { BaseSchema as Schema } from '../../../../src/schema/main.js'
-        export default class Account extends Schema {
-          public async up () {
-            this.schema.createTable('schema_accounts', (table) => {
-              table.increments()
-            })
-          }
-
-          public async down() {
-            this.schema.dropTable('schema_accounts')
-          }
-        }
-      `
-    )
+    await createMigrationFile({
+      filePath: 'database/migrations/posts.ts',
+      className: 'Account',
+      up: `
+        this.schema.createTable('schema_accounts', (table) => {
+          table.increments()
+        })
+      `,
+      down: `
+        this.schema.dropTable('schema_accounts')
+      `,
+    })
 
     const db = getDb()
-    const ace = await new AceFactory().make(fs.baseUrl, { importer: () => {} })
+    const ace = await new AceFactory().make(fs.baseUrl, {
+      importer: (filePath) => import(filePath),
+    })
     await ace.app.init()
     ace.app.container.singleton('lucid.db', () => db)
     ace.ui.switchMode('raw')
@@ -158,26 +165,23 @@ test.group('migration:refresh', (group) => {
     fs,
     assert,
   }) => {
-    await fs.create(
-      'database/migrations/refresh_cmd_users_v2.ts',
-      `
-        import { BaseSchema as Schema } from '../../../../src/schema/main.js'
-        export default class User extends Schema {
-          public async up () {
-            this.schema.createTable('schema_users', (table) => {
-              table.increments()
-            })
-          }
-
-          public async down() {
-            this.schema.dropTable('schema_users')
-          }
-        }
-      `
-    )
+    await createMigrationFile({
+      filePath: 'database/migrations/refresh_cmd_users_v2.ts',
+      className: 'User',
+      up: `
+        this.schema.createTable('schema_users', (table) => {
+          table.increments()
+        })
+      `,
+      down: `
+        this.schema.dropTable('schema_users')
+      `,
+    })
 
     const db = getDb()
-    const ace = await new AceFactory().make(fs.baseUrl, { importer: () => {} })
+    const ace = await new AceFactory().make(fs.baseUrl, {
+      importer: (filePath) => import(filePath),
+    })
     await ace.app.init()
     ace.app.container.singleton('lucid.db', () => db)
     ace.ui.switchMode('raw')
@@ -192,5 +196,70 @@ test.group('migration:refresh', (group) => {
 
     const schemaFileExists = await fs.exists('database/schema.ts')
     assert.isFalse(schemaFileExists)
+  })
+
+  test('refresh pending migrations after squashing older ones', async ({ fs, assert }) => {
+    await createMigrationFile({
+      filePath: 'database/migrations/refresh_cmd_users_dump.ts',
+      className: 'User',
+      up: `
+        this.schema.createTable('schema_users', (table) => {
+          table.increments()
+        })
+      `,
+      down: `
+        this.schema.dropTable('schema_users')
+      `,
+    })
+
+    const db = getDb()
+    const ace = await new AceFactory().make(fs.baseUrl, {
+      importer: (filePath) => import(filePath),
+    })
+    await ace.app.init()
+    ace.app.container.singleton('lucid.db', () => db)
+    ace.ui.switchMode('raw')
+
+    ace.addLoader(new ListLoader([Reset, DbSeed, Migrate, Rollback, SchemaGenerate]))
+
+    const migrate = await ace.create(Migrate, [])
+    await migrate.exec()
+
+    const dump = await ace.create(SchemaDump, ['--prune'])
+    await dump.exec()
+
+    await createMigrationFile({
+      filePath: 'database/migrations/refresh_cmd_accounts_after_dump.ts',
+      className: 'Account',
+      up: `
+        this.schema.createTable('schema_accounts', (table) => {
+          table.increments()
+        })
+      `,
+      down: `
+        this.schema.dropTable('schema_accounts')
+      `,
+    })
+
+    const secondMigrate = await ace.create(Migrate, ['--no-schema-generate'])
+    await secondMigrate.exec()
+
+    const refresh = await ace.create(Refresh, ['--no-schema-generate'])
+    await refresh.exec()
+
+    const migrated = await db.connection().from('adonis_schema').orderBy('id', 'asc')
+    const hasUsersTable = await db.connection().schema.hasTable('schema_users')
+    const hasAccountsTable = await db.connection().schema.hasTable('schema_accounts')
+
+    assert.equal(refresh.exitCode, 0)
+    assert.isTrue(hasUsersTable)
+    assert.isTrue(hasAccountsTable)
+    assert.deepEqual(
+      migrated.map(({ name }) => name),
+      [
+        'database/migrations/refresh_cmd_users_dump',
+        'database/migrations/refresh_cmd_accounts_after_dump',
+      ]
+    )
   })
 })

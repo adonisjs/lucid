@@ -53,6 +53,11 @@ export const emitter = new Emitter<any>(app)
 export const logger = new Logger({})
 export const createEmitter = () => new Emitter<any>(app)
 
+type TestFs = {
+  remove(path: string): Promise<void>
+  create(path: string, contents: string): Promise<void>
+}
+
 /**
  * Returns config based upon DB set in environment variables
  */
@@ -344,6 +349,78 @@ export async function cleanup(customTables?: string[]) {
   await db.schema.dropTableIfExists('group_user')
 
   await db.destroy()
+}
+
+/**
+ * Clean the default fixture tables plus extra tables specific to a test suite.
+ * This keeps call sites readable without changing the legacy `cleanup()`
+ * contract used by the rest of the codebase.
+ */
+export async function cleanupTestDatabase(extraTables: string[] = []) {
+  await cleanup()
+
+  if (extraTables.length) {
+    await cleanup(extraTables)
+  }
+}
+
+/**
+ * Access the active Japa file-system sandbox.
+ */
+function getTestFs() {
+  const test = getActiveTest()
+  const fs = test?.context.fs
+
+  if (!fs) {
+    throw new Error('This helper must be called from a Japa test using the file-system plugin')
+  }
+
+  return fs
+}
+
+/**
+ * Create a migration file inside the active Japa file-system sandbox.
+ */
+export async function createMigrationFile(options: {
+  filePath: string
+  className: string
+  up: string
+  down?: string
+}) {
+  const fs = getTestFs()
+  const downMethod = options.down
+    ? `public async down () {
+        ${options.down}
+      }`
+    : ''
+
+  await fs.create(
+    options.filePath,
+    `import { BaseSchema as Schema } from '../../../../src/schema/main.js'
+
+      export default class ${options.className} extends Schema {
+        public async up () {
+          ${options.up}
+        }
+
+        ${downMethod}
+      }`
+  )
+}
+
+/**
+ * Remove schema dump artifacts created inside tests
+ */
+export async function cleanupSchemaArtifacts(fs: TestFs, extraPaths: string[] = []) {
+  for (let path of [
+    'database/migrations',
+    'database/schema',
+    'database/schema.ts',
+    'tmp/schema',
+    ...extraPaths,
+  ]) {
+    await fs.remove(path)
+  }
 }
 
 /**
