@@ -105,6 +105,7 @@ export class MysqlSchemaState extends BaseSchemaState {
   private getConnectionArguments(connection: MysqlSchemaStateConnection) {
     return [
       ...(connection.socketPath ? [`--socket=${connection.socketPath}`] : []),
+      ...(connection.socketPath ? [] : ['--protocol=TCP']),
       ...(connection.socketPath ? [] : [`--host=${connection.host ?? '127.0.0.1'}`]),
       ...(connection.socketPath ? [] : [`--port=${connection.port ?? 3306}`]),
       `--user=${connection.user}`,
