@@ -551,6 +551,9 @@ export class ModelQueryBuilder
        * Count "*"
        */
       if (!subQuery.hasAggregates) {
+        subQuery.clearOrder()
+        subQuery.clearLimit()
+        subQuery.clearOffset()
         subQuery.count('*')
       }
 
