@@ -112,6 +112,25 @@ export class OrmSchemaGenerator extends EventEmitter<{
   }
 
   /**
+   * Format the content using prettier.
+   *
+   * @param content
+   * @private
+   */
+  private async formatWithPrettier(content: string): Promise<string> {
+    try {
+      const { format, resolveConfig } = await import('prettier')
+      const config = await resolveConfig('@adonisjs/prettier-config')
+      content = await format(content, {
+        ...config,
+        parser: 'typescript',
+      })
+    } catch {}
+
+    return content
+  }
+
+  /**
    * Generate schemas and write to output file
    */
   async generate(): Promise<void> {
@@ -144,7 +163,10 @@ export class OrmSchemaGenerator extends EventEmitter<{
       ' * Run "node ace migration:run" command to re-generate this file',
       ' */',
     ].join('\n')
-    await writeFile(this.config.outputPath, `${comment}\n\n${output}`, 'utf-8')
+
+    const formattedContent = await this.formatWithPrettier(`${comment}\n\n${output}`)
+
+    await writeFile(this.config.outputPath, formattedContent, 'utf-8')
   }
 
   /**
