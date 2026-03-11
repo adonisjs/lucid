@@ -19,6 +19,27 @@ export type ColumnInfo = {
 }
 
 /**
+ * Return value of the primaryKey rule. Identifies which column
+ * is the primary key and how it should be represented.
+ */
+export type PrimaryKeyInfo = {
+  columnName: string
+  columnInfo: ColumnInfo
+}
+
+/**
+ * A function that receives the table name, primary key column names
+ * (from the database), and the full columns metadata. Returns which
+ * column to mark as primary along with its decorator info.
+ * Return undefined to skip primary key handling.
+ */
+export type PrimaryKeyRule = (
+  tableName: string,
+  primaryKeys: string[],
+  columns: Record<string, DatabaseColumn>
+) => PrimaryKeyInfo | undefined
+
+/**
  * Schema rules that can be customized per type, column, or table
  */
 export type SchemaRules = {
@@ -36,8 +57,10 @@ export type SchemaRules = {
       columns?: {
         [column: string]: ColumnInfo | ((dataType: string) => ColumnInfo)
       }
+      primaryKey?: PrimaryKeyRule
     }
   }
+  primaryKey?: PrimaryKeyRule
 }
 
 /**

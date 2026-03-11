@@ -70,6 +70,22 @@ export class RedshiftDialect implements DialectContract {
   }
 
   /**
+   * Returns the primary key column names for a given table
+   *
+   * NOTE: ASSUMING FEATURE PARITY WITH POSTGRESQL HERE (NOT TESTED)
+   */
+  async getPrimaryKeys(tableName: string): Promise<string[]> {
+    const result = await this.client.rawQuery(
+      `SELECT a.attname
+       FROM pg_index i
+       JOIN pg_attribute a ON a.attrelid = i.indrelid AND a.attnum = ANY(i.indkey)
+       WHERE i.indrelid = '${tableName}'::regclass AND i.indisprimary
+       ORDER BY a.attnum`
+    )
+    return result.rows.map((row: any) => row.attname)
+  }
+
+  /**
    * Returns an array of all views names for one or many schemas
    *
    * NOTE: ASSUMING FEATURE PARITY WITH POSTGRESQL HERE (NOT TESTED)

@@ -105,6 +105,12 @@ export class OracleDialect implements DialectContract {
     )
   }
 
+  async getPrimaryKeys(_tableName: string): Promise<string[]> {
+    throw new Error(
+      '"getPrimaryKeys" method is not implemented for oracledb. Create a PR to add the feature'
+    )
+  }
+
   getAdvisoryLock(): Promise<boolean> {
     throw new Error(
       'Support for advisory locks is not implemented for oracledb. Create a PR to add the feature'

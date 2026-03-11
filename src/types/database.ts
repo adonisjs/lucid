@@ -84,6 +84,8 @@ export interface DialectContract {
   truncate(table: string, cascade?: boolean): Promise<void>
   truncateAllTables(excludeTables?: string[], schemas?: string[]): Promise<void>
 
+  getPrimaryKeys(tableName: string): Promise<string[]>
+
   getAdvisoryLock(key: string | number, timeout?: number): Promise<boolean>
   releaseAdvisoryLock(key: string | number): Promise<boolean>
 }
@@ -200,6 +202,11 @@ export interface QueryClientContract {
    */
   columnsInfo(table: string): Promise<{ [column: string]: Knex.ColumnInfo }>
   columnsInfo(table: string, column: string): Promise<Knex.ColumnInfo>
+
+  /**
+   * Returns the primary key column names for a given table
+   */
+  getPrimaryKeys(tableName: string): Promise<string[]>
 
   /**
    * Get all tables of the database

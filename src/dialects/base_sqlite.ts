@@ -65,6 +65,17 @@ export abstract class BaseSqliteDialect implements DialectContract {
   }
 
   /**
+   * Returns the primary key column names for a given table
+   */
+  async getPrimaryKeys(tableName: string): Promise<string[]> {
+    const result = await this.client.rawQuery(`PRAGMA table_info('${tableName}')`)
+    return result
+      .filter((row: any) => row.pk > 0)
+      .sort((a: any, b: any) => a.pk - b.pk)
+      .map((row: any) => row.name)
+  }
+
+  /**
    * Returns an array of all views names
    */
   async getAllViews(): Promise<string[]> {

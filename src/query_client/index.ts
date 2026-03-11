@@ -151,6 +151,13 @@ export class QueryClient implements QueryClientContract {
   }
 
   /**
+   * Returns the primary key column names for a given table
+   */
+  async getPrimaryKeys(tableName: string): Promise<string[]> {
+    return this.dialect.getPrimaryKeys(tableName)
+  }
+
+  /**
    * Returns an array of table names
    */
   async getAllTables(schemas?: string[] | undefined): Promise<string[]> {

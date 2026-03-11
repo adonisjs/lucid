@@ -592,3 +592,66 @@ test.group('Query client | get tables', (group) => {
     await connection.disconnect()
   })
 })
+
+test.group('Query client | get primary keys', (group) => {
+  group.setup(async () => {
+    await setup()
+  })
+
+  group.teardown(async () => {
+    await cleanup()
+  })
+
+  group.each.teardown(async () => {
+    await resetTables()
+  })
+
+  test('get primary keys for a table with increments id', async ({ assert }) => {
+    const connection = new Connection('primary', getConfig(), logger)
+    connection.connect()
+
+    const client = new QueryClient('dual', connection, createEmitter())
+    const primaryKeys = await client.getPrimaryKeys('users')
+    assert.deepEqual(primaryKeys, ['id'])
+
+    await connection.disconnect()
+  })
+
+  test('get primary keys for a table with non-id primary key', async ({ assert }) => {
+    const connection = new Connection('primary', getConfig(), logger)
+    connection.connect()
+
+    const client = new QueryClient('dual', connection, createEmitter())
+
+    await client.schema.dropTableIfExists('test_custom_pk')
+    await client.schema.createTable('test_custom_pk', (table) => {
+      table.text('key').notNullable().primary()
+      table.text('value').notNullable()
+    })
+
+    const primaryKeys = await client.getPrimaryKeys('test_custom_pk')
+    assert.deepEqual(primaryKeys, ['key'])
+
+    await client.schema.dropTable('test_custom_pk')
+    await connection.disconnect()
+  })
+
+  test('get empty array for a table with no primary key', async ({ assert }) => {
+    const connection = new Connection('primary', getConfig(), logger)
+    connection.connect()
+
+    const client = new QueryClient('dual', connection, createEmitter())
+
+    await client.schema.dropTableIfExists('test_no_pk')
+    await client.schema.createTable('test_no_pk', (table) => {
+      table.text('name').notNullable()
+      table.text('value').notNullable()
+    })
+
+    const primaryKeys = await client.getPrimaryKeys('test_no_pk')
+    assert.deepEqual(primaryKeys, [])
+
+    await client.schema.dropTable('test_no_pk')
+    await connection.disconnect()
+  })
+})

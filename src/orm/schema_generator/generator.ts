@@ -85,7 +85,7 @@ export class OrmSchemaGenerator extends EventEmitter<{
    * Fetch all tables and their columns from the database
    */
   private async fetchTablesAndColumns(): Promise<
-    Array<{ name: string; columns: Record<string, any> }>
+    Array<{ name: string; columns: Record<string, any>; primaryKeys: string[] }>
   > {
     /**
      * Get list of all tables from the database
@@ -98,13 +98,17 @@ export class OrmSchemaGenerator extends EventEmitter<{
     this.emit('collect:tables', tables)
 
     /**
-     * Fetch columns for each table
+     * Fetch columns and primary keys for each table
      */
     const tablesWithColumns = await Promise.all(
       tables.map(async (tableName) => {
-        const columns = await this.connection.columnsInfo(tableName)
+        const [columns, primaryKeys] = await Promise.all([
+          this.connection.columnsInfo(tableName),
+          this.connection.getPrimaryKeys(tableName),
+        ])
+
         this.emit('table:info', { tableName, columns })
-        return { name: tableName, columns }
+        return { name: tableName, columns, primaryKeys }
       })
     )
 

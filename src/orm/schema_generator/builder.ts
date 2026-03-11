@@ -14,6 +14,7 @@ import stringHelpers from '@adonisjs/core/helpers/string'
 import { DEFAULT_SCHEMA_RULES } from './rules.ts'
 import { DATA_TYPES_MAPPING, INTERNAL_TYPES } from './mappings.ts'
 import type {
+  ColumnInfo,
   SchemaRules,
   DatabaseColumn,
   GeneratedColumn,
@@ -51,7 +52,8 @@ export class OrmSchemaBuilder {
   private generateColumnSchema(
     columnName: string,
     column: DatabaseColumn,
-    tableName: string
+    tableName: string,
+    primaryKeyColumnInfo: ColumnInfo | undefined
   ): GeneratedColumn {
     const dialectColumnType = `${this.client.dialect.name}.${column.type}`
     // Map database type to internal type identifier
@@ -66,11 +68,13 @@ export class OrmSchemaBuilder {
     // 1. Table-specific column
     // 2. Table-specific type
     // 3. Global column name
-    // 4. Global type
+    // 4. Primary key rule (when this column is the primary key)
+    // 5. Global type
     const ruleDef =
       this.schema.tables[tableName]?.columns?.[columnName] ??
       this.schema.tables[tableName]?.types?.[typeLookupKey] ??
       this.schema.columns[columnName] ??
+      primaryKeyColumnInfo ??
       this.schema.types[typeLookupKey]
 
     const rule = typeof ruleDef === 'function' ? ruleDef(typeLookupKey) : ruleDef
@@ -102,12 +106,24 @@ export class OrmSchemaBuilder {
   private generateTableSchema(
     tableName: string,
     columns: Record<string, DatabaseColumn>,
+    primaryKeys: string[],
     importsBag: ImportsBag
   ): string {
+    /**
+     * Resolve the primary key using table-specific or global primaryKey rule
+     */
+    const primaryKeyRule =
+      this.schema.tables[tableName]?.primaryKey ?? this.schema.primaryKey
+    const primaryKeyResult = primaryKeyRule?.(tableName, primaryKeys, columns)
+
     const columnNames = Object.keys(columns).sort((a, b) => a.localeCompare(b))
     const schema = columnNames.map((columnName) => {
       const column = columns[columnName]
-      return this.generateColumnSchema(columnName, column, tableName)
+      const pkInfo =
+        primaryKeyResult && columnName === primaryKeyResult.columnName
+          ? primaryKeyResult.columnInfo
+          : undefined
+      return this.generateColumnSchema(columnName, column, tableName, pkInfo)
     })
 
     // Add column-specific imports
@@ -131,7 +147,11 @@ export class OrmSchemaBuilder {
    * Generate schemas for multiple tables
    */
   generateSchemas(
-    tables: Array<{ name: string; columns: Record<string, DatabaseColumn> }>
+    tables: Array<{
+      name: string
+      columns: Record<string, DatabaseColumn>
+      primaryKeys: string[]
+    }>
   ): GeneratedSchemas {
     const importsBag = new ImportsBag()
     const classesToCreate: string[] = []
@@ -140,7 +160,12 @@ export class OrmSchemaBuilder {
     importsBag.add({ source: '@adonisjs/lucid/orm', namedImports: ['BaseModel', 'column'] })
 
     tables.forEach((table) => {
-      const classDefinition = this.generateTableSchema(table.name, table.columns, importsBag)
+      const classDefinition = this.generateTableSchema(
+        table.name,
+        table.columns,
+        table.primaryKeys,
+        importsBag
+      )
       classesToCreate.push(classDefinition)
     })
 
