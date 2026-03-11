@@ -112,8 +112,7 @@ export class OrmSchemaBuilder {
     /**
      * Resolve the primary key using table-specific or global primaryKey rule
      */
-    const primaryKeyRule =
-      this.schema.tables[tableName]?.primaryKey ?? this.schema.primaryKey
+    const primaryKeyRule = this.schema.tables[tableName]?.primaryKey ?? this.schema.primaryKey
     const primaryKeyResult = primaryKeyRule?.(tableName, primaryKeys, columns)
 
     const columnNames = Object.keys(columns).sort((a, b) => a.localeCompare(b))

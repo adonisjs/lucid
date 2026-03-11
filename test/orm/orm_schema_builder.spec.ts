@@ -41,9 +41,7 @@ test.group('OrmSchemaBuilder | Basic Type Mapping', (group) => {
 
     const columns = await connection.knexQuery().from('test_basic_types').columnInfo()
     const primaryKeys = await connection.getPrimaryKeys('test_basic_types')
-    const schemas = generator.generateSchemas([
-      { name: 'test_basic_types', columns, primaryKeys },
-    ])
+    const schemas = generator.generateSchemas([{ name: 'test_basic_types', columns, primaryKeys }])
     const output = schemas.classes.join('\n')
 
     assert.snapshot(output).matchInline(`
@@ -301,9 +299,7 @@ test.group('OrmSchemaBuilder | Column-Specific Rules', (group) => {
 
     const columns = await connection.knexQuery().from('test_custom_pk').columnInfo()
     const primaryKeys = await connection.getPrimaryKeys('test_custom_pk')
-    const schemas = generator.generateSchemas([
-      { name: 'test_custom_pk', columns, primaryKeys },
-    ])
+    const schemas = generator.generateSchemas([{ name: 'test_custom_pk', columns, primaryKeys }])
     const output = schemas.classes.join('\n')
 
     assert.snapshot(output).matchInline(`
@@ -330,7 +326,7 @@ test.group('OrmSchemaBuilder | Column-Specific Rules', (group) => {
         columns: {
           key: {
             tsType: 'string',
-            decorator: '@column({ columnName: \'key\' })',
+            decorator: "@column({ columnName: 'key' })",
             imports: [],
           },
         },
@@ -417,9 +413,7 @@ test.group('OrmSchemaBuilder | Column-Specific Rules', (group) => {
       value: { type: 'text', nullable: false },
     }
 
-    const schemas = generator.generateSchemas([
-      { name: 'test_no_pk', columns, primaryKeys: [] },
-    ])
+    const schemas = generator.generateSchemas([{ name: 'test_no_pk', columns, primaryKeys: [] }])
     const output = schemas.classes.join('\n')
 
     assert.snapshot(output).matchInline(`
@@ -589,9 +583,7 @@ test.group('OrmSchemaBuilder | Nullable Columns', (group) => {
 
     const columns = await connection.knexQuery().from('test_nullable_ts').columnInfo()
     const primaryKeys = await connection.getPrimaryKeys('test_nullable_ts')
-    const schemas = generator.generateSchemas([
-      { name: 'test_nullable_ts', columns, primaryKeys },
-    ])
+    const schemas = generator.generateSchemas([{ name: 'test_nullable_ts', columns, primaryKeys }])
     const output = schemas.classes.join('\n')
 
     assert.snapshot(output).matchInline(`
@@ -981,9 +973,7 @@ test.group('OrmSchemaBuilder | Unknown Types', (group) => {
       exotic_nullable: { type: 'another_unknown_type', nullable: true },
     }
 
-    const schemas = generator.generateSchemas([
-      { name: 'test', columns, primaryKeys: ['id'] },
-    ])
+    const schemas = generator.generateSchemas([{ name: 'test', columns, primaryKeys: ['id'] }])
     const output = schemas.classes.join('\n')
 
     // Unknown types should default to 'any'
@@ -1054,9 +1044,7 @@ test.group('OrmSchemaBuilder | Enum Handling', (group) => {
 
     const columns = await connection.knexQuery().from('test_enum_users').columnInfo()
     const primaryKeys = await connection.getPrimaryKeys('test_enum_users')
-    const schemas = generator.generateSchemas([
-      { name: 'test_enum_users', columns, primaryKeys },
-    ])
+    const schemas = generator.generateSchemas([{ name: 'test_enum_users', columns, primaryKeys }])
     const output = schemas.classes.join('\n')
 
     assert.snapshot(output).matchInline(`
@@ -1190,9 +1178,7 @@ test.group('OrmSchemaBuilder | Enum Handling', (group) => {
 
     const columns = await connection.knexQuery().from('test_enum_default').columnInfo()
     const primaryKeys = await connection.getPrimaryKeys('test_enum_default')
-    const schemas = generator.generateSchemas([
-      { name: 'test_enum_default', columns, primaryKeys },
-    ])
+    const schemas = generator.generateSchemas([{ name: 'test_enum_default', columns, primaryKeys }])
     const output = schemas.classes.join('\n')
 
     // Without custom schema rules, enum should default to string type
@@ -1348,9 +1334,7 @@ test.group('OrmSchemaBuilder | Name Conversion', (group) => {
 
     const columns = await connection.knexQuery().from('user_profiles').columnInfo()
     const primaryKeys = await connection.getPrimaryKeys('user_profiles')
-    const schemas = generator.generateSchemas([
-      { name: 'user_profiles', columns, primaryKeys },
-    ])
+    const schemas = generator.generateSchemas([{ name: 'user_profiles', columns, primaryKeys }])
 
     assert.snapshot(schemas.classes.join('\n')).matchInline(`
       "export class UserProfileSchema extends BaseModel {
