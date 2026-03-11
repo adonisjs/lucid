@@ -105,6 +105,13 @@ export class TransactionClient extends EventEmitter implements TransactionClient
   }
 
   /**
+   * Returns the primary key column names for a given table
+   */
+  async getPrimaryKeys(tableName: string): Promise<string[]> {
+    return this.dialect.getPrimaryKeys(tableName)
+  }
+
+  /**
    * Get columns info inside a transaction. You won't need it here, however
    * added for API compatibility with the [[QueryClient]] class
    */
