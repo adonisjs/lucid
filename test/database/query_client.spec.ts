@@ -625,8 +625,8 @@ test.group('Query client | get primary keys', (group) => {
 
     await client.schema.dropTableIfExists('test_custom_pk')
     await client.schema.createTable('test_custom_pk', (table) => {
-      table.text('key').notNullable().primary()
-      table.text('value').notNullable()
+      table.string('key').notNullable().primary()
+      table.string('value').notNullable()
     })
 
     const primaryKeys = await client.getPrimaryKeys('test_custom_pk')

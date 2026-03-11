@@ -293,8 +293,8 @@ test.group('OrmSchemaBuilder | Column-Specific Rules', (group) => {
     await connection.schema.dropTableIfExists('test_custom_pk')
 
     await connection.schema.createTable('test_custom_pk', (table) => {
-      table.text('key').notNullable().primary()
-      table.text('value').notNullable()
+      table.string('key').notNullable().primary()
+      table.string('value').notNullable()
     })
 
     const columns = await connection.knexQuery().from('test_custom_pk').columnInfo()
