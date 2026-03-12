@@ -90,6 +90,10 @@ export class MssqlDialect implements DialectContract {
     return tables.map(({ name }) => name)
   }
 
+  async getAllTablesWithSchema(): Promise<{ name: string; schema: string }[]> {
+    return this.#compileGetAllTables()
+  }
+
   /**
    * Truncate mssql table. Disabling foreign key constriants alone is
    * not enough for SQL server.

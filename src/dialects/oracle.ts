@@ -42,6 +42,12 @@ export class OracleDialect implements DialectContract {
     )
   }
 
+  async getAllTablesWithSchema(): Promise<{ name: string; schema?: string }[]> {
+    throw new Error(
+      '"getAllTablesWithSchema" method is not implemented for oracledb. Create a PR to add the feature'
+    )
+  }
+
   /**
    * Truncate pg table with option to cascade and restart identity
    */

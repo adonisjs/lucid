@@ -132,21 +132,23 @@ export class QueryClient implements QueryClientContract {
   /**
    * Get information for a table columns
    */
-  columnsInfo(table: string): Promise<{ [column: string]: ColumnInfo }>
-  columnsInfo(table: string, column: string): Promise<ColumnInfo>
+  columnsInfo(
+    table: string,
+    column?: string,
+    schema?: string
+  ): Promise<{ [column: string]: ColumnInfo }>
+  columnsInfo(table: string, column: string, schema?: string): Promise<ColumnInfo>
   async columnsInfo(
-    table: unknown,
-    column?: unknown
+    table: string,
+    column?: string,
+    schema?: string
   ): Promise<{ [column: string]: ColumnInfo } | ColumnInfo> {
-    const query = this.getWriteClient().table(table as string)
-
-    if (column) {
-      query.columnInfo(column as string)
-    } else {
-      query.columnInfo()
+    let query = this.getWriteClient().table(table)
+    if (schema) {
+      query = query.withSchema(schema)
     }
 
-    const result = await query
+    const result = await (column ? query.columnInfo(column) : query.columnInfo())
     return result
   }
 
@@ -162,6 +164,15 @@ export class QueryClient implements QueryClientContract {
    */
   async getAllTables(schemas?: string[] | undefined): Promise<string[]> {
     return this.dialect.getAllTables(schemas)
+  }
+
+  /**
+   * Returns an array of tables with their schema names
+   */
+  async getAllTablesWithSchema(
+    schemas?: string[] | undefined
+  ): Promise<{ name: string; schema?: string }[]> {
+    return this.dialect.getAllTablesWithSchema(schemas)
   }
 
   /**

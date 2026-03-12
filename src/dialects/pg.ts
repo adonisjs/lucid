@@ -71,6 +71,10 @@ export class PgDialect implements DialectContract {
     return tables.map(({ name }) => name)
   }
 
+  async getAllTablesWithSchema(schemas: string[]) {
+    return this.#compileGetAllTables(schemas)
+  }
+
   /**
    * Returns the primary key column names for a given table
    */
@@ -173,20 +177,21 @@ export class PgDialect implements DialectContract {
    * Drop all tables inside the database
    */
   async dropAllTables(schemas: string[]) {
-    let tables = await this.getAllTables(schemas)
+    const allTables = await this.#compileGetAllTables(schemas)
+    const knex = this.client.getWriteClient()
 
     /**
      * Filter out tables that are not allowed to be dropped
      */
-    tables = tables.filter(
-      (table) => !(this.config.wipe?.ignoreTables || ['spatial_ref_sys']).includes(table)
-    )
+    const tablesToDrop = allTables
+      .filter(this.#omitFromExcludeList(this.config.wipe?.ignoreTables || ['spatial_ref_sys']))
+      .map((table) => knex.ref(`${table.schema}.${table.name}`).toSQL().sql)
 
-    if (!tables.length) {
+    if (!tablesToDrop.length) {
       return
     }
 
-    await this.client.rawQuery(`DROP TABLE "${tables.join('", "')}" CASCADE;`)
+    await this.client.rawQuery(`DROP TABLE ${tablesToDrop.join(', ')} CASCADE;`)
   }
 
   /**

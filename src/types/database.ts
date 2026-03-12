@@ -70,6 +70,7 @@ export interface DialectContract {
   readonly supportsReturningStatement: boolean
 
   getAllTables(schemas?: string[]): Promise<string[]>
+  getAllTablesWithSchema(schemas?: string[]): Promise<{ name: string; schema?: string }[]>
   dropAllTables(schemas?: string[]): Promise<void>
 
   getAllViews(schemas?: string[]): Promise<string[]>
@@ -200,8 +201,12 @@ export interface QueryClientContract {
   /**
    * Returns columns info for a given table
    */
-  columnsInfo(table: string): Promise<{ [column: string]: Knex.ColumnInfo }>
-  columnsInfo(table: string, column: string): Promise<Knex.ColumnInfo>
+  columnsInfo(
+    table: string,
+    column?: string,
+    schema?: string
+  ): Promise<{ [column: string]: Knex.ColumnInfo }>
+  columnsInfo(table: string, column: string, schema?: string): Promise<Knex.ColumnInfo>
 
   /**
    * Returns the primary key column names for a given table
@@ -212,6 +217,11 @@ export interface QueryClientContract {
    * Get all tables of the database
    */
   getAllTables(schemas?: string[]): Promise<string[]>
+
+  /**
+   * Get all tables with their schema names
+   */
+  getAllTablesWithSchema(schemas?: string[]): Promise<{ name: string; schema?: string }[]>
 
   /**
    * Returns an array of all views names for one or many schemas

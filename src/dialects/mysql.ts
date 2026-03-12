@@ -149,6 +149,11 @@ export class MysqlDialect implements DialectContract {
     return tables.map(({ table_name }) => table_name)
   }
 
+  async getAllTablesWithSchema(): Promise<{ name: string; schema?: string }[]> {
+    const tables = await this.getAllTables()
+    return tables.map((name) => ({ name }))
+  }
+
   /**
    * Returns an array of all views names
    */

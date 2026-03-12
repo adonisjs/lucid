@@ -64,6 +64,11 @@ export abstract class BaseSqliteDialect implements DialectContract {
     return tables.map(({ table_name }) => table_name)
   }
 
+  async getAllTablesWithSchema(): Promise<{ name: string; schema?: string }[]> {
+    const tables = await this.getAllTables()
+    return tables.map((name) => ({ name }))
+  }
+
   /**
    * Returns the primary key column names for a given table
    */

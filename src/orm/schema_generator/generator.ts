@@ -90,25 +90,33 @@ export class OrmSchemaGenerator extends EventEmitter<{
     /**
      * Get list of all tables from the database
      */
-    let tables = await this.connection.getAllTables(this.config.schemas)
+    let tables = await this.connection.getAllTablesWithSchema(this.config.schemas)
     if (this.config.excludeTables) {
-      tables = tables.filter((tableName) => !this.config.excludeTables?.includes(tableName))
+      tables = tables.filter(
+        ({ name, schema }) =>
+          !this.config.excludeTables?.includes(name) &&
+          !(schema && this.config.excludeTables?.includes(`${schema}.${name}`))
+      )
     }
 
-    this.emit('collect:tables', tables)
+    this.emit(
+      'collect:tables',
+      tables.map(({ name }) => name)
+    )
 
     /**
      * Fetch columns and primary keys for each table
      */
     const tablesWithColumns = await Promise.all(
-      tables.map(async (tableName) => {
+      tables.map(async ({ name, schema }) => {
+        const tableLookup = schema ? `${schema}.${name}` : name
         const [columns, primaryKeys] = await Promise.all([
-          this.connection.columnsInfo(tableName),
-          this.connection.getPrimaryKeys(tableName),
+          this.connection.columnsInfo(name, undefined, schema),
+          this.connection.getPrimaryKeys(tableLookup),
         ])
 
-        this.emit('table:info', { tableName, columns })
-        return { name: tableName, columns, primaryKeys }
+        this.emit('table:info', { tableName: name, columns })
+        return { name, columns, primaryKeys }
       })
     )
 

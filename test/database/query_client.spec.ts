@@ -549,9 +549,10 @@ test.group('Query client | get tables', (group) => {
     await resetTables()
   })
 
-  test('get an array of tables', async ({ assert }) => {
+  test('get an array of tables', async ({ assert, cleanup: testCleanup }) => {
     const connection = new Connection('primary', getConfig(), logger)
     connection.connect()
+    testCleanup(() => connection.disconnect())
 
     const client = new QueryClient('dual', connection, createEmitter())
     const tables = await client.getAllTables(['public'])
@@ -588,8 +589,6 @@ test.group('Query client | get tables', (group) => {
         'uuid_users',
       ])
     }
-
-    await connection.disconnect()
   })
 })
 
@@ -655,3 +654,101 @@ test.group('Query client | get primary keys', (group) => {
     await connection.disconnect()
   })
 })
+
+if (process.env.DB === 'pg') {
+  test.group('Query client | pg schema-qualified tables', (group) => {
+    group.setup(async () => {
+      await setup()
+    })
+
+    group.teardown(async () => {
+      await cleanup()
+    })
+
+    test('get tables with schema info for non-public schemas', async ({
+      assert,
+      cleanup: testCleanup,
+    }) => {
+      const connection = new Connection('primary', getConfig(), logger)
+      connection.connect()
+
+      const client = new QueryClient('dual', connection, createEmitter())
+
+      await client.rawQuery('CREATE SCHEMA IF NOT EXISTS test_schema')
+      await client.rawQuery(`
+        CREATE TABLE IF NOT EXISTS test_schema.test_posts (
+          id serial PRIMARY KEY,
+          title varchar(255) NOT NULL
+        )
+      `)
+
+      testCleanup(async () => {
+        await client.rawQuery('DROP TABLE IF EXISTS test_schema.test_posts')
+        await client.rawQuery('DROP SCHEMA IF EXISTS test_schema')
+        await connection.disconnect()
+      })
+
+      const tables = await client.getAllTablesWithSchema(['public', 'test_schema'])
+
+      const testPostsEntry = tables.find((t) => t.name === 'test_posts')
+      assert.isDefined(testPostsEntry)
+      assert.equal(testPostsEntry!.schema, 'test_schema')
+
+      const usersEntry = tables.find((t) => t.name === 'users')
+      assert.isDefined(usersEntry)
+      assert.equal(usersEntry!.schema, 'public')
+    })
+
+    test('get column info with schema parameter', async ({ assert, cleanup: testCleanup }) => {
+      const connection = new Connection('primary', getConfig(), logger)
+      connection.connect()
+
+      const client = new QueryClient('dual', connection, createEmitter())
+
+      await client.rawQuery('CREATE SCHEMA IF NOT EXISTS test_schema')
+      await client.rawQuery(`
+        CREATE TABLE IF NOT EXISTS test_schema.test_posts (
+          id serial PRIMARY KEY,
+          title varchar(255) NOT NULL
+        )
+      `)
+
+      testCleanup(async () => {
+        await client.rawQuery('DROP TABLE IF EXISTS test_schema.test_posts')
+        await client.rawQuery('DROP SCHEMA IF EXISTS test_schema')
+        await connection.disconnect()
+      })
+
+      const columns = await client.columnsInfo('test_posts', undefined, 'test_schema')
+      assert.property(columns, 'id')
+      assert.property(columns, 'title')
+    })
+
+    test('get primary keys for schema-qualified table', async ({
+      assert,
+      cleanup: testCleanup,
+    }) => {
+      const connection = new Connection('primary', getConfig(), logger)
+      connection.connect()
+
+      const client = new QueryClient('dual', connection, createEmitter())
+
+      await client.rawQuery('CREATE SCHEMA IF NOT EXISTS test_schema')
+      await client.rawQuery(`
+        CREATE TABLE IF NOT EXISTS test_schema.test_posts (
+          id serial PRIMARY KEY,
+          title varchar(255) NOT NULL
+        )
+      `)
+
+      testCleanup(async () => {
+        await client.rawQuery('DROP TABLE IF EXISTS test_schema.test_posts')
+        await client.rawQuery('DROP SCHEMA IF EXISTS test_schema')
+        await connection.disconnect()
+      })
+
+      const primaryKeys = await client.getPrimaryKeys('test_schema.test_posts')
+      assert.deepEqual(primaryKeys, ['id'])
+    })
+  })
+}
