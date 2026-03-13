@@ -40,23 +40,24 @@ test.group('OrmSchemaBuilder | Basic Type Mapping', (group) => {
     })
 
     const columns = await connection.knexQuery().from('test_basic_types').columnInfo()
-    const schemas = generator.generateSchemas([{ name: 'test_basic_types', columns }])
+    const primaryKeys = await connection.getPrimaryKeys('test_basic_types')
+    const schemas = generator.generateSchemas([{ name: 'test_basic_types', columns, primaryKeys }])
     const output = schemas.classes.join('\n')
 
     assert.snapshot(output).matchInline(`
       "export class TestBasicTypeSchema extends BaseModel {
-        static $columns = ['id', 'name', 'age', 'isActive', 'bio'] as const
+        static $columns = ['age', 'bio', 'id', 'isActive', 'name'] as const
         $columns = TestBasicTypeSchema.$columns
-        @column({ isPrimary: true })
-        declare id: number
-        @column()
-        declare name: string
         @column()
         declare age: number
         @column()
+        declare bio: string
+        @column({ isPrimary: true })
+        declare id: number
+        @column()
         declare isActive: boolean
         @column()
-        declare bio: string
+        declare name: string
       }"
     `)
 
@@ -78,7 +79,8 @@ test.group('OrmSchemaBuilder | Basic Type Mapping', (group) => {
     })
 
     const columns = await connection.knexQuery().from('test_numbers').columnInfo()
-    const schemas = generator.generateSchemas([{ name: 'test_numbers', columns }])
+    const primaryKeys = await connection.getPrimaryKeys('test_numbers')
+    const schemas = generator.generateSchemas([{ name: 'test_numbers', columns, primaryKeys }])
     const output = schemas.classes.join('\n')
     const expectedDecilamNumType = ['sqlite', 'libsql', 'better_sqlite'].includes(process.env.DB!)
       ? 'number'
@@ -86,16 +88,16 @@ test.group('OrmSchemaBuilder | Basic Type Mapping', (group) => {
 
     assert.snapshot(output).matchInline(`
       "export class TestNumberSchema extends BaseModel {
-        static $columns = ['id', 'smallNum', 'bigNum', 'decimalNum'] as const
+        static $columns = ['bigNum', 'decimalNum', 'id', 'smallNum'] as const
         $columns = TestNumberSchema.$columns
-        @column({ isPrimary: true })
-        declare id: number
-        @column()
-        declare smallNum: number
         @column()
         declare bigNum: bigint | number
         @column()
         declare decimalNum: ${expectedDecilamNumType}
+        @column({ isPrimary: true })
+        declare id: number
+        @column()
+        declare smallNum: number
       }"
     `)
 
@@ -116,19 +118,20 @@ test.group('OrmSchemaBuilder | Basic Type Mapping', (group) => {
     })
 
     const columns = await connection.knexQuery().from('test_dates').columnInfo()
-    const schemas = generator.generateSchemas([{ name: 'test_dates', columns }])
+    const primaryKeys = await connection.getPrimaryKeys('test_dates')
+    const schemas = generator.generateSchemas([{ name: 'test_dates', columns, primaryKeys }])
     const output = schemas.classes.join('\n')
 
     assert.snapshot(output).matchInline(`
       "export class TestDateSchema extends BaseModel {
-        static $columns = ['id', 'birthDate', 'createdAt'] as const
+        static $columns = ['birthDate', 'createdAt', 'id'] as const
         $columns = TestDateSchema.$columns
-        @column({ isPrimary: true })
-        declare id: number
         @column.date()
         declare birthDate: DateTime
         @column.dateTime({ autoCreate: true })
         declare createdAt: DateTime
+        @column({ isPrimary: true })
+        declare id: number
       }"
     `)
 
@@ -153,7 +156,8 @@ test.group('OrmSchemaBuilder | Basic Type Mapping', (group) => {
     const expectedJSONType = ['mssql'].includes(process.env.DB!) ? 'string' : 'any'
 
     const columns = await connection.knexQuery().from('test_json').columnInfo()
-    const schemas = generator.generateSchemas([{ name: 'test_json', columns }])
+    const primaryKeys = await connection.getPrimaryKeys('test_json')
+    const schemas = generator.generateSchemas([{ name: 'test_json', columns, primaryKeys }])
     const output = schemas.classes.join('\n')
 
     assert.snapshot(output).matchInline(`
@@ -189,19 +193,20 @@ test.group('OrmSchemaBuilder | Basic Type Mapping', (group) => {
     const expectedJSONType = ['mssql'].includes(process.env.DB!) ? 'string' : 'any'
 
     const columns = await connection.knexQuery().from('test_jsonb').columnInfo()
-    const schemas = generator.generateSchemas([{ name: 'test_jsonb', columns }])
+    const primaryKeys = await connection.getPrimaryKeys('test_jsonb')
+    const schemas = generator.generateSchemas([{ name: 'test_jsonb', columns, primaryKeys }])
     const output = schemas.classes.join('\n')
 
     assert.snapshot(output).matchInline(`
       "export class TestJsonbSchema extends BaseModel {
-        static $columns = ['id', 'settings', 'preferences'] as const
+        static $columns = ['id', 'preferences', 'settings'] as const
         $columns = TestJsonbSchema.$columns
         @column({ isPrimary: true })
         declare id: number
         @column()
-        declare settings: ${expectedJSONType}
-        @column()
         declare preferences: ${expectedJSONType} | null
+        @column()
+        declare settings: ${expectedJSONType}
       }"
     `)
 
@@ -235,7 +240,8 @@ test.group('OrmSchemaBuilder | Column-Specific Rules', (group) => {
     })
 
     const columns = await connection.knexQuery().from('test_pk').columnInfo()
-    const schemas = generator.generateSchemas([{ name: 'test_pk', columns }])
+    const primaryKeys = await connection.getPrimaryKeys('test_pk')
+    const schemas = generator.generateSchemas([{ name: 'test_pk', columns, primaryKeys }])
     const output = schemas.classes.join('\n')
 
     assert.snapshot(output).matchInline(`
@@ -262,7 +268,9 @@ test.group('OrmSchemaBuilder | Column-Specific Rules', (group) => {
       name: { type: 'varchar', nullable: false },
     }
 
-    const schemas = generator.generateSchemas([{ name: 'test_uuid_pk', columns }])
+    const schemas = generator.generateSchemas([
+      { name: 'test_uuid_pk', columns, primaryKeys: ['id'] },
+    ])
     const output = schemas.classes.join('\n')
 
     assert.snapshot(output).matchInline(`
@@ -273,6 +281,149 @@ test.group('OrmSchemaBuilder | Column-Specific Rules', (group) => {
         declare id: string
         @column()
         declare name: string
+      }"
+    `)
+  })
+
+  test('apply primary key decorator to non-id column', async ({ assert }) => {
+    const db = getDb()
+    const connection = db.connection()
+    const generator = new OrmSchemaBuilder(connection)
+
+    await connection.schema.dropTableIfExists('test_custom_pk')
+
+    await connection.schema.createTable('test_custom_pk', (table) => {
+      table.string('key').notNullable().primary()
+      table.string('value').notNullable()
+    })
+
+    const columns = await connection.knexQuery().from('test_custom_pk').columnInfo()
+    const primaryKeys = await connection.getPrimaryKeys('test_custom_pk')
+    const schemas = generator.generateSchemas([{ name: 'test_custom_pk', columns, primaryKeys }])
+    const output = schemas.classes.join('\n')
+
+    assert.snapshot(output).matchInline(`
+      "export class TestCustomPkSchema extends BaseModel {
+        static $columns = ['key', 'value'] as const
+        $columns = TestCustomPkSchema.$columns
+        @column({ isPrimary: true })
+        declare key: string
+        @column()
+        declare value: string
+      }"
+    `)
+
+    await connection.schema.dropTable('test_custom_pk')
+  })
+
+  test('column rules take precedence over primary key rule', async ({ assert }) => {
+    const db = getDb()
+    const connection = db.connection()
+    const generator = new OrmSchemaBuilder(connection)
+
+    generator.loadRules([
+      {
+        columns: {
+          key: {
+            tsType: 'string',
+            decorator: "@column({ columnName: 'key' })",
+            imports: [],
+          },
+        },
+      },
+    ])
+
+    const columns = {
+      key: { type: 'text', nullable: false },
+      value: { type: 'text', nullable: false },
+    }
+
+    const schemas = generator.generateSchemas([
+      { name: 'test_precedence', columns, primaryKeys: ['key'] },
+    ])
+    const output = schemas.classes.join('\n')
+
+    assert.snapshot(output).matchInline(`
+      "export class TestPrecedenceSchema extends BaseModel {
+        static $columns = ['key', 'value'] as const
+        $columns = TestPrecedenceSchema.$columns
+        @column({ columnName: 'key' })
+        declare key: string
+        @column()
+        declare value: string
+      }"
+    `)
+  })
+
+  test('table-specific primaryKey rule takes precedence over global', async ({ assert }) => {
+    const db = getDb()
+    const connection = db.connection()
+    const generator = new OrmSchemaBuilder(connection)
+
+    generator.loadRules([
+      {
+        tables: {
+          test_table_pk: {
+            primaryKey: (_tableName, primaryKeys, columns) => {
+              const columnName = primaryKeys[0]
+              if (!columnName || !columns[columnName]) return undefined
+              return {
+                columnName,
+                columnInfo: {
+                  tsType: 'string',
+                  decorator: '@column({ isPrimary: true, serializeAs: null })',
+                  imports: [],
+                },
+              }
+            },
+          },
+        },
+      },
+    ])
+
+    const columns = {
+      key: { type: 'text', nullable: false },
+      value: { type: 'text', nullable: false },
+    }
+
+    const schemas = generator.generateSchemas([
+      { name: 'test_table_pk', columns, primaryKeys: ['key'] },
+    ])
+    const output = schemas.classes.join('\n')
+
+    assert.snapshot(output).matchInline(`
+      "export class TestTablePkSchema extends BaseModel {
+        static $columns = ['key', 'value'] as const
+        $columns = TestTablePkSchema.$columns
+        @column({ isPrimary: true, serializeAs: null })
+        declare key: string
+        @column()
+        declare value: string
+      }"
+    `)
+  })
+
+  test('no primary key when database returns empty primary keys', async ({ assert }) => {
+    const db = getDb()
+    const connection = db.connection()
+    const generator = new OrmSchemaBuilder(connection)
+
+    const columns = {
+      name: { type: 'varchar', nullable: false },
+      value: { type: 'text', nullable: false },
+    }
+
+    const schemas = generator.generateSchemas([{ name: 'test_no_pk', columns, primaryKeys: [] }])
+    const output = schemas.classes.join('\n')
+
+    assert.snapshot(output).matchInline(`
+      "export class TestNoPkSchema extends BaseModel {
+        static $columns = ['name', 'value'] as const
+        $columns = TestNoPkSchema.$columns
+        @column()
+        declare name: string
+        @column()
+        declare value: string
       }"
     `)
   })
@@ -290,7 +441,8 @@ test.group('OrmSchemaBuilder | Column-Specific Rules', (group) => {
     })
 
     const columns = await connection.knexQuery().from('test_password').columnInfo()
-    const schemas = generator.generateSchemas([{ name: 'test_password', columns }])
+    const primaryKeys = await connection.getPrimaryKeys('test_password')
+    const schemas = generator.generateSchemas([{ name: 'test_password', columns, primaryKeys }])
     const output = schemas.classes.join('\n')
 
     assert.snapshot(output).matchInline(`
@@ -320,17 +472,18 @@ test.group('OrmSchemaBuilder | Column-Specific Rules', (group) => {
     })
 
     const columns = await connection.knexQuery().from('test_created_at').columnInfo()
-    const schemas = generator.generateSchemas([{ name: 'test_created_at', columns }])
+    const primaryKeys = await connection.getPrimaryKeys('test_created_at')
+    const schemas = generator.generateSchemas([{ name: 'test_created_at', columns, primaryKeys }])
     const output = schemas.classes.join('\n')
 
     assert.snapshot(output).matchInline(`
       "export class TestCreatedAtSchema extends BaseModel {
-        static $columns = ['id', 'createdAt'] as const
+        static $columns = ['createdAt', 'id'] as const
         $columns = TestCreatedAtSchema.$columns
-        @column({ isPrimary: true })
-        declare id: number
         @column.dateTime({ autoCreate: true })
         declare createdAt: DateTime
+        @column({ isPrimary: true })
+        declare id: number
       }"
     `)
 
@@ -350,7 +503,8 @@ test.group('OrmSchemaBuilder | Column-Specific Rules', (group) => {
     })
 
     const columns = await connection.knexQuery().from('test_updated_at').columnInfo()
-    const schemas = generator.generateSchemas([{ name: 'test_updated_at', columns }])
+    const primaryKeys = await connection.getPrimaryKeys('test_updated_at')
+    const schemas = generator.generateSchemas([{ name: 'test_updated_at', columns, primaryKeys }])
     const output = schemas.classes.join('\n')
 
     assert.snapshot(output).matchInline(`
@@ -395,19 +549,20 @@ test.group('OrmSchemaBuilder | Nullable Columns', (group) => {
     })
 
     const columns = await connection.knexQuery().from('test_nullable').columnInfo()
-    const schemas = generator.generateSchemas([{ name: 'test_nullable', columns }])
+    const primaryKeys = await connection.getPrimaryKeys('test_nullable')
+    const schemas = generator.generateSchemas([{ name: 'test_nullable', columns, primaryKeys }])
     const output = schemas.classes.join('\n')
 
     assert.snapshot(output).matchInline(`
       "export class TestNullableSchema extends BaseModel {
-        static $columns = ['id', 'middleName', 'age'] as const
+        static $columns = ['age', 'id', 'middleName'] as const
         $columns = TestNullableSchema.$columns
+        @column()
+        declare age: number | null
         @column({ isPrimary: true })
         declare id: number
         @column()
         declare middleName: string | null
-        @column()
-        declare age: number | null
       }"
     `)
 
@@ -427,17 +582,18 @@ test.group('OrmSchemaBuilder | Nullable Columns', (group) => {
     })
 
     const columns = await connection.knexQuery().from('test_nullable_ts').columnInfo()
-    const schemas = generator.generateSchemas([{ name: 'test_nullable_ts', columns }])
+    const primaryKeys = await connection.getPrimaryKeys('test_nullable_ts')
+    const schemas = generator.generateSchemas([{ name: 'test_nullable_ts', columns, primaryKeys }])
     const output = schemas.classes.join('\n')
 
     assert.snapshot(output).matchInline(`
       "export class TestNullableTSchema extends BaseModel {
-        static $columns = ['id', 'deletedAt'] as const
+        static $columns = ['deletedAt', 'id'] as const
         $columns = TestNullableTSchema.$columns
-        @column({ isPrimary: true })
-        declare id: number
         @column.dateTime()
         declare deletedAt: DateTime | null
+        @column({ isPrimary: true })
+        declare id: number
       }"
     `)
 
@@ -483,7 +639,8 @@ test.group('OrmSchemaBuilder | Custom Rules', (group) => {
     })
 
     const columns = await connection.knexQuery().from('test_custom').columnInfo()
-    const schemas = generator.generateSchemas([{ name: 'test_custom', columns }])
+    const primaryKeys = await connection.getPrimaryKeys('test_custom')
+    const schemas = generator.generateSchemas([{ name: 'test_custom', columns, primaryKeys }])
     const output = schemas.classes.join('\n')
 
     assert.snapshot(output).matchInline(`
@@ -529,7 +686,8 @@ test.group('OrmSchemaBuilder | Custom Rules', (group) => {
     })
 
     const columns = await connection.knexQuery().from('test_users').columnInfo()
-    const schemas = generator.generateSchemas([{ name: 'test_users', columns }])
+    const primaryKeys = await connection.getPrimaryKeys('test_users')
+    const schemas = generator.generateSchemas([{ name: 'test_users', columns, primaryKeys }])
     const output = schemas.classes.join('\n')
 
     assert.snapshot(output).matchInline(`
@@ -587,11 +745,21 @@ test.group('OrmSchemaBuilder | Custom Rules', (group) => {
       table.string('status').notNullable()
     })
 
-    const userColumns = await connection.knexQuery().from('test_users').columnInfo()
-    const postColumns = await connection.knexQuery().from('test_posts').columnInfo()
+    const [userColumns, userPrimaryKeys] = await Promise.all([
+      connection.knexQuery().from('test_users').columnInfo(),
+      connection.getPrimaryKeys('test_users'),
+    ])
+    const [postColumns, postPrimaryKeys] = await Promise.all([
+      connection.knexQuery().from('test_posts').columnInfo(),
+      connection.getPrimaryKeys('test_posts'),
+    ])
 
-    const userSchemas = generator.generateSchemas([{ name: 'test_users', columns: userColumns }])
-    const postSchemas = generator.generateSchemas([{ name: 'test_posts', columns: postColumns }])
+    const userSchemas = generator.generateSchemas([
+      { name: 'test_users', columns: userColumns, primaryKeys: userPrimaryKeys },
+    ])
+    const postSchemas = generator.generateSchemas([
+      { name: 'test_posts', columns: postColumns, primaryKeys: postPrimaryKeys },
+    ])
 
     assert.snapshot(userSchemas.classes.join('\n')).matchInline(`
       "export class TestUserSchema extends BaseModel {
@@ -654,10 +822,12 @@ test.group('OrmSchemaBuilder | Multiple Tables', (group) => {
       {
         name: 'test_users',
         columns: await connection.knexQuery().from('test_users').columnInfo(),
+        primaryKeys: await connection.getPrimaryKeys('test_users'),
       },
       {
         name: 'test_posts',
         columns: await connection.knexQuery().from('test_posts').columnInfo(),
+        primaryKeys: await connection.getPrimaryKeys('test_posts'),
       },
     ]
 
@@ -698,10 +868,12 @@ test.group('OrmSchemaBuilder | Multiple Tables', (group) => {
       {
         name: 'test_users',
         columns: await connection.knexQuery().from('test_users').columnInfo(),
+        primaryKeys: await connection.getPrimaryKeys('test_users'),
       },
       {
         name: 'test_posts',
         columns: await connection.knexQuery().from('test_posts').columnInfo(),
+        primaryKeys: await connection.getPrimaryKeys('test_posts'),
       },
     ]
 
@@ -748,6 +920,7 @@ test.group('OrmSchemaBuilder | Output Generation', (group) => {
       {
         name: 'test_users',
         columns: await connection.knexQuery().from('test_users').columnInfo(),
+        primaryKeys: await connection.getPrimaryKeys('test_users'),
       },
     ]
 
@@ -759,14 +932,14 @@ test.group('OrmSchemaBuilder | Output Generation', (group) => {
       import { DateTime } from 'luxon'
 
       export class TestUserSchema extends BaseModel {
-        static $columns = ['id', 'name', 'createdAt'] as const
+        static $columns = ['createdAt', 'id', 'name'] as const
         $columns = TestUserSchema.$columns
+        @column.dateTime({ autoCreate: true })
+        declare createdAt: DateTime
         @column({ isPrimary: true })
         declare id: number
         @column()
         declare name: string
-        @column.dateTime({ autoCreate: true })
-        declare createdAt: DateTime
       }
       "
     `)
@@ -800,20 +973,20 @@ test.group('OrmSchemaBuilder | Unknown Types', (group) => {
       exotic_nullable: { type: 'another_unknown_type', nullable: true },
     }
 
-    const schemas = generator.generateSchemas([{ name: 'test', columns }])
+    const schemas = generator.generateSchemas([{ name: 'test', columns, primaryKeys: ['id'] }])
     const output = schemas.classes.join('\n')
 
     // Unknown types should default to 'any'
     assert.snapshot(output).matchInline(`
       "export class TestSchema extends BaseModel {
-        static $columns = ['id', 'weirdField', 'exoticNullable'] as const
+        static $columns = ['exoticNullable', 'id', 'weirdField'] as const
         $columns = TestSchema.$columns
+        @column()
+        declare exoticNullable: any | null
         @column({ isPrimary: true })
         declare id: number
         @column()
         declare weirdField: any
-        @column()
-        declare exoticNullable: any | null
       }"
     `)
   })
@@ -870,7 +1043,8 @@ test.group('OrmSchemaBuilder | Enum Handling', (group) => {
     }
 
     const columns = await connection.knexQuery().from('test_enum_users').columnInfo()
-    const schemas = generator.generateSchemas([{ name: 'test_enum_users', columns }])
+    const primaryKeys = await connection.getPrimaryKeys('test_enum_users')
+    const schemas = generator.generateSchemas([{ name: 'test_enum_users', columns, primaryKeys }])
     const output = schemas.classes.join('\n')
 
     assert.snapshot(output).matchInline(`
@@ -926,7 +1100,10 @@ test.group('OrmSchemaBuilder | Enum Handling', (group) => {
     }
 
     const columns = await connection.knexQuery().from('test_enum_profiles').columnInfo()
-    const schemas = generator.generateSchemas([{ name: 'test_enum_profiles', columns }])
+    const primaryKeys = await connection.getPrimaryKeys('test_enum_profiles')
+    const schemas = generator.generateSchemas([
+      { name: 'test_enum_profiles', columns, primaryKeys },
+    ])
     const output = schemas.classes.join('\n')
 
     assert.snapshot(output).matchInline(`
@@ -963,11 +1140,25 @@ test.group('OrmSchemaBuilder | Enum Handling', (group) => {
       })
 
       const columns = await connection.knexQuery().from('test_enum_no_rule').columnInfo()
-      const schemas = generator.generateSchemas([{ name: 'test_enum_no_rule', columns }])
+      const primaryKeys = await connection.getPrimaryKeys('test_enum_no_rule')
+      const schemas = generator.generateSchemas([
+        { name: 'test_enum_no_rule', columns, primaryKeys },
+      ])
       const output = schemas.classes.join('\n')
 
       // USER-DEFINED types without schema rules should default to 'any'
-      assert.snapshot(output).matchInline(``)
+      assert.snapshot(output).matchInline(`
+        "export class TestEnumNoRuleSchema extends BaseModel {
+          static $columns = ['id', 'mood', 'status'] as const
+          $columns = TestEnumNoRuleSchema.$columns
+          @column({ isPrimary: true })
+          declare id: number
+          @column()
+          declare mood: any | null
+          @column()
+          declare status: any
+        }"
+      `)
 
       await connection.schema.dropTable('test_enum_no_rule')
       await connection.rawQuery('DROP TYPE status_enum')
@@ -986,20 +1177,21 @@ test.group('OrmSchemaBuilder | Enum Handling', (group) => {
     })
 
     const columns = await connection.knexQuery().from('test_enum_default').columnInfo()
-    const schemas = generator.generateSchemas([{ name: 'test_enum_default', columns }])
+    const primaryKeys = await connection.getPrimaryKeys('test_enum_default')
+    const schemas = generator.generateSchemas([{ name: 'test_enum_default', columns, primaryKeys }])
     const output = schemas.classes.join('\n')
 
     // Without custom schema rules, enum should default to string type
     assert.snapshot(output).matchInline(`
       "export class TestEnumDefaultSchema extends BaseModel {
-        static $columns = ['id', 'status', 'priority'] as const
+        static $columns = ['id', 'priority', 'status'] as const
         $columns = TestEnumDefaultSchema.$columns
         @column({ isPrimary: true })
         declare id: number
         @column()
-        declare status: string
-        @column()
         declare priority: string | null
+        @column()
+        declare status: string
       }"
     `)
 
@@ -1035,21 +1227,22 @@ test.group('OrmSchemaBuilder | Name Conversion', (group) => {
     })
 
     const columns = await connection.knexQuery().from('test_profiles').columnInfo()
-    const schemas = generator.generateSchemas([{ name: 'test_profiles', columns }])
+    const primaryKeys = await connection.getPrimaryKeys('test_profiles')
+    const schemas = generator.generateSchemas([{ name: 'test_profiles', columns, primaryKeys }])
     const output = schemas.classes.join('\n')
 
     assert.snapshot(output).matchInline(`
       "export class TestProfileSchema extends BaseModel {
-        static $columns = ['id', 'userProfileId', 'firstName', 'lastNameSuffix'] as const
+        static $columns = ['firstName', 'id', 'lastNameSuffix', 'userProfileId'] as const
         $columns = TestProfileSchema.$columns
+        @column()
+        declare firstName: string
         @column({ isPrimary: true })
         declare id: number
         @column()
-        declare userProfileId: number
-        @column()
-        declare firstName: string
-        @column()
         declare lastNameSuffix: string
+        @column()
+        declare userProfileId: number
       }"
     `)
 
@@ -1078,17 +1271,24 @@ test.group('OrmSchemaBuilder | Name Conversion', (group) => {
     })
 
     const usersColumns = await connection.knexQuery().from('test_users_plural').columnInfo()
+    const usersPrimaryKeys = await connection.getPrimaryKeys('test_users_plural')
     const postsColumns = await connection.knexQuery().from('test_posts_plural').columnInfo()
+    const postsPrimaryKeys = await connection.getPrimaryKeys('test_posts_plural')
     const categoriesColumns = await connection.knexQuery().from('test_categories').columnInfo()
+    const categoriesPrimaryKeys = await connection.getPrimaryKeys('test_categories')
 
     const usersSchemas = generator.generateSchemas([
-      { name: 'test_users_plural', columns: usersColumns },
+      { name: 'test_users_plural', columns: usersColumns, primaryKeys: usersPrimaryKeys },
     ])
     const postsSchemas = generator.generateSchemas([
-      { name: 'test_posts_plural', columns: postsColumns },
+      { name: 'test_posts_plural', columns: postsColumns, primaryKeys: postsPrimaryKeys },
     ])
     const categoriesSchemas = generator.generateSchemas([
-      { name: 'test_categories', columns: categoriesColumns },
+      {
+        name: 'test_categories',
+        columns: categoriesColumns,
+        primaryKeys: categoriesPrimaryKeys,
+      },
     ])
 
     assert.snapshot(usersSchemas.classes.join('\n')).matchInline(`
@@ -1133,7 +1333,8 @@ test.group('OrmSchemaBuilder | Name Conversion', (group) => {
     })
 
     const columns = await connection.knexQuery().from('user_profiles').columnInfo()
-    const schemas = generator.generateSchemas([{ name: 'user_profiles', columns }])
+    const primaryKeys = await connection.getPrimaryKeys('user_profiles')
+    const schemas = generator.generateSchemas([{ name: 'user_profiles', columns, primaryKeys }])
 
     assert.snapshot(schemas.classes.join('\n')).matchInline(`
       "export class UserProfileSchema extends BaseModel {

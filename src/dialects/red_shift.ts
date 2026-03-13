@@ -53,20 +53,43 @@ export class RedshiftDialect implements DialectContract {
     }
   }
 
+  #compileGetAllTables(schemas: string[]) {
+    return this.client
+      .query()
+      .from('pg_catalog.pg_tables')
+      .select(['tablename as name', 'schemaname as schema'])
+      .whereIn('schemaname', schemas)
+      .orderBy('tablename', 'asc')
+  }
+
   /**
    * Returns an array of table names for one or many schemas.
    *
    * NOTE: ASSUMING FEATURE PARITY WITH POSTGRESQL HERE (NOT TESTED)
    */
   async getAllTables(schemas: string[]) {
-    const tables = await this.client
-      .query()
-      .from('pg_catalog.pg_tables')
-      .select('tablename as table_name')
-      .whereIn('schemaname', schemas)
-      .orderBy('tablename', 'asc')
+    const tables = await this.#compileGetAllTables(schemas)
+    return tables.map(({ name }) => name)
+  }
 
-    return tables.map(({ table_name }) => table_name)
+  async getAllTablesWithSchema(schemas: string[]) {
+    return this.#compileGetAllTables(schemas)
+  }
+
+  /**
+   * Returns the primary key column names for a given table
+   *
+   * NOTE: ASSUMING FEATURE PARITY WITH POSTGRESQL HERE (NOT TESTED)
+   */
+  async getPrimaryKeys(tableName: string): Promise<string[]> {
+    const result = await this.client.rawQuery(
+      `SELECT a.attname
+       FROM pg_index i
+       JOIN pg_attribute a ON a.attrelid = i.indrelid AND a.attnum = ANY(i.indkey)
+       WHERE i.indrelid = '${tableName}'::regclass AND i.indisprimary
+       ORDER BY a.attnum`
+    )
+    return result.rows.map((row: any) => row.attname)
   }
 
   /**
@@ -136,22 +159,22 @@ export class RedshiftDialect implements DialectContract {
      */
     const searchPath = schemas ?? ['public']
 
-    const tables = await this.getAllTables(searchPath)
+    const tables = await this.#compileGetAllTables(searchPath)
     const knex = this.client.getWriteClient()
 
     /**
-     * Collecting the tables to be dropped. We ignore tables from the exclude
+     * Collecting the tables to be truncated. We ignore tables from the exclude
      * tables list.
      */
-    const tablesToTrunacte = tables
+    const tablesToTruncate = tables
       .filter(this.#omitFromExcludeList(excludeTables))
       .map((table) => knex.ref(`${table.schema}.${table.name}`).toSQL().sql)
 
-    if (tablesToTrunacte.length) {
+    if (tablesToTruncate.length) {
       const trx = await knex.transaction()
       try {
         await trx.schema.raw('SET CONSTRAINTS ALL DEFERRED;')
-        await trx.schema.raw(`TRUNCATE ${tablesToTrunacte.join(',')};`)
+        await trx.schema.raw(`TRUNCATE ${tablesToTruncate.join(',')};`)
         await trx.schema.raw('SET CONSTRAINTS ALL IMMEDIATE;')
         await trx.commit()
       } catch (error) {
@@ -165,20 +188,21 @@ export class RedshiftDialect implements DialectContract {
    * Drop all tables inside the database
    */
   async dropAllTables(schemas: string[]) {
-    let tables = await this.getAllTables(schemas)
+    const allTables = await this.#compileGetAllTables(schemas)
+    const knex = this.client.getWriteClient()
 
     /**
      * Filter out tables that are not allowed to be dropped
      */
-    tables = tables.filter(
-      (table) => !(this.config.wipe?.ignoreTables || ['spatial_ref_sys']).includes(table)
-    )
+    const tablesToDrop = allTables
+      .filter(this.#omitFromExcludeList(this.config.wipe?.ignoreTables || ['spatial_ref_sys']))
+      .map((table) => knex.ref(`${table.schema}.${table.name}`).toSQL().sql)
 
-    if (!tables.length) {
+    if (!tablesToDrop.length) {
       return
     }
 
-    await this.client.rawQuery(`DROP table ${tables.join(',')} CASCADE;`)
+    await this.client.rawQuery(`DROP TABLE ${tablesToDrop.join(', ')} CASCADE;`)
   }
 
   /**

@@ -119,6 +119,22 @@ export class MysqlDialect implements DialectContract {
   }
 
   /**
+   * Returns the primary key column names for a given table
+   */
+  async getPrimaryKeys(tableName: string): Promise<string[]> {
+    const result = await this.client
+      .query()
+      .from('information_schema.KEY_COLUMN_USAGE')
+      .select('COLUMN_NAME as column_name')
+      .where('TABLE_NAME', tableName)
+      .where('CONSTRAINT_NAME', 'PRIMARY')
+      .where('TABLE_SCHEMA', new RawBuilder('database()'))
+      .orderBy('ORDINAL_POSITION', 'asc')
+
+    return result.map(({ column_name }: any) => column_name)
+  }
+
+  /**
    * Returns an array of table names
    */
   async getAllTables(): Promise<string[]> {
@@ -131,6 +147,11 @@ export class MysqlDialect implements DialectContract {
       .orderBy('table_name', 'asc')
 
     return tables.map(({ table_name }) => table_name)
+  }
+
+  async getAllTablesWithSchema(): Promise<{ name: string; schema?: string }[]> {
+    const tables = await this.getAllTables()
+    return tables.map((name) => ({ name }))
   }
 
   /**

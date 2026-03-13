@@ -85,26 +85,38 @@ export class OrmSchemaGenerator extends EventEmitter<{
    * Fetch all tables and their columns from the database
    */
   private async fetchTablesAndColumns(): Promise<
-    Array<{ name: string; columns: Record<string, any> }>
+    Array<{ name: string; columns: Record<string, any>; primaryKeys: string[] }>
   > {
     /**
      * Get list of all tables from the database
      */
-    let tables = await this.connection.getAllTables(this.config.schemas)
+    let tables = await this.connection.getAllTablesWithSchema(this.config.schemas)
     if (this.config.excludeTables) {
-      tables = tables.filter((tableName) => !this.config.excludeTables?.includes(tableName))
+      tables = tables.filter(
+        ({ name, schema }) =>
+          !this.config.excludeTables?.includes(name) &&
+          !(schema && this.config.excludeTables?.includes(`${schema}.${name}`))
+      )
     }
 
-    this.emit('collect:tables', tables)
+    this.emit(
+      'collect:tables',
+      tables.map(({ name }) => name)
+    )
 
     /**
-     * Fetch columns for each table
+     * Fetch columns and primary keys for each table
      */
     const tablesWithColumns = await Promise.all(
-      tables.map(async (tableName) => {
-        const columns = await this.connection.columnsInfo(tableName)
-        this.emit('table:info', { tableName, columns })
-        return { name: tableName, columns }
+      tables.map(async ({ name, schema }) => {
+        const tableLookup = schema ? `${schema}.${name}` : name
+        const [columns, primaryKeys] = await Promise.all([
+          this.connection.columnsInfo(name, undefined, schema),
+          this.connection.getPrimaryKeys(tableLookup),
+        ])
+
+        this.emit('table:info', { tableName: name, columns })
+        return { name, columns, primaryKeys }
       })
     )
 

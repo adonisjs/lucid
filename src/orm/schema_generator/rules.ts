@@ -7,8 +7,8 @@
  * file that was distributed with this source code.
  */
 
-import { INTERNAL_TYPES } from './mappings.ts'
-import type { SchemaRules } from '../../types/schema_generator.ts'
+import { INTERNAL_TYPES, DATA_TYPES_MAPPING } from './mappings.ts'
+import type { SchemaRules, DatabaseColumn } from '../../types/schema_generator.ts'
 
 /**
  * Default schema rules for mapping internal types to TypeScript types
@@ -92,18 +92,6 @@ export const DEFAULT_SCHEMA_RULES: Required<SchemaRules> = {
     },
   },
   columns: {
-    id: (dataType, column) => {
-      const inferredDataType =
-        typeof DEFAULT_SCHEMA_RULES.types[dataType] === 'function'
-          ? DEFAULT_SCHEMA_RULES.types[dataType](dataType, column)
-          : DEFAULT_SCHEMA_RULES.types[dataType]
-
-      return {
-        tsType: inferredDataType?.tsType ?? dataType,
-        imports: inferredDataType?.imports ?? [],
-        decorator: '@column({ isPrimary: true })',
-      }
-    },
     password: {
       tsType: 'string',
       imports: [],
@@ -121,4 +109,30 @@ export const DEFAULT_SCHEMA_RULES: Required<SchemaRules> = {
     },
   },
   tables: {},
+  primaryKey: (
+    _tableName: string,
+    primaryKeys: string[],
+    columns: Record<string, DatabaseColumn>
+  ) => {
+    const columnName = primaryKeys[0]
+    if (!columnName || !columns[columnName]) {
+      return undefined
+    }
+
+    const column = columns[columnName]
+    const internalType = DATA_TYPES_MAPPING[column.type] ?? column.type
+    const inferredDataType =
+      typeof DEFAULT_SCHEMA_RULES.types[internalType] === 'function'
+        ? DEFAULT_SCHEMA_RULES.types[internalType](internalType)
+        : DEFAULT_SCHEMA_RULES.types[internalType]
+
+    return {
+      columnName,
+      columnInfo: {
+        tsType: inferredDataType?.tsType ?? column.type,
+        imports: inferredDataType?.imports ?? [],
+        decorator: '@column({ isPrimary: true })',
+      },
+    }
+  },
 }

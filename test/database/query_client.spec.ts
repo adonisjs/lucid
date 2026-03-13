@@ -549,9 +549,10 @@ test.group('Query client | get tables', (group) => {
     await resetTables()
   })
 
-  test('get an array of tables', async ({ assert }) => {
+  test('get an array of tables', async ({ assert, cleanup: testCleanup }) => {
     const connection = new Connection('primary', getConfig(), logger)
     connection.connect()
+    testCleanup(() => connection.disconnect())
 
     const client = new QueryClient('dual', connection, createEmitter())
     const tables = await client.getAllTables(['public'])
@@ -588,7 +589,166 @@ test.group('Query client | get tables', (group) => {
         'uuid_users',
       ])
     }
+  })
+})
+
+test.group('Query client | get primary keys', (group) => {
+  group.setup(async () => {
+    await setup()
+  })
+
+  group.teardown(async () => {
+    await cleanup()
+  })
+
+  group.each.teardown(async () => {
+    await resetTables()
+  })
+
+  test('get primary keys for a table with increments id', async ({ assert }) => {
+    const connection = new Connection('primary', getConfig(), logger)
+    connection.connect()
+
+    const client = new QueryClient('dual', connection, createEmitter())
+    const primaryKeys = await client.getPrimaryKeys('users')
+    assert.deepEqual(primaryKeys, ['id'])
 
     await connection.disconnect()
   })
+
+  test('get primary keys for a table with non-id primary key', async ({ assert }) => {
+    const connection = new Connection('primary', getConfig(), logger)
+    connection.connect()
+
+    const client = new QueryClient('dual', connection, createEmitter())
+
+    await client.schema.dropTableIfExists('test_custom_pk')
+    await client.schema.createTable('test_custom_pk', (table) => {
+      table.string('key').notNullable().primary()
+      table.string('value').notNullable()
+    })
+
+    const primaryKeys = await client.getPrimaryKeys('test_custom_pk')
+    assert.deepEqual(primaryKeys, ['key'])
+
+    await client.schema.dropTable('test_custom_pk')
+    await connection.disconnect()
+  })
+
+  test('get empty array for a table with no primary key', async ({ assert }) => {
+    const connection = new Connection('primary', getConfig(), logger)
+    connection.connect()
+
+    const client = new QueryClient('dual', connection, createEmitter())
+
+    await client.schema.dropTableIfExists('test_no_pk')
+    await client.schema.createTable('test_no_pk', (table) => {
+      table.text('name').notNullable()
+      table.text('value').notNullable()
+    })
+
+    const primaryKeys = await client.getPrimaryKeys('test_no_pk')
+    assert.deepEqual(primaryKeys, [])
+
+    await client.schema.dropTable('test_no_pk')
+    await connection.disconnect()
+  })
 })
+
+if (process.env.DB === 'pg') {
+  test.group('Query client | pg schema-qualified tables', (group) => {
+    group.setup(async () => {
+      await setup()
+    })
+
+    group.teardown(async () => {
+      await cleanup()
+    })
+
+    test('get tables with schema info for non-public schemas', async ({
+      assert,
+      cleanup: testCleanup,
+    }) => {
+      const connection = new Connection('primary', getConfig(), logger)
+      connection.connect()
+
+      const client = new QueryClient('dual', connection, createEmitter())
+
+      await client.rawQuery('CREATE SCHEMA IF NOT EXISTS test_schema')
+      await client.rawQuery(`
+        CREATE TABLE IF NOT EXISTS test_schema.test_posts (
+          id serial PRIMARY KEY,
+          title varchar(255) NOT NULL
+        )
+      `)
+
+      testCleanup(async () => {
+        await client.rawQuery('DROP TABLE IF EXISTS test_schema.test_posts')
+        await client.rawQuery('DROP SCHEMA IF EXISTS test_schema')
+        await connection.disconnect()
+      })
+
+      const tables = await client.getAllTablesWithSchema(['public', 'test_schema'])
+
+      const testPostsEntry = tables.find((t) => t.name === 'test_posts')
+      assert.isDefined(testPostsEntry)
+      assert.equal(testPostsEntry!.schema, 'test_schema')
+
+      const usersEntry = tables.find((t) => t.name === 'users')
+      assert.isDefined(usersEntry)
+      assert.equal(usersEntry!.schema, 'public')
+    })
+
+    test('get column info with schema parameter', async ({ assert, cleanup: testCleanup }) => {
+      const connection = new Connection('primary', getConfig(), logger)
+      connection.connect()
+
+      const client = new QueryClient('dual', connection, createEmitter())
+
+      await client.rawQuery('CREATE SCHEMA IF NOT EXISTS test_schema')
+      await client.rawQuery(`
+        CREATE TABLE IF NOT EXISTS test_schema.test_posts (
+          id serial PRIMARY KEY,
+          title varchar(255) NOT NULL
+        )
+      `)
+
+      testCleanup(async () => {
+        await client.rawQuery('DROP TABLE IF EXISTS test_schema.test_posts')
+        await client.rawQuery('DROP SCHEMA IF EXISTS test_schema')
+        await connection.disconnect()
+      })
+
+      const columns = await client.columnsInfo('test_posts', undefined, 'test_schema')
+      assert.property(columns, 'id')
+      assert.property(columns, 'title')
+    })
+
+    test('get primary keys for schema-qualified table', async ({
+      assert,
+      cleanup: testCleanup,
+    }) => {
+      const connection = new Connection('primary', getConfig(), logger)
+      connection.connect()
+
+      const client = new QueryClient('dual', connection, createEmitter())
+
+      await client.rawQuery('CREATE SCHEMA IF NOT EXISTS test_schema')
+      await client.rawQuery(`
+        CREATE TABLE IF NOT EXISTS test_schema.test_posts (
+          id serial PRIMARY KEY,
+          title varchar(255) NOT NULL
+        )
+      `)
+
+      testCleanup(async () => {
+        await client.rawQuery('DROP TABLE IF EXISTS test_schema.test_posts')
+        await client.rawQuery('DROP SCHEMA IF EXISTS test_schema')
+        await connection.disconnect()
+      })
+
+      const primaryKeys = await client.getPrimaryKeys('test_schema.test_posts')
+      assert.deepEqual(primaryKeys, ['id'])
+    })
+  })
+}

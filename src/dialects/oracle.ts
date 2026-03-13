@@ -42,6 +42,12 @@ export class OracleDialect implements DialectContract {
     )
   }
 
+  async getAllTablesWithSchema(): Promise<{ name: string; schema?: string }[]> {
+    throw new Error(
+      '"getAllTablesWithSchema" method is not implemented for oracledb. Create a PR to add the feature'
+    )
+  }
+
   /**
    * Truncate pg table with option to cascade and restart identity
    */
@@ -102,6 +108,12 @@ export class OracleDialect implements DialectContract {
   async dropAllDomains(): Promise<void> {
     throw new Error(
       '"dropAllDomains" method is not implemented for oracledb. Create a PR to add the feature.'
+    )
+  }
+
+  async getPrimaryKeys(_tableName: string): Promise<string[]> {
+    throw new Error(
+      '"getPrimaryKeys" method is not implemented for oracledb. Create a PR to add the feature'
     )
   }
 
