@@ -53,6 +53,7 @@ export class OrmSchemaBuilder {
     columnName: string,
     column: DatabaseColumn,
     tableName: string,
+    primaryKeys: string[],
     primaryKeyColumnInfo: ColumnInfo | undefined
   ): GeneratedColumn {
     const dialectColumnType = `${this.client.dialect.name}.${column.type}`
@@ -89,7 +90,7 @@ export class OrmSchemaBuilder {
     let tsType = finalRule.tsType
     let propertyName = stringHelpers.camelCase(columnName)
 
-    if (column.nullable) {
+    if (column.nullable && !primaryKeys.includes(columnName)) {
       tsType += ' | null'
     }
 
@@ -122,7 +123,7 @@ export class OrmSchemaBuilder {
         primaryKeyResult && columnName === primaryKeyResult.columnName
           ? primaryKeyResult.columnInfo
           : undefined
-      return this.generateColumnSchema(columnName, column, tableName, pkInfo)
+      return this.generateColumnSchema(columnName, column, tableName, primaryKeys, pkInfo)
     })
 
     // Add column-specific imports
