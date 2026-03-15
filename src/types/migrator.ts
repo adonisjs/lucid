@@ -48,3 +48,12 @@ export type MigrationListNode = {
   batch?: number
   migrationTime?: Date
 }
+
+/**
+ * Options accepted by the SchemaDumper constructor
+ */
+export type SchemaDumperOptions = {
+  connectionName?: string
+  outputPath?: string
+  prune?: boolean
+}
