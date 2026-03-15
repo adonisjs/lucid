@@ -10,7 +10,6 @@
 import { readFile, writeFile } from 'node:fs/promises'
 import { BaseSchemaState } from '../base_schema_state.js'
 import { type PostgreConfig, type QueryClientContract } from '../../../types/database.js'
-import { normalizePostgresCliConnection } from '../helpers/postgres_connection.js'
 
 /**
  * PostgreSQL schema dumps are delegated to `pg_dump`.
@@ -26,12 +25,53 @@ export class PgSchemaState extends BaseSchemaState {
   }
 
   /**
+   * Convert a Lucid PostgreSQL connection config into the shape expected by
+   * the PostgreSQL CLI tools.
+   */
+  #normalizeCliConnection() {
+    const connection = this.connectionConfig.connection as PostgreConfig['connection']
+
+    if (!connection) {
+      throw new Error('Incomplete PostgreSQL connection config. Cannot create schema dump')
+    }
+
+    if (typeof connection === 'string') return this.#parseConnectionString(connection)
+    if (connection.connectionString) return this.#parseConnectionString(connection.connectionString)
+
+    if (!connection.database || !connection.user) {
+      throw new Error('Incomplete PostgreSQL connection config. Cannot create schema dump')
+    }
+
+    return {
+      host: connection.host,
+      port: String(connection.port),
+      user: connection.user,
+      password: connection.password ?? '',
+      database: connection.database,
+    }
+  }
+
+  /**
+   * Parse a PostgreSQL connection string into the normalized structure used
+   * by the CLI integration helpers.
+   */
+  #parseConnectionString(connectionString: string) {
+    const url = new URL(connectionString)
+
+    return {
+      host: url.hostname,
+      port: url.port,
+      user: decodeURIComponent(url.username),
+      password: decodeURIComponent(url.password),
+      database: url.pathname.replace(/^\//, ''),
+    }
+  }
+
+  /**
    * Dump the structural schema using `pg_dump`.
    */
   protected async dumpSchema(path: string) {
-    const connection = normalizePostgresCliConnection(
-      this.connectionConfig.connection as PostgreConfig['connection']
-    )
+    const connection = this.#normalizeCliConnection()
     const args = [
       '--schema-only',
       /**
@@ -73,9 +113,7 @@ export class PgSchemaState extends BaseSchemaState {
    * state needed by future migration inserts.
    */
   protected async dumpMigrationMetadata() {
-    const connection = normalizePostgresCliConnection(
-      this.connectionConfig.connection as PostgreConfig['connection']
-    )
+    const connection = this.#normalizeCliConnection()
     const statements: string[] = []
 
     for (let tableName of [this.schemaTableName, this.schemaVersionsTableName]) {
@@ -122,9 +160,7 @@ export class PgSchemaState extends BaseSchemaState {
    * Load the schema dump using `psql`.
    */
   async load(path: string) {
-    const connection = normalizePostgresCliConnection(
-      this.connectionConfig.connection as PostgreConfig['connection']
-    )
+    const connection = this.#normalizeCliConnection()
 
     /**
      * PostgreSQL schema dumps contain psql-specific commands emitted by
