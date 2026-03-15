@@ -55,7 +55,7 @@ export function defineValidationRules(db: Database) {
          * Apply where clause respecting the caseInsensitive flag.
          */
         if (caseInsensitive) {
-          query.whereRaw(`lower(${columnName}) = ?`, [db.raw(`lower(?)`, [value])])
+          query.whereRaw(`lower(??) = ?`, [columnName, db.raw(`lower(?)`, [value])])
         } else {
           query.where(columnName, value as string | number)
         }
@@ -106,7 +106,7 @@ export function defineValidationRules(db: Database) {
          * Apply where clause respecting the caseInsensitive flag.
          */
         if (caseInsensitive) {
-          query.whereRaw(`lower(${columnName}) = ?`, [db.raw(`lower(?)`, [value])])
+          query.whereRaw(`lower(??) = ?`, [columnName, db.raw(`lower(?)`, [value])])
         } else {
           query.where(columnName, value as string | number)
         }

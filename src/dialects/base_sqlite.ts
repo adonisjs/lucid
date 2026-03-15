@@ -73,7 +73,8 @@ export abstract class BaseSqliteDialect implements DialectContract {
    * Returns the primary key column names for a given table
    */
   async getPrimaryKeys(tableName: string): Promise<string[]> {
-    const result = await this.client.rawQuery(`PRAGMA table_info('${tableName}')`)
+    const ref = this.client.getWriteClient().ref(tableName).toSQL().sql
+    const result = await this.client.rawQuery(`PRAGMA table_info(${ref})`)
     return result
       .filter((row: any) => row.pk > 0)
       .sort((a: any, b: any) => a.pk - b.pk)
@@ -178,9 +179,13 @@ export abstract class BaseSqliteDialect implements DialectContract {
     /**
      * Drop all tables
      */
+    const knex = this.client.getWriteClient()
     const promises = tables
       .filter((table) => !this.config.wipe?.ignoreTables?.includes(table))
-      .map((table) => this.client.rawQuery(`DROP TABLE ${table};`))
+      .map((table) => {
+        const ref = knex.ref(table).toSQL().sql
+        return this.client.rawQuery(`DROP TABLE ${ref};`)
+      })
 
     await Promise.all(promises)
 

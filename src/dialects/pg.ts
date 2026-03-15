@@ -79,12 +79,19 @@ export class PgDialect implements DialectContract {
    * Returns the primary key column names for a given table
    */
   async getPrimaryKeys(tableName: string): Promise<string[]> {
+    const parts = tableName.split('.')
+    const table = parts.pop()!
+    const schema = parts.join('.') || 'public'
+
     const result = await this.client.rawQuery(
       `SELECT a.attname
        FROM pg_index i
        JOIN pg_attribute a ON a.attrelid = i.indrelid AND a.attnum = ANY(i.indkey)
-       WHERE i.indrelid = '${tableName}'::regclass AND i.indisprimary
-       ORDER BY a.attnum`
+       JOIN pg_class c ON c.oid = i.indrelid
+       JOIN pg_namespace n ON n.oid = c.relnamespace
+       WHERE c.relname = ? AND n.nspname = ? AND i.indisprimary
+       ORDER BY a.attnum`,
+      [table, schema]
     )
     return result.rows.map((row: any) => row.attname)
   }
@@ -201,7 +208,9 @@ export class PgDialect implements DialectContract {
     const views = await this.getAllViews(schemas)
     if (!views.length) return
 
-    await this.client.rawQuery(`DROP VIEW "${views.join('", "')}" CASCADE;`)
+    const knex = this.client.getWriteClient()
+    const quotedViews = views.map((v) => knex.ref(v).toSQL().sql)
+    await this.client.rawQuery(`DROP VIEW ${quotedViews.join(', ')} CASCADE;`)
   }
 
   /**
@@ -211,7 +220,9 @@ export class PgDialect implements DialectContract {
     const types = await this.getAllTypes(schemas)
     if (!types.length) return
 
-    await this.client.rawQuery(`DROP TYPE "${types.join('", "')}" CASCADE;`)
+    const knex = this.client.getWriteClient()
+    const quotedTypes = types.map((t) => knex.ref(t).toSQL().sql)
+    await this.client.rawQuery(`DROP TYPE ${quotedTypes.join(', ')} CASCADE;`)
   }
 
   /**
@@ -232,7 +243,9 @@ export class PgDialect implements DialectContract {
     ]
     const domainsToDrop = domains.filter((domain) => !builtInDomains.includes(domain))
 
-    await this.client.rawQuery(`DROP DOMAIN "${domainsToDrop.join('", "')}" CASCADE;`)
+    const knex = this.client.getWriteClient()
+    const quotedDomains = domainsToDrop.map((d) => knex.ref(d).toSQL().sql)
+    await this.client.rawQuery(`DROP DOMAIN ${quotedDomains.join(', ')} CASCADE;`)
   }
 
   /**

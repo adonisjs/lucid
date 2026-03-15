@@ -226,7 +226,9 @@ export class MysqlDialect implements DialectContract {
   async dropAllViews(): Promise<void> {
     const views = await this.getAllViews()
 
-    return this.client.rawQuery(`DROP VIEW ${views.join(',')};`)
+    const knex = this.client.getWriteClient()
+    const quotedViews = views.map((v) => knex.ref(v).toSQL().sql)
+    return this.client.rawQuery(`DROP VIEW ${quotedViews.join(', ')};`)
   }
 
   /**
