@@ -1615,6 +1615,78 @@ test.group('Model | Has Many Through | withCount', (group) => {
     assert.equal(countries[1].$extras.posts_count, 2)
   })
 
+  test('ignore relation order and pagination when using withCount', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter)
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+
+      @column()
+      declare countryId: number
+    }
+
+    class Post extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+
+      @column()
+      declare userId: number
+
+      @column()
+      declare title: string
+    }
+
+    class Country extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+
+      @hasManyThrough([() => Post, () => User], {
+        onQuery: (query) => {
+          query.orderBy('posts.id', 'asc').limit(1).offset(1)
+        },
+      })
+      declare posts: HasManyThrough<typeof Post>
+    }
+
+    await db
+      .insertQuery()
+      .table('countries')
+      .insert([{ name: 'India' }, { name: 'Switzerland' }])
+
+    await db
+      .insertQuery()
+      .table('users')
+      .multiInsert([
+        { username: 'virk', country_id: 1 },
+        { username: 'nikk', country_id: 1 },
+        { username: 'romain', country_id: 2 },
+        { username: 'joe', country_id: 2 },
+      ])
+
+    await db
+      .insertQuery()
+      .table('posts')
+      .multiInsert([
+        { title: 'Adonis 101', user_id: 1 },
+        { title: 'Lucid 101', user_id: 1 },
+        { title: 'Adonis5', user_id: 2 },
+        { title: 'Validations 101', user_id: 3 },
+        { title: 'Assets 101', user_id: 4 },
+      ])
+
+    const query = Country.query().withCount('posts').orderBy('id', 'asc')
+
+    const countries = await query
+    assert.lengthOf(countries, 2)
+    assert.equal(Number(countries[0].$extras.posts_count), 3)
+    assert.equal(Number(countries[1].$extras.posts_count), 2)
+  })
+
   test('apply constraints to the withCount subquery', async ({ fs, assert }) => {
     const app = new AppFactory().create(fs.baseUrl, () => {})
     await app.init()
