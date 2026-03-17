@@ -22,6 +22,14 @@ import { Logger as ConnectionLogger } from './logger.js'
 import type { ConnectionConfig, ConnectionContract } from '../types/database.js'
 
 /**
+ * A Knex config variant where `connection` is typed as `any`. Used internally
+ * by `getWriteConfig` / `getReadConfig` so that resolver functions and `{}`
+ * placeholders can be assigned without type assertions. The type is still
+ * structurally assignable to `Knex.Config` because `any` satisfies every type.
+ */
+type KnexRawConfig = Omit<Knex.Config, 'connection'> & { connection?: any }
+
+/**
  * Connection class manages a given database connection. Internally it uses
  * knex to build the database connection with appropriate database
  * driver.
@@ -62,6 +70,12 @@ export class Connection extends EventEmitter implements ConnectionContract {
    * defined
    */
   private readReplicas: any[] = []
+
+  /**
+   * Write replica connection resolver function when replicas are defined and
+   * the write connection is a function. Populated by `getWriteConfig`.
+   */
+  private writeReplicaResolver: (() => any) | null = null
 
   /**
    * The round robin counter for reading config
@@ -154,9 +168,13 @@ export class Connection extends EventEmitter implements ConnectionContract {
 
   /**
    * Returns normalized config object for write replica to be
-   * used by knex
+   * used by knex.
+   *
+   * When `connection` is a function resolver, an empty placeholder is used for
+   * the initial knex setup. The `writeConfigResolver` is responsible for
+   * calling the function on each connection acquisition.
    */
-  private getWriteConfig(): Knex.Config {
+  private getWriteConfig(): KnexRawConfig {
     if (!this.config.replicas) {
       /**
        * Replacing string based libsql client with the
@@ -165,20 +183,44 @@ export class Connection extends EventEmitter implements ConnectionContract {
       if (this.config.client === 'libsql') {
         return {
           ...this.config,
-          client: LibSQLClient as any,
+          ...(typeof this.config.connection === 'function' ? { connection: {} } : {}),
+          client: LibSQLClient,
         }
       }
 
-      return this.config
+      /**
+       * When connection is a function resolver, substitute an empty placeholder
+       * so that Knex can initialise cleanly. The resolver is patched in via
+       * patchKnex and provides the real config on each acquisition.
+       */
+      if (typeof this.config.connection === 'function') {
+        return { ...this.config, connection: {} }
+      }
+
+      return { ...this.config }
     }
 
-    const { replicas, ...config } = this.config
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { replicas, ...config } = this.config as any
 
     /**
      * Give preference to the replica write connection when and merge values from
      * the main connection object when defined.
+     *
+     * When the connection is a function resolver, store it in `writeReplicaResolver`
+     * and use an empty placeholder for the initial Knex config. The resolver is
+     * invoked on each connection acquisition via `writeConfigResolver`.
      */
-    if (typeof replicas.write.connection === 'string' || typeof config.connection === 'string') {
+    if (
+      typeof replicas.write.connection === 'function' ||
+      typeof config.connection === 'function'
+    ) {
+      this.writeReplicaResolver = replicas.write.connection ?? config.connection
+      config.connection = {}
+    } else if (
+      typeof replicas.write.connection === 'string' ||
+      typeof config.connection === 'string'
+    ) {
       config.connection = replicas.write.connection
     } else {
       config.connection = Object.assign({}, config.connection, replicas.write.connection)
@@ -192,25 +234,35 @@ export class Connection extends EventEmitter implements ConnectionContract {
       config.pool = Object.assign({}, config.pool, replicas.write.pool)
     }
 
-    return config as Knex.Config
+    return config
   }
 
   /**
    * Returns the config for read replicas.
    */
-  private getReadConfig(): Knex.Config {
+  private getReadConfig(): KnexRawConfig {
     if (!this.config.replicas) {
-      return this.config
+      if (typeof this.config.connection === 'function') {
+        return { ...this.config, connection: {} }
+      }
+
+      return { ...this.config }
     }
 
-    const { replicas, ...config } = this.config
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { replicas, ...config } = this.config as any
 
     /**
      * Reading replicas and storing them as a reference, so that we
      * can pick a config from replicas as round robin.
+     *
+     * When the connection is a function resolver, store it so the
+     * readConfigResolver can call it on each connection acquisition.
      */
-    this.readReplicas = (replicas.read.connection as Array<any>).map((one) => {
-      if (typeof one === 'string' || typeof config.connection === 'string') {
+    this.readReplicas = (replicas.read.connection as Array<any>).map((one: any) => {
+      if (typeof one === 'function') {
+        return one
+      } else if (typeof one === 'string' || typeof config.connection === 'string') {
         return one
       } else {
         return Object.assign({}, config.connection, one)
@@ -219,10 +271,15 @@ export class Connection extends EventEmitter implements ConnectionContract {
 
     /**
      * Add database property on the main connection, since knexjs needs it
-     * internally
+     * internally. When the first replica is a function resolver, use an empty
+     * placeholder since the resolver provides the real config per-acquisition.
      */
-    config.connection = {
-      database: this.readReplicas[0].database,
+    if (typeof this.readReplicas[0] === 'function') {
+      config.connection = {}
+    } else {
+      config.connection = {
+        database: this.readReplicas[0].database,
+      }
     }
 
     /**
@@ -233,27 +290,115 @@ export class Connection extends EventEmitter implements ConnectionContract {
       config.pool = Object.assign({}, config.pool, replicas.read.pool)
     }
 
-    return config as Knex.Config
+    return config
   }
 
   /**
-   * Resolves connection config for the writer connection
+   * Resolves connection config for the writer connection.
+   * When `connection` is a function resolver, it is called to support dynamic
+   * credentials (e.g. short-lived IAM tokens that must be refreshed).
    */
-  private writeConfigResolver(originalConfig: ConnectionConfig) {
-    return originalConfig.connection
+  private writeConfigResolver(_originalConfig: ConnectionConfig) {
+    if (this.writeReplicaResolver) {
+      return this.writeReplicaResolver()
+    }
+    if (typeof this.config.connection === 'function') {
+      return this.config.connection()
+    }
+    return this.config.connection
   }
 
   /**
-   * Resolves connection config for the reader connection
+   * Resolves connection config for the reader connection.
+   * When the connection or a stored read replica entry is a function resolver,
+   * it is called to support dynamic credentials.
    */
-  private readConfigResolver(originalConfig: ConnectionConfig) {
+  private readConfigResolver(_originalConfig: ConnectionConfig) {
     if (!this.readReplicas.length) {
-      return originalConfig.connection
+      if (typeof this.config.connection === 'function') {
+        return this.config.connection()
+      }
+      return this.config.connection
     }
 
     const index = this.roundRobinCounter++ % this.readReplicas.length
     this.logger.trace({ connection: this.name }, `round robin using host at ${index} index`)
-    return this.readReplicas[index]
+    const replica = this.readReplicas[index]
+    if (typeof replica === 'function') {
+      return replica()
+    }
+    return replica
+  }
+
+  /**
+   * Re-patches the `acquireRawConnection` method on the given knex client so
+   * that `getRuntimeConnectionSettings` is always awaited. This is necessary
+   * when the connection is an async function resolver, because
+   * `knex-dynamic-connection` calls `getRuntimeConnectionSettings` synchronously.
+   *
+   * `Promise.resolve(settings)` is safe for both sync and async resolvers:
+   * a plain object passes through unchanged; a Promise is awaited.
+   *
+   * Supported dialects: pg / postgres / redshift, mysql / mysql2.
+   * MSSQL support can be added when needed.
+   */
+  private patchForAsyncResolver(knexClient: Knex): void {
+    const client = knexClient.client
+
+    switch (this.clientName) {
+      case 'postgres':
+        client.acquireRawConnection = function acquireRawConnection(this: any) {
+          const self = this
+          return Promise.resolve(this.getRuntimeConnectionSettings()).then((settings: any) => {
+            const connection = new self.driver.Client(settings)
+            connection.on('error', (err: any) => {
+              connection.__knex__disposed = err
+            })
+            connection.on('end', (err: any) => {
+              connection.__knex__disposed = err || 'Connection ended unexpectedly'
+            })
+            return connection
+              .connect()
+              .then(() => {
+                if (!self.version) {
+                  return self.checkVersion(connection).then((version: string) => {
+                    self.version = version
+                    return connection
+                  })
+                }
+                return connection
+              })
+              .then((conn: any) => {
+                self.setSchemaSearchPath(conn)
+                return conn
+              })
+          })
+        }
+        break
+
+      case 'mysql':
+      case 'mysql2':
+        client.acquireRawConnection = function acquireRawConnection(this: any) {
+          const self = this
+          return Promise.resolve(this.getRuntimeConnectionSettings()).then(
+            (settings: any) =>
+              new Promise((resolve, reject) => {
+                const connection = self.driver.createConnection(settings)
+                connection.on('error', (err: any) => {
+                  connection.__knex__disposed = err
+                })
+                connection.connect((err: any) => {
+                  if (err) {
+                    connection.removeAllListeners()
+                    return reject(err)
+                  }
+                  resolve(connection)
+                })
+              })
+          )
+        }
+        break
+    }
   }
 
   /**
@@ -268,6 +413,10 @@ export class Connection extends EventEmitter implements ConnectionContract {
 
     // @ts-ignore
     patchKnex(this.client, this.writeConfigResolver.bind(this))
+
+    if (typeof this.config.connection === 'function' || this.writeReplicaResolver) {
+      this.patchForAsyncResolver(this.client)
+    }
   }
 
   /**
@@ -289,6 +438,13 @@ export class Connection extends EventEmitter implements ConnectionContract {
 
     // @ts-ignore
     patchKnex(this.readClient, this.readConfigResolver.bind(this))
+
+    if (
+      typeof this.config.connection === 'function' ||
+      this.readReplicas.some((r) => typeof r === 'function')
+    ) {
+      this.patchForAsyncResolver(this.readClient)
+    }
   }
 
   /**

@@ -69,6 +69,70 @@ if (!['sqlite', 'better_sqlite', 'libsql'].includes(process.env.DB!)) {
 
       assert.equal(readConfig.client, config.client)
     })
+
+    test('writeConfigResolver calls connection function when connection is a resolver', async ({
+      assert,
+    }) => {
+      const config = getConfig()
+      const resolvedConfig = { host: '10.0.0.1', user: 'dynamic_user', password: 'token' }
+      config.connection = () => resolvedConfig
+
+      const connection = new Connection('primary', config, logger)
+      const result = await connection['writeConfigResolver'](config)
+
+      assert.deepEqual(result, resolvedConfig)
+    })
+
+    test('writeConfigResolver calls async connection function when connection is an async resolver', async ({
+      assert,
+    }) => {
+      const config = getConfig()
+      const resolvedConfig = { host: '10.0.0.1', user: 'dynamic_user', password: 'iam_token' }
+      config.connection = async () => resolvedConfig
+
+      const connection = new Connection('primary', config, logger)
+      const result = await connection['writeConfigResolver'](config)
+
+      assert.deepEqual(result, resolvedConfig)
+    })
+
+    test('readConfigResolver calls connection function when connection is a resolver', async ({
+      assert,
+    }) => {
+      const config = getConfig()
+      const resolvedConfig = { host: '10.0.0.1', user: 'dynamic_user', password: 'token' }
+      config.connection = () => resolvedConfig
+
+      const connection = new Connection('primary', config, logger)
+      const result = await connection['readConfigResolver'](config)
+
+      assert.deepEqual(result, resolvedConfig)
+    })
+
+    test('get write config stores function resolver and uses empty placeholder when write replica connection is a function', ({
+      assert,
+    }) => {
+      const config = getConfig()
+      const resolver = () => ({ host: '10.0.0.1' })
+      config.replicas! = {
+        write: {
+          connection: resolver as any,
+        },
+        read: {
+          connection: [{ host: '10.0.0.1' }],
+        },
+      }
+
+      const connection = new Connection('primary', config, logger)
+      const writeConfig = connection['getWriteConfig']()
+
+      /**
+       * The connection property is a placeholder so Knex can initialise cleanly.
+       * The actual resolver is stored in writeReplicaResolver and invoked per-acquisition.
+       */
+      assert.deepEqual(writeConfig.connection, {})
+      assert.equal(connection['writeReplicaResolver'], resolver)
+    })
   })
 }
 
@@ -163,8 +227,8 @@ if (process.env.DB === 'mysql') {
   test.group('Connection | setup mysql', () => {
     test('pass user config to mysql driver', async ({ assert }) => {
       const config = getConfig() as MysqlConfig
-      config.connection!.charset = 'utf-8'
-      config.connection!.typeCast = false
+      ;(config.connection as Exclude<MysqlConfig['connection'], Function>)!.charset = 'utf-8'
+      ;(config.connection as Exclude<MysqlConfig['connection'], Function>)!.typeCast = false
 
       const connection = new Connection('primary', config, logger)
       connection.connect()

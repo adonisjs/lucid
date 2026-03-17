@@ -25,6 +25,13 @@ import {
 import { type OrmSchemaGeneratorConfig } from './schema_generator.ts'
 
 /**
+ * A sync or async function that returns a connection config.
+ * This allows for dynamic credentials (e.g. short-lived IAM tokens).
+ * Mirrors the shape of Knex's `ConnectionConfigProvider`.
+ */
+export type ConnectionResolver<T> = (() => T) | (() => Promise<T>)
+
+/**
  * Same as knex. Need to redefine, as knex doesn't export this
  * type
  */
@@ -452,7 +459,9 @@ type Mysql2AdditionalOptions = {
 export type MysqlConfig = SharedConfigNode & {
   client: 'mysql' | 'mysql2'
   version?: string
-  connection?: SharedConnectionNode & MysqlConnectionNode & Mysql2AdditionalOptions
+  connection?:
+    | (SharedConnectionNode & MysqlConnectionNode & Mysql2AdditionalOptions)
+    | ConnectionResolver<SharedConnectionNode & MysqlConnectionNode & Mysql2AdditionalOptions>
   replicas?: {
     write: {
       connection: MysqlConfig['connection']
@@ -483,7 +492,10 @@ export type PostgreConfig = SharedConfigNode & {
   client: 'pg' | 'postgres' | 'postgresql'
   version?: string
   returning?: string
-  connection?: string | (SharedConnectionNode & PostgresConnectionNode)
+  connection?:
+    | string
+    | (SharedConnectionNode & PostgresConnectionNode)
+    | ConnectionResolver<SharedConnectionNode & PostgresConnectionNode>
   replicas?: {
     write: {
       connection: PostgreConfig['connection']
@@ -531,7 +543,9 @@ type OracleConnectionNode = {
 }
 export type OracleConfig = SharedConfigNode & {
   client: 'oracledb'
-  connection?: SharedConnectionNode & OracleConnectionNode
+  connection?:
+    | (SharedConnectionNode & OracleConnectionNode)
+    | ConnectionResolver<SharedConnectionNode & OracleConnectionNode>
   replicas?: {
     write: {
       connection: OracleConfig['connection']
@@ -582,7 +596,9 @@ type MssqlConnectionNode = {
 export type MssqlConfig = SharedConfigNode & {
   client: 'mssql'
   version?: string
-  connection?: SharedConnectionNode & MssqlConnectionNode
+  connection?:
+    | (SharedConnectionNode & MssqlConnectionNode)
+    | ConnectionResolver<SharedConnectionNode & MssqlConnectionNode>
   replicas?: {
     write: {
       connection: MssqlConfig['connection']
