@@ -59,9 +59,7 @@ export class MysqlSchemaState extends BaseSchemaState {
       connection.database,
     ]
 
-    await this.spawnToFile('mysqldump', args, path, {
-      env: this.getCommandEnv(connection),
-    })
+    await this.spawnToFile('mysqldump', args, path)
 
     /**
      * MySQL dumps embed the current auto-increment counter, which is runtime
@@ -80,10 +78,7 @@ export class MysqlSchemaState extends BaseSchemaState {
     await this.spawnFromFile(
       'mysql',
       [...this.getConnectionArguments(connection), connection.database],
-      path,
-      {
-        env: this.getCommandEnv(connection),
-      }
+      path
     )
   }
 
@@ -109,20 +104,7 @@ export class MysqlSchemaState extends BaseSchemaState {
       ...(connection.socketPath ? [] : [`--host=${connection.host ?? '127.0.0.1'}`]),
       ...(connection.socketPath ? [] : [`--port=${connection.port ?? 3306}`]),
       `--user=${connection.user}`,
+      `--password=${connection.password ?? ''}`,
     ]
-  }
-
-  /**
-   * Build the environment variables used by the MySQL CLI tools.
-   */
-  private getCommandEnv(connection: MysqlSchemaStateConnection) {
-    return {
-      ...process.env,
-      /**
-       * MySQL CLI tools read passwords from `MYSQL_PWD`. This avoids leaking
-       * the password as a process argument.
-       */
-      MYSQL_PWD: connection.password ?? '',
-    }
   }
 }
