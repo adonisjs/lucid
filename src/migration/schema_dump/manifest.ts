@@ -125,7 +125,11 @@ export class SchemaDumpManifestFile {
     return manifest
   }
 
-  constructor(private manifest: SchemaDumpManifest) {}
+  #squashedSet: Set<string>
+
+  constructor(private manifest: SchemaDumpManifest) {
+    this.#squashedSet = new Set(manifest.squashedMigrationNames)
+  }
 
   /**
    * Persist the manifest as formatted JSON for readability and diffs.
@@ -158,7 +162,7 @@ export class SchemaDumpManifestFile {
    * Returns true when the given migration name is part of the squashed baseline.
    */
   hasSquashedMigration(name: string) {
-    return this.manifest.squashedMigrationNames.includes(name)
+    return this.#squashedSet.has(name)
   }
 
   /**
