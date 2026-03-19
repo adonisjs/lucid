@@ -12,7 +12,7 @@ import { Chance } from 'chance'
 import { join } from 'node:path'
 import knex, { type Knex } from 'knex'
 import { fileURLToPath } from 'node:url'
-import { getActiveTest } from '@japa/runner'
+import { getActiveTest, getActiveTestOrFail } from '@japa/runner'
 import { Logger } from '@adonisjs/core/logger'
 import { Emitter } from '@adonisjs/core/events'
 import { type Application } from '@adonisjs/core/app'
@@ -43,6 +43,7 @@ import { RawQueryBuilder } from '../src/database/query_builder/raw.js'
 import { InsertQueryBuilder } from '../src/database/query_builder/insert.js'
 import { type LucidRow, type LucidModel, type AdapterContract } from '../src/types/model.js'
 import { DatabaseQueryBuilder } from '../src/database/query_builder/database.js'
+import { type FileSystem } from '@japa/file-system'
 
 dotenv.config()
 export const APP_ROOT = new URL('./tmp', import.meta.url)
@@ -347,6 +348,64 @@ export async function cleanup(customTables?: string[]) {
 }
 
 /**
+ * Clean the default fixture tables plus extra tables specific to a test suite.
+ * This keeps call sites readable without changing the legacy `cleanup()`
+ * contract used by the rest of the codebase.
+ */
+export async function cleanupTestDatabase(extraTables: string[] = []) {
+  await cleanup()
+
+  if (extraTables.length) {
+    await cleanup(extraTables)
+  }
+}
+
+/**
+ * Create a migration file inside the active Japa file-system sandbox.
+ */
+export async function createMigrationFile(options: {
+  filePath: string
+  className: string
+  up: string
+  down?: string
+}) {
+  const fs = getActiveTestOrFail().context.fs
+  const downMethod = options.down
+    ? `public async down () {
+        ${options.down}
+      }`
+    : ''
+
+  await fs.create(
+    options.filePath,
+    `import { BaseSchema as Schema } from '../../../../src/schema/main.js'
+
+      export default class ${options.className} extends Schema {
+        public async up () {
+          ${options.up}
+        }
+
+        ${downMethod}
+      }`
+  )
+}
+
+/**
+ * Remove schema dump artifacts created inside tests
+ */
+export async function cleanupSchemaArtifacts(fs: FileSystem, extraPaths: string[] = []) {
+  for (let path of [
+    'database/migrations',
+    'database/schema',
+    'database/schema.ts',
+    'tmp/schema',
+    ...extraPaths,
+  ]) {
+    await fs.remove(path)
+  }
+}
+
+/**
  * Reset database tables
  */
 export async function resetTables() {
@@ -429,6 +488,14 @@ export function getDb(eventEmitter?: Emitter<any>, config?: DatabaseConfig) {
 
   return db
 }
+
+/**
+ * Returns true when the current test database dialect supports schema dump
+ * creation/restoration via external CLI tools.
+ */
+export const supportsSchemaDump = ['sqlite', 'better_sqlite', 'mysql', 'pg'].includes(
+  process.env.DB || ''
+)
 
 /**
  * Returns the orm adapter

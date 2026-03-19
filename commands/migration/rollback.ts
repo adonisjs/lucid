@@ -162,6 +162,10 @@ export default class Rollback extends MigrationsBase {
 
     await this.instantiateMigrator()
     await this.runMigrations(this.migrator!, this.connection)
+    if (this.exitCode) {
+      return
+    }
+
     await this.generateSchemaClasses()
   }
 

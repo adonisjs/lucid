@@ -12,15 +12,47 @@ import { ListLoader } from '@adonisjs/core/ace'
 import { AceFactory } from '@adonisjs/core/factories'
 
 import DbSeed from '../commands/db_seed.js'
-import { getDb } from '../test-helpers/index.js'
 import Reset from '../commands/migration/reset.js'
 import Migrate from '../commands/migration/run.js'
 import DbTruncate from '../commands/db_truncate.js'
+import SchemaDump from '../commands/schema_dump.js'
+import Rollback from '../commands/migration/rollback.js'
 import { AppFactory } from '@adonisjs/core/factories/app'
 import { type ApplicationService } from '@adonisjs/core/types'
 import { DatabaseTestUtils } from '../src/test_utils/database.js'
+import {
+  cleanupSchemaArtifacts,
+  cleanupTestDatabase,
+  createMigrationFile,
+  getDb,
+  setup,
+  supportsSchemaDump,
+} from '../test-helpers/index.js'
 
-test.group('Database Test Utils', () => {
+test.group('Database Test Utils', (group) => {
+  group.each.disableTimeout()
+
+  group.each.setup(async ({ context }) => {
+    await cleanupSchemaArtifacts(context.fs)
+    await cleanupTestDatabase([
+      'adonis_schema',
+      'adonis_schema_versions',
+      'schema_users',
+      'schema_accounts',
+    ])
+    await setup()
+
+    return async () => {
+      await cleanupSchemaArtifacts(context.fs)
+      await cleanupTestDatabase([
+        'adonis_schema',
+        'adonis_schema_versions',
+        'schema_users',
+        'schema_accounts',
+      ])
+    }
+  })
+
   test('truncate() should run migration:run and db:truncate commands', async ({ fs, assert }) => {
     let migrationRun = false
     let truncateRun = false
@@ -37,7 +69,9 @@ test.group('Database Test Utils', () => {
       }
     }
 
-    const ace = await new AceFactory().make(fs.baseUrl, { importer: () => {} })
+    const ace = await new AceFactory().make(fs.baseUrl, {
+      importer: (filePath) => import(filePath),
+    })
     ace.addLoader(new ListLoader([FakeMigrate, FakeDbTruncate]))
 
     const app = new AppFactory().create(fs.baseUrl, () => {})
@@ -70,7 +104,9 @@ test.group('Database Test Utils', () => {
       }
     }
 
-    const ace = await new AceFactory().make(fs.baseUrl, { importer: () => {} })
+    const ace = await new AceFactory().make(fs.baseUrl, {
+      importer: (filePath) => import(filePath),
+    })
     ace.addLoader(new ListLoader([FakeMigrate, FakeDbTruncate]))
 
     const app = new AppFactory().create(fs.baseUrl, () => {}) as ApplicationService
@@ -94,7 +130,9 @@ test.group('Database Test Utils', () => {
       }
     }
 
-    const ace = await new AceFactory().make(fs.baseUrl, { importer: () => {} })
+    const ace = await new AceFactory().make(fs.baseUrl, {
+      importer: (filePath) => import(filePath),
+    })
     ace.addLoader(new ListLoader([FakeDbSeed]))
 
     const app = new AppFactory().create(fs.baseUrl, () => {}) as ApplicationService
@@ -239,7 +277,9 @@ test.group('Database Test Utils', () => {
 
   test('withGlobalTransaction should wrap and rollback a transaction', async ({ fs, assert }) => {
     const db = getDb()
-    const ace = await new AceFactory().make(fs.baseUrl, { importer: () => {} })
+    const ace = await new AceFactory().make(fs.baseUrl, {
+      importer: (filePath) => import(filePath),
+    })
 
     const app = new AppFactory().create(fs.baseUrl, () => {}) as ApplicationService
     await app.init()
@@ -256,4 +296,169 @@ test.group('Database Test Utils', () => {
 
     assert.isUndefined(db.connectionGlobalTransactions.get(db.primaryConnectionName))
   })
+
+  test('migrate() should bootstrap from a schema dump and keep squashed history on reset', async ({
+    fs,
+    assert,
+  }) => {
+    await createMigrationFile({
+      filePath: 'database/migrations/test_utils_users_dump.ts',
+      className: 'User',
+      up: `
+        this.schema.createTable('schema_users', (table) => {
+          table.increments()
+        })
+      `,
+      down: `
+        this.schema.dropTable('schema_users')
+      `,
+    })
+
+    const db = getDb()
+    const ace = await new AceFactory().make(fs.baseUrl, {
+      importer: (filePath) => import(filePath),
+    })
+    await ace.app.init()
+    ace.app.container.singleton('lucid.db', () => db)
+    ace.ui.switchMode('raw')
+    ace.addLoader(new ListLoader([Migrate, Reset, Rollback, DbTruncate, SchemaDump]))
+
+    const app = ace.app as ApplicationService
+    app.container.bind('ace', () => ace)
+
+    const initialMigrate = await ace.create(Migrate, ['--no-schema-generate'])
+    await initialMigrate.exec()
+
+    const dump = await ace.create(SchemaDump, ['--prune'])
+    await dump.exec()
+
+    await cleanupTestDatabase([
+      'adonis_schema',
+      'adonis_schema_versions',
+      'schema_users',
+      'schema_accounts',
+    ])
+
+    await createMigrationFile({
+      filePath: 'database/migrations/test_utils_accounts_after_dump.ts',
+      className: 'Account',
+      up: `
+        this.schema.createTable('schema_accounts', (table) => {
+          table.increments()
+        })
+      `,
+      down: `
+        this.schema.dropTable('schema_accounts')
+      `,
+    })
+
+    const dbTestUtils = new DatabaseTestUtils(app)
+    const resetMigrations = await dbTestUtils.migrate()
+
+    const migratedBeforeReset = await db.connection().from('adonis_schema').orderBy('id', 'asc')
+    assert.deepEqual(
+      migratedBeforeReset.map(({ name }) => name),
+      [
+        'database/migrations/test_utils_users_dump',
+        'database/migrations/test_utils_accounts_after_dump',
+      ]
+    )
+
+    await resetMigrations()
+
+    const migratedAfterReset = await db.connection().from('adonis_schema').orderBy('id', 'asc')
+    const hasUsersTable = await db.connection().schema.hasTable('schema_users')
+    const hasAccountsTable = await db.connection().schema.hasTable('schema_accounts')
+
+    assert.isTrue(hasUsersTable)
+    assert.isFalse(hasAccountsTable)
+    assert.deepEqual(
+      migratedAfterReset.map(({ name }) => name),
+      ['database/migrations/test_utils_users_dump']
+    )
+  }).skip(!supportsSchemaDump, 'Schema dumps are not supported for the current database dialect')
+
+  test('truncate() should bootstrap from a schema dump and keep the schema intact', async ({
+    fs,
+    assert,
+  }) => {
+    await createMigrationFile({
+      filePath: 'database/migrations/test_utils_truncate_users_dump.ts',
+      className: 'User',
+      up: `
+        this.schema.createTable('schema_users', (table) => {
+          table.increments()
+          table.string('email')
+        })
+      `,
+      down: `
+        this.schema.dropTable('schema_users')
+      `,
+    })
+
+    const db = getDb()
+    const ace = await new AceFactory().make(fs.baseUrl, {
+      importer: (filePath) => import(filePath),
+    })
+    await ace.app.init()
+    ace.app.container.singleton('lucid.db', () => db)
+    ace.ui.switchMode('raw')
+    ace.addLoader(new ListLoader([Migrate, Reset, Rollback, DbTruncate, SchemaDump]))
+
+    const app = ace.app as ApplicationService
+    app.container.bind('ace', () => ace)
+
+    const initialMigrate = await ace.create(Migrate, ['--no-schema-generate'])
+    await initialMigrate.exec()
+
+    const dump = await ace.create(SchemaDump, ['--prune'])
+    await dump.exec()
+
+    await cleanupTestDatabase([
+      'adonis_schema',
+      'adonis_schema_versions',
+      'schema_users',
+      'schema_accounts',
+    ])
+
+    await createMigrationFile({
+      filePath: 'database/migrations/test_utils_truncate_accounts_after_dump.ts',
+      className: 'Account',
+      up: `
+        this.schema.createTable('schema_accounts', (table) => {
+          table.increments()
+          table.string('name')
+        })
+      `,
+      down: `
+        this.schema.dropTable('schema_accounts')
+      `,
+    })
+
+    const dbTestUtils = new DatabaseTestUtils(app)
+    const truncateTables = await dbTestUtils.truncate()
+
+    await db.connection().table('schema_users').insert({ email: 'virk@adonisjs.com' })
+    await db.connection().table('schema_accounts').insert({ name: 'primary' })
+
+    await truncateTables()
+
+    const hasUsersTable = await db.connection().schema.hasTable('schema_users')
+    const hasAccountsTable = await db.connection().schema.hasTable('schema_accounts')
+    const usersRows = await db.connection().from('schema_users').select('*')
+    const accountsRows = await db.connection().from('schema_accounts').select('*')
+    const migrated = await db.connection().from('adonis_schema').orderBy('id', 'asc')
+
+    assert.isTrue(hasUsersTable)
+    assert.isTrue(hasAccountsTable)
+    assert.lengthOf(usersRows, 0)
+    assert.lengthOf(accountsRows, 0)
+    assert.deepEqual(
+      migrated.map(({ name }) => name),
+      [
+        'database/migrations/test_utils_truncate_users_dump',
+        'database/migrations/test_utils_truncate_accounts_after_dump',
+      ]
+    )
+  }).skip(!supportsSchemaDump, 'Schema dumps are not supported for the current database dialect')
 })

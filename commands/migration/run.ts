@@ -56,6 +56,12 @@ export default class Migrate extends MigrationsBase {
   declare disableLocks: boolean
 
   /**
+   * Custom schema dump path to load before running pending migrations.
+   */
+  @flags.string({ description: 'Define a custom path for the schema dump used to bootstrap' })
+  declare schemaPath: string
+
+  /**
    * Generate schema classes after migrating the database
    */
   @flags.boolean({
@@ -74,6 +80,7 @@ export default class Migrate extends MigrationsBase {
     this.migrator = new MigrationRunner(db, this.app, {
       direction: 'up',
       connectionName: this.connection,
+      schemaPath: this.schemaPath,
       dryRun: this.dryRun,
       disableLocks: this.disableLocks,
     })
@@ -143,6 +150,10 @@ export default class Migrate extends MigrationsBase {
 
     await this.instantiateMigrator()
     await this.runMigrations(this.migrator!, this.connection)
+    if (this.exitCode) {
+      return
+    }
+
     await this.generateSchemaClasses()
   }
 

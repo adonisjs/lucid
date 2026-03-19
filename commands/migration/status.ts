@@ -49,6 +49,8 @@ export default class Status extends BaseCommand {
         return this.colors.yellow('pending')
       case 'migrated':
         return this.colors.green('completed')
+      case 'squashed':
+        return this.colors.cyan('squashed')
       case 'corrupt':
         return this.colors.red('corrupt')
     }
@@ -77,11 +79,18 @@ export default class Status extends BaseCommand {
      * Push a new row to the table
      */
     list.forEach((node) => {
+      let message = ''
+      if (node.status === 'squashed') {
+        message = 'The migration file was pruned after being squashed into a schema dump'
+      } else if (node.status === 'corrupt') {
+        message = 'The migration file is missing on filesystem'
+      }
+
       table.row([
         node.name,
         this.colorizeStatus(node.status),
         node.batch ? String(node.batch) : 'NA',
-        node.status === 'corrupt' ? 'The migration file is missing on filesystem' : '',
+        message,
       ])
     })
 
