@@ -20,6 +20,7 @@ import Rollback from '../commands/migration/rollback.js'
 import { AppFactory } from '@adonisjs/core/factories/app'
 import { type ApplicationService } from '@adonisjs/core/types'
 import { DatabaseTestUtils } from '../src/test_utils/database.js'
+import { DatabaseTestAssertions } from '../src/test_utils/assertions.js'
 import { column } from '../src/orm/decorators/index.js'
 import {
   cleanupSchemaArtifacts,
@@ -467,7 +468,7 @@ test.group('Database Test Utils', (group) => {
   }).skip(!supportsSchemaDump, 'Schema dumps are not supported for the current database dialect')
 })
 
-test.group('Database Test Utils | Assertions', (group) => {
+test.group('Database Test Assertions', (group) => {
   group.each.disableTimeout()
 
   group.each.setup(async () => {
@@ -486,8 +487,8 @@ test.group('Database Test Utils | Assertions', (group) => {
     await app.init()
     app.container.bind('lucid.db', () => db)
 
-    const dbTestUtils = new DatabaseTestUtils(app)
-    await dbTestUtils.assertHas('users', { username: 'jul' })
+    const dbAssertions = new DatabaseTestAssertions(app)
+    await dbAssertions.assertHas('users', { username: 'jul' })
   })
 
   test('assertHas should fail when no matching rows exist', async () => {
@@ -499,8 +500,8 @@ test.group('Database Test Utils | Assertions', (group) => {
     await app.init()
     app.container.bind('lucid.db', () => db)
 
-    const dbTestUtils = new DatabaseTestUtils(app)
-    await dbTestUtils.assertHas('users', { username: 'nonexistent' })
+    const dbAssertions = new DatabaseTestAssertions(app)
+    await dbAssertions.assertHas('users', { username: 'nonexistent' })
   }).throws(
     `Expected table 'users' to have rows matching {"username":"nonexistent"}, but none were found`
   )
@@ -519,8 +520,8 @@ test.group('Database Test Utils | Assertions', (group) => {
     await app.init()
     app.container.bind('lucid.db', () => db)
 
-    const dbTestUtils = new DatabaseTestUtils(app)
-    await dbTestUtils.assertHas('users', { points: 10 }, 2)
+    const dbAssertions = new DatabaseTestAssertions(app)
+    await dbAssertions.assertHas('users', { points: 10 }, 2)
   })
 
   test('assertHas should fail when count does not match', async () => {
@@ -534,8 +535,8 @@ test.group('Database Test Utils | Assertions', (group) => {
     await app.init()
     app.container.bind('lucid.db', () => db)
 
-    const dbTestUtils = new DatabaseTestUtils(app)
-    await dbTestUtils.assertHas('users', { points: 10 }, 5)
+    const dbAssertions = new DatabaseTestAssertions(app)
+    await dbAssertions.assertHas('users', { points: 10 }, 5)
   }).throws(`Expected table 'users' to have 5 rows matching {"points":10}, but found 1`)
 
   test('assertMissing should pass when no matching rows exist', async () => {
@@ -547,8 +548,8 @@ test.group('Database Test Utils | Assertions', (group) => {
     await app.init()
     app.container.bind('lucid.db', () => db)
 
-    const dbTestUtils = new DatabaseTestUtils(app)
-    await dbTestUtils.assertMissing('users', { username: 'jul' })
+    const dbAssertions = new DatabaseTestAssertions(app)
+    await dbAssertions.assertMissing('users', { username: 'jul' })
   })
 
   test('assertMissing should fail when matching rows exist', async () => {
@@ -562,8 +563,8 @@ test.group('Database Test Utils | Assertions', (group) => {
     await app.init()
     app.container.bind('lucid.db', () => db)
 
-    const dbTestUtils = new DatabaseTestUtils(app)
-    await dbTestUtils.assertMissing('users', { username: 'jul' })
+    const dbAssertions = new DatabaseTestAssertions(app)
+    await dbAssertions.assertMissing('users', { username: 'jul' })
   }).throws(`Expected table 'users' to have no rows matching {"username":"jul"}, but found 1`)
 
   test('assertCount should pass with correct count', async () => {
@@ -580,8 +581,8 @@ test.group('Database Test Utils | Assertions', (group) => {
     await app.init()
     app.container.bind('lucid.db', () => db)
 
-    const dbTestUtils = new DatabaseTestUtils(app)
-    await dbTestUtils.assertCount('users', 2)
+    const dbAssertions = new DatabaseTestAssertions(app)
+    await dbAssertions.assertCount('users', 2)
   })
 
   test('assertCount should fail with incorrect count', async () => {
@@ -595,8 +596,8 @@ test.group('Database Test Utils | Assertions', (group) => {
     await app.init()
     app.container.bind('lucid.db', () => db)
 
-    const dbTestUtils = new DatabaseTestUtils(app)
-    await dbTestUtils.assertCount('users', 5)
+    const dbAssertions = new DatabaseTestAssertions(app)
+    await dbAssertions.assertCount('users', 5)
   }).throws("Expected table 'users' to have 5 rows, but found 1")
 
   test('assertEmpty should pass on empty table', async () => {
@@ -608,8 +609,8 @@ test.group('Database Test Utils | Assertions', (group) => {
     await app.init()
     app.container.bind('lucid.db', () => db)
 
-    const dbTestUtils = new DatabaseTestUtils(app)
-    await dbTestUtils.assertEmpty('users')
+    const dbAssertions = new DatabaseTestAssertions(app)
+    await dbAssertions.assertEmpty('users')
   })
 
   test('assertEmpty should fail on non-empty table', async () => {
@@ -623,8 +624,8 @@ test.group('Database Test Utils | Assertions', (group) => {
     await app.init()
     app.container.bind('lucid.db', () => db)
 
-    const dbTestUtils = new DatabaseTestUtils(app)
-    await dbTestUtils.assertEmpty('users')
+    const dbAssertions = new DatabaseTestAssertions(app)
+    await dbAssertions.assertEmpty('users')
   }).throws("Expected table 'users' to have 0 rows, but found 1")
 
   test('assertModelExists should pass when model exists in db', async () => {
@@ -656,8 +657,8 @@ test.group('Database Test Utils | Assertions', (group) => {
     await app.init()
     app.container.bind('lucid.db', () => db)
 
-    const dbTestUtils = new DatabaseTestUtils(app)
-    await dbTestUtils.assertModelExists(user)
+    const dbAssertions = new DatabaseTestAssertions(app)
+    await dbAssertions.assertModelExists(user)
   })
 
   test('assertModelExists should fail when model does not exist in db', async ({ assert }) => {
@@ -692,9 +693,9 @@ test.group('Database Test Utils | Assertions', (group) => {
     await app.init()
     app.container.bind('lucid.db', () => db)
 
-    const dbTestUtils = new DatabaseTestUtils(app)
+    const dbAssertions = new DatabaseTestAssertions(app)
     await assert.rejects(
-      () => dbTestUtils.assertModelExists(user),
+      () => dbAssertions.assertModelExists(user),
       `Expected 'User' model with primary key ${primaryKey} to exist, but it was not found`
     )
   })
@@ -729,8 +730,8 @@ test.group('Database Test Utils | Assertions', (group) => {
     await app.init()
     app.container.bind('lucid.db', () => db)
 
-    const dbTestUtils = new DatabaseTestUtils(app)
-    await dbTestUtils.assertModelMissing(user)
+    const dbAssertions = new DatabaseTestAssertions(app)
+    await dbAssertions.assertModelMissing(user)
   })
 
   test('assertModelMissing should fail when model still exists in db', async ({ assert }) => {
@@ -762,9 +763,9 @@ test.group('Database Test Utils | Assertions', (group) => {
     await app.init()
     app.container.bind('lucid.db', () => db)
 
-    const dbTestUtils = new DatabaseTestUtils(app)
+    const dbAssertions = new DatabaseTestAssertions(app)
     await assert.rejects(
-      () => dbTestUtils.assertModelMissing(user),
+      () => dbAssertions.assertModelMissing(user),
       `Expected 'User' model with primary key ${user.$primaryKeyValue} to not exist, but it was found`
     )
   })

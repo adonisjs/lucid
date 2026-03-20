@@ -28,6 +28,7 @@
     "./orm": "./build/src/orm/main.js",
     "./orm/relations": "./build/src/orm/relations/main.js",
     "./seeders": "./build/src/seeders/main.js",
+    "./plugins/db": "./build/src/plugins/japa/db.js",
     "./services/*": "./build/services/*.js",
     "./types/*": "./build/src/types/*.js",
     "./migration": "./build/src/migration/main.js",
