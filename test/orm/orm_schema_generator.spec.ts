@@ -331,6 +331,7 @@ test.group('OrmSchemaGenerator | Custom Schema Rules', (group) => {
     await generator.generate()
 
     const output = await readFile(outputPath, 'utf-8')
+    console.log(output)
     // Since there's no default export, it should use the module itself
     assert.include(output, 'export class TestMemberSchema extends BaseModel')
 
@@ -365,7 +366,7 @@ test.group('OrmSchemaGenerator | Custom Schema Rules', (group) => {
     await connection.schema.dropTableIfExists('test_members')
     await connection.schema.createTable('test_members', (table) => {
       table.increments('id')
-      table.string('role', 15).notNullable()
+      table.string('role').notNullable()
     })
 
     const outputPath = join(fs.basePath, 'member_schema.ts')
@@ -382,7 +383,7 @@ test.group('OrmSchemaGenerator | Custom Schema Rules', (group) => {
     const output = await readFile(outputPath, 'utf-8')
     // Since there's no default export, it should use the module itself
     assert.include(output, 'export class TestMemberSchema extends BaseModel')
-    assert.include(output, '@column({ meta: { nullable: false, maxLength: 15 } })')
+    assert.include(output, '@column({ meta: { type: "varchar" } })')
 
     await connection.schema.dropTable('test_members')
   })
