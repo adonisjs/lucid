@@ -7333,6 +7333,7 @@ test.group('Model | ManyToMany | pagination', (group) => {
       total: 2,
       perPage: 1,
       currentPage: 1,
+      pageName: 'page',
       lastPage: 2,
       firstPage: 1,
       firstPageUrl: '/skills?page=1',

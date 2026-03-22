@@ -3006,6 +3006,7 @@ test.group('Model | Has Many Through | pagination', (group) => {
       total: 3,
       perPage: 2,
       currentPage: 1,
+      pageName: 'page',
       lastPage: 2,
       firstPage: 1,
       firstPageUrl: '/posts?page=1',

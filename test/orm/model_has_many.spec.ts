@@ -5224,6 +5224,7 @@ test.group('Model | HasMany | paginate', (group) => {
       total: 18,
       perPage: 5,
       currentPage: 1,
+      pageName: 'page',
       lastPage: 4,
       firstPage: 1,
       firstPageUrl: '/posts?page=1',

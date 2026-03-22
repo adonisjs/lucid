@@ -79,6 +79,7 @@ export class SimplePaginator extends Array implements SimplePaginatorContract<an
     private totalNumber: number,
     public perPage: number,
     public currentPage: number,
+    public pageName: string,
     ...rows: any[]
   ) {
     super(...rows)
@@ -109,6 +110,7 @@ export class SimplePaginator extends Array implements SimplePaginatorContract<an
       [metaKeys.total]: this.total,
       [metaKeys.perPage]: this.perPage,
       [metaKeys.currentPage]: this.currentPage,
+      [metaKeys.pageName]: this.pageName,
       [metaKeys.lastPage]: this.lastPage,
       [metaKeys.firstPage]: this.firstPage,
       [metaKeys.firstPageUrl]: this.getUrl(1),
@@ -150,7 +152,7 @@ export class SimplePaginator extends Array implements SimplePaginatorContract<an
    * page
    */
   getUrl(page: number): string {
-    const qs = stringify(Object.assign({}, this.qs, { page: page < 1 ? 1 : page }))
+    const qs = stringify(Object.assign({}, this.qs, { [this.pageName]: page < 1 ? 1 : page }))
     return `${this.url}?${qs}`
   }
 
