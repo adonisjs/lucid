@@ -1,4 +1,4 @@
-const Sqlite3Client = require('knex/lib/dialects/sqlite3/index.js')
+const Sqlite3Client = require('knex/lib/dialects/sqlite3')
 
 module.exports = class LibSQLClient extends Sqlite3Client {
   _driver() {
