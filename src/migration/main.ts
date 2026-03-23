@@ -8,3 +8,4 @@
  */
 
 export { MigrationRunner } from './runner.js'
+export { SchemaDumper } from './schema_dumper.js'

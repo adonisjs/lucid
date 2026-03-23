@@ -12,7 +12,7 @@ import { test } from '@japa/runner'
 import { AceFactory } from '@adonisjs/core/factories'
 
 import SchemaGenerate from '../../commands/schema_generate.js'
-import { setup, cleanup, getDb } from '../../test-helpers/index.js'
+import { setup, cleanup, getConfig, getDb } from '../../test-helpers/index.js'
 
 test.group('schema:generate', (group) => {
   group.each.setup(async () => {
@@ -64,17 +64,19 @@ test.group('schema:generate', (group) => {
   })
 
   test('skip schema generation when enabled is false', async ({ fs, assert }) => {
-    const db = getDb()
-
-    // Override config to disable schema generation
-    const connection = db.manager.get(db.primaryConnectionName)!
-    const originalConfig = connection.config
-    connection.config = {
-      ...originalConfig,
-      schemaGeneration: {
-        enabled: false,
+    const baseConfig = getConfig()
+    const db = getDb(undefined, {
+      connection: 'primary',
+      connections: {
+        primary: {
+          ...baseConfig,
+          schemaGeneration: {
+            enabled: false,
+          },
+        },
+        secondary: getConfig(),
       },
-    } as typeof originalConfig
+    })
 
     const ace = await new AceFactory().make(fs.baseUrl, { importer: () => {} })
     await ace.app.init()
@@ -92,8 +94,5 @@ test.group('schema:generate', (group) => {
     assert.isFalse(schemaFileExists)
     assert.equal(generate.exitCode, 0)
     generate.assertLogMatches(/Schema generation is disabled/)
-
-    // Restore original config
-    connection.config = originalConfig
   })
 })

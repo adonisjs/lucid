@@ -9,6 +9,8 @@
 
 import slash from 'slash'
 import { EventEmitter } from 'node:events'
+import { isAbsolute } from 'node:path'
+import { access } from 'node:fs/promises'
 import {
   type MigratorOptions,
   type MigratedFileNode,
@@ -16,10 +18,10 @@ import {
 } from '../types/migrator.js'
 
 import {
+  type ConnectionConfig,
   type FileNode,
   type MigratorConfig,
   type QueryClientContract,
-  type SharedConfigNode,
   type TransactionClientContract,
 } from '../types/database.js'
 
@@ -28,6 +30,8 @@ import { type Database } from '../database/main.js'
 import { type Application } from '@adonisjs/core/app'
 import { type BaseSchema } from '../schema/main.js'
 import * as errors from '../errors.js'
+import { SchemaDumpManifestFile } from './schema_dump/manifest.js'
+import { createSchemaState } from './schema_dump/schema_state.js'
 
 /**
  * Migrator exposes the API to execute migrations using the schema files
@@ -35,7 +39,7 @@ import * as errors from '../errors.js'
  */
 export class MigrationRunner extends EventEmitter {
   private client: QueryClientContract
-  private config: SharedConfigNode
+  private config: ConnectionConfig
 
   /**
    * Reference to the migrations config for the given connection
@@ -57,6 +61,11 @@ export class MigrationRunner extends EventEmitter {
    * Migration source to collect schema files from the disk
    */
   private migrationSource: MigrationSource
+
+  /**
+   * Cache the schema dump manifest once it has been loaded from disk.
+   */
+  private schemaDumpManifest?: SchemaDumpManifestFile | null
 
   /**
    * Flag to know if running the app in production
@@ -318,17 +327,11 @@ export class MigrationRunner extends EventEmitter {
    * Makes the migrations version table (if missing).
    */
   private async makeMigrationsVersionsTable() {
-    /**
-     * Return early when table already exists
-     */
     const hasTable = await this.client.schema.hasTable(this.schemaVersionsTableName)
     if (hasTable) {
       return
     }
 
-    /**
-     * Create table
-     */
     this.emit('create:schema_versions:table')
     await this.client.schema.createTable(this.schemaVersionsTableName, (table) => {
       table.integer('version').unsigned().primary()
@@ -340,12 +343,18 @@ export class MigrationRunner extends EventEmitter {
    * it inserts a new row for version 1
    */
   private async getLatestVersion() {
-    const rows = await this.client.from(this.schemaVersionsTableName).select('version').limit(1)
+    const rows = await this.client
+      .query()
+      .from(this.schemaVersionsTableName)
+      .select('version')
+      .limit(1)
 
     if (rows.length) {
       return Number(rows[0].version)
     } else {
-      await this.client.table(this.schemaVersionsTableName).insert({ version: 1 })
+      await this.client.insertQuery().table(this.schemaVersionsTableName).insert({
+        version: 1,
+      })
       return 1
     }
   }
@@ -361,6 +370,7 @@ export class MigrationRunner extends EventEmitter {
       await Promise.all(
         migrations.map((migration) => {
           return client
+            .query()
             .from(this.schemaTableName)
             .where('id', migration.id)
             .update({
@@ -369,7 +379,9 @@ export class MigrationRunner extends EventEmitter {
         })
       )
 
-      await client.from(this.schemaVersionsTableName).where('version', 1).update({ version: 2 })
+      await client.query().from(this.schemaVersionsTableName).where('version', 1).update({
+        version: 2,
+      })
       await this.commit(client)
     } catch (error) {
       await this.rollback(client)
@@ -392,7 +404,7 @@ export class MigrationRunner extends EventEmitter {
    * table
    */
   private async getLatestBatch() {
-    const rows = await this.client.from(this.schemaTableName).max('batch as batch')
+    const rows = await this.client.query().from(this.schemaTableName).max('batch as batch')
     return Number(rows[0].batch)
   }
 
@@ -400,10 +412,7 @@ export class MigrationRunner extends EventEmitter {
    * Returns an array of files migrated till now
    */
   private async getMigratedFiles() {
-    const rows = await this.client
-      .query<{ name: string }>()
-      .from(this.schemaTableName)
-      .select('name')
+    const rows = await this.client.query().from(this.schemaTableName).select('name')
 
     return new Set(rows.map(({ name }) => name))
   }
@@ -414,11 +423,132 @@ export class MigrationRunner extends EventEmitter {
    */
   private async getMigratedFilesTillBatch(batch: number) {
     return this.client
-      .query<{ name: string; batch: number; migration_time: Date; id: number }>()
+      .query()
       .from(this.schemaTableName)
       .select('name', 'batch', 'migration_time', 'id')
       .where('batch', '>', batch)
       .orderBy('id', 'desc')
+  }
+
+  /**
+   * Returns true when at least one migration row already exists.
+   */
+  private async hasRunAnyMigrations() {
+    const hasTable = await this.client.schema.hasTable(this.schemaTableName)
+    if (!hasTable) {
+      return false
+    }
+
+    const rows = await this.client.query().from(this.schemaTableName).select('id').limit(1)
+    return rows.length > 0
+  }
+
+  /**
+   * Resolve the schema dump path for the current connection.
+   */
+  private getSchemaDumpPath() {
+    const path =
+      ('schemaPath' in this.options ? this.options.schemaPath : undefined) ||
+      SchemaDumpManifestFile.defaultDumpPath(this.client.connectionName)
+    return isAbsolute(path) ? path : this.app.makePath(path)
+  }
+
+  /**
+   * Returns the manifest path stored next to the schema dump.
+   */
+  private getSchemaDumpManifestPath() {
+    return SchemaDumpManifestFile.metaPath(this.getSchemaDumpPath())
+  }
+
+  /**
+   * Returns true when the schema dump file exists on disk.
+   */
+  private async hasSchemaDumpFile(path: string) {
+    try {
+      await access(path)
+      return true
+    } catch {
+      return false
+    }
+  }
+
+  /**
+   * Load the schema dump manifest once for the current runner instance.
+   * Invalid manifests are ignored, so they never mask genuinely missing
+   * migration files.
+   */
+  private async loadSchemaDumpManifest() {
+    if (this.schemaDumpManifest !== undefined) {
+      return
+    }
+
+    this.schemaDumpManifest = await SchemaDumpManifestFile.readForContext(
+      this.getSchemaDumpManifestPath(),
+      {
+        connection: this.client.connectionName,
+        schemaTableName: this.schemaTableName,
+        schemaVersionsTableName: this.schemaVersionsTableName,
+      }
+    )
+  }
+
+  /**
+   * Returns true when a missing migration file is intentionally absent because
+   * it was squashed into the stored schema dump.
+   */
+  private isSquashedMigration(name: string) {
+    return this.schemaDumpManifest ? this.schemaDumpManifest.hasSquashedMigration(name) : false
+  }
+
+  /**
+   * Drop migration bookkeeping tables before loading a schema dump that
+   * recreates them from scratch.
+   */
+  private async deleteMigrationsTables() {
+    const hasSchemaVersionsTable = await this.client.schema.hasTable(this.schemaVersionsTableName)
+    if (hasSchemaVersionsTable) {
+      await this.client.schema.dropTable(this.schemaVersionsTableName)
+    }
+
+    const hasSchemaTable = await this.client.schema.hasTable(this.schemaTableName)
+    if (hasSchemaTable) {
+      await this.client.schema.dropTable(this.schemaTableName)
+    }
+  }
+
+  /**
+   * Load the stored schema dump when migrating a fresh database in `up`
+   * direction.
+   */
+  private async prepareDatabaseForUp() {
+    if (this.dryRun) {
+      await this.makeMigrationsTable()
+      return
+    }
+
+    if (await this.hasRunAnyMigrations()) {
+      await this.makeMigrationsTable()
+      return
+    }
+
+    const schemaDumpPath = this.getSchemaDumpPath()
+    if (!schemaDumpPath || !(await this.hasSchemaDumpFile(schemaDumpPath))) {
+      await this.makeMigrationsTable()
+      return
+    }
+
+    const schemaState = createSchemaState(
+      this.client,
+      this.config,
+      this.schemaTableName,
+      this.schemaVersionsTableName
+    )
+
+    this.emit('schema:load', { path: schemaDumpPath })
+    await this.deleteMigrationsTables()
+    await schemaState.load(schemaDumpPath)
+    this.emit('schema:loaded', { path: schemaDumpPath })
+    await this.makeMigrationsTable()
   }
 
   /**
@@ -429,7 +559,11 @@ export class MigrationRunner extends EventEmitter {
     this.emit('start')
     this.booted = true
     await this.acquireLock()
-    await this.makeMigrationsTable()
+    if (this.direction === 'up') {
+      await this.prepareDatabaseForUp()
+    } else {
+      await this.makeMigrationsTable()
+    }
   }
 
   /**
@@ -484,6 +618,7 @@ export class MigrationRunner extends EventEmitter {
 
     const existing = await this.getMigratedFilesTillBatch(batch)
     const collected = await this.migrationSource.getMigrations()
+    await this.loadSchemaDumpManifest()
 
     if (step === undefined || step <= 0) {
       step = collected.length
@@ -498,7 +633,7 @@ export class MigrationRunner extends EventEmitter {
     existing.forEach((file) => {
       const migration = collected.find(({ name }) => name === file.name)
       if (!migration) {
-        throw new errors.E_MISSING_SCHEMA_FILES([file.name])
+        return
       }
 
       this.migratedFiles[migration.name] = {
@@ -508,6 +643,24 @@ export class MigrationRunner extends EventEmitter {
         batch: file.batch,
       }
     })
+
+    /**
+     * Missing files are only acceptable when they were intentionally squashed
+     * into the stored schema dump. Any other missing migration remains an
+     * integrity error.
+     */
+    for (let file of existing) {
+      const migration = collected.find(({ name }) => name === file.name)
+      if (migration) {
+        continue
+      }
+
+      if (this.isSquashedMigration(file.name)) {
+        continue
+      }
+
+      throw new errors.E_MISSING_SCHEMA_FILES([file.name])
+    }
 
     this.migratedFiles = Object.fromEntries(Object.entries(this.migratedFiles).slice(0, step))
     const filesToMigrate = Object.keys(this.migratedFiles)
@@ -522,6 +675,8 @@ export class MigrationRunner extends EventEmitter {
   on(event: 'release:lock', callback: () => void): this
   on(event: 'create:schema:table', callback: () => void): this
   on(event: 'create:schema_versions:table', callback: () => void): this
+  on(event: 'schema:load', callback: (payload: { path: string }) => void): this
+  on(event: 'schema:loaded', callback: (payload: { path: string }) => void): this
   on(event: 'upgrade:version', callback: (payload: { from: number; to: number }) => void): this
   on(event: 'migration:start', callback: (file: MigratedFileNode) => void): this
   on(event: 'migration:completed', callback: (file: MigratedFileNode) => void): this
@@ -535,6 +690,7 @@ export class MigrationRunner extends EventEmitter {
    */
   async getList(): Promise<MigrationListNode[]> {
     const existingCollected: Set<string> = new Set()
+    await this.loadSchemaDumpManifest()
     await this.makeMigrationsTable()
     const existing = await this.getMigratedFilesTillBatch(0)
     const collected = await this.migrationSource.getMigrations()
@@ -565,12 +721,20 @@ export class MigrationRunner extends EventEmitter {
     /**
      * These are the one's which were migrated earlier, but now missing
      * on the disk
+     *
+     * Missing files remain visible in the status output. The manifest lets us
+     * distinguish intentional squashes from genuinely corrupt history.
      */
-    existing.forEach(({ name, batch, migration_time }) => {
+    for (let { name, batch, migration_time: migrationTime } of existing) {
       if (!existingCollected.has(name)) {
-        list.push({ name, batch, migrationTime: migration_time, status: 'corrupt' })
+        list.push({
+          name,
+          batch,
+          migrationTime,
+          status: this.isSquashedMigration(name) ? 'squashed' : 'corrupt',
+        })
       }
-    })
+    }
 
     return list
   }

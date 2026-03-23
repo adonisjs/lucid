@@ -8,7 +8,7 @@
  */
 
 import { type Pool } from 'tarn'
-import knex, { type Knex } from 'knex'
+import { knex, type Knex } from 'knex'
 import { EventEmitter } from 'node:events'
 import { patchKnex } from 'knex-dynamic-connection'
 import type { Logger } from '@adonisjs/core/logger'
@@ -19,6 +19,7 @@ import * as errors from '../errors.js'
 import LibSQLClient from '../clients/libsql.cjs'
 import { clientsNames } from '../dialects/index.js'
 import { Logger as ConnectionLogger } from './logger.js'
+import { patchKnexSqliteForeignKeyCheck } from '../patches/knex_sqlite_foreign_key_check.js'
 import type { ConnectionConfig, ConnectionContract } from '../types/database.js'
 
 /**
@@ -28,6 +29,11 @@ import type { ConnectionConfig, ConnectionContract } from '../types/database.js'
  * structurally assignable to `Knex.Config` because `any` satisfies every type.
  */
 type KnexRawConfig = Omit<Knex.Config, 'connection'> & { connection?: any }
+
+/**
+ * Apply knex SQLite foreign key check patch
+ */
+await patchKnexSqliteForeignKeyCheck()
 
 /**
  * Connection class manages a given database connection. Internally it uses
@@ -405,7 +411,7 @@ export class Connection extends EventEmitter implements ConnectionContract {
    * Creates the write connection.
    */
   private setupWriteConnection() {
-    this.client = knex.knex(
+    this.client = knex(
       Object.assign({ log: new ConnectionLogger(this.name, this.logger) }, this.getWriteConfig(), {
         debug: false,
       })
@@ -430,7 +436,7 @@ export class Connection extends EventEmitter implements ConnectionContract {
     }
 
     this.logger.trace({ connection: this.name }, 'setting up read/write replicas')
-    this.readClient = knex.knex(
+    this.readClient = knex(
       Object.assign({ log: new ConnectionLogger(this.name, this.logger) }, this.getReadConfig(), {
         debug: false,
       })

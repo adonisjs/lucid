@@ -64,9 +64,15 @@ export default class Refresh extends BaseCommand {
   declare disableLocks: boolean
 
   /**
-   * Converting command properties to arguments
+   * Custom schema dump path to load before running pending migrations.
    */
-  private getArgs() {
+  @flags.string({ description: 'Define a custom path for the schema dump used to bootstrap' })
+  declare schemaPath: string
+
+  /**
+   * Converting command properties to shared arguments
+   */
+  private getSharedArgs() {
     const args: string[] = []
     if (this.force) {
       args.push('--force')
@@ -87,7 +93,7 @@ export default class Refresh extends BaseCommand {
    * Converting command properties to db:wipe arguments
    */
   private getWipeArgs() {
-    const args: string[] = this.getArgs()
+    const args: string[] = this.getSharedArgs()
     if (this.dropTypes) {
       args.push('--drop-types')
     }
@@ -98,6 +104,19 @@ export default class Refresh extends BaseCommand {
 
     if (this.dropViews) {
       args.push('--drop-views')
+    }
+
+    return args
+  }
+
+  /**
+   * Converting command properties to migration:run arguments
+   */
+  private getMigrateArgs() {
+    const args = this.getSharedArgs()
+
+    if (this.schemaPath) {
+      args.push(`--schema-path=${this.schemaPath}`)
     }
 
     return args
@@ -116,7 +135,7 @@ export default class Refresh extends BaseCommand {
    * Run migrations
    */
   private async runMigrations() {
-    const migrate = await this.kernel.exec('migration:run', this.getArgs())
+    const migrate = await this.kernel.exec('migration:run', this.getMigrateArgs())
     this.exitCode = migrate.exitCode
     this.error = migrate.error
   }

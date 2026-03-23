@@ -210,6 +210,20 @@ export default abstract class MigrationsBase extends BaseCommand {
       this.logger.info(`Upgrading migrations version from "${from}" to "${to}"`)
     })
 
+    /**
+     * Loading a stored schema dump before running pending migrations.
+     */
+    migrator.on('schema:load', ({ path }) => {
+      this.logger.info(`Restoring schema dump from "${this.app.relativePath(path)}"`)
+    })
+
+    /**
+     * Stored schema dump loaded successfully.
+     */
+    migrator.on('schema:loaded', () => {
+      this.logger.info('Schema dump restored')
+    })
+
     migrator.on('start', () => (start = process.hrtime()))
     migrator.on('end', () => (duration = process.hrtime(start)))
 

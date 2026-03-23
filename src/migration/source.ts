@@ -39,7 +39,7 @@ export class MigrationSource {
    * Returns an array of migrations paths for a given connection. If paths
    * are not defined, then `database/migrations` fallback is used
    */
-  private getMigrationsPath(): string[] {
+  getMigrationsPaths(): string[] {
     const directories = (this.config.migrations || {}).paths
     const defaultDirectory =
       this.app.relativePath(this.app.migrationsPath()) || 'database/migrations'
@@ -50,7 +50,7 @@ export class MigrationSource {
    * Returns an array of files for all defined directories
    */
   async getMigrations() {
-    const migrationPaths = this.getMigrationsPath()
+    const migrationPaths = this.getMigrationsPaths()
     const directories = await Promise.all(
       migrationPaths.map((directoryPath) => {
         return this.getDirectoryFiles(directoryPath)
