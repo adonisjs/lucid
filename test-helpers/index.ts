@@ -10,7 +10,7 @@
 import dotenv from 'dotenv'
 import { Chance } from 'chance'
 import { join } from 'node:path'
-import knex, { type Knex } from 'knex'
+import { knex, type Knex } from 'knex'
 import { fileURLToPath } from 'node:url'
 import { getActiveTest, getActiveTestOrFail } from '@japa/runner'
 import { Logger } from '@adonisjs/core/logger'
@@ -152,8 +152,8 @@ export function getConfig(): ConnectionConfig {
 /**
  * Returns an instance of knex for testing
  */
-export function getKnex(config: knex.Knex.Config): knex.Knex {
-  return knex.knex(
+export function getKnex(config: Knex.Config): Knex {
+  return knex(
     Object.assign(
       {},
       {
