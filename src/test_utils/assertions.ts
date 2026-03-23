@@ -10,7 +10,6 @@
 import { AssertionError } from 'node:assert'
 import { type ApplicationService } from '@adonisjs/core/types'
 import { type LucidRow, type LucidModel } from '../types/model.js'
-import { type Database } from '../database/main.js'
 
 /**
  * Provides database assertion methods for use inside test bodies.
@@ -25,7 +24,7 @@ export class DatabaseTestAssertions {
   /**
    * Returns the Database instance from the container
    */
-  async #getDb(): Promise<Database> {
+  async #getDb() {
     return this.app.container.make('lucid.db')
   }
 
@@ -119,15 +118,9 @@ export class DatabaseTestAssertions {
       throw new Error(`Cannot assert model existence: primary key value is undefined`)
     }
 
-    const connection = await this.#getConnection()
-    const result: any = await connection
-      .query()
-      .from(Model.table)
-      .where(Model.primaryKey, primaryKeyValue)
-      .count('* as count')
-    const actualCount = Number(result[0].count)
+    const result = await Model.find(primaryKeyValue)
 
-    if (actualCount === 0) {
+    if (!result) {
       throw new AssertionError({
         message: `Expected '${Model.name}' model with primary key ${primaryKeyValue} to exist, but it was not found`,
         actual: 'missing',
@@ -148,15 +141,9 @@ export class DatabaseTestAssertions {
       throw new Error(`Cannot assert model absence: primary key value is undefined`)
     }
 
-    const connection = await this.#getConnection()
-    const result: any = await connection
-      .query()
-      .from(Model.table)
-      .where(Model.primaryKey, primaryKeyValue)
-      .count('* as count')
-    const actualCount = Number(result[0].count)
+    const result = await Model.find(primaryKeyValue)
 
-    if (actualCount > 0) {
+    if (result) {
       throw new AssertionError({
         message: `Expected '${Model.name}' model with primary key ${primaryKeyValue} to not exist, but it was found`,
         actual: 'exists',

@@ -21,7 +21,7 @@ import { AppFactory } from '@adonisjs/core/factories/app'
 import { type ApplicationService } from '@adonisjs/core/types'
 import { DatabaseTestUtils } from '../src/test_utils/database.js'
 import { DatabaseTestAssertions } from '../src/test_utils/assertions.js'
-import { column } from '../src/orm/decorators/index.js'
+import { beforeFind, column } from '../src/orm/decorators/index.js'
 import {
   cleanupSchemaArtifacts,
   cleanupTestDatabase,
@@ -722,6 +722,92 @@ test.group('Database Test Assertions', (group) => {
     user.fill({ username: 'jul', email: 'jul@adonisjs.com' })
     await user.save()
     await user.delete()
+
+    const app = new AppFactory().create(
+      new URL('./', import.meta.url),
+      () => {}
+    ) as ApplicationService
+    await app.init()
+    app.container.bind('lucid.db', () => db)
+
+    const dbAssertions = new DatabaseTestAssertions(app)
+    await dbAssertions.assertModelMissing(user)
+  })
+
+  test('assertModelExists should respect beforeFind hooks', async ({ assert }) => {
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter)
+
+    class User extends BaseModel {
+      static table = 'users'
+
+      @column({ isPrimary: true })
+      declare id: number
+
+      @column()
+      declare username: string
+
+      @column()
+      declare email: string
+
+      @column()
+      declare points: number
+
+      @beforeFind()
+      static applyActiveFilter(query: any) {
+        query.where('points', '>', 0)
+      }
+    }
+
+    const user = new User()
+    user.fill({ username: 'jul', email: 'jul@adonisjs.com', points: 0 })
+    await user.save()
+
+    const app = new AppFactory().create(
+      new URL('./', import.meta.url),
+      () => {}
+    ) as ApplicationService
+    await app.init()
+    app.container.bind('lucid.db', () => db)
+
+    const dbAssertions = new DatabaseTestAssertions(app)
+
+    await assert.rejects(
+      () => dbAssertions.assertModelExists(user),
+      `Expected 'User' model with primary key ${user.$primaryKeyValue} to exist, but it was not found`
+    )
+  })
+
+  test('assertModelMissing should respect beforeFind hooks', async () => {
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter)
+
+    class User extends BaseModel {
+      static table = 'users'
+
+      @column({ isPrimary: true })
+      declare id: number
+
+      @column()
+      declare username: string
+
+      @column()
+      declare email: string
+
+      @column()
+      declare points: number
+
+      @beforeFind()
+      static applyActiveFilter(query: any) {
+        query.where('points', '>', 0)
+      }
+    }
+
+    const user = new User()
+    user.fill({ username: 'jul', email: 'jul@adonisjs.com', points: 0 })
+    await user.save()
 
     const app = new AppFactory().create(
       new URL('./', import.meta.url),
