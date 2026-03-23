@@ -62,9 +62,14 @@ export type StrictValues =
 export type StrictValuesWithoutRaw = Exclude<StrictValues, RawQuery>
 
 /**
+ * Values allowed in raw query bindings
+ */
+export type RawBindingValue = StrictValues | null
+
+/**
  * Shape of raw query bindings
  */
-export type RawQueryBindings = { [key: string]: StrictValues } | StrictValues[]
+export type RawQueryBindings = { [key: string]: RawBindingValue } | RawBindingValue[]
 
 /**
  * A builder method to allow raw queries. However, the return type is the

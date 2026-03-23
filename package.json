@@ -35,6 +35,7 @@
     "./utils": "./build/src/utils/index.js"
   },
   "scripts": {
+    "postinstall": "node patch-knex.js",
     "pretest": "npm run lint",
     "test:better_sqlite": "cross-env DB=better_sqlite node --enable-source-maps --import=@poppinss/ts-exec ./bin/test.js",
     "test:libsql": "cross-env DB=libsql node --enable-source-maps --import=@poppinss/ts-exec ./bin/test.js",

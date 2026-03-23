@@ -19,13 +19,7 @@ import * as errors from '../errors.js'
 import LibSQLClient from '../clients/libsql.cjs'
 import { clientsNames } from '../dialects/index.js'
 import { Logger as ConnectionLogger } from './logger.js'
-import { patchKnexSqliteForeignKeyCheck } from '../patches/knex_sqlite_foreign_key_check.js'
 import type { ConnectionConfig, ConnectionContract } from '../types/database.js'
-
-/**
- * Apply knex SQLite foreign key check patch
- */
-await patchKnexSqliteForeignKeyCheck()
 
 /**
  * Connection class manages a given database connection. Internally it uses
