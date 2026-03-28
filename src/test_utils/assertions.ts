@@ -22,6 +22,13 @@ export class DatabaseTestAssertions {
   ) {}
 
   /**
+   * Returns a new instance of assertions configured for the given connection
+   */
+  connection(connectionName: string) {
+    return new DatabaseTestAssertions(this.app, connectionName)
+  }
+
+  /**
    * Returns the Database instance from the container
    */
   async #getDb() {

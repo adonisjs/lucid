@@ -871,7 +871,10 @@ test.group('Database Test Assertions | connection', (group) => {
 
   test('assertHas should query the configured connection', async ({ assert }) => {
     const db = await getMultiConnectionDb()
-    await db.connection('primary').table('users').insert({ username: 'jul', email: 'jul@adonisjs.com' })
+    await db
+      .connection('primary')
+      .table('users')
+      .insert({ username: 'jul', email: 'jul@adonisjs.com' })
 
     const app = new AppFactory().create(
       new URL('./', import.meta.url),
@@ -880,19 +883,21 @@ test.group('Database Test Assertions | connection', (group) => {
     await app.init()
     app.container.bind('lucid.db', () => db)
 
-    const primaryAssertions = new DatabaseTestAssertions(app, 'primary')
-    await primaryAssertions.assertHas('users', { username: 'jul' })
+    const dbAssertions = new DatabaseTestAssertions(app)
+    await dbAssertions.connection('primary').assertHas('users', { username: 'jul' })
 
-    const secondaryAssertions = new DatabaseTestAssertions(app, 'secondary')
     await assert.rejects(
-      () => secondaryAssertions.assertHas('users', { username: 'jul' }),
+      () => dbAssertions.connection('secondary').assertHas('users', { username: 'jul' }),
       /Expected table 'users' to have rows matching/
     )
   })
 
   test('assertMissing should query the configured connection', async () => {
     const db = await getMultiConnectionDb()
-    await db.connection('primary').table('users').insert({ username: 'jul', email: 'jul@adonisjs.com' })
+    await db
+      .connection('primary')
+      .table('users')
+      .insert({ username: 'jul', email: 'jul@adonisjs.com' })
 
     const app = new AppFactory().create(
       new URL('./', import.meta.url),
@@ -901,13 +906,16 @@ test.group('Database Test Assertions | connection', (group) => {
     await app.init()
     app.container.bind('lucid.db', () => db)
 
-    const secondaryAssertions = new DatabaseTestAssertions(app, 'secondary')
-    await secondaryAssertions.assertMissing('users', { username: 'jul' })
+    const dbAssertions = new DatabaseTestAssertions(app)
+    await dbAssertions.connection('secondary').assertMissing('users', { username: 'jul' })
   })
 
   test('assertCount should query the configured connection', async () => {
     const db = await getMultiConnectionDb()
-    await db.connection('primary').table('users').insert({ username: 'jul', email: 'jul@adonisjs.com' })
+    await db
+      .connection('primary')
+      .table('users')
+      .insert({ username: 'jul', email: 'jul@adonisjs.com' })
 
     const app = new AppFactory().create(
       new URL('./', import.meta.url),
@@ -916,11 +924,9 @@ test.group('Database Test Assertions | connection', (group) => {
     await app.init()
     app.container.bind('lucid.db', () => db)
 
-    const primaryAssertions = new DatabaseTestAssertions(app, 'primary')
-    await primaryAssertions.assertCount('users', 1)
-
-    const secondaryAssertions = new DatabaseTestAssertions(app, 'secondary')
-    await secondaryAssertions.assertCount('users', 0)
+    const dbAssertions = new DatabaseTestAssertions(app)
+    await dbAssertions.connection('primary').assertCount('users', 1)
+    await dbAssertions.connection('secondary').assertCount('users', 0)
   })
 
   test('assertModelExists should query the configured connection', async ({ assert }) => {
@@ -952,12 +958,11 @@ test.group('Database Test Assertions | connection', (group) => {
     await app.init()
     app.container.bind('lucid.db', () => db)
 
-    const primaryAssertions = new DatabaseTestAssertions(app, 'primary')
-    await primaryAssertions.assertModelExists(user)
+    const dbAssertions = new DatabaseTestAssertions(app)
+    await dbAssertions.connection('primary').assertModelExists(user)
 
-    const secondaryAssertions = new DatabaseTestAssertions(app, 'secondary')
     await assert.rejects(
-      () => secondaryAssertions.assertModelExists(user),
+      () => dbAssertions.connection('secondary').assertModelExists(user),
       /Expected 'User' model with primary key .+ to exist, but it was not found/
     )
   })
@@ -991,12 +996,11 @@ test.group('Database Test Assertions | connection', (group) => {
     await app.init()
     app.container.bind('lucid.db', () => db)
 
-    const secondaryAssertions = new DatabaseTestAssertions(app, 'secondary')
-    await secondaryAssertions.assertModelMissing(user)
+    const dbAssertions = new DatabaseTestAssertions(app)
+    await dbAssertions.connection('secondary').assertModelMissing(user)
 
-    const primaryAssertions = new DatabaseTestAssertions(app, 'primary')
     await assert.rejects(
-      () => primaryAssertions.assertModelMissing(user),
+      () => dbAssertions.connection('primary').assertModelMissing(user),
       /Expected 'User' model with primary key .+ to not exist, but it was found/
     )
   })
