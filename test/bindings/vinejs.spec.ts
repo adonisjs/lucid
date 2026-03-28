@@ -57,7 +57,7 @@ test.group('VineJS | unique', (group) => {
       await validator.validate({
         email: 'foo@bar.com',
       })
-    } catch (error) {
+    } catch (error: any) {
       assert.deepEqual(error.messages, [
         {
           field: 'email',
@@ -101,7 +101,7 @@ test.group('VineJS | unique', (group) => {
          */
         email: 'foo@bar.com',
       })
-    } catch (error) {
+    } catch (error: any) {
       if (dialectPerformsCaseSensitiveSearch) {
         assert.deepEqual(error.messages, [
           {
@@ -163,7 +163,7 @@ test.group('VineJS | unique', (group) => {
          */
         email: 'foo@bar.com',
       })
-    } catch (error) {
+    } catch (error: any) {
       assert.deepEqual(error.messages, [
         {
           field: 'username',
@@ -228,7 +228,7 @@ test.group('VineJS | unique', (group) => {
       await validator.validate({
         email: 'foo@bar.com',
       })
-    } catch (error) {
+    } catch (error: any) {
       assert.deepEqual(error.messages, [
         {
           field: 'email',
@@ -306,7 +306,7 @@ test.group('VineJS | exists', (group) => {
       await validator.validate({
         email: 'foo@bar.com',
       })
-    } catch (error) {
+    } catch (error: any) {
       assert.deepEqual(error.messages, [
         {
           field: 'email',
@@ -364,7 +364,7 @@ test.group('VineJS | exists', (group) => {
            */
           email: 'foo@bar.com',
         })
-      } catch (error) {
+      } catch (error: any) {
         assert.deepEqual(error.messages, [
           {
             field: 'username',
@@ -421,7 +421,7 @@ test.group('VineJS | exists', (group) => {
       await validator.validate({
         email: 'foo@bar.com',
       })
-    } catch (error) {
+    } catch (error: any) {
       assert.deepEqual(error.messages, [
         {
           field: 'email',

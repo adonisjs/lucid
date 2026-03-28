@@ -52,7 +52,7 @@ test.group('Model | HasOne | Options', (group) => {
       }
 
       User.$getRelation('profile')!.boot()
-    } catch ({ message }) {
+    } catch ({ message }: any) {
       assert.equal(
         message,
         'Relation "User.profile" expects "id" to exist on "User" model, but is missing. Did you forget to define the column?'
@@ -81,7 +81,7 @@ test.group('Model | HasOne | Options', (group) => {
       }
 
       User.$getRelation('profile')!.boot()
-    } catch ({ message }) {
+    } catch ({ message }: any) {
       assert.equal(
         message,
         'Relation "User.profile" expects "userId" to exist on "Profile" model, but is missing. Did you forget to define the column?'
@@ -1496,7 +1496,7 @@ test.group('Model | HasOne | preload', (group) => {
 
     try {
       await User.query().select('username').preload('profile').where('username', 'virk').first()
-    } catch ({ message }) {
+    } catch ({ message }: any) {
       assert.equal(message, 'Cannot preload "profile", value of "User.id" is undefined')
     }
   })
@@ -2639,7 +2639,7 @@ test.group('Model | HasOne | pagination', (group) => {
     const user = await User.find(1)
     try {
       await user!.related('profile').query().paginate(1)
-    } catch ({ message }) {
+    } catch ({ message }: any) {
       assert.equal(message, 'Cannot paginate a hasOne relationship "(profile)"')
     }
   })

@@ -255,7 +255,7 @@ export class MigrationRunner extends EventEmitter {
       await this.commit(client)
       this.migratedFiles[migration.name].status = 'completed'
       this.emit('migration:completed', this.migratedFiles[migration.name])
-    } catch (error) {
+    } catch (error: any) {
       this.error = error
       this.migratedFiles[migration.name].status = 'error'
       this.emit('migration:error', this.migratedFiles[migration.name])
@@ -760,7 +760,7 @@ export class MigrationRunner extends EventEmitter {
       } else if (this.options.direction === 'down') {
         await this.runDown(this.options.batch, this.options.step)
       }
-    } catch (error) {
+    } catch (error: any) {
       this.error = error
     }
 

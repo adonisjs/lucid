@@ -51,7 +51,7 @@ test.group('Model | BelongsTo | Options', (group) => {
       }
 
       Profile.$getRelation('user')!.boot()
-    } catch ({ message }) {
+    } catch ({ message }: any) {
       assert.equal(
         message,
         'Relation "Profile.user" expects "id" to exist on "User" model, but is missing. Did you forget to define the column?'
@@ -80,7 +80,7 @@ test.group('Model | BelongsTo | Options', (group) => {
       }
 
       Profile.$getRelation('user')!.boot()
-    } catch ({ message }) {
+    } catch ({ message }: any) {
       assert.equal(
         message,
         'Relation "Profile.user" expects "userId" to exist on "Profile" model, but is missing. Did you forget to define the column?'
@@ -1197,7 +1197,7 @@ test.group('Model | BelongsTo | preload', (group) => {
 
     try {
       await Profile.query().select('display_name').preload('user')
-    } catch ({ message }) {
+    } catch ({ message }: any) {
       assert.equal(
         message,
         [
@@ -2143,7 +2143,7 @@ test.group('Model | BelongsTo | bulk operations', (group) => {
     const profile = await Profile.find(1)
     try {
       await profile!.related('user').query().paginate(1)
-    } catch ({ message }) {
+    } catch ({ message }: any) {
       assert.equal(message, 'Cannot paginate a belongsTo relationship "(user)"')
     }
   })

@@ -52,7 +52,7 @@ test.group('Model | Has Many Through | Options', (group) => {
       }
 
       Country.$getRelation('posts')!.boot()
-    } catch ({ message }) {
+    } catch ({ message }: any) {
       assert.equal(
         message,
         'Relation "Country.posts" expects "id" to exist on "Country" model, but is missing. Did you forget to define the column?'
@@ -83,7 +83,7 @@ test.group('Model | Has Many Through | Options', (group) => {
       }
 
       Country.$getRelation('posts')!.boot()
-    } catch ({ message }) {
+    } catch ({ message }: any) {
       assert.equal(
         message,
         'Relation "Country.posts" expects "countryId" to exist on "User" model, but is missing. Did you forget to define the column?'
@@ -117,7 +117,7 @@ test.group('Model | Has Many Through | Options', (group) => {
       }
 
       Country.$getRelation('posts')!.boot()
-    } catch ({ message }) {
+    } catch ({ message }: any) {
       assert.equal(
         message,
         'Relation "Country.posts" expects "id" to exist on "User" model, but is missing. Did you forget to define the column?'
@@ -154,7 +154,7 @@ test.group('Model | Has Many Through | Options', (group) => {
       }
 
       Country.$getRelation('posts')!.boot()
-    } catch ({ message }) {
+    } catch ({ message }: any) {
       assert.equal(
         message,
         'Relation "Country.posts" expects "userId" to exist on "Post" model, but is missing. Did you forget to define the column?'
@@ -1489,7 +1489,7 @@ test.group('Model | Has Many Through | preload', (group) => {
 
     try {
       await Country.query().select('name').preload('posts')
-    } catch ({ message }) {
+    } catch ({ message }: any) {
       assert.equal(message, 'Cannot preload "posts", value of "Country.id" is undefined')
     }
   })
@@ -3049,7 +3049,7 @@ test.group('Model | Has Many Through | pagination', (group) => {
 
     try {
       await Country.query().preload('posts', (query) => query.paginate(1))
-    } catch ({ message }) {
+    } catch ({ message }: any) {
       assert.equal(message, 'Cannot paginate relationship "posts" during preload')
     }
   })

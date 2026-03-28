@@ -183,7 +183,7 @@ test.group('Transaction | query', (group) => {
         await db.insertQuery().table('users').insert({ username: 'virk' })
         throw new Error('should rollback')
       })
-    } catch (error) {
+    } catch (error: any) {
       assert.equal(error.message, 'should rollback')
     }
 

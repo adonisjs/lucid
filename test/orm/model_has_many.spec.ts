@@ -53,7 +53,7 @@ test.group('Model | HasMany | Options', (group) => {
       }
 
       User.$getRelation('posts')!.boot()
-    } catch ({ message }) {
+    } catch ({ message }: any) {
       assert.equal(
         message,
         'Relation "User.posts" expects "id" to exist on "User" model, but is missing. Did you forget to define the column?'
@@ -82,7 +82,7 @@ test.group('Model | HasMany | Options', (group) => {
       }
 
       User.$getRelation('posts')!.boot()
-    } catch ({ message }) {
+    } catch ({ message }: any) {
       assert.equal(
         message,
         'Relation "User.posts" expects "userId" to exist on "Post" model, but is missing. Did you forget to define the column?'
@@ -1320,7 +1320,7 @@ test.group('Model | HasMany | preload', (group) => {
 
     try {
       await User.query().select('username').preload('posts').where('username', 'virk').first()
-    } catch ({ message }) {
+    } catch ({ message }: any) {
       assert.equal(message, 'Cannot preload "posts", value of "User.id" is undefined')
     }
   })
@@ -5263,7 +5263,7 @@ test.group('Model | HasMany | paginate', (group) => {
       await User.query().preload('posts', (query) => {
         query.paginate(1, 5)
       })
-    } catch ({ message }) {
+    } catch ({ message }: any) {
       assert.equal(message, 'Cannot paginate relationship "posts" during preload')
     }
   })

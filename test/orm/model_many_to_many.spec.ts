@@ -55,7 +55,7 @@ test.group('Model | ManyToMany | Options', (group) => {
       }
 
       User.$getRelation('skills')!.boot()
-    } catch ({ message }) {
+    } catch ({ message }: any) {
       assert.equal(
         message,
         'Relation "User.skills" expects "id" to exist on "User" model, but is missing. Did you forget to define the column?'
@@ -139,7 +139,7 @@ test.group('Model | ManyToMany | Options', (group) => {
       }
 
       User.$getRelation('skills')!.boot()
-    } catch ({ message }) {
+    } catch ({ message }: any) {
       assert.equal(
         message,
         'Relation "User.skills" expects "id" to exist on "Skill" model, but is missing. Did you forget to define the column?'
@@ -1811,7 +1811,7 @@ test.group('Model | ManyToMany | preload', (group) => {
 
     try {
       await User.query().select('username').preload('skills')
-    } catch ({ message }) {
+    } catch ({ message }: any) {
       assert.equal(message, 'Cannot preload "skills", value of "User.id" is undefined')
     }
   })
@@ -7387,7 +7387,7 @@ test.group('Model | ManyToMany | pagination', (group) => {
       await User.query().preload('skills', (query) => {
         query.paginate(1, 5)
       })
-    } catch ({ message }) {
+    } catch ({ message }: any) {
       assert.equal(message, 'Cannot paginate relationship "skills" during preload')
     }
   })
