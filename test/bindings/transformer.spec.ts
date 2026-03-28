@@ -99,7 +99,7 @@ test.group('Transformer | withCount | HasMany', (group) => {
         { user_id: 2, title: 'Adonis 102' },
       ])
 
-    const users = await User.query().withCount('posts')
+    const users = await User.query().orderBy('id', 'asc').withCount('posts')
     const result = await serializer.serialize(UserTransformer.transform(users))
 
     assert.lengthOf(result, 2)

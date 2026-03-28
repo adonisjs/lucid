@@ -12,11 +12,11 @@ import { Chance } from 'chance'
 import { join } from 'node:path'
 import knex, { type Knex } from 'knex'
 import { fileURLToPath } from 'node:url'
-import { getActiveTest, getActiveTestOrFail } from '@japa/runner'
 import { Logger } from '@adonisjs/core/logger'
 import { Emitter } from '@adonisjs/core/events'
 import { type Application } from '@adonisjs/core/app'
 import { AppFactory } from '@adonisjs/core/factories/app'
+import { getActiveTest, getActiveTestOrFail } from '@japa/runner'
 
 import {
   type DatabaseConfig,
