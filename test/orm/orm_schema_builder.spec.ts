@@ -1354,7 +1354,7 @@ test.group('OrmSchemaBuilder | Name Conversion', (group) => {
     const generator = new OrmSchemaBuilder(connection)
 
     const columns = {
-      id: { type: 'integer', nullable: false },
+      'id': { type: 'integer', nullable: false },
       '5G': { type: 'boolean', nullable: true },
     }
 
@@ -1392,7 +1392,7 @@ test.group('OrmSchemaBuilder | Name Conversion', (group) => {
     ])
 
     const columns = {
-      id: { type: 'integer', nullable: false },
+      'id': { type: 'integer', nullable: false },
       '3rd_party_id': { type: 'varchar', nullable: false },
     }
 
@@ -1429,10 +1429,10 @@ test.group('OrmSchemaBuilder | Name Conversion', (group) => {
     ])
 
     const columns = {
-      id: { type: 'integer', nullable: false },
+      'id': { type: 'integer', nullable: false },
       '5G': { type: 'boolean', nullable: true },
-      name: { type: 'varchar', nullable: false },
-      secret: { type: 'varchar', nullable: false },
+      'name': { type: 'varchar', nullable: false },
+      'secret': { type: 'varchar', nullable: false },
     }
 
     const schemas = generator.generateSchemas([{ name: 'examples', columns, primaryKeys: ['id'] }])
