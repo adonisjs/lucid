@@ -33,10 +33,17 @@ export default class MakeSeeder extends BaseCommand {
   declare contentsFrom: string
 
   /**
+   * Forcefully overwrite existing files
+   */
+  @flags.boolean({ description: 'Forcefully overwrite existing files', alias: 'f' })
+  declare force: boolean
+
+  /**
    * Execute command
    */
   async run(): Promise<void> {
     const codemods = await this.createCodemods()
+    codemods.overwriteExisting = this.force === true
     await codemods.makeUsingStub(
       stubsRoot,
       'make/seeder/main.stub',
