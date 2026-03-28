@@ -10,11 +10,30 @@
 import { type ImportInfo } from '@poppinss/utils'
 
 /**
+ * A structured decorator definition with name and optional arguments
+ */
+export type DecoratorInfo = {
+  name: string
+  args?: Record<string, any>
+}
+
+/**
  * Column information with TypeScript type, decorator, and imports
  */
 export type ColumnInfo = {
   tsType: string
-  decorator: string
+
+  /**
+   * @deprecated Use `decorators` instead
+   */
+  decorator?: string
+
+  /**
+   * Structured decorator definitions. When defined, the `decorator`
+   * property is ignored.
+   */
+  decorators?: DecoratorInfo[]
+
   imports?: ImportInfo[]
 }
 
@@ -57,6 +76,7 @@ export type SchemaRules = {
       columns?: {
         [column: string]: ColumnInfo | ((dataType: string) => ColumnInfo)
       }
+      skipColumns?: string[]
       primaryKey?: PrimaryKeyRule
     }
   }
