@@ -1761,6 +1761,50 @@ test.group('Model | BelongsTo | withCount', (group) => {
     assert.equal(profiles[0].$extras.user_count, 1)
   })
 
+  test('ignore relation order and pagination when using withCount', async ({ assert, fs }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter)
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+    }
+
+    class Profile extends BaseModel {
+      @column()
+      declare userId: number
+
+      @belongsTo(() => User, {
+        onQuery: (query) => {
+          query.orderBy('id', 'asc').limit(1).offset(1)
+        },
+      })
+      declare user: BelongsTo<typeof User>
+    }
+
+    await db
+      .insertQuery()
+      .table('users')
+      .multiInsert([{ username: 'virk' }, { username: 'nikk' }])
+    await db
+      .insertQuery()
+      .table('profiles')
+      .multiInsert([
+        { display_name: 'Hvirk', user_id: 1 },
+        { display_name: 'Nikk', user_id: 2 },
+      ])
+
+    const query = Profile.query().withCount('user').orderBy('id', 'asc')
+
+    const profiles = await query
+    assert.lengthOf(profiles, 2)
+    assert.equal(Number(profiles[0].$extras.user_count), 1)
+    assert.equal(Number(profiles[1].$extras.user_count), 1)
+  })
+
   test('allow cherry picking columns', async ({ assert, fs }) => {
     const app = new AppFactory().create(fs.baseUrl, () => {})
     await app.init()

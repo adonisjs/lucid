@@ -1776,6 +1776,64 @@ test.group('Model | HasOne | withCount', (group) => {
     assert.equal(users[1].$extras.profile_count, 1)
   })
 
+  test('ignore relation order and pagination when using withCount', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter)
+
+    class Profile extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+
+      @column()
+      declare userId: number
+
+      @column()
+      declare displayName: string
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+
+      @hasOne(() => Profile, {
+        onQuery: (query) => {
+          query.orderBy('id', 'asc').limit(1).offset(1)
+        },
+      })
+      declare profile: HasOne<typeof Profile>
+    }
+
+    await db
+      .insertQuery()
+      .table('users')
+      .insert([{ username: 'virk' }, { username: 'nikk' }])
+
+    const [user0, user1] = await db.query().from('users')
+    await db
+      .insertQuery()
+      .table('profiles')
+      .insert([
+        {
+          user_id: user0.id,
+          display_name: 'virk',
+        },
+        {
+          user_id: user1.id,
+          display_name: 'nikk',
+        },
+      ])
+
+    const query = User.query().withCount('profile').orderBy('id', 'asc')
+
+    const users = await query
+    assert.lengthOf(users, 2)
+    assert.equal(Number(users[0].$extras.profile_count), 1)
+    assert.equal(Number(users[1].$extras.profile_count), 1)
+  })
+
   test('allow cherry picking columns', async ({ fs, assert }) => {
     const app = new AppFactory().create(fs.baseUrl, () => {})
     await app.init()

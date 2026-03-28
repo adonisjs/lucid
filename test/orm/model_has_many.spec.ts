@@ -1676,6 +1676,72 @@ test.group('Model | HasMany | withCount', (group) => {
     assert.deepEqual(Number(users[1].$extras.posts_count), 1)
   })
 
+  test('ignore relation order and pagination when using withCount', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter)
+
+    class Post extends BaseModel {
+      @column()
+      declare userId: number
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+
+      @hasMany(() => Post, {
+        onQuery: (query) => {
+          query.orderBy('id', 'asc').limit(1).offset(1)
+        },
+      })
+      declare posts: HasMany<typeof Post>
+    }
+
+    User.$getRelation('posts')!.boot()
+
+    await db
+      .insertQuery()
+      .table('users')
+      .insert([{ username: 'virk' }, { username: 'nikk' }])
+
+    const [user0, user1] = await db.query().from('users').orderBy('id', 'asc')
+    await db
+      .insertQuery()
+      .table('posts')
+      .insert([
+        {
+          user_id: user0.id,
+          title: 'Adonis 101',
+        },
+        {
+          user_id: user0.id,
+          title: 'Adonis 102',
+        },
+        {
+          user_id: user0.id,
+          title: 'Adonis 103',
+        },
+        {
+          user_id: user1.id,
+          title: 'Lucid 101',
+        },
+        {
+          user_id: user1.id,
+          title: 'Lucid 102',
+        },
+      ])
+
+    const query = User.query().withCount('posts').orderBy('id', 'asc')
+
+    const users = await query
+    assert.lengthOf(users, 2)
+    assert.deepEqual(Number(users[0].$extras.posts_count), 3)
+    assert.deepEqual(Number(users[1].$extras.posts_count), 2)
+  })
+
   test('apply constraints to the withCount subquery', async ({ fs, assert }) => {
     const app = new AppFactory().create(fs.baseUrl, () => {})
     await app.init()
