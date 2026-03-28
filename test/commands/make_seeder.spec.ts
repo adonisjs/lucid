@@ -34,4 +34,21 @@ test.group('MakeSeeder', (group) => {
       `export default class extends BaseSeeder`
     )
   })
+
+  test('make a seeder using --contents-from flag', async ({ fs, assert }) => {
+    await fs.create('custom_seeder.ts', 'export default class CustomSeeder {}')
+
+    const ace = await new AceFactory().make(fs.baseUrl, { importer: () => {} })
+    await ace.app.init()
+    ace.ui.switchMode('raw')
+
+    const command = await ace.create(MakeSeeder, ['user', '--contents-from=custom_seeder.ts'])
+    await command.exec()
+
+    command.assertLog('green(DONE:)    create database/seeders/user_seeder.ts')
+    await assert.fileContains(
+      'database/seeders/user_seeder.ts',
+      'export default class CustomSeeder {}'
+    )
+  })
 })

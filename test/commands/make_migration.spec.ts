@@ -122,4 +122,27 @@ test.group('MakeMigration', (group) => {
     await command.exec()
     command.assertLogMatches(/database\/foo\/\d+_create_users_table/)
   })
+
+  test('create migration using --contents-from flag', async ({ fs, assert }) => {
+    await fs.create(
+      'custom_migration.ts',
+      `import { BaseSchema } from '@adonisjs/lucid/schema'\nexport default class extends BaseSchema {}`
+    )
+
+    const db = getDb()
+    const ace = await new AceFactory().make(fs.baseUrl, { importer: () => {} })
+    ace.app.container.singleton('lucid.db', () => db)
+    await ace.app.init()
+    ace.ui.switchMode('raw')
+
+    const command = await ace.create(MakeMigration, [
+      'users',
+      '--contents-from=custom_migration.ts',
+    ])
+    await command.exec()
+    const filename = fileNameFromLog(command.logger.getLogs()[0].message)
+
+    command.assertLogMatches(/database\/migrations\/\d+_create_users_table/)
+    await assert.fileContains(filename, 'export default class extends BaseSchema {}')
+  })
 })
