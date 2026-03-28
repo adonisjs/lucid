@@ -35,8 +35,15 @@ export default class MakeFactory extends BaseCommand {
   @flags.string({ description: 'Use the contents of the given file as the generated output' })
   declare contentsFrom: string
 
+  /**
+   * Forcefully overwrite existing files
+   */
+  @flags.boolean({ description: 'Forcefully overwrite existing files', alias: 'f' })
+  declare force: boolean
+
   async run() {
     const codemods = await this.createCodemods()
+    codemods.overwriteExisting = this.force === true
     await codemods.makeUsingStub(
       stubsRoot,
       'make/factory/main.stub',

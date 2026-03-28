@@ -73,6 +73,12 @@ export default class MakeModel extends BaseCommand {
   declare contentsFrom: string
 
   /**
+   * Forcefully overwrite existing files
+   */
+  @flags.boolean({ description: 'Forcefully overwrite existing files' })
+  declare force: boolean
+
+  /**
    * Run migrations
    */
   private async runMakeMigration() {
@@ -80,7 +86,8 @@ export default class MakeModel extends BaseCommand {
       return
     }
 
-    const makeMigration = await this.kernel.exec('make:migration', [this.name])
+    const migrationArgs = this.force ? [this.name, '--force'] : [this.name]
+    const makeMigration = await this.kernel.exec('make:migration', migrationArgs)
     this.exitCode = makeMigration.exitCode
     this.error = makeMigration.error
   }
@@ -93,7 +100,8 @@ export default class MakeModel extends BaseCommand {
       return
     }
 
-    const makeController = await this.kernel.exec('make:controller', [this.name])
+    const controllerArgs = this.force ? [this.name, '--force'] : [this.name]
+    const makeController = await this.kernel.exec('make:controller', controllerArgs)
     this.exitCode = makeController.exitCode
     this.error = makeController.error
   }
@@ -106,7 +114,8 @@ export default class MakeModel extends BaseCommand {
       return
     }
 
-    const makeTransformer = await this.kernel.exec('make:transformer', [this.name])
+    const transformerArgs = this.force ? [this.name, '--force'] : [this.name]
+    const makeTransformer = await this.kernel.exec('make:transformer', transformerArgs)
     this.exitCode = makeTransformer.exitCode
     this.error = makeTransformer.error
   }
@@ -119,7 +128,8 @@ export default class MakeModel extends BaseCommand {
       return
     }
 
-    const makeFactory = await this.kernel.exec('make:factory', [this.name])
+    const factoryArgs = this.force ? [this.name, '--force'] : [this.name]
+    const makeFactory = await this.kernel.exec('make:factory', factoryArgs)
     this.exitCode = makeFactory.exitCode
     this.error = makeFactory.error
   }
@@ -129,6 +139,7 @@ export default class MakeModel extends BaseCommand {
    */
   async run(): Promise<void> {
     const codemods = await this.createCodemods()
+    codemods.overwriteExisting = this.force === true
     await codemods.makeUsingStub(
       stubsRoot,
       'make/model/main.stub',
