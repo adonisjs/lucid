@@ -862,12 +862,12 @@ if (process.env.DB === 'pg') {
     group.each.disableTimeout()
 
     test('assertHas should query the configured connection', async ({ assert, cleanup }) => {
+      const db = await getMultiConnectionDb()
       cleanup(async () => {
         await db.connection('primary').from('users').del()
         await db.connection('secondary').from('users').del()
       })
 
-      const db = await getMultiConnectionDb()
       await db
         .connection('primary')
         .table('users')
