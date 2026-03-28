@@ -108,7 +108,7 @@
     "igniculus": "^1.5.0",
     "kleur": "^4.1.5",
     "knex": "3.2.7",
-    "knex-dynamic-connection": "^5.0.0",
+    "knex-dynamic-connection": "^5.0.1",
     "pretty-hrtime": "^1.0.3",
     "slash": "^5.1.0",
     "tarn": "^3.0.2"
