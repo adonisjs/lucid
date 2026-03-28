@@ -231,6 +231,10 @@ export default abstract class MigrationsBase extends BaseCommand {
      * Run migrations
      */
     await migrator.run()
+    if (migrator.error) {
+      this.error = migrator.error
+      this.exitCode = 1
+    }
 
     /**
      * Log all pending files. This will happen, when one of the migration
