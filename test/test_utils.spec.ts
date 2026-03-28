@@ -471,6 +471,7 @@ test.group('Database Test Utils', (group) => {
 
 test.group('Database Test Assertions', (group) => {
   group.each.disableTimeout()
+  group.each.skip(process.env.DB !== 'pg')
 
   group.each.setup(async () => {
     await setup()
