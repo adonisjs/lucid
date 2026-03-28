@@ -469,540 +469,540 @@ test.group('Database Test Utils', (group) => {
   }).skip(!supportsSchemaDump, 'Schema dumps are not supported for the current database dialect')
 })
 
-test.group('Database Test Assertions', (group) => {
-  group.each.disableTimeout()
-  group.each.skip(process.env.DB !== 'pg')
+if (process.env.DB === 'pg') {
+  test.group('Database Test Assertions', (group) => {
+    group.each.disableTimeout()
+    group.each.setup(async () => {
+      await setup()
+      return async () => await resetTables()
+    })
 
-  group.each.setup(async () => {
-    await setup()
-    return async () => await resetTables()
-  })
+    test('assertHas should pass when matching rows exist', async () => {
+      const db = getDb()
+      await db.table('users').insert({ username: 'jul', email: 'jul@adonisjs.com' })
 
-  test('assertHas should pass when matching rows exist', async () => {
-    const db = getDb()
-    await db.table('users').insert({ username: 'jul', email: 'jul@adonisjs.com' })
+      const app = new AppFactory().create(
+        new URL('./', import.meta.url),
+        () => {}
+      ) as ApplicationService
+      await app.init()
+      app.container.bind('lucid.db', () => db)
 
-    const app = new AppFactory().create(
-      new URL('./', import.meta.url),
-      () => {}
-    ) as ApplicationService
-    await app.init()
-    app.container.bind('lucid.db', () => db)
+      const dbAssertions = new DatabaseTestAssertions(app)
+      await dbAssertions.assertHas('users', { username: 'jul' })
+    })
 
-    const dbAssertions = new DatabaseTestAssertions(app)
-    await dbAssertions.assertHas('users', { username: 'jul' })
-  })
+    test('assertHas should fail when no matching rows exist', async () => {
+      const db = getDb()
+      const app = new AppFactory().create(
+        new URL('./', import.meta.url),
+        () => {}
+      ) as ApplicationService
+      await app.init()
+      app.container.bind('lucid.db', () => db)
 
-  test('assertHas should fail when no matching rows exist', async () => {
-    const db = getDb()
-    const app = new AppFactory().create(
-      new URL('./', import.meta.url),
-      () => {}
-    ) as ApplicationService
-    await app.init()
-    app.container.bind('lucid.db', () => db)
-
-    const dbAssertions = new DatabaseTestAssertions(app)
-    await dbAssertions.assertHas('users', { username: 'nonexistent' })
-  }).throws(
-    `Expected table 'users' to have rows matching {"username":"nonexistent"}, but none were found`
-  )
-
-  test('assertHas should pass when matching exact count', async () => {
-    const db = getDb()
-    await db.table('users').multiInsert([
-      { username: 'jul', email: 'jul@adonisjs.com', points: 10 },
-      { username: 'romain', email: 'romain@adonisjs.com', points: 10 },
-    ])
-
-    const app = new AppFactory().create(
-      new URL('./', import.meta.url),
-      () => {}
-    ) as ApplicationService
-    await app.init()
-    app.container.bind('lucid.db', () => db)
-
-    const dbAssertions = new DatabaseTestAssertions(app)
-    await dbAssertions.assertHas('users', { points: 10 }, 2)
-  })
-
-  test('assertHas should fail when count does not match', async () => {
-    const db = getDb()
-    await db.table('users').insert({ username: 'jul', email: 'jul@adonisjs.com', points: 10 })
-
-    const app = new AppFactory().create(
-      new URL('./', import.meta.url),
-      () => {}
-    ) as ApplicationService
-    await app.init()
-    app.container.bind('lucid.db', () => db)
-
-    const dbAssertions = new DatabaseTestAssertions(app)
-    await dbAssertions.assertHas('users', { points: 10 }, 5)
-  }).throws(`Expected table 'users' to have 5 rows matching {"points":10}, but found 1`)
-
-  test('assertMissing should pass when no matching rows exist', async () => {
-    const db = getDb()
-    const app = new AppFactory().create(
-      new URL('./', import.meta.url),
-      () => {}
-    ) as ApplicationService
-    await app.init()
-    app.container.bind('lucid.db', () => db)
-
-    const dbAssertions = new DatabaseTestAssertions(app)
-    await dbAssertions.assertMissing('users', { username: 'jul' })
-  })
-
-  test('assertMissing should fail when matching rows exist', async () => {
-    const db = getDb()
-    await db.table('users').insert({ username: 'jul', email: 'jul@adonisjs.com' })
-
-    const app = new AppFactory().create(
-      new URL('./', import.meta.url),
-      () => {}
-    ) as ApplicationService
-    await app.init()
-    app.container.bind('lucid.db', () => db)
-
-    const dbAssertions = new DatabaseTestAssertions(app)
-    await dbAssertions.assertMissing('users', { username: 'jul' })
-  }).throws(`Expected table 'users' to have no rows matching {"username":"jul"}, but found 1`)
-
-  test('assertCount should pass with correct count', async () => {
-    const db = getDb()
-    await db.table('users').multiInsert([
-      { username: 'jul', email: 'jul@adonisjs.com' },
-      { username: 'romain', email: 'romain@adonisjs.com' },
-    ])
-
-    const app = new AppFactory().create(
-      new URL('./', import.meta.url),
-      () => {}
-    ) as ApplicationService
-    await app.init()
-    app.container.bind('lucid.db', () => db)
-
-    const dbAssertions = new DatabaseTestAssertions(app)
-    await dbAssertions.assertCount('users', 2)
-  })
-
-  test('assertCount should fail with incorrect count', async () => {
-    const db = getDb()
-    await db.table('users').insert({ username: 'jul', email: 'jul@adonisjs.com' })
-
-    const app = new AppFactory().create(
-      new URL('./', import.meta.url),
-      () => {}
-    ) as ApplicationService
-    await app.init()
-    app.container.bind('lucid.db', () => db)
-
-    const dbAssertions = new DatabaseTestAssertions(app)
-    await dbAssertions.assertCount('users', 5)
-  }).throws("Expected table 'users' to have 5 rows, but found 1")
-
-  test('assertEmpty should pass on empty table', async () => {
-    const db = getDb()
-    const app = new AppFactory().create(
-      new URL('./', import.meta.url),
-      () => {}
-    ) as ApplicationService
-    await app.init()
-    app.container.bind('lucid.db', () => db)
-
-    const dbAssertions = new DatabaseTestAssertions(app)
-    await dbAssertions.assertEmpty('users')
-  })
-
-  test('assertEmpty should fail on non-empty table', async () => {
-    const db = getDb()
-    await db.table('users').insert({ username: 'jul', email: 'jul@adonisjs.com' })
-
-    const app = new AppFactory().create(
-      new URL('./', import.meta.url),
-      () => {}
-    ) as ApplicationService
-    await app.init()
-    app.container.bind('lucid.db', () => db)
-
-    const dbAssertions = new DatabaseTestAssertions(app)
-    await dbAssertions.assertEmpty('users')
-  }).throws("Expected table 'users' to have 0 rows, but found 1")
-
-  test('assertModelExists should pass when model exists in db', async () => {
-    const db = getDb()
-    const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter)
-
-    class User extends BaseModel {
-      static table = 'users'
-
-      @column({ isPrimary: true })
-      declare id: number
-
-      @column()
-      declare username: string
-
-      @column()
-      declare email: string
-    }
-
-    const user = new User()
-    user.fill({ username: 'jul', email: 'jul@adonisjs.com' })
-    await user.save()
-
-    const app = new AppFactory().create(
-      new URL('./', import.meta.url),
-      () => {}
-    ) as ApplicationService
-    await app.init()
-    app.container.bind('lucid.db', () => db)
-
-    const dbAssertions = new DatabaseTestAssertions(app)
-    await dbAssertions.assertModelExists(user)
-  })
-
-  test('assertModelExists should fail when model does not exist in db', async ({ assert }) => {
-    const db = getDb()
-    const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter)
-
-    class User extends BaseModel {
-      static table = 'users'
-
-      @column({ isPrimary: true })
-      declare id: number
-
-      @column()
-      declare username: string
-
-      @column()
-      declare email: string
-    }
-
-    const user = new User()
-    user.fill({ username: 'jul', email: 'jul@adonisjs.com' })
-    await user.save()
-
-    const primaryKey = user.$primaryKeyValue
-    await user.delete()
-
-    const app = new AppFactory().create(
-      new URL('./', import.meta.url),
-      () => {}
-    ) as ApplicationService
-    await app.init()
-    app.container.bind('lucid.db', () => db)
-
-    const dbAssertions = new DatabaseTestAssertions(app)
-    await assert.rejects(
-      () => dbAssertions.assertModelExists(user),
-      `Expected 'User' model with primary key ${primaryKey} to exist, but it was not found`
+      const dbAssertions = new DatabaseTestAssertions(app)
+      await dbAssertions.assertHas('users', { username: 'nonexistent' })
+    }).throws(
+      `Expected table 'users' to have rows matching {"username":"nonexistent"}, but none were found`
     )
-  })
 
-  test('assertModelMissing should pass when model does not exist in db', async () => {
-    const db = getDb()
-    const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter)
+    test('assertHas should pass when matching exact count', async () => {
+      const db = getDb()
+      await db.table('users').multiInsert([
+        { username: 'jul', email: 'jul@adonisjs.com', points: 10 },
+        { username: 'romain', email: 'romain@adonisjs.com', points: 10 },
+      ])
 
-    class User extends BaseModel {
-      static table = 'users'
+      const app = new AppFactory().create(
+        new URL('./', import.meta.url),
+        () => {}
+      ) as ApplicationService
+      await app.init()
+      app.container.bind('lucid.db', () => db)
 
-      @column({ isPrimary: true })
-      declare id: number
+      const dbAssertions = new DatabaseTestAssertions(app)
+      await dbAssertions.assertHas('users', { points: 10 }, 2)
+    })
 
-      @column()
-      declare username: string
+    test('assertHas should fail when count does not match', async () => {
+      const db = getDb()
+      await db.table('users').insert({ username: 'jul', email: 'jul@adonisjs.com', points: 10 })
 
-      @column()
-      declare email: string
-    }
+      const app = new AppFactory().create(
+        new URL('./', import.meta.url),
+        () => {}
+      ) as ApplicationService
+      await app.init()
+      app.container.bind('lucid.db', () => db)
 
-    const user = new User()
-    user.fill({ username: 'jul', email: 'jul@adonisjs.com' })
-    await user.save()
-    await user.delete()
+      const dbAssertions = new DatabaseTestAssertions(app)
+      await dbAssertions.assertHas('users', { points: 10 }, 5)
+    }).throws(`Expected table 'users' to have 5 rows matching {"points":10}, but found 1`)
 
-    const app = new AppFactory().create(
-      new URL('./', import.meta.url),
-      () => {}
-    ) as ApplicationService
-    await app.init()
-    app.container.bind('lucid.db', () => db)
+    test('assertMissing should pass when no matching rows exist', async () => {
+      const db = getDb()
+      const app = new AppFactory().create(
+        new URL('./', import.meta.url),
+        () => {}
+      ) as ApplicationService
+      await app.init()
+      app.container.bind('lucid.db', () => db)
 
-    const dbAssertions = new DatabaseTestAssertions(app)
-    await dbAssertions.assertModelMissing(user)
-  })
+      const dbAssertions = new DatabaseTestAssertions(app)
+      await dbAssertions.assertMissing('users', { username: 'jul' })
+    })
 
-  test('assertModelExists should respect beforeFind hooks', async ({ assert }) => {
-    const db = getDb()
-    const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter)
+    test('assertMissing should fail when matching rows exist', async () => {
+      const db = getDb()
+      await db.table('users').insert({ username: 'jul', email: 'jul@adonisjs.com' })
 
-    class User extends BaseModel {
-      static table = 'users'
+      const app = new AppFactory().create(
+        new URL('./', import.meta.url),
+        () => {}
+      ) as ApplicationService
+      await app.init()
+      app.container.bind('lucid.db', () => db)
 
-      @column({ isPrimary: true })
-      declare id: number
+      const dbAssertions = new DatabaseTestAssertions(app)
+      await dbAssertions.assertMissing('users', { username: 'jul' })
+    }).throws(`Expected table 'users' to have no rows matching {"username":"jul"}, but found 1`)
 
-      @column()
-      declare username: string
+    test('assertCount should pass with correct count', async () => {
+      const db = getDb()
+      await db.table('users').multiInsert([
+        { username: 'jul', email: 'jul@adonisjs.com' },
+        { username: 'romain', email: 'romain@adonisjs.com' },
+      ])
 
-      @column()
-      declare email: string
+      const app = new AppFactory().create(
+        new URL('./', import.meta.url),
+        () => {}
+      ) as ApplicationService
+      await app.init()
+      app.container.bind('lucid.db', () => db)
 
-      @column()
-      declare points: number
+      const dbAssertions = new DatabaseTestAssertions(app)
+      await dbAssertions.assertCount('users', 2)
+    })
 
-      @beforeFind()
-      static applyActiveFilter(query: any) {
-        query.where('points', '>', 0)
+    test('assertCount should fail with incorrect count', async () => {
+      const db = getDb()
+      await db.table('users').insert({ username: 'jul', email: 'jul@adonisjs.com' })
+
+      const app = new AppFactory().create(
+        new URL('./', import.meta.url),
+        () => {}
+      ) as ApplicationService
+      await app.init()
+      app.container.bind('lucid.db', () => db)
+
+      const dbAssertions = new DatabaseTestAssertions(app)
+      await dbAssertions.assertCount('users', 5)
+    }).throws("Expected table 'users' to have 5 rows, but found 1")
+
+    test('assertEmpty should pass on empty table', async () => {
+      const db = getDb()
+      const app = new AppFactory().create(
+        new URL('./', import.meta.url),
+        () => {}
+      ) as ApplicationService
+      await app.init()
+      app.container.bind('lucid.db', () => db)
+
+      const dbAssertions = new DatabaseTestAssertions(app)
+      await dbAssertions.assertEmpty('users')
+    })
+
+    test('assertEmpty should fail on non-empty table', async () => {
+      const db = getDb()
+      await db.table('users').insert({ username: 'jul', email: 'jul@adonisjs.com' })
+
+      const app = new AppFactory().create(
+        new URL('./', import.meta.url),
+        () => {}
+      ) as ApplicationService
+      await app.init()
+      app.container.bind('lucid.db', () => db)
+
+      const dbAssertions = new DatabaseTestAssertions(app)
+      await dbAssertions.assertEmpty('users')
+    }).throws("Expected table 'users' to have 0 rows, but found 1")
+
+    test('assertModelExists should pass when model exists in db', async () => {
+      const db = getDb()
+      const adapter = ormAdapter(db)
+      const BaseModel = getBaseModel(adapter)
+
+      class User extends BaseModel {
+        static table = 'users'
+
+        @column({ isPrimary: true })
+        declare id: number
+
+        @column()
+        declare username: string
+
+        @column()
+        declare email: string
       }
-    }
 
-    const user = new User()
-    user.fill({ username: 'jul', email: 'jul@adonisjs.com', points: 0 })
-    await user.save()
+      const user = new User()
+      user.fill({ username: 'jul', email: 'jul@adonisjs.com' })
+      await user.save()
 
-    const app = new AppFactory().create(
-      new URL('./', import.meta.url),
-      () => {}
-    ) as ApplicationService
-    await app.init()
-    app.container.bind('lucid.db', () => db)
+      const app = new AppFactory().create(
+        new URL('./', import.meta.url),
+        () => {}
+      ) as ApplicationService
+      await app.init()
+      app.container.bind('lucid.db', () => db)
 
-    const dbAssertions = new DatabaseTestAssertions(app)
+      const dbAssertions = new DatabaseTestAssertions(app)
+      await dbAssertions.assertModelExists(user)
+    })
 
-    await assert.rejects(
-      () => dbAssertions.assertModelExists(user),
-      `Expected 'User' model with primary key ${user.$primaryKeyValue} to exist, but it was not found`
-    )
-  })
+    test('assertModelExists should fail when model does not exist in db', async ({ assert }) => {
+      const db = getDb()
+      const adapter = ormAdapter(db)
+      const BaseModel = getBaseModel(adapter)
 
-  test('assertModelMissing should respect beforeFind hooks', async () => {
-    const db = getDb()
-    const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter)
+      class User extends BaseModel {
+        static table = 'users'
 
-    class User extends BaseModel {
-      static table = 'users'
+        @column({ isPrimary: true })
+        declare id: number
 
-      @column({ isPrimary: true })
-      declare id: number
+        @column()
+        declare username: string
 
-      @column()
-      declare username: string
-
-      @column()
-      declare email: string
-
-      @column()
-      declare points: number
-
-      @beforeFind()
-      static applyActiveFilter(query: any) {
-        query.where('points', '>', 0)
+        @column()
+        declare email: string
       }
-    }
 
-    const user = new User()
-    user.fill({ username: 'jul', email: 'jul@adonisjs.com', points: 0 })
-    await user.save()
+      const user = new User()
+      user.fill({ username: 'jul', email: 'jul@adonisjs.com' })
+      await user.save()
 
-    const app = new AppFactory().create(
-      new URL('./', import.meta.url),
-      () => {}
-    ) as ApplicationService
-    await app.init()
-    app.container.bind('lucid.db', () => db)
+      const primaryKey = user.$primaryKeyValue
+      await user.delete()
 
-    const dbAssertions = new DatabaseTestAssertions(app)
-    await dbAssertions.assertModelMissing(user)
+      const app = new AppFactory().create(
+        new URL('./', import.meta.url),
+        () => {}
+      ) as ApplicationService
+      await app.init()
+      app.container.bind('lucid.db', () => db)
+
+      const dbAssertions = new DatabaseTestAssertions(app)
+      await assert.rejects(
+        () => dbAssertions.assertModelExists(user),
+        `Expected 'User' model with primary key ${primaryKey} to exist, but it was not found`
+      )
+    })
+
+    test('assertModelMissing should pass when model does not exist in db', async () => {
+      const db = getDb()
+      const adapter = ormAdapter(db)
+      const BaseModel = getBaseModel(adapter)
+
+      class User extends BaseModel {
+        static table = 'users'
+
+        @column({ isPrimary: true })
+        declare id: number
+
+        @column()
+        declare username: string
+
+        @column()
+        declare email: string
+      }
+
+      const user = new User()
+      user.fill({ username: 'jul', email: 'jul@adonisjs.com' })
+      await user.save()
+      await user.delete()
+
+      const app = new AppFactory().create(
+        new URL('./', import.meta.url),
+        () => {}
+      ) as ApplicationService
+      await app.init()
+      app.container.bind('lucid.db', () => db)
+
+      const dbAssertions = new DatabaseTestAssertions(app)
+      await dbAssertions.assertModelMissing(user)
+    })
+
+    test('assertModelExists should respect beforeFind hooks', async ({ assert }) => {
+      const db = getDb()
+      const adapter = ormAdapter(db)
+      const BaseModel = getBaseModel(adapter)
+
+      class User extends BaseModel {
+        static table = 'users'
+
+        @column({ isPrimary: true })
+        declare id: number
+
+        @column()
+        declare username: string
+
+        @column()
+        declare email: string
+
+        @column()
+        declare points: number
+
+        @beforeFind()
+        static applyActiveFilter(query: any) {
+          query.where('points', '>', 0)
+        }
+      }
+
+      const user = new User()
+      user.fill({ username: 'jul', email: 'jul@adonisjs.com', points: 0 })
+      await user.save()
+
+      const app = new AppFactory().create(
+        new URL('./', import.meta.url),
+        () => {}
+      ) as ApplicationService
+      await app.init()
+      app.container.bind('lucid.db', () => db)
+
+      const dbAssertions = new DatabaseTestAssertions(app)
+
+      await assert.rejects(
+        () => dbAssertions.assertModelExists(user),
+        `Expected 'User' model with primary key ${user.$primaryKeyValue} to exist, but it was not found`
+      )
+    })
+
+    test('assertModelMissing should respect beforeFind hooks', async () => {
+      const db = getDb()
+      const adapter = ormAdapter(db)
+      const BaseModel = getBaseModel(adapter)
+
+      class User extends BaseModel {
+        static table = 'users'
+
+        @column({ isPrimary: true })
+        declare id: number
+
+        @column()
+        declare username: string
+
+        @column()
+        declare email: string
+
+        @column()
+        declare points: number
+
+        @beforeFind()
+        static applyActiveFilter(query: any) {
+          query.where('points', '>', 0)
+        }
+      }
+
+      const user = new User()
+      user.fill({ username: 'jul', email: 'jul@adonisjs.com', points: 0 })
+      await user.save()
+
+      const app = new AppFactory().create(
+        new URL('./', import.meta.url),
+        () => {}
+      ) as ApplicationService
+      await app.init()
+      app.container.bind('lucid.db', () => db)
+
+      const dbAssertions = new DatabaseTestAssertions(app)
+      await dbAssertions.assertModelMissing(user)
+    })
+
+    test('assertModelMissing should fail when model still exists in db', async ({ assert }) => {
+      const db = getDb()
+      const adapter = ormAdapter(db)
+      const BaseModel = getBaseModel(adapter)
+
+      class User extends BaseModel {
+        static table = 'users'
+
+        @column({ isPrimary: true })
+        declare id: number
+
+        @column()
+        declare username: string
+
+        @column()
+        declare email: string
+      }
+
+      const user = new User()
+      user.fill({ username: 'jul', email: 'jul@adonisjs.com' })
+      await user.save()
+
+      const app = new AppFactory().create(
+        new URL('./', import.meta.url),
+        () => {}
+      ) as ApplicationService
+      await app.init()
+      app.container.bind('lucid.db', () => db)
+
+      const dbAssertions = new DatabaseTestAssertions(app)
+      await assert.rejects(
+        () => dbAssertions.assertModelMissing(user),
+        `Expected 'User' model with primary key ${user.$primaryKeyValue} to not exist, but it was found`
+      )
+    })
   })
 
-  test('assertModelMissing should fail when model still exists in db', async ({ assert }) => {
-    const db = getDb()
-    const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter)
+  test.group('Database Test Assertions | connection', (group) => {
+    group.each.disableTimeout()
 
-    class User extends BaseModel {
-      static table = 'users'
+    group.each.setup(async () => {
+      const db = await getMultiConnectionDb()
+      return async () => {
+        await db.connection('primary').from('users').del()
+        await db.connection('secondary').from('users').del()
+      }
+    })
 
-      @column({ isPrimary: true })
-      declare id: number
+    test('assertHas should query the configured connection', async ({ assert }) => {
+      const db = await getMultiConnectionDb()
+      await db
+        .connection('primary')
+        .table('users')
+        .insert({ username: 'jul', email: 'jul@adonisjs.com' })
 
-      @column()
-      declare username: string
+      const app = new AppFactory().create(
+        new URL('./', import.meta.url),
+        () => {}
+      ) as ApplicationService
+      await app.init()
+      app.container.bind('lucid.db', () => db)
 
-      @column()
-      declare email: string
-    }
+      const dbAssertions = new DatabaseTestAssertions(app)
+      await dbAssertions.connection('primary').assertHas('users', { username: 'jul' })
 
-    const user = new User()
-    user.fill({ username: 'jul', email: 'jul@adonisjs.com' })
-    await user.save()
+      await assert.rejects(
+        () => dbAssertions.connection('secondary').assertHas('users', { username: 'jul' }),
+        /Expected table 'users' to have rows matching/
+      )
+    })
 
-    const app = new AppFactory().create(
-      new URL('./', import.meta.url),
-      () => {}
-    ) as ApplicationService
-    await app.init()
-    app.container.bind('lucid.db', () => db)
+    test('assertMissing should query the configured connection', async () => {
+      const db = await getMultiConnectionDb()
+      await db
+        .connection('primary')
+        .table('users')
+        .insert({ username: 'jul', email: 'jul@adonisjs.com' })
 
-    const dbAssertions = new DatabaseTestAssertions(app)
-    await assert.rejects(
-      () => dbAssertions.assertModelMissing(user),
-      `Expected 'User' model with primary key ${user.$primaryKeyValue} to not exist, but it was found`
-    )
+      const app = new AppFactory().create(
+        new URL('./', import.meta.url),
+        () => {}
+      ) as ApplicationService
+      await app.init()
+      app.container.bind('lucid.db', () => db)
+
+      const dbAssertions = new DatabaseTestAssertions(app)
+      await dbAssertions.connection('secondary').assertMissing('users', { username: 'jul' })
+    })
+
+    test('assertCount should query the configured connection', async () => {
+      const db = await getMultiConnectionDb()
+      await db
+        .connection('primary')
+        .table('users')
+        .insert({ username: 'jul', email: 'jul@adonisjs.com' })
+
+      const app = new AppFactory().create(
+        new URL('./', import.meta.url),
+        () => {}
+      ) as ApplicationService
+      await app.init()
+      app.container.bind('lucid.db', () => db)
+
+      const dbAssertions = new DatabaseTestAssertions(app)
+      await dbAssertions.connection('primary').assertCount('users', 1)
+      await dbAssertions.connection('secondary').assertCount('users', 0)
+    })
+
+    test('assertModelExists should query the configured connection', async ({ assert }) => {
+      const db = await getMultiConnectionDb()
+      const adapter = ormAdapter(db)
+      const BaseModel = getBaseModel(adapter)
+
+      class User extends BaseModel {
+        static table = 'users'
+
+        @column({ isPrimary: true })
+        declare id: number
+
+        @column()
+        declare username: string
+
+        @column()
+        declare email: string
+      }
+
+      const user = new User()
+      user.fill({ username: 'jul', email: 'jul@adonisjs.com' })
+      await user.save()
+
+      const app = new AppFactory().create(
+        new URL('./', import.meta.url),
+        () => {}
+      ) as ApplicationService
+      await app.init()
+      app.container.bind('lucid.db', () => db)
+
+      const dbAssertions = new DatabaseTestAssertions(app)
+      await dbAssertions.connection('primary').assertModelExists(user)
+
+      await assert.rejects(
+        () => dbAssertions.connection('secondary').assertModelExists(user),
+        /Expected 'User' model with primary key .+ to exist, but it was not found/
+      )
+    })
+
+    test('assertModelMissing should query the configured connection', async ({ assert }) => {
+      const db = await getMultiConnectionDb()
+      const adapter = ormAdapter(db)
+      const BaseModel = getBaseModel(adapter)
+
+      class User extends BaseModel {
+        static table = 'users'
+
+        @column({ isPrimary: true })
+        declare id: number
+
+        @column()
+        declare username: string
+
+        @column()
+        declare email: string
+      }
+
+      const user = new User()
+      user.fill({ username: 'jul', email: 'jul@adonisjs.com' })
+      await user.save()
+
+      const app = new AppFactory().create(
+        new URL('./', import.meta.url),
+        () => {}
+      ) as ApplicationService
+      await app.init()
+      app.container.bind('lucid.db', () => db)
+
+      const dbAssertions = new DatabaseTestAssertions(app)
+      await dbAssertions.connection('secondary').assertModelMissing(user)
+
+      await assert.rejects(
+        () => dbAssertions.connection('primary').assertModelMissing(user),
+        /Expected 'User' model with primary key .+ to not exist, but it was found/
+      )
+    })
   })
-})
-
-test.group('Database Test Assertions | connection', (group) => {
-  group.each.disableTimeout()
-
-  group.each.setup(async () => {
-    const db = await getMultiConnectionDb()
-    return async () => {
-      await db.connection('primary').from('users').del()
-      await db.connection('secondary').from('users').del()
-    }
-  })
-
-  test('assertHas should query the configured connection', async ({ assert }) => {
-    const db = await getMultiConnectionDb()
-    await db
-      .connection('primary')
-      .table('users')
-      .insert({ username: 'jul', email: 'jul@adonisjs.com' })
-
-    const app = new AppFactory().create(
-      new URL('./', import.meta.url),
-      () => {}
-    ) as ApplicationService
-    await app.init()
-    app.container.bind('lucid.db', () => db)
-
-    const dbAssertions = new DatabaseTestAssertions(app)
-    await dbAssertions.connection('primary').assertHas('users', { username: 'jul' })
-
-    await assert.rejects(
-      () => dbAssertions.connection('secondary').assertHas('users', { username: 'jul' }),
-      /Expected table 'users' to have rows matching/
-    )
-  })
-
-  test('assertMissing should query the configured connection', async () => {
-    const db = await getMultiConnectionDb()
-    await db
-      .connection('primary')
-      .table('users')
-      .insert({ username: 'jul', email: 'jul@adonisjs.com' })
-
-    const app = new AppFactory().create(
-      new URL('./', import.meta.url),
-      () => {}
-    ) as ApplicationService
-    await app.init()
-    app.container.bind('lucid.db', () => db)
-
-    const dbAssertions = new DatabaseTestAssertions(app)
-    await dbAssertions.connection('secondary').assertMissing('users', { username: 'jul' })
-  })
-
-  test('assertCount should query the configured connection', async () => {
-    const db = await getMultiConnectionDb()
-    await db
-      .connection('primary')
-      .table('users')
-      .insert({ username: 'jul', email: 'jul@adonisjs.com' })
-
-    const app = new AppFactory().create(
-      new URL('./', import.meta.url),
-      () => {}
-    ) as ApplicationService
-    await app.init()
-    app.container.bind('lucid.db', () => db)
-
-    const dbAssertions = new DatabaseTestAssertions(app)
-    await dbAssertions.connection('primary').assertCount('users', 1)
-    await dbAssertions.connection('secondary').assertCount('users', 0)
-  })
-
-  test('assertModelExists should query the configured connection', async ({ assert }) => {
-    const db = await getMultiConnectionDb()
-    const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter)
-
-    class User extends BaseModel {
-      static table = 'users'
-
-      @column({ isPrimary: true })
-      declare id: number
-
-      @column()
-      declare username: string
-
-      @column()
-      declare email: string
-    }
-
-    const user = new User()
-    user.fill({ username: 'jul', email: 'jul@adonisjs.com' })
-    await user.save()
-
-    const app = new AppFactory().create(
-      new URL('./', import.meta.url),
-      () => {}
-    ) as ApplicationService
-    await app.init()
-    app.container.bind('lucid.db', () => db)
-
-    const dbAssertions = new DatabaseTestAssertions(app)
-    await dbAssertions.connection('primary').assertModelExists(user)
-
-    await assert.rejects(
-      () => dbAssertions.connection('secondary').assertModelExists(user),
-      /Expected 'User' model with primary key .+ to exist, but it was not found/
-    )
-  })
-
-  test('assertModelMissing should query the configured connection', async ({ assert }) => {
-    const db = await getMultiConnectionDb()
-    const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter)
-
-    class User extends BaseModel {
-      static table = 'users'
-
-      @column({ isPrimary: true })
-      declare id: number
-
-      @column()
-      declare username: string
-
-      @column()
-      declare email: string
-    }
-
-    const user = new User()
-    user.fill({ username: 'jul', email: 'jul@adonisjs.com' })
-    await user.save()
-
-    const app = new AppFactory().create(
-      new URL('./', import.meta.url),
-      () => {}
-    ) as ApplicationService
-    await app.init()
-    app.container.bind('lucid.db', () => db)
-
-    const dbAssertions = new DatabaseTestAssertions(app)
-    await dbAssertions.connection('secondary').assertModelMissing(user)
-
-    await assert.rejects(
-      () => dbAssertions.connection('primary').assertModelMissing(user),
-      /Expected 'User' model with primary key .+ to not exist, but it was found/
-    )
-  })
-})
+}
