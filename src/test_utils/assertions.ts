@@ -118,7 +118,7 @@ export class DatabaseTestAssertions {
       throw new Error(`Cannot assert model existence: primary key value is undefined`)
     }
 
-    const result = await Model.find(primaryKeyValue)
+    const result = await Model.find(primaryKeyValue, { connection: this.connectionName })
 
     if (!result) {
       throw new AssertionError({
@@ -141,7 +141,7 @@ export class DatabaseTestAssertions {
       throw new Error(`Cannot assert model absence: primary key value is undefined`)
     }
 
-    const result = await Model.find(primaryKeyValue)
+    const result = await Model.find(primaryKeyValue, { connection: this.connectionName })
 
     if (result) {
       throw new AssertionError({
