@@ -152,8 +152,8 @@ export function getConfig(): ConnectionConfig {
 /**
  * Returns an instance of knex for testing
  */
-export function getKnex(config: knex.Knex.Config): knex.Knex {
-  return knex.knex(
+export function getKnex(config: Knex.Config): Knex {
+  return knex(
     Object.assign(
       {},
       {

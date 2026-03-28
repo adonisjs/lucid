@@ -260,7 +260,7 @@ export class Connection extends EventEmitter implements ConnectionContract {
    * Creates the write connection.
    */
   private setupWriteConnection() {
-    this.client = knex.knex(
+    this.client = knex(
       Object.assign({ log: new ConnectionLogger(this.name, this.logger) }, this.getWriteConfig(), {
         debug: false,
       })
@@ -281,7 +281,7 @@ export class Connection extends EventEmitter implements ConnectionContract {
     }
 
     this.logger.trace({ connection: this.name }, 'setting up read/write replicas')
-    this.readClient = knex.knex(
+    this.readClient = knex(
       Object.assign({ log: new ConnectionLogger(this.name, this.logger) }, this.getReadConfig(), {
         debug: false,
       })
