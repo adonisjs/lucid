@@ -533,6 +533,100 @@ if (!['sqlite', 'mssql', 'better_sqlite', 'libsql'].includes(process.env.DB!)) {
 
       await connection.disconnect()
     })
+
+    test('release advisory lock with pool of 1')
+      .disableTimeout()
+      .run(async ({ assert, cleanup }) => {
+      const config = getConfig()
+      config.pool = { min: 1, max: 1, acquireTimeoutMillis: 2000 }
+
+      const connection = new Connection('primary', config, logger)
+      connection.connect()
+
+      const client = new QueryClient('dual', connection, createEmitter())
+      const knexClient = client.getWriteClient()
+
+      /**
+       * Simulate what would happen if we pinned a connection for
+       * the lock: acquire a connection, hold it, then try to run
+       * a normal query. With pool max=1 the query should hang
+       * because there are no free connections.
+       */
+      const heldConnection = await knexClient.client.acquireConnection()
+      cleanup(async () => {
+        knexClient.client.releaseConnection(heldConnection)
+        await connection.disconnect()
+      })
+
+      /**
+       * This simulates running a migration query while the lock
+       * connection is held. It should timeout since the only
+       * pool connection is occupied.
+       */
+      await assert.rejects(() => client.rawQuery('SELECT 1'))
+    })
+
+    test('release advisory lock fails with pool of 2 without pinned connection', async ({
+      assert,
+      cleanup,
+    }) => {
+      const config = getConfig()
+      config.pool = { min: 2, max: 2 }
+
+      const connection = new Connection('primary', config, logger)
+      connection.connect()
+      cleanup(() => connection.disconnect())
+
+      const client = new QueryClient('dual', connection, createEmitter())
+      const knexClient = client.getWriteClient()
+
+      const acquired = await client.dialect.getAdvisoryLock(1)
+      assert.isTrue(acquired)
+
+      /**
+       * Hold one connection so the release call is forced onto
+       * the other one. With min:2/max:2 both connections exist,
+       * and holding one guarantees releaseAdvisoryLock gets a
+       * different connection than the one that acquired the lock.
+       */
+      const heldConnection = await knexClient.client.acquireConnection()
+
+      const released = await client.dialect.releaseAdvisoryLock(1)
+
+      knexClient.client.releaseConnection(heldConnection)
+
+      assert.isFalse(released)
+    })
+
+    test('release advisory lock succeeds with pool of 2 with pinned connection', async ({
+      assert,
+      cleanup,
+    }) => {
+      const config = getConfig()
+      config.pool = { min: 2, max: 2 }
+
+      const connection = new Connection('primary', config, logger)
+      connection.connect()
+
+      const client = new QueryClient('dual', connection, createEmitter())
+      const knexClient = client.getWriteClient()
+
+      /**
+       * Pin a connection and pass it to both acquire and release.
+       * This ensures both operations run on the same database session.
+       */
+      const pinnedConnection = await knexClient.client.acquireConnection()
+      cleanup(async () => {
+        knexClient.client.releaseConnection(pinnedConnection)
+        await connection.disconnect()
+      })
+
+      const acquired = await client.dialect.getAdvisoryLock(1, undefined, pinnedConnection)
+      assert.isTrue(acquired)
+
+      const released = await client.dialect.releaseAdvisoryLock(1, pinnedConnection)
+      assert.isTrue(released)
+    })
   })
 }
 

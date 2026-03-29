@@ -252,20 +252,32 @@ export class PgDialect implements DialectContract {
    * Attempts to add advisory lock to the database and
    * returns it's status.
    */
-  async getAdvisoryLock(key: string): Promise<boolean> {
-    const response = await this.client.rawQuery(
-      `SELECT PG_TRY_ADVISORY_LOCK('${key}') as lock_status;`
-    )
+  async getAdvisoryLock(key: string, _timeout?: number, connection?: any): Promise<boolean> {
+    const query = this.client
+      .getWriteClient()
+      .raw(`SELECT PG_TRY_ADVISORY_LOCK('${key}') as lock_status;`)
+
+    if (connection) {
+      query.connection(connection)
+    }
+
+    const response = await query
     return response.rows[0] && response.rows[0].lock_status === true
   }
 
   /**
    * Releases the advisory lock
    */
-  async releaseAdvisoryLock(key: string): Promise<boolean> {
-    const response = await this.client.rawQuery(
-      `SELECT PG_ADVISORY_UNLOCK('${key}') as lock_status;`
-    )
+  async releaseAdvisoryLock(key: string, connection?: any): Promise<boolean> {
+    const query = this.client
+      .getWriteClient()
+      .raw(`SELECT PG_ADVISORY_UNLOCK('${key}') as lock_status;`)
+
+    if (connection) {
+      query.connection(connection)
+    }
+
+    const response = await query
     return response.rows[0] && response.rows[0].lock_status === true
   }
 }

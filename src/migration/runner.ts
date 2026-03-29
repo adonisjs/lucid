@@ -91,6 +91,14 @@ export class MigrationRunner extends EventEmitter {
   disableLocks: boolean
 
   /**
+   * A dedicated connection pinned for the advisory lock lifecycle.
+   * When the pool has more than one connection, we hold this connection
+   * between acquire and release to ensure both operations run on the
+   * same database session.
+   */
+  private lockConnection: any = null
+
+  /**
    * An array of files we have successfully migrated. The files are
    * collected regardless of `up` or `down` methods
    */
@@ -269,22 +277,32 @@ export class MigrationRunner extends EventEmitter {
    * Acquires a lock to disallow concurrent transactions. Only works with
    * `Mysql`, `PostgresSQL` and `MariaDb` for now.
    *
-   * Make sure we are acquiring lock outside the transactions, since we want
-   * to block other processes from acquiring the same lock.
-   *
-   * Locks are always acquired in dry run too, since we want to stay close
-   * to the real execution cycle
+   * Advisory locks are session-scoped, meaning both acquire and release
+   * must happen on the same database connection. When the pool has more
+   * than one connection, we pin a dedicated connection to guarantee this.
+   * With a single-connection pool, pinning is unnecessary (and would
+   * starve other queries).
    */
   private async acquireLock() {
     if (!this.client.dialect.supportsAdvisoryLocks || this.disableLocks) {
       return
     }
 
-    const acquired = await this.client.dialect.getAdvisoryLock(1)
-    if (!acquired) {
-      throw new errors.E_UNABLE_ACQUIRE_LOCK()
+    const knexClient = this.client.getWriteClient()
+    if (knexClient.client.pool.max > 1) {
+      this.lockConnection = await knexClient.client.acquireConnection()
     }
-    this.emit('acquire:lock')
+
+    try {
+      const acquired = await this.client.dialect.getAdvisoryLock(1, undefined, this.lockConnection)
+      if (!acquired) {
+        throw new errors.E_UNABLE_ACQUIRE_LOCK()
+      }
+      this.emit('acquire:lock')
+    } catch (error) {
+      this.releaseLockConnection()
+      throw error
+    }
   }
 
   /**
@@ -296,11 +314,25 @@ export class MigrationRunner extends EventEmitter {
       return
     }
 
-    const released = await this.client.dialect.releaseAdvisoryLock(1)
-    if (!released) {
-      throw new errors.E_UNABLE_RELEASE_LOCK()
+    try {
+      const released = await this.client.dialect.releaseAdvisoryLock(1, this.lockConnection)
+      if (!released) {
+        throw new errors.E_UNABLE_RELEASE_LOCK()
+      }
+      this.emit('release:lock')
+    } finally {
+      this.releaseLockConnection()
     }
-    this.emit('release:lock')
+  }
+
+  /**
+   * Release the pinned lock connection back to the pool
+   */
+  private releaseLockConnection() {
+    if (this.lockConnection) {
+      this.client.getWriteClient().client.releaseConnection(this.lockConnection)
+      this.lockConnection = null
+    }
   }
 
   /**

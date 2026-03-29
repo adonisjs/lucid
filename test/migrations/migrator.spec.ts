@@ -14,6 +14,7 @@ import { AppFactory } from '@adonisjs/core/factories/app'
 import {
   setup,
   getDb,
+  getConfig,
   resetTables,
   getMigrator,
   cleanup as cleanupTables,
@@ -1525,5 +1526,89 @@ test.group('Migrator', (group) => {
     assert.isFalse(hasUsersTable)
     assert.deepEqual(migratedFiles, [])
     assert.equal(migrator.status, 'skipped')
+  })
+
+  test('migrate with pool of 4 acquires and releases advisory lock correctly', async ({
+    fs,
+    assert,
+    cleanup,
+  }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+
+    const config = getConfig()
+    config.pool = { min: 4, max: 4 }
+    const db = getDb(undefined, {
+      connection: 'primary',
+      connections: { primary: config, secondary: config },
+    })
+    cleanup(() => db.manager.closeAll())
+
+    await fs.create(
+      'database/migrations/users_pool4.ts',
+      `
+      import { BaseSchema as Schema } from '../../../../src/schema/main.js'
+      export default class User extends Schema {
+        public async up () {
+          this.schema.createTable('schema_users', (table) => {
+            table.increments()
+          })
+        }
+      }
+    `
+    )
+
+    const migrator = getMigrator(db, app, {
+      direction: 'up',
+      connectionName: 'primary',
+    })
+
+    await migrator.run()
+
+    assert.isNull(migrator.error)
+    assert.equal(migrator.status, 'completed')
+    assert.isTrue(await db.connection().schema.hasTable('schema_users'))
+  })
+
+  test('migrate with pool of 1 acquires and releases advisory lock correctly', async ({
+    fs,
+    assert,
+    cleanup,
+  }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+
+    const config = getConfig()
+    config.pool = { min: 1, max: 1 }
+    const db = getDb(undefined, {
+      connection: 'primary',
+      connections: { primary: config, secondary: config },
+    })
+    cleanup(() => db.manager.closeAll())
+
+    await fs.create(
+      'database/migrations/users_pool1.ts',
+      `
+      import { BaseSchema as Schema } from '../../../../src/schema/main.js'
+      export default class User extends Schema {
+        public async up () {
+          this.schema.createTable('schema_users', (table) => {
+            table.increments()
+          })
+        }
+      }
+    `
+    )
+
+    const migrator = getMigrator(db, app, {
+      direction: 'up',
+      connectionName: 'primary',
+    })
+
+    await migrator.run()
+
+    assert.isNull(migrator.error)
+    assert.equal(migrator.status, 'completed')
+    assert.isTrue(await db.connection().schema.hasTable('schema_users'))
   })
 })
