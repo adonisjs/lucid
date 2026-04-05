@@ -1,7 +1,7 @@
 {
   "name": "@adonisjs/lucid",
   "description": "SQL ORM built on top of Active Record pattern",
-  "version": "22.4.1",
+  "version": "22.4.2",
   "engines": {
     "node": ">=24.0.0"
   },
