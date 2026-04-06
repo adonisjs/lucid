@@ -15,6 +15,7 @@ import { DEFAULT_SCHEMA_RULES } from './rules.ts'
 import { DATA_TYPES_MAPPING, INTERNAL_TYPES } from './mappings.ts'
 import type {
   ColumnInfo,
+  DecoratorInfo,
   SchemaRules,
   DatabaseColumn,
   GeneratedColumn,
@@ -43,7 +44,79 @@ export class OrmSchemaBuilder {
    * Load user-defined schema rules
    */
   loadRules(rules: SchemaRules[]): void {
-    this.schema = merge.all<Required<SchemaRules>>([this.schema, ...rules])
+    this.schema = merge.all<Required<SchemaRules>>([this.schema, ...rules], {
+      arrayMerge: (_target, source) => source,
+      isMergeableObject: (value) => {
+        if (!value || typeof value !== 'object') return false
+        /**
+         * ColumnInfo objects (identified by having `tsType`) should be
+         * replaced entirely, not deep merged. This prevents default
+         * decorators/imports from leaking into user-defined rules.
+         */
+        if ('tsType' in value) return false
+        const tag = Object.prototype.toString.call(value)
+        return tag !== '[object RegExp]' && tag !== '[object Date]'
+      },
+    })
+  }
+
+  /**
+   * Serialize a decorator argument value to a TypeScript-safe string
+   */
+  private serializeArgValue(value: any): string {
+    if (value === null) {
+      return 'null'
+    }
+    if (typeof value === 'string') {
+      return `'${value}'`
+    }
+    return String(value)
+  }
+
+  /**
+   * Build a decorator string from a structured DecoratorInfo
+   */
+  private buildDecorator(decorator: DecoratorInfo): string {
+    if (!decorator.args || Object.keys(decorator.args).length === 0) {
+      return `${decorator.name}()`
+    }
+
+    const argEntries = Object.entries(decorator.args)
+      .map(([key, value]) => `${key}: ${this.serializeArgValue(value)}`)
+      .join(', ')
+    return `${decorator.name}({ ${argEntries} })`
+  }
+
+  /**
+   * Build decorator strings from a ColumnInfo. Supports both the
+   * new `decorators` array and the deprecated `decorator` string.
+   */
+  private buildDecorators(rule: ColumnInfo, extraColumnArgs?: Record<string, any>): string {
+    /**
+     * New structured path: build from decorators array
+     */
+    if (rule.decorators) {
+      return rule.decorators
+        .map((dec) => {
+          /**
+           * Merge extra column args (like columnName) into decorators
+           * that start with `@column`
+           */
+          if (extraColumnArgs && dec.name.startsWith('@column')) {
+            return this.buildDecorator({
+              name: dec.name,
+              args: { ...extraColumnArgs, ...dec.args },
+            })
+          }
+          return this.buildDecorator(dec)
+        })
+        .join('\n  ')
+    }
+
+    /**
+     * Deprecated path: use the decorator string as-is
+     */
+    return rule.decorator ?? '@column()'
   }
 
   /**
@@ -84,20 +157,34 @@ export class OrmSchemaBuilder {
     const finalRule = rule ?? {
       tsType: 'any',
       imports: [],
-      decorator: '@column()',
+      decorators: [{ name: '@column' }],
     }
 
     let tsType = finalRule.tsType
     let propertyName = stringHelpers.camelCase(columnName)
+    let extraColumnArgs: Record<string, any> | undefined
+
+    /**
+     * When the property name is not a valid JS identifier and the rule
+     * uses the structured `decorators` array, prefix it with an
+     * underscore and set an explicit columnName so Lucid maps it
+     * back to the correct database column.
+     */
+    if (/^[^a-zA-Z_$]/.test(propertyName) && finalRule.decorators) {
+      propertyName = `_${propertyName}`
+      extraColumnArgs = { columnName }
+    }
 
     if (column.nullable && !primaryKeys.includes(columnName)) {
       tsType += ' | null'
     }
 
+    const decorators = this.buildDecorators(finalRule, extraColumnArgs)
+
     return {
       imports: finalRule.imports ?? [],
       propertyName,
-      column: `  ${finalRule.decorator}\n  declare ${propertyName}: ${tsType}`,
+      column: `  ${decorators}\n  declare ${propertyName}: ${tsType}`,
     }
   }
 
@@ -116,7 +203,10 @@ export class OrmSchemaBuilder {
     const primaryKeyRule = this.schema.tables[tableName]?.primaryKey ?? this.schema.primaryKey
     const primaryKeyResult = primaryKeyRule?.(tableName, primaryKeys, columns)
 
-    const columnNames = Object.keys(columns).sort((a, b) => a.localeCompare(b))
+    const skipColumns = this.schema.tables[tableName]?.skipColumns ?? []
+    const columnNames = Object.keys(columns)
+      .filter((columnName) => !skipColumns.includes(columnName))
+      .sort((a, b) => a.localeCompare(b))
     const schema = columnNames.map((columnName) => {
       const column = columns[columnName]
       const pkInfo =

@@ -65,7 +65,7 @@ test.group('Query client | drop tables', (group) => {
     try {
       await client.dropAllTables()
       await client.dropAllTables()
-    } catch (err) {
+    } catch (err: any) {
       assert.fail(err)
     }
 

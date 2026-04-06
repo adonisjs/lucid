@@ -162,7 +162,7 @@ export class DbConnectionCountCheck extends BaseCheck {
       )
         .mergeMetaData(this.#getConnectionMetadata())
         .mergeMetaData(this.#getConnectionsCountMetadata(connectionsCount))
-    } catch (error) {
+    } catch (error: any) {
       return Result.failed(error.message || 'Connection failed', error).mergeMetaData(
         this.#getConnectionMetadata()
       )

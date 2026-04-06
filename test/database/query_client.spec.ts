@@ -406,7 +406,7 @@ test.group('Query client | read mode', (group) => {
 
     try {
       await client.transaction()
-    } catch ({ message }) {
+    } catch ({ message }: any) {
       assert.equal(
         message,
         'Write client is not available for query client instantiated in read mode'

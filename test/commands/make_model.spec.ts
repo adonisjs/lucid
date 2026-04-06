@@ -10,6 +10,7 @@
 import { test } from '@japa/runner'
 import { ListLoader } from '@adonisjs/core/ace'
 import { AceFactory } from '@adonisjs/core/factories'
+import MakeTransformer from '@adonisjs/core/commands/make/transformer'
 
 import { getDb } from '../../test-helpers/index.js'
 import MakeModel from '../../commands/make_model.js'
@@ -80,5 +81,39 @@ test.group('MakeModel', (group) => {
       export default class User extends UserSchema {
       }"
     `)
+  })
+
+  test('make a model with transformer', async ({ fs, assert }) => {
+    const ace = await new AceFactory().make(fs.baseUrl, { importer: () => {} })
+    await ace.app.init()
+    ace.ui.switchMode('raw')
+
+    ace.addLoader(new ListLoader([MakeTransformer]))
+
+    const command = await ace.create(MakeModel, ['user', '--transformer'])
+    await command.exec()
+
+    command.assertLog('green(DONE:)    create app/models/user.ts')
+    command.assertLog('green(DONE:)    create app/transformers/user_transformer.ts')
+    assert.snapshot(await fs.contents('app/models/user.ts')).matchInline(`
+      "import { UserSchema } from '#database/schema'
+
+      export default class User extends UserSchema {
+      }"
+    `)
+  })
+
+  test('make a model using --contents-from flag', async ({ fs, assert }) => {
+    await fs.create('custom_model.ts', 'export default class CustomUser {}')
+
+    const ace = await new AceFactory().make(fs.baseUrl, { importer: () => {} })
+    await ace.app.init()
+    ace.ui.switchMode('raw')
+
+    const command = await ace.create(MakeModel, ['user', '--contents-from=custom_model.ts'])
+    await command.exec()
+
+    command.assertLog('green(DONE:)    create app/models/user.ts')
+    await assert.fileContains('app/models/user.ts', 'export default class CustomUser {}')
   })
 })

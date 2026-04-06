@@ -39,4 +39,21 @@ test.group('Make Factory', async () => {
         `import ${set.model.split('/').pop()} from '${set.modelImportPath}'`
       )
     })
+
+  test('generate a factory using --contents-from flag', async ({ assert, fs }) => {
+    await fs.create('custom_factory.ts', 'export default class CustomFactory {}')
+
+    const ace = await new AceFactory().make(fs.baseUrl, { importer: () => {} })
+    await ace.app.init()
+    ace.ui.switchMode('raw')
+
+    const command = await ace.create(MakeFactory, ['User', '--contents-from=custom_factory.ts'])
+    await command.exec()
+
+    command.assertLog('green(DONE:)    create database/factories/user_factory.ts')
+    await assert.fileContains(
+      'database/factories/user_factory.ts',
+      'export default class CustomFactory {}'
+    )
+  })
 })

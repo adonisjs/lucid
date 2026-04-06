@@ -8,8 +8,9 @@
  */
 
 import { BaseCommand, args, flags } from '@adonisjs/core/ace'
-import { stubsRoot } from '../stubs/main.js'
 import { type CommandOptions } from '@adonisjs/core/types/ace'
+
+import { stubsRoot } from '../stubs/main.js'
 
 export default class MakeModel extends BaseCommand {
   static commandName = 'make:model'
@@ -45,6 +46,16 @@ export default class MakeModel extends BaseCommand {
   declare controller: boolean
 
   /**
+   * Defines if we generate the transformer for the model.
+   */
+  @flags.boolean({
+    name: 'transformer',
+    alias: 'c',
+    description: 'Generate the transformer for the model',
+  })
+  declare transformer: boolean
+
+  /**
    * Defines if we generate the factory for the model.
    */
   @flags.boolean({
@@ -53,6 +64,13 @@ export default class MakeModel extends BaseCommand {
     description: 'Generate a factory for the model',
   })
   declare factory: boolean
+
+  /**
+   * Read the contents from this file (if the flag exists) and use
+   * it as the raw contents
+   */
+  @flags.string({ description: 'Use the contents of the given file as the generated output' })
+  declare contentsFrom: string
 
   /**
    * Run migrations
@@ -81,6 +99,19 @@ export default class MakeModel extends BaseCommand {
   }
 
   /**
+   * Make transformer
+   */
+  private async runMakeTransformer() {
+    if (!this.transformer || this.exitCode) {
+      return
+    }
+
+    const makeTransformer = await this.kernel.exec('make:transformer', [this.name])
+    this.exitCode = makeTransformer.exitCode
+    this.error = makeTransformer.error
+  }
+
+  /**
    * Make factory
    */
   private async runMakeFactory() {
@@ -98,12 +129,20 @@ export default class MakeModel extends BaseCommand {
    */
   async run(): Promise<void> {
     const codemods = await this.createCodemods()
-    await codemods.makeUsingStub(stubsRoot, 'make/model/main.stub', {
-      flags: this.parsed.flags,
-      entity: this.app.generators.createEntity(this.name),
-    })
+    await codemods.makeUsingStub(
+      stubsRoot,
+      'make/model/main.stub',
+      {
+        flags: this.parsed.flags,
+        entity: this.app.generators.createEntity(this.name),
+      },
+      {
+        contentsFromFile: this.contentsFrom,
+      }
+    )
 
     await this.runMakeMigration()
+    await this.runMakeTransformer()
     await this.runMakeController()
     await this.runMakeFactory()
   }

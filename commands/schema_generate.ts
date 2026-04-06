@@ -95,7 +95,11 @@ export default class SchemaGenerate extends BaseCommand {
       connectionName: this.connection,
       schemas,
       ...managerConnection.config.schemaGeneration,
-      excludeTables: [migrationsTableName, migrationsVersionsTableName],
+      excludeTables: [
+        migrationsTableName,
+        migrationsVersionsTableName,
+        ...(managerConnection.config.schemaGeneration?.excludeTables ?? []),
+      ],
       outputPath: isAbsolute(outputPath) ? outputPath : this.app.makePath(outputPath),
     })
 
