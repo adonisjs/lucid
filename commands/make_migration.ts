@@ -57,6 +57,13 @@ export default class MakeMigration extends BaseCommand {
   declare alter: boolean
 
   /**
+   * Read the contents from this file (if the flag exists) and use
+   * it as the raw contents
+   */
+  @flags.string({ description: 'Use the contents of the given file as the generated output' })
+  declare contentsFrom: string
+
+  /**
    * Not a valid connection
    */
   private printNotAValidConnection(connection: string) {
@@ -130,14 +137,21 @@ export default class MakeMigration extends BaseCommand {
     const fileName = `${prefix}_${action}_${tableName}_table.ts`
 
     const codemods = await this.createCodemods()
-    await codemods.makeUsingStub(stubsRoot, `make/migration/${action}.stub`, {
-      entity,
-      flags: this.parsed.flags,
-      migration: {
-        tableName,
-        folder,
-        fileName,
+    await codemods.makeUsingStub(
+      stubsRoot,
+      `make/migration/${action}.stub`,
+      {
+        entity,
+        flags: this.parsed.flags,
+        migration: {
+          tableName,
+          folder,
+          fileName,
+        },
       },
-    })
+      {
+        contentsFromFile: this.contentsFrom,
+      }
+    )
   }
 }

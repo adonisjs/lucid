@@ -52,7 +52,7 @@ test.group('Model | HasOne | Options', (group) => {
       }
 
       User.$getRelation('profile')!.boot()
-    } catch ({ message }) {
+    } catch ({ message }: any) {
       assert.equal(
         message,
         'Relation "User.profile" expects "id" to exist on "User" model, but is missing. Did you forget to define the column?'
@@ -81,7 +81,7 @@ test.group('Model | HasOne | Options', (group) => {
       }
 
       User.$getRelation('profile')!.boot()
-    } catch ({ message }) {
+    } catch ({ message }: any) {
       assert.equal(
         message,
         'Relation "User.profile" expects "userId" to exist on "Profile" model, but is missing. Did you forget to define the column?'
@@ -1496,7 +1496,7 @@ test.group('Model | HasOne | preload', (group) => {
 
     try {
       await User.query().select('username').preload('profile').where('username', 'virk').first()
-    } catch ({ message }) {
+    } catch ({ message }: any) {
       assert.equal(message, 'Cannot preload "profile", value of "User.id" is undefined')
     }
   })
@@ -1774,6 +1774,64 @@ test.group('Model | HasOne | withCount', (group) => {
 
     assert.equal(users[0].$extras.profile_count, 1)
     assert.equal(users[1].$extras.profile_count, 1)
+  })
+
+  test('ignore relation order and pagination when using withCount', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter)
+
+    class Profile extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+
+      @column()
+      declare userId: number
+
+      @column()
+      declare displayName: string
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+
+      @hasOne(() => Profile, {
+        onQuery: (query) => {
+          query.orderBy('id', 'asc').limit(1).offset(1)
+        },
+      })
+      declare profile: HasOne<typeof Profile>
+    }
+
+    await db
+      .insertQuery()
+      .table('users')
+      .insert([{ username: 'virk' }, { username: 'nikk' }])
+
+    const [user0, user1] = await db.query().from('users')
+    await db
+      .insertQuery()
+      .table('profiles')
+      .insert([
+        {
+          user_id: user0.id,
+          display_name: 'virk',
+        },
+        {
+          user_id: user1.id,
+          display_name: 'nikk',
+        },
+      ])
+
+    const query = User.query().withCount('profile').orderBy('id', 'asc')
+
+    const users = await query
+    assert.lengthOf(users, 2)
+    assert.equal(Number(users[0].$extras.profile_count), 1)
+    assert.equal(Number(users[1].$extras.profile_count), 1)
   })
 
   test('allow cherry picking columns', async ({ fs, assert }) => {
@@ -2639,7 +2697,7 @@ test.group('Model | HasOne | pagination', (group) => {
     const user = await User.find(1)
     try {
       await user!.related('profile').query().paginate(1)
-    } catch ({ message }) {
+    } catch ({ message }: any) {
       assert.equal(message, 'Cannot paginate a hasOne relationship "(profile)"')
     }
   })

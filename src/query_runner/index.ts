@@ -68,7 +68,7 @@ export class QueryRunner {
     try {
       const result = await query
       return [undefined, result]
-    } catch (error) {
+    } catch (error: any) {
       return [error, undefined]
     }
   }

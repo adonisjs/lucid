@@ -280,7 +280,13 @@ export class QueryClient implements QueryClientContract {
    * may want to decide which client to use.
    */
   knexRawQuery(sql: string, bindings?: RawQueryBindings | undefined): Knex.Raw<any> {
-    return bindings ? this.connection.client!.raw(sql, bindings) : this.connection.client!.raw(sql)
+    if (!bindings) {
+      return this.connection.client!.raw(sql)
+    }
+    if (Array.isArray(bindings)) {
+      return this.connection.client!.raw(sql, bindings as Knex.RawBinding[])
+    }
+    return this.connection.client!.raw(sql, bindings as Knex.ValueDict)
   }
 
   /**
@@ -316,10 +322,7 @@ export class QueryClient implements QueryClientContract {
     sql: string,
     bindings?: RawQueryBindings | undefined
   ): RawQueryBuilderContract<Result> {
-    return new RawQueryBuilder(
-      bindings ? this.connection.client!.raw(sql, bindings) : this.connection.client!.raw(sql),
-      this
-    )
+    return new RawQueryBuilder(this.knexRawQuery(sql, bindings), this)
   }
 
   /**

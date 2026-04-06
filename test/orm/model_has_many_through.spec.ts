@@ -52,7 +52,7 @@ test.group('Model | Has Many Through | Options', (group) => {
       }
 
       Country.$getRelation('posts')!.boot()
-    } catch ({ message }) {
+    } catch ({ message }: any) {
       assert.equal(
         message,
         'Relation "Country.posts" expects "id" to exist on "Country" model, but is missing. Did you forget to define the column?'
@@ -83,7 +83,7 @@ test.group('Model | Has Many Through | Options', (group) => {
       }
 
       Country.$getRelation('posts')!.boot()
-    } catch ({ message }) {
+    } catch ({ message }: any) {
       assert.equal(
         message,
         'Relation "Country.posts" expects "countryId" to exist on "User" model, but is missing. Did you forget to define the column?'
@@ -117,7 +117,7 @@ test.group('Model | Has Many Through | Options', (group) => {
       }
 
       Country.$getRelation('posts')!.boot()
-    } catch ({ message }) {
+    } catch ({ message }: any) {
       assert.equal(
         message,
         'Relation "Country.posts" expects "id" to exist on "User" model, but is missing. Did you forget to define the column?'
@@ -154,7 +154,7 @@ test.group('Model | Has Many Through | Options', (group) => {
       }
 
       Country.$getRelation('posts')!.boot()
-    } catch ({ message }) {
+    } catch ({ message }: any) {
       assert.equal(
         message,
         'Relation "Country.posts" expects "userId" to exist on "Post" model, but is missing. Did you forget to define the column?'
@@ -1489,7 +1489,7 @@ test.group('Model | Has Many Through | preload', (group) => {
 
     try {
       await Country.query().select('name').preload('posts')
-    } catch ({ message }) {
+    } catch ({ message }: any) {
       assert.equal(message, 'Cannot preload "posts", value of "Country.id" is undefined')
     }
   })
@@ -1613,6 +1613,78 @@ test.group('Model | Has Many Through | withCount', (group) => {
     assert.lengthOf(countries, 2)
     assert.equal(countries[0].$extras.posts_count, 3)
     assert.equal(countries[1].$extras.posts_count, 2)
+  })
+
+  test('ignore relation order and pagination when using withCount', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter)
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+
+      @column()
+      declare countryId: number
+    }
+
+    class Post extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+
+      @column()
+      declare userId: number
+
+      @column()
+      declare title: string
+    }
+
+    class Country extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+
+      @hasManyThrough([() => Post, () => User], {
+        onQuery: (query) => {
+          query.orderBy('posts.id', 'asc').limit(1).offset(1)
+        },
+      })
+      declare posts: HasManyThrough<typeof Post>
+    }
+
+    await db
+      .insertQuery()
+      .table('countries')
+      .insert([{ name: 'India' }, { name: 'Switzerland' }])
+
+    await db
+      .insertQuery()
+      .table('users')
+      .multiInsert([
+        { username: 'virk', country_id: 1 },
+        { username: 'nikk', country_id: 1 },
+        { username: 'romain', country_id: 2 },
+        { username: 'joe', country_id: 2 },
+      ])
+
+    await db
+      .insertQuery()
+      .table('posts')
+      .multiInsert([
+        { title: 'Adonis 101', user_id: 1 },
+        { title: 'Lucid 101', user_id: 1 },
+        { title: 'Adonis5', user_id: 2 },
+        { title: 'Validations 101', user_id: 3 },
+        { title: 'Assets 101', user_id: 4 },
+      ])
+
+    const query = Country.query().withCount('posts').orderBy('id', 'asc')
+
+    const countries = await query
+    assert.lengthOf(countries, 2)
+    assert.equal(Number(countries[0].$extras.posts_count), 3)
+    assert.equal(Number(countries[1].$extras.posts_count), 2)
   })
 
   test('apply constraints to the withCount subquery', async ({ fs, assert }) => {
@@ -3049,7 +3121,7 @@ test.group('Model | Has Many Through | pagination', (group) => {
 
     try {
       await Country.query().preload('posts', (query) => query.paginate(1))
-    } catch ({ message }) {
+    } catch ({ message }: any) {
       assert.equal(message, 'Cannot paginate relationship "posts" during preload')
     }
   })

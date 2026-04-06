@@ -1272,7 +1272,7 @@ test.group('Base Model | persist', (group) => {
 
     try {
       await user.refresh()
-    } catch ({ message }) {
+    } catch ({ message }: any) {
       assert.equal(message, '"Model.refresh" failed. Unable to lookup "users" table where "id" = 1')
     }
   })
@@ -1900,7 +1900,7 @@ test.group('Base Model | delete', (group) => {
 
     try {
       user.username = 'virk'
-    } catch ({ message }) {
+    } catch ({ message }: any) {
       assert.equal(message, 'Cannot mutate delete model instance')
     }
   })
@@ -3883,7 +3883,7 @@ test.group('Base Model | fetch', (group) => {
 
     try {
       await User.findOrFail(1)
-    } catch ({ message, model }) {
+    } catch ({ message, model }: any) {
       assert.equal(message, 'Row not found')
       assert.equal(model.name, User.name)
     }
@@ -4665,7 +4665,7 @@ test.group('Base Model | fetch', (group) => {
           client: trx,
         }
       )
-    } catch (error) {
+    } catch (error: any) {
       assert.exists(error)
       await trx.rollback()
     }
@@ -4717,7 +4717,7 @@ test.group('Base Model | fetch', (group) => {
           email: 'romain@adonisjs.com',
         },
       ])
-    } catch ({ message }) {
+    } catch ({ message }: any) {
       assert.equal(
         message,
         'Value for the "username" is null or undefined inside "fetchOrCreateMany" payload'
@@ -4765,7 +4765,7 @@ test.group('Base Model | fetch', (group) => {
           email: 'romain@adonisjs.com',
         } as any,
       ])
-    } catch ({ message }) {
+    } catch ({ message }: any) {
       assert.equal(
         message,
         'Value for the "username" is null or undefined inside "fetchOrCreateMany" payload'
@@ -5375,7 +5375,7 @@ test.group('Base Model | hooks', (group) => {
 
     try {
       await user.save()
-    } catch ({ message }) {
+    } catch ({ message }: any) {
       assert.equal(message, 'Wait')
     }
   })
@@ -5573,7 +5573,7 @@ test.group('Base Model | hooks', (group) => {
 
     try {
       await user.save()
-    } catch ({ message }) {
+    } catch ({ message }: any) {
       assert.equal(message, 'Wait')
     }
 
@@ -5704,7 +5704,7 @@ test.group('Base Model | hooks', (group) => {
 
     try {
       await user.delete()
-    } catch ({ message }) {
+    } catch ({ message }: any) {
       assert.equal(message, 'Wait')
     }
 
@@ -6439,7 +6439,7 @@ test.group('Base Model | date', (group) => {
     user.dob = 10 as any
     try {
       await user.save()
-    } catch (error) {
+    } catch (error: any) {
       assert.instanceOf(error, errors.E_INVALID_DATE_COLUMN_VALUE)
       assert.equal(
         error.message,
@@ -6475,7 +6475,7 @@ test.group('Base Model | date', (group) => {
     user.username = 'virk'
     try {
       await user.save()
-    } catch ({ message }) {
+    } catch ({ message }: any) {
       assert.equal(message, 'Invalid value for "User.dob". unparsable')
     }
   })
@@ -6839,7 +6839,7 @@ test.group('Base Model | datetime', (group) => {
     user.dob = 10 as any
     try {
       await user.save()
-    } catch (error) {
+    } catch (error: any) {
       assert.instanceOf(error, errors.E_INVALID_DATE_COLUMN_VALUE)
       assert.equal(
         error.message,

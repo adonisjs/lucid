@@ -1347,4 +1347,299 @@ test.group('OrmSchemaBuilder | Name Conversion', (group) => {
 
     await connection.schema.dropTable('user_profiles')
   })
+
+  test('prefix column names starting with a digit with underscore', async ({ assert }) => {
+    const db = getDb()
+    const connection = db.connection()
+    const generator = new OrmSchemaBuilder(connection)
+
+    const columns = {
+      'id': { type: 'integer', nullable: false },
+      '5G': { type: 'boolean', nullable: true },
+    }
+
+    const schemas = generator.generateSchemas([{ name: 'examples', columns, primaryKeys: ['id'] }])
+    const output = schemas.classes.join('\n')
+
+    assert.snapshot(output).matchInline(`
+      "export class ExampleSchema extends BaseModel {
+        static $columns = ['_5G', 'id'] as const
+        $columns = ExampleSchema.$columns
+        @column({ columnName: '5G' })
+        declare _5G: boolean | null
+        @column({ isPrimary: true })
+        declare id: number
+      }"
+    `)
+  })
+
+  test('prefix column names starting with a digit preserves existing decorator args', async ({
+    assert,
+  }) => {
+    const db = getDb()
+    const connection = db.connection()
+    const generator = new OrmSchemaBuilder(connection)
+
+    generator.loadRules([
+      {
+        columns: {
+          '3rd_party_id': {
+            tsType: 'string',
+            decorators: [{ name: '@column', args: { serializeAs: null } }],
+          },
+        },
+      },
+    ])
+
+    const columns = {
+      'id': { type: 'integer', nullable: false },
+      '3rd_party_id': { type: 'varchar', nullable: false },
+    }
+
+    const schemas = generator.generateSchemas([
+      { name: 'integrations', columns, primaryKeys: ['id'] },
+    ])
+    const output = schemas.classes.join('\n')
+
+    assert.snapshot(output).matchInline(`
+      "export class IntegrationSchema extends BaseModel {
+        static $columns = ['_3RdPartyId', 'id'] as const
+        $columns = IntegrationSchema.$columns
+        @column({ columnName: '3rd_party_id', serializeAs: null })
+        declare _3RdPartyId: string
+        @column({ isPrimary: true })
+        declare id: number
+      }"
+    `)
+  })
+
+  test('skip columns listed in skipColumns for a table', async ({ assert }) => {
+    const db = getDb()
+    const connection = db.connection()
+    const generator = new OrmSchemaBuilder(connection)
+
+    generator.loadRules([
+      {
+        tables: {
+          examples: {
+            skipColumns: ['5G', 'secret'],
+          },
+        },
+      },
+    ])
+
+    const columns = {
+      'id': { type: 'integer', nullable: false },
+      '5G': { type: 'boolean', nullable: true },
+      'name': { type: 'varchar', nullable: false },
+      'secret': { type: 'varchar', nullable: false },
+    }
+
+    const schemas = generator.generateSchemas([{ name: 'examples', columns, primaryKeys: ['id'] }])
+    const output = schemas.classes.join('\n')
+
+    assert.snapshot(output).matchInline(`
+      "export class ExampleSchema extends BaseModel {
+        static $columns = ['id', 'name'] as const
+        $columns = ExampleSchema.$columns
+        @column({ isPrimary: true })
+        declare id: number
+        @column()
+        declare name: string
+      }"
+    `)
+  })
+
+  test('deprecated decorator string still works', async ({ assert }) => {
+    const db = getDb()
+    const connection = db.connection()
+    const generator = new OrmSchemaBuilder(connection)
+
+    generator.loadRules([
+      {
+        columns: {
+          legacy: {
+            tsType: 'string',
+            decorator: '@column({ serializeAs: null })',
+          },
+        },
+      },
+    ])
+
+    const columns = {
+      id: { type: 'integer', nullable: false },
+      legacy: { type: 'varchar', nullable: false },
+    }
+
+    const schemas = generator.generateSchemas([
+      { name: 'legacy_table', columns, primaryKeys: ['id'] },
+    ])
+    const output = schemas.classes.join('\n')
+
+    assert.snapshot(output).matchInline(`
+      "export class LegacyTableSchema extends BaseModel {
+        static $columns = ['id', 'legacy'] as const
+        $columns = LegacyTableSchema.$columns
+        @column({ isPrimary: true })
+        declare id: number
+        @column({ serializeAs: null })
+        declare legacy: string
+      }"
+    `)
+  })
+
+  test('multiple decorators on a column', async ({ assert }) => {
+    const db = getDb()
+    const connection = db.connection()
+    const generator = new OrmSchemaBuilder(connection)
+
+    generator.loadRules([
+      {
+        columns: {
+          email: {
+            tsType: 'string',
+            decorators: [
+              { name: '@column', args: { serializeAs: null } },
+              { name: '@encryptedColumn' },
+            ],
+          },
+        },
+      },
+    ])
+
+    const columns = {
+      id: { type: 'integer', nullable: false },
+      email: { type: 'varchar', nullable: false },
+    }
+
+    const schemas = generator.generateSchemas([{ name: 'users', columns, primaryKeys: ['id'] }])
+    const output = schemas.classes.join('\n')
+
+    assert.snapshot(output).matchInline(`
+      "export class UserSchema extends BaseModel {
+        static $columns = ['email', 'id'] as const
+        $columns = UserSchema.$columns
+        @column({ serializeAs: null })
+        @encryptedColumn()
+        declare email: string
+        @column({ isPrimary: true })
+        declare id: number
+      }"
+    `)
+  })
+
+  test('custom type rule with decorators array replaces default decorators', async ({ assert }) => {
+    const db = getDb()
+    const connection = db.connection()
+    const generator = new OrmSchemaBuilder(connection)
+
+    generator.loadRules([
+      {
+        types: {
+          string: {
+            tsType: 'string',
+            decorators: [{ name: '@column', args: { serializeAs: null } }],
+            imports: [],
+          },
+        },
+      },
+    ])
+
+    const columns = {
+      id: { type: 'integer', nullable: false },
+      name: { type: 'varchar', nullable: false },
+    }
+
+    const schemas = generator.generateSchemas([{ name: 'test_type', columns, primaryKeys: ['id'] }])
+    const output = schemas.classes.join('\n')
+
+    assert.snapshot(output).matchInline(`
+      "export class TestTypeSchema extends BaseModel {
+        static $columns = ['id', 'name'] as const
+        $columns = TestTypeSchema.$columns
+        @column({ isPrimary: true })
+        declare id: number
+        @column({ serializeAs: null })
+        declare name: string
+      }"
+    `)
+  })
+
+  test('custom type rule with deprecated decorator string replaces default', async ({ assert }) => {
+    const db = getDb()
+    const connection = db.connection()
+    const generator = new OrmSchemaBuilder(connection)
+
+    generator.loadRules([
+      {
+        types: {
+          decimal: {
+            tsType: 'Decimal',
+            decorator: '@decimal()',
+            imports: [{ source: 'decimal.js', namedImports: ['Decimal'] }],
+          },
+        },
+      },
+    ])
+
+    const columns = {
+      id: { type: 'integer', nullable: false },
+      price: { type: 'decimal', nullable: false },
+    }
+
+    const schemas = generator.generateSchemas([
+      { name: 'test_decimal', columns, primaryKeys: ['id'] },
+    ])
+    const output = schemas.classes.join('\n')
+
+    assert.snapshot(output).matchInline(`
+      "export class TestDecimalSchema extends BaseModel {
+        static $columns = ['id', 'price'] as const
+        $columns = TestDecimalSchema.$columns
+        @column({ isPrimary: true })
+        declare id: number
+        @decimal()
+        declare price: Decimal
+      }"
+    `)
+  })
+
+  test('overriding default column rule replaces decorators entirely', async ({ assert }) => {
+    const db = getDb()
+    const connection = db.connection()
+    const generator = new OrmSchemaBuilder(connection)
+
+    generator.loadRules([
+      {
+        columns: {
+          created_at: {
+            tsType: 'string',
+            decorators: [{ name: '@column' }],
+            imports: [],
+          },
+        },
+      },
+    ])
+
+    const columns = {
+      id: { type: 'integer', nullable: false },
+      created_at: { type: 'timestamp', nullable: false },
+    }
+
+    const schemas = generator.generateSchemas([
+      { name: 'test_override', columns, primaryKeys: ['id'] },
+    ])
+    const output = schemas.classes.join('\n')
+
+    assert.snapshot(output).matchInline(`
+      "export class TestOverrideSchema extends BaseModel {
+        static $columns = ['createdAt', 'id'] as const
+        $columns = TestOverrideSchema.$columns
+        @column()
+        declare createdAt: string
+        @column({ isPrimary: true })
+        declare id: number
+      }"
+    `)
+  })
 })

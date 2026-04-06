@@ -55,7 +55,7 @@ test.group('Model | ManyToMany | Options', (group) => {
       }
 
       User.$getRelation('skills')!.boot()
-    } catch ({ message }) {
+    } catch ({ message }: any) {
       assert.equal(
         message,
         'Relation "User.skills" expects "id" to exist on "User" model, but is missing. Did you forget to define the column?'
@@ -139,7 +139,7 @@ test.group('Model | ManyToMany | Options', (group) => {
       }
 
       User.$getRelation('skills')!.boot()
-    } catch ({ message }) {
+    } catch ({ message }: any) {
       assert.equal(
         message,
         'Relation "User.skills" expects "id" to exist on "Skill" model, but is missing. Did you forget to define the column?'
@@ -1811,7 +1811,7 @@ test.group('Model | ManyToMany | preload', (group) => {
 
     try {
       await User.query().select('username').preload('skills')
-    } catch ({ message }) {
+    } catch ({ message }: any) {
       assert.equal(message, 'Cannot preload "skills", value of "User.id" is undefined')
     }
   })
@@ -1913,6 +1913,69 @@ test.group('Model | ManyToMany | withCount', (group) => {
     const users = await User.query().withCount('skills').orderBy('id', 'asc')
     assert.lengthOf(users, 2)
 
+    assert.deepEqual(Number(users[0].$extras.skills_count), 2)
+    assert.deepEqual(Number(users[1].$extras.skills_count), 1)
+  })
+
+  test('ignore relation order and pagination when using withCount', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter)
+
+    class Skill extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+
+      @column()
+      declare name: string
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+
+      @manyToMany(() => Skill, {
+        onQuery: (query) => {
+          query.orderBy('skills.id', 'asc').limit(1).offset(1)
+        },
+      })
+      declare skills: ManyToMany<typeof Skill>
+    }
+
+    await db
+      .insertQuery()
+      .table('users')
+      .insert([{ username: 'virk' }, { username: 'nikk' }])
+
+    await db
+      .insertQuery()
+      .table('skills')
+      .insert([{ name: 'Programming' }, { name: 'Dancing' }, { name: 'Singing' }])
+
+    await db
+      .insertQuery()
+      .table('skill_user')
+      .insert([
+        {
+          user_id: 1,
+          skill_id: 1,
+        },
+        {
+          user_id: 1,
+          skill_id: 2,
+        },
+        {
+          user_id: 2,
+          skill_id: 2,
+        },
+      ])
+
+    const query = User.query().withCount('skills').orderBy('id', 'asc')
+
+    const users = await query
+    assert.lengthOf(users, 2)
     assert.deepEqual(Number(users[0].$extras.skills_count), 2)
     assert.deepEqual(Number(users[1].$extras.skills_count), 1)
   })
@@ -7387,7 +7450,7 @@ test.group('Model | ManyToMany | pagination', (group) => {
       await User.query().preload('skills', (query) => {
         query.paginate(1, 5)
       })
-    } catch ({ message }) {
+    } catch ({ message }: any) {
       assert.equal(message, 'Cannot paginate relationship "skills" during preload')
     }
   })

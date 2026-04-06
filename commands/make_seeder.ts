@@ -7,9 +7,9 @@
  * file that was distributed with this source code.
  */
 
-import { BaseCommand, args } from '@adonisjs/core/ace'
-import { stubsRoot } from '../stubs/main.js'
+import { BaseCommand, args, flags } from '@adonisjs/core/ace'
 import { type CommandOptions } from '@adonisjs/core/types/ace'
+import { stubsRoot } from '../stubs/main.js'
 
 export default class MakeSeeder extends BaseCommand {
   static commandName = 'make:seeder'
@@ -26,13 +26,27 @@ export default class MakeSeeder extends BaseCommand {
   declare name: string
 
   /**
+   * Read the contents from this file (if the flag exists) and use
+   * it as the raw contents
+   */
+  @flags.string({ description: 'Use the contents of the given file as the generated output' })
+  declare contentsFrom: string
+
+  /**
    * Execute command
    */
   async run(): Promise<void> {
     const codemods = await this.createCodemods()
-    await codemods.makeUsingStub(stubsRoot, 'make/seeder/main.stub', {
-      flags: this.parsed.flags,
-      entity: this.app.generators.createEntity(this.name),
-    })
+    await codemods.makeUsingStub(
+      stubsRoot,
+      'make/seeder/main.stub',
+      {
+        flags: this.parsed.flags,
+        entity: this.app.generators.createEntity(this.name),
+      },
+      {
+        contentsFromFile: this.contentsFrom,
+      }
+    )
   }
 }

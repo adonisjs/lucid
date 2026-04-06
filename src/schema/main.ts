@@ -104,7 +104,7 @@ export class BaseSchema {
           )
           await trackedCall
           reporter.end()
-        } catch (error) {
+        } catch (error: any) {
           reporter.end(error)
           throw error
         }

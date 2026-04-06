@@ -10,13 +10,13 @@
 import dotenv from 'dotenv'
 import { Chance } from 'chance'
 import { join } from 'node:path'
-import { knex, type Knex } from 'knex'
+import knex, { type Knex } from 'knex'
 import { fileURLToPath } from 'node:url'
-import { getActiveTest, getActiveTestOrFail } from '@japa/runner'
 import { Logger } from '@adonisjs/core/logger'
 import { Emitter } from '@adonisjs/core/events'
 import { type Application } from '@adonisjs/core/app'
 import { AppFactory } from '@adonisjs/core/factories/app'
+import { getActiveTest, getActiveTestOrFail } from '@japa/runner'
 
 import {
   type DatabaseConfig,
@@ -55,10 +55,10 @@ export const logger = new Logger({})
 export const createEmitter = () => new Emitter<any>(app)
 
 /**
- * Returns config based upon DB set in environment variables
+ * Returns config for a given database dialect
  */
-export function getConfig(): ConnectionConfig {
-  switch (process.env.DB) {
+export function getConfigForDb(db: string): ConnectionConfig {
+  switch (db) {
     case 'sqlite':
       return {
         client: 'sqlite3',
@@ -145,8 +145,15 @@ export function getConfig(): ConnectionConfig {
         },
       }
     default:
-      throw new Error(`Missing test config for ${process.env.DB} connection`)
+      throw new Error(`Missing test config for ${db} connection`)
   }
+}
+
+/**
+ * Returns config based upon DB set in environment variables
+ */
+export function getConfig(): ConnectionConfig {
+  return getConfigForDb(process.env.DB!)
 }
 
 /**
@@ -166,11 +173,9 @@ export function getKnex(config: Knex.Config): Knex {
 }
 
 /**
- * Does base setup by creating databases
+ * Creates all test tables on the given knex connection
  */
-export async function setup(destroyDb: boolean = true) {
-  const db = getKnex(Object.assign({}, getConfig(), { debug: false }))
-
+export async function setupDb(db: Knex, destroyDb: boolean = true) {
   const hasUsersTable = await db.schema.hasTable('users')
   if (!hasUsersTable) {
     await db.schema.createTable('users', (table) => {
@@ -313,6 +318,14 @@ export async function setup(destroyDb: boolean = true) {
   if (destroyDb) {
     await db.destroy()
   }
+}
+
+/**
+ * Does base setup by creating databases
+ */
+export async function setup(destroyDb: boolean = true) {
+  const db = getKnex(Object.assign({}, getConfig(), { debug: false }))
+  await setupDb(db, destroyDb)
 }
 
 /**
@@ -484,6 +497,40 @@ export function getDb(eventEmitter?: Emitter<any>, config?: DatabaseConfig) {
   const test = getActiveTest()
   test?.cleanup(() => {
     return db.manager.closeAll()
+  })
+
+  return db
+}
+
+/**
+ * Returns a Database instance with two connections backed by different
+ * databases (SQLite for primary, PostgreSQL for secondary).
+ * Both databases are set up with all test tables.
+ */
+export async function getMultiConnectionDb() {
+  const primaryConfig = getConfigForDb('sqlite')
+  const secondaryConfig = getConfigForDb('pg')
+
+  const primaryKnex = getKnex(Object.assign({}, primaryConfig, { debug: false }))
+  const secondaryKnex = getKnex(Object.assign({}, secondaryConfig, { debug: false }))
+  await setupDb(primaryKnex)
+  await setupDb(secondaryKnex)
+
+  const db = new Database(
+    {
+      connection: 'primary',
+      connections: {
+        primary: primaryConfig,
+        secondary: secondaryConfig,
+      },
+    },
+    logger,
+    createEmitter()
+  )
+
+  const test = getActiveTest()
+  test?.cleanup(async () => {
+    await db.manager.closeAll()
   })
 
   return db

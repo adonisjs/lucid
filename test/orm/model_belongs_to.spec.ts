@@ -51,7 +51,7 @@ test.group('Model | BelongsTo | Options', (group) => {
       }
 
       Profile.$getRelation('user')!.boot()
-    } catch ({ message }) {
+    } catch ({ message }: any) {
       assert.equal(
         message,
         'Relation "Profile.user" expects "id" to exist on "User" model, but is missing. Did you forget to define the column?'
@@ -80,7 +80,7 @@ test.group('Model | BelongsTo | Options', (group) => {
       }
 
       Profile.$getRelation('user')!.boot()
-    } catch ({ message }) {
+    } catch ({ message }: any) {
       assert.equal(
         message,
         'Relation "Profile.user" expects "userId" to exist on "Profile" model, but is missing. Did you forget to define the column?'
@@ -1197,7 +1197,7 @@ test.group('Model | BelongsTo | preload', (group) => {
 
     try {
       await Profile.query().select('display_name').preload('user')
-    } catch ({ message }) {
+    } catch ({ message }: any) {
       assert.equal(
         message,
         [
@@ -1761,6 +1761,50 @@ test.group('Model | BelongsTo | withCount', (group) => {
     assert.equal(profiles[0].$extras.user_count, 1)
   })
 
+  test('ignore relation order and pagination when using withCount', async ({ assert, fs }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter)
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+    }
+
+    class Profile extends BaseModel {
+      @column()
+      declare userId: number
+
+      @belongsTo(() => User, {
+        onQuery: (query) => {
+          query.orderBy('id', 'asc').limit(1).offset(1)
+        },
+      })
+      declare user: BelongsTo<typeof User>
+    }
+
+    await db
+      .insertQuery()
+      .table('users')
+      .multiInsert([{ username: 'virk' }, { username: 'nikk' }])
+    await db
+      .insertQuery()
+      .table('profiles')
+      .multiInsert([
+        { display_name: 'Hvirk', user_id: 1 },
+        { display_name: 'Nikk', user_id: 2 },
+      ])
+
+    const query = Profile.query().withCount('user').orderBy('id', 'asc')
+
+    const profiles = await query
+    assert.lengthOf(profiles, 2)
+    assert.equal(Number(profiles[0].$extras.user_count), 1)
+    assert.equal(Number(profiles[1].$extras.user_count), 1)
+  })
+
   test('allow cherry picking columns', async ({ assert, fs }) => {
     const app = new AppFactory().create(fs.baseUrl, () => {})
     await app.init()
@@ -2143,7 +2187,7 @@ test.group('Model | BelongsTo | bulk operations', (group) => {
     const profile = await Profile.find(1)
     try {
       await profile!.related('user').query().paginate(1)
-    } catch ({ message }) {
+    } catch ({ message }: any) {
       assert.equal(message, 'Cannot paginate a belongsTo relationship "(user)"')
     }
   })
