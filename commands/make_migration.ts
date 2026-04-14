@@ -64,6 +64,12 @@ export default class MakeMigration extends BaseCommand {
   declare contentsFrom: string
 
   /**
+   * Forcefully overwrite existing files
+   */
+  @flags.boolean({ description: 'Forcefully overwrite existing files', alias: 'f' })
+  declare force: boolean
+
+  /**
    * Not a valid connection
    */
   private printNotAValidConnection(connection: string) {
@@ -137,6 +143,7 @@ export default class MakeMigration extends BaseCommand {
     const fileName = `${prefix}_${action}_${tableName}_table.ts`
 
     const codemods = await this.createCodemods()
+    codemods.overwriteExisting = this.force === true
     await codemods.makeUsingStub(
       stubsRoot,
       `make/migration/${action}.stub`,
