@@ -5501,6 +5501,58 @@ test.group('Query Builder | limit', (group) => {
 
     await connection.disconnect()
   })
+
+  if (['mysql', 'mysql_legacy'].includes(process.env.DB!)) {
+    test('apply limit to delete query on mysql', async ({ assert }) => {
+      const connection = new Connection('primary', getConfig(), logger)
+      connection.connect()
+
+      const db = getQueryBuilder(getQueryClient(connection))
+      const { sql, bindings } = db.from('users').where('country_id', 1).limit(5).del().toSQL()
+
+      const { sql: knexSql, bindings: knexBindings } = connection
+        .client!.from('users')
+        .where('country_id', 1)
+        .limit(5)
+        .del()
+        .toSQL()
+
+      assert.equal(sql, knexSql)
+      assert.deepEqual(bindings, knexBindings)
+      assert.match(sql, /delete from .*users.* where .*country_id.* = \? limit \?/i)
+
+      await connection.disconnect()
+    })
+
+    test('execute delete with limit on mysql', async ({ assert }) => {
+      const connection = new Connection('primary', getConfig(), logger)
+      connection.connect()
+
+      await connection.client!.table('users').insert([
+        { country_id: 1, username: 'virk-1', email: 'virk-1@example.com' },
+        { country_id: 1, username: 'virk-2', email: 'virk-2@example.com' },
+        { country_id: 1, username: 'virk-3', email: 'virk-3@example.com' },
+        { country_id: 2, username: 'nikk', email: 'nikk@example.com' },
+      ])
+
+      const affected = await getQueryBuilder(getQueryClient(connection))
+        .from('users')
+        .where('country_id', 1)
+        .limit(2)
+        .del()
+
+      assert.equal(affected, 2)
+
+      const remaining = await getQueryBuilder(getQueryClient(connection))
+        .from('users')
+        .where('country_id', 1)
+        .count('* as total')
+
+      assert.equal(remaining[0].total, 1)
+
+      await connection.disconnect()
+    })
+  }
 })
 
 test.group('Query Builder | union', (group) => {
