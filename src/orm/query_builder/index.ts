@@ -804,7 +804,7 @@ export class ModelQueryBuilder
   /**
    * Paginate through rows inside a given table
    */
-  async paginate(page: number, perPage: number = 20): Promise<any> {
+  async paginate(page: number, perPage: number = 20, pageName: string = 'page'): Promise<any> {
     const isFetchCall =
       this.wrapResultsToModelInstances && (this.knexQuery as any)['_method'] === 'select'
 
@@ -840,8 +840,8 @@ export class ModelQueryBuilder
      * Choose paginator
      */
     const paginator = this.wrapResultsToModelInstances
-      ? new ModelPaginator(total, perPage, page, ...results)
-      : new SimplePaginator(total, perPage, page, ...results)
+      ? new ModelPaginator(total, perPage, page, pageName, ...results)
+      : new SimplePaginator(total, perPage, page, pageName, ...results)
 
     paginator.namingStrategy = this.model.namingStrategy
 

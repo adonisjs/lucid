@@ -450,7 +450,8 @@ export interface ModelQueryBuilderContract<Model extends LucidModel, Result = In
    */
   paginate(
     page: number,
-    perPage?: number
+    perPage?: number,
+    pageName?: string
   ): Promise<
     Result extends LucidRow ? ModelPaginatorContract<Result> : SimplePaginatorContract<Result>
   >

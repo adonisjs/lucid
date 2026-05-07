@@ -87,6 +87,7 @@ export class SnakeCaseNamingStrategy implements NamingStrategyContract {
     total: string
     perPage: string
     currentPage: string
+    pageName: string
     lastPage: string
     firstPage: string
     firstPageUrl: string
@@ -98,6 +99,7 @@ export class SnakeCaseNamingStrategy implements NamingStrategyContract {
       total: 'total',
       perPage: 'per_page',
       currentPage: 'current_page',
+      pageName: 'page_name',
       lastPage: 'last_page',
       firstPage: 'first_page',
       firstPageUrl: 'first_page_url',

@@ -7218,6 +7218,7 @@ test.group('Base Model | paginate', (group) => {
       total: 18,
       perPage: 5,
       currentPage: 1,
+      pageName: 'page',
       lastPage: 4,
       firstPage: 1,
       firstPageUrl: '/users?page=1',
@@ -7263,11 +7264,61 @@ test.group('Base Model | paginate', (group) => {
       total: 18,
       perPage: 5,
       currentPage: 1,
+      pageName: 'page',
       lastPage: 4,
       firstPage: 1,
       firstPageUrl: '/users?page=1',
       lastPageUrl: '/users?page=4',
       nextPageUrl: '/users?page=2',
+      previousPageUrl: null,
+    })
+  })
+
+  test('return URLs with the customized page name', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+
+    const BaseModel = getBaseModel(adapter)
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+
+      @column()
+      declare username: string
+
+      @column()
+      declare email: string
+    }
+
+    await db.insertQuery().table('users').multiInsert(getUsers(18))
+    const users = await User.query().paginate(1, 5, 'customPageName')
+    users.baseUrl('/users')
+
+    assert.instanceOf(users, ModelPaginator)
+
+    assert.lengthOf(users.all(), 5)
+    assert.instanceOf(users.all()[0], User)
+    assert.equal(users.perPage, 5)
+    assert.equal(users.currentPage, 1)
+    assert.equal(users.lastPage, 4)
+    assert.isTrue(users.hasPages)
+    assert.isTrue(users.hasMorePages)
+    assert.isFalse(users.isEmpty)
+    assert.equal(users.total, 18)
+    assert.isTrue(users.hasTotal)
+    assert.deepEqual(users.getMeta(), {
+      total: 18,
+      perPage: 5,
+      currentPage: 1,
+      pageName: 'customPageName',
+      lastPage: 4,
+      firstPage: 1,
+      firstPageUrl: '/users?customPageName=1',
+      lastPageUrl: '/users?customPageName=4',
+      nextPageUrl: '/users?customPageName=2',
       previousPageUrl: null,
     })
   })
@@ -7311,6 +7362,7 @@ test.group('Base Model | paginate', (group) => {
       total: 18,
       perPage: 5,
       currentPage: 1,
+      pageName: 'page',
       lastPage: 4,
       firstPage: 1,
       firstPageUrl: '/users?page=1',
@@ -7345,6 +7397,7 @@ test.group('Base Model | paginate', (group) => {
         total: 'total',
         perPage: 'perPage',
         currentPage: 'currentPage',
+        pageName: 'pageName',
         lastPage: 'lastPage',
         firstPage: 'firstPage',
         firstPageUrl: 'firstPageUrl',
@@ -7372,6 +7425,7 @@ test.group('Base Model | paginate', (group) => {
       total: 18,
       perPage: 5,
       currentPage: 1,
+      pageName: 'page',
       lastPage: 4,
       firstPage: 1,
       firstPageUrl: '/users?page=1',
@@ -7426,6 +7480,7 @@ test.group('Base Model | paginate', (group) => {
       total: 1,
       perPage: 5,
       currentPage: 1,
+      pageName: 'page',
       lastPage: 1,
       firstPage: 1,
       firstPageUrl: '/users?page=1',
