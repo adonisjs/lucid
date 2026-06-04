@@ -50,7 +50,7 @@ export default class MakeModel extends BaseCommand {
    */
   @flags.boolean({
     name: 'transformer',
-    alias: 'c',
+    alias: 't',
     description: 'Generate the transformer for the model',
   })
   declare transformer: boolean
