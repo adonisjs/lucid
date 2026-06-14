@@ -56,11 +56,14 @@ export class PgDialect implements DialectContract {
   #compileGetAllTables(schemas: string[]) {
     return this.client
       .query()
-      .from('pg_catalog.pg_tables')
-      .select(['tablename as name', 'schemaname as schema'])
-      .whereNotIn('schemaname', ['pg_catalog', 'information_schema'])
-      .whereIn('schemaname', schemas)
-      .orderBy('tablename', 'asc')
+      .from('pg_catalog.pg_class as c')
+      .join('pg_catalog.pg_namespace as n', 'n.oid', 'c.relnamespace')
+      .select(['c.relname as name', 'n.nspname as schema'])
+      .whereIn('c.relkind', ['r', 'p'])
+      .where('c.relispartition', false)
+      .whereNotIn('n.nspname', ['pg_catalog', 'information_schema'])
+      .whereIn('n.nspname', schemas)
+      .orderBy('c.relname', 'asc')
   }
 
   /**
