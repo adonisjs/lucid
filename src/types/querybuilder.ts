@@ -46,10 +46,12 @@ export type RawQuery =
 export type StrictValues =
   | string
   | number
+  | bigint
   | boolean
   | Date
   | Array<string>
   | Array<number>
+  | Array<bigint>
   | Array<Date>
   | Array<boolean>
   | Buffer
