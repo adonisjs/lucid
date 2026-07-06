@@ -11,9 +11,21 @@ import {
   type DialectContract,
   type SharedConfigNode,
   type QueryClientContract,
+  type DialectAdministrationContract,
 } from '../types/database.js'
 
 export class MssqlDialect implements DialectContract {
+  /**
+   * Database level administration operations for the dialect
+   */
+  static administration: DialectAdministrationContract = {
+    maintenanceDatabase: 'master',
+    async databaseExists(client, databaseName) {
+      const rows = await client.from('sys.databases').where('name', databaseName)
+      return rows.length > 0
+    },
+  }
+
   readonly name = 'mssql'
   readonly supportsAdvisoryLocks = false
   readonly supportsViews = false

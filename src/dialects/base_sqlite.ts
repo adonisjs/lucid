@@ -7,9 +7,23 @@
  * file that was distributed with this source code.
  */
 
-import type { DialectContract, QueryClientContract, SharedConfigNode } from '../types/database.js'
+import type {
+  DialectContract,
+  QueryClientContract,
+  SharedConfigNode,
+  DialectAdministrationContract,
+} from '../types/database.js'
 
 export abstract class BaseSqliteDialect implements DialectContract {
+  /**
+   * Database level administration operations for the dialect.
+   * The database lives inside a file on disk, created and
+   * removed from the filesystem directly
+   */
+  static administration: DialectAdministrationContract = {
+    usesFileDatabase: true,
+  }
+
   abstract readonly name: 'sqlite3' | 'better-sqlite3' | 'libsql'
   readonly supportsAdvisoryLocks = false
   readonly supportsViews = true

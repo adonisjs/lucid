@@ -7,47 +7,17 @@
  * file that was distributed with this source code.
  */
 
-import knex, { Knex } from 'knex'
+import knex, { type Knex } from 'knex'
 import { existsSync } from 'node:fs'
 import { dirname } from 'node:path'
 import { mkdir, unlink } from 'node:fs/promises'
+// @ts-expect-error
+import { resolveClientNameWithAliases } from 'knex/lib/util/helpers.js'
 
 import * as errors from '../errors.js'
 import LibSQLClient from '../clients/libsql.cjs'
-import type { ConnectionConfig } from '../types/database.js'
-
-/**
- * The list of clients on which the administrator can create and
- * drop databases
- */
-const SUPPORTED_CLIENTS = [
-  'sqlite',
-  'sqlite3',
-  'better-sqlite3',
-  'libsql',
-  'mysql',
-  'mysql2',
-  'pg',
-  'postgres',
-  'postgresql',
-  'redshift',
-  'mssql',
-]
-
-/**
- * The list of clients using a file backed database
- */
-const FILE_BACKED_CLIENTS = ['sqlite', 'sqlite3', 'better-sqlite3', 'libsql']
-
-/**
- * The list of clients speaking the PostgreSQL dialect
- */
-const PG_CLIENTS = ['pg', 'postgres', 'postgresql', 'redshift']
-
-/**
- * The list of clients speaking the MySQL dialect
- */
-const MYSQL_CLIENTS = ['mysql', 'mysql2']
+import { clientsToDialectsMapping } from '../dialects/index.js'
+import type { ConnectionConfig, DialectAdministrationContract } from '../types/database.js'
 
 /**
  * Database administrator performs database level operations like creating
@@ -56,12 +26,17 @@ const MYSQL_CLIENTS = ['mysql', 'mysql2']
  * Since the database in question may not exist yet, we cannot use the
  * regular lucid connections that are bound to the database defined
  * inside the config file. Instead, we create a standalone knex
- * connection to the maintenance database of the dialect
- * ("postgres" for PostgreSQL, "master" for MSSQL and
- * no database at all for MySQL).
+ * connection to the maintenance database of the dialect and
+ * delegate the dialect specific bits to the dialect
+ * "administration" implementation.
  */
 export class DatabaseAdministrator {
   #config: ConnectionConfig
+
+  /**
+   * Dialect specific implementation of the administration operations
+   */
+  #administration: DialectAdministrationContract
 
   /**
    * Reference to knex. The instance is lazily created when performing
@@ -70,11 +45,17 @@ export class DatabaseAdministrator {
   #client?: Knex
 
   constructor(config: ConnectionConfig) {
-    if (!SUPPORTED_CLIENTS.includes(config.client)) {
+    const clientName = resolveClientNameWithAliases(
+      config.client
+    ) as keyof typeof clientsToDialectsMapping
+
+    const administration = clientsToDialectsMapping[clientName]?.administration
+    if (!administration) {
       throw new errors.E_UNSUPPORTED_DB_ADMINISTRATION([config.client])
     }
 
     this.#config = config
+    this.#administration = administration
   }
 
   /**
@@ -82,7 +63,7 @@ export class DatabaseAdministrator {
    * database like sqlite or libsql
    */
   private usesFileDatabase(): boolean {
-    return FILE_BACKED_CLIENTS.includes(this.#config.client)
+    return this.#administration.usesFileDatabase === true
   }
 
   /**
@@ -117,26 +98,20 @@ export class DatabaseAdministrator {
    * question
    */
   private getMaintenanceConnection() {
+    if (this.#administration.usesFileDatabase) {
+      return this.resolveConnectionNode()
+    }
+
     const connection = this.resolveConnectionNode()
+    const { maintenanceDatabase } = this.#administration
 
-    if (PG_CLIENTS.includes(this.#config.client)) {
-      if (typeof connection === 'string') {
-        const url = new URL(connection)
-        url.pathname = '/postgres'
-        return url.toString()
-      }
-      return Object.assign({}, connection, { database: 'postgres' })
+    if (typeof connection === 'string') {
+      const url = new URL(connection)
+      url.pathname = maintenanceDatabase ? `/${maintenanceDatabase}` : '/'
+      return url.toString()
     }
 
-    if (MYSQL_CLIENTS.includes(this.#config.client)) {
-      return Object.assign({}, connection, { database: undefined })
-    }
-
-    if (this.#config.client === 'mssql') {
-      return Object.assign({}, connection, { database: 'master' })
-    }
-
-    return connection
+    return Object.assign({}, connection, { database: maintenanceDatabase ?? undefined })
   }
 
   /**
@@ -152,27 +127,16 @@ export class DatabaseAdministrator {
           ? { filename: (this.resolveConnectionNode() as { filename: string }).filename }
           : (this.getMaintenanceConnection() as Knex.Config['connection']),
         useNullAsDefault: true,
+        /**
+         * Debug is disabled like lucid does for its own knex instances,
+         * since this standalone connection does not go through the
+         * QueryClient instrumentation emitting "db:query" events
+         */
         debug: false,
       })
     }
 
     return this.#client
-  }
-
-  /**
-   * Quotes the database name as per the dialect rules to avoid
-   * SQL injection via the database name
-   */
-  private quoteIdentifier(name: string): string {
-    if (MYSQL_CLIENTS.includes(this.#config.client)) {
-      return '`' + name.replace(/`/g, '``') + '`'
-    }
-
-    if (this.#config.client === 'mssql') {
-      return '[' + name.replace(/]/g, ']]') + ']'
-    }
-
-    return '"' + name.replace(/"/g, '""') + '"'
   }
 
   /**
@@ -205,27 +169,11 @@ export class DatabaseAdministrator {
    * Returns a boolean to know if the database already exists
    */
   async databaseExists(): Promise<boolean> {
-    if (this.usesFileDatabase()) {
+    if (this.#administration.usesFileDatabase) {
       return existsSync(this.fileDatabasePath())
     }
 
-    const client = this.getClient()
-    const databaseName = this.databaseName
-
-    if (MYSQL_CLIENTS.includes(this.#config.client)) {
-      const rows = await client
-        .from('information_schema.schemata')
-        .where('schema_name', databaseName)
-      return rows.length > 0
-    }
-
-    if (this.#config.client === 'mssql') {
-      const rows = await client.from('sys.databases').where('name', databaseName)
-      return rows.length > 0
-    }
-
-    const rows = await client.from('pg_database').where('datname', databaseName)
-    return rows.length > 0
+    return this.#administration.databaseExists(this.getClient(), this.databaseName)
   }
 
   /**
@@ -239,7 +187,8 @@ export class DatabaseAdministrator {
       return
     }
 
-    await this.getClient().raw(`CREATE DATABASE ${this.quoteIdentifier(this.databaseName)}`)
+    const client = this.getClient()
+    await client.raw(`CREATE DATABASE ${client.ref(this.databaseName).toSQL().sql}`)
   }
 
   /**
@@ -257,7 +206,8 @@ export class DatabaseAdministrator {
       return
     }
 
-    await this.getClient().raw(`DROP DATABASE ${this.quoteIdentifier(this.databaseName)}`)
+    const client = this.getClient()
+    await client.raw(`DROP DATABASE ${client.ref(this.databaseName).toSQL().sql}`)
   }
 
   /**
