@@ -73,6 +73,112 @@ test.group('db:drop', (group) => {
     dbDrop.assertLogMatches(/does not exist/)
   })
 
+  test('do not drop database in production when prompt is rejected', async ({
+    fs,
+    assert,
+    cleanup,
+  }) => {
+    process.env.NODE_ENV = 'production'
+    cleanup(() => {
+      delete process.env.NODE_ENV
+    })
+
+    const administrator = new DatabaseAdministrator(getDbManagementConfig())
+    try {
+      await administrator.createDatabase()
+    } finally {
+      await administrator.disconnect()
+    }
+
+    const ace = await new AceFactory().make(fs.baseUrl, { importer: () => {} })
+    await ace.app.init()
+    await ace.app.boot()
+    ace.app.container.singleton('lucid.db', () => getDb(undefined, getDatabaseConfig()))
+    ace.ui.switchMode('raw')
+
+    const dbDrop = await ace.create(DbDrop, [])
+    dbDrop.prompt
+      .trap('You are in production environment. Want to continue dropping the database?')
+      .reject()
+
+    await dbDrop.exec()
+
+    const postDropAdministrator = new DatabaseAdministrator(getDbManagementConfig())
+    try {
+      assert.isTrue(await postDropAdministrator.databaseExists())
+    } finally {
+      await postDropAdministrator.disconnect()
+    }
+  })
+
+  test('drop database in production when prompt is accepted', async ({ fs, assert, cleanup }) => {
+    process.env.NODE_ENV = 'production'
+    cleanup(() => {
+      delete process.env.NODE_ENV
+    })
+
+    const administrator = new DatabaseAdministrator(getDbManagementConfig())
+    try {
+      await administrator.createDatabase()
+    } finally {
+      await administrator.disconnect()
+    }
+
+    const ace = await new AceFactory().make(fs.baseUrl, { importer: () => {} })
+    await ace.app.init()
+    await ace.app.boot()
+    ace.app.container.singleton('lucid.db', () => getDb(undefined, getDatabaseConfig()))
+    ace.ui.switchMode('raw')
+
+    const dbDrop = await ace.create(DbDrop, [])
+    dbDrop.prompt
+      .trap('You are in production environment. Want to continue dropping the database?')
+      .accept()
+
+    await dbDrop.exec()
+
+    const postDropAdministrator = new DatabaseAdministrator(getDbManagementConfig())
+    try {
+      assert.isFalse(await postDropAdministrator.databaseExists())
+    } finally {
+      await postDropAdministrator.disconnect()
+    }
+  })
+
+  test('drop database in production when --force flag is passed', async ({
+    fs,
+    assert,
+    cleanup,
+  }) => {
+    process.env.NODE_ENV = 'production'
+    cleanup(() => {
+      delete process.env.NODE_ENV
+    })
+
+    const administrator = new DatabaseAdministrator(getDbManagementConfig())
+    try {
+      await administrator.createDatabase()
+    } finally {
+      await administrator.disconnect()
+    }
+
+    const ace = await new AceFactory().make(fs.baseUrl, { importer: () => {} })
+    await ace.app.init()
+    await ace.app.boot()
+    ace.app.container.singleton('lucid.db', () => getDb(undefined, getDatabaseConfig()))
+    ace.ui.switchMode('raw')
+
+    const dbDrop = await ace.create(DbDrop, ['--force'])
+    await dbDrop.exec()
+
+    const postDropAdministrator = new DatabaseAdministrator(getDbManagementConfig())
+    try {
+      assert.isFalse(await postDropAdministrator.databaseExists())
+    } finally {
+      await postDropAdministrator.disconnect()
+    }
+  })
+
   test('print error when using an invalid connection name', async ({ fs, assert }) => {
     const ace = await new AceFactory().make(fs.baseUrl, { importer: () => {} })
     await ace.app.init()
