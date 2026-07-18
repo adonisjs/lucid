@@ -34,10 +34,7 @@ export type ValueWithSubQueries<T> = T | ChainableContract | RawQuery
  * Acceptable raw queries
  */
 export type RawQuery =
-  | RawBuilderContract
-  | RawQueryBuilderContract
-  | Knex.Raw
-  | Knex.RawQueryBuilder
+  RawBuilderContract | RawQueryBuilderContract | Knex.Raw | Knex.RawQueryBuilder
 
 /**
  * A known set of values allowed when defining values for different

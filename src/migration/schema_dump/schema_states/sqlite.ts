@@ -59,8 +59,7 @@ export class SqliteSchemaState extends BaseSchemaState {
    */
   private getDatabasePath() {
     const connection = this.connectionConfig.connection as
-      | SqliteConfig['connection']
-      | LibSQLConfig['connection']
+      SqliteConfig['connection'] | LibSQLConfig['connection']
     const filename = connection?.filename
 
     if (!filename) {

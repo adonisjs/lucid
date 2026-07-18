@@ -235,8 +235,7 @@ export class QueryClient implements QueryClientContract {
   transaction(options?: { isolationLevel?: IsolationLevels }): Promise<TransactionClientContract>
   async transaction<T>(
     callback?:
-      | { isolationLevel?: IsolationLevels }
-      | ((trx: TransactionClientContract) => Promise<any>),
+      { isolationLevel?: IsolationLevels } | ((trx: TransactionClientContract) => Promise<any>),
     options?: { isolationLevel?: IsolationLevels }
   ): Promise<TransactionClientContract | T> {
     const trx = await this.getWriteClient().transaction(options)
