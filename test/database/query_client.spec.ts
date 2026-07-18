@@ -14,7 +14,7 @@ import { QueryClient } from '../../src/query_client/index.js'
 import {
   logger,
   setup,
-  cleanup,
+  cleanup as dbCleanup,
   getConfig,
   resetTables,
   createEmitter,
@@ -26,7 +26,7 @@ test.group('Query client', (group) => {
   })
 
   group.teardown(async () => {
-    await cleanup()
+    await dbCleanup()
   })
 
   group.each.teardown(async () => {
@@ -277,7 +277,7 @@ test.group('Query client | dual mode', (group) => {
   })
 
   group.teardown(async () => {
-    await cleanup()
+    await dbCleanup()
   })
 
   group.each.teardown(async () => {
@@ -356,7 +356,7 @@ test.group('Query client | read mode', (group) => {
   })
 
   group.teardown(async () => {
-    await cleanup()
+    await dbCleanup()
   })
 
   group.each.teardown(async () => {
@@ -423,7 +423,7 @@ test.group('Query client | write mode', (group) => {
   })
 
   group.teardown(async () => {
-    await cleanup()
+    await dbCleanup()
   })
 
   group.each.teardown(async () => {
@@ -503,7 +503,7 @@ if (!['sqlite', 'mssql', 'better_sqlite', 'libsql'].includes(process.env.DB!)) {
     })
 
     group.teardown(async () => {
-      await cleanup()
+      await dbCleanup()
     })
 
     group.each.teardown(async () => {
@@ -636,7 +636,7 @@ test.group('Query client | get tables', (group) => {
   })
 
   group.teardown(async () => {
-    await cleanup()
+    await dbCleanup()
   })
 
   group.each.teardown(async () => {
@@ -692,7 +692,7 @@ test.group('Query client | get primary keys', (group) => {
   })
 
   group.teardown(async () => {
-    await cleanup()
+    await dbCleanup()
   })
 
   group.each.teardown(async () => {
@@ -756,7 +756,7 @@ if (process.env.DB === 'pg') {
     })
 
     group.teardown(async () => {
-      await cleanup()
+      await dbCleanup()
     })
 
     test('get tables with schema info for non-public schemas', async ({
