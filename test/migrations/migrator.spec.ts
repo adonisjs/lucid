@@ -1570,6 +1570,54 @@ test.group('Migrator', (group) => {
     assert.isTrue(await db.connection().schema.hasTable('schema_users'))
   })
 
+  test('migrate with pool of 2 acquires and releases advisory lock correctly', async ({
+    fs,
+    assert,
+    cleanup,
+  }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+
+    /**
+     * Pool of 2 is the tightest case for connection pinning: one
+     * connection is held for the advisory lock lifecycle and the
+     * other is left to run the migration queries. If pinning starved
+     * the pool, this migration would deadlock.
+     */
+    const config = getConfig()
+    config.pool = { min: 2, max: 2 }
+    const db = getDb(undefined, {
+      connection: 'primary',
+      connections: { primary: config, secondary: config },
+    })
+    cleanup(() => db.manager.closeAll())
+
+    await fs.create(
+      'database/migrations/users_pool2.ts',
+      `
+      import { BaseSchema as Schema } from '../../../../src/schema/main.js'
+      export default class User extends Schema {
+        public async up () {
+          this.schema.createTable('schema_users', (table) => {
+            table.increments()
+          })
+        }
+      }
+    `
+    )
+
+    const migrator = getMigrator(db, app, {
+      direction: 'up',
+      connectionName: 'primary',
+    })
+
+    await migrator.run()
+
+    assert.isNull(migrator.error)
+    assert.equal(migrator.status, 'completed')
+    assert.isTrue(await db.connection().schema.hasTable('schema_users'))
+  })
+
   test('migrate with pool of 1 acquires and releases advisory lock correctly', async ({
     fs,
     assert,
@@ -1611,4 +1659,129 @@ test.group('Migrator', (group) => {
     assert.equal(migrator.status, 'completed')
     assert.isTrue(await db.connection().schema.hasTable('schema_users'))
   })
+
+  test('rollback with a multi connection pool acquires and releases advisory lock correctly', async ({
+    fs,
+    assert,
+    cleanup,
+  }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+
+    /**
+     * The "up" pool tests already exercise pinning during acquire. This
+     * test covers the "down" direction, ensuring the pinned connection
+     * is acquired and released correctly across a rollback as well.
+     */
+    const config = getConfig()
+    config.pool = { min: 2, max: 2 }
+    const db = getDb(undefined, {
+      connection: 'primary',
+      connections: { primary: config, secondary: config },
+    })
+    cleanup(() => db.manager.closeAll())
+
+    await fs.create(
+      'database/migrations/users_pool_rollback.ts',
+      `
+      import { BaseSchema as Schema } from '../../../../src/schema/main.js'
+      export default class User extends Schema {
+        public async up () {
+          this.schema.createTable('schema_users', (table) => {
+            table.increments()
+          })
+        }
+
+        public async down () {
+          this.schema.dropTable('schema_users')
+        }
+      }
+    `
+    )
+
+    const migrator = getMigrator(db, app, {
+      direction: 'up',
+      connectionName: 'primary',
+    })
+    await migrator.run()
+
+    assert.isNull(migrator.error)
+    assert.equal(migrator.status, 'completed')
+    assert.isTrue(await db.connection().schema.hasTable('schema_users'))
+
+    const rollbackMigrator = getMigrator(db, app, {
+      direction: 'down',
+      connectionName: 'primary',
+    })
+    await rollbackMigrator.run()
+
+    assert.isNull(rollbackMigrator.error)
+    assert.equal(rollbackMigrator.status, 'completed')
+    assert.isFalse(await db.connection().schema.hasTable('schema_users'))
+  })
+
+  test('surface the acquire lock error without masking it as a release error', async ({
+    fs,
+    assert,
+    cleanup,
+  }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+
+    const config = getConfig()
+    config.pool = { min: 2, max: 4 }
+    const db = getDb(undefined, {
+      connection: 'primary',
+      connections: { primary: config, secondary: config },
+    })
+    cleanup(() => db.manager.closeAll())
+
+    /**
+     * Simulate another process holding the advisory lock on its own
+     * database session, so the migrator is unable to acquire it.
+     */
+    const client = db.connection('primary')
+    const knexClient = client.getWriteClient()
+    const heldConnection = await knexClient.client.acquireConnection()
+    const locked = await client.dialect.getAdvisoryLock(1, undefined, heldConnection)
+    assert.isTrue(locked)
+
+    cleanup(async () => {
+      await client.dialect.releaseAdvisoryLock(1, heldConnection)
+      knexClient.client.releaseConnection(heldConnection)
+    })
+
+    await fs.create(
+      'database/migrations/users_contended.ts',
+      `
+      import { BaseSchema as Schema } from '../../../../src/schema/main.js'
+      export default class User extends Schema {
+        public async up () {
+          this.schema.createTable('schema_users', (table) => {
+            table.increments()
+          })
+        }
+      }
+    `
+    )
+
+    const migrator = getMigrator(db, app, {
+      direction: 'up',
+      connectionName: 'primary',
+    })
+
+    /**
+     * run() must resolve (not throw). Previously the failed acquisition
+     * triggered a bogus release that threw E_UNABLE_RELEASE_LOCK and
+     * masked the real "unable to acquire lock" error.
+     */
+    await migrator.run()
+
+    assert.equal(migrator.status, 'error')
+    assert.equal((migrator.error as any)?.code, 'E_UNABLE_ACQUIRE_LOCK')
+    assert.isFalse(await db.connection().schema.hasTable('schema_users'))
+  }).skip(
+    ['sqlite', 'better_sqlite', 'libsql', 'mssql'].includes(process.env.DB!),
+    'Advisory locks are only supported on PostgreSQL and MySQL'
+  )
 })

@@ -99,6 +99,14 @@ export class MigrationRunner extends EventEmitter {
   private lockConnection: any = null
 
   /**
+   * Tracks whether we have actually acquired the advisory lock. We only
+   * attempt to release the lock when this is true, otherwise a failed
+   * acquisition would trigger a bogus release (releasing a lock we never
+   * held), masking the original "unable to acquire lock" error.
+   */
+  private lockAcquired: boolean = false
+
+  /**
    * An array of files we have successfully migrated. The files are
    * collected regardless of `up` or `down` methods
    */
@@ -298,6 +306,7 @@ export class MigrationRunner extends EventEmitter {
       if (!acquired) {
         throw new errors.E_UNABLE_ACQUIRE_LOCK()
       }
+      this.lockAcquired = true
       this.emit('acquire:lock')
     } catch (error) {
       this.releaseLockConnection()
@@ -314,6 +323,15 @@ export class MigrationRunner extends EventEmitter {
       return
     }
 
+    /**
+     * Never attempt to release a lock we did not acquire. Doing so would
+     * throw "E_UNABLE_RELEASE_LOCK" and mask the real error (for example
+     * "E_UNABLE_ACQUIRE_LOCK" raised when another process holds the lock).
+     */
+    if (!this.lockAcquired) {
+      return
+    }
+
     try {
       const released = await this.client.dialect.releaseAdvisoryLock(1, this.lockConnection)
       if (!released) {
@@ -321,6 +339,7 @@ export class MigrationRunner extends EventEmitter {
       }
       this.emit('release:lock')
     } finally {
+      this.lockAcquired = false
       this.releaseLockConnection()
     }
   }
