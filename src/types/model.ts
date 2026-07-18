@@ -97,13 +97,15 @@ export type OptionalTypedDecorator<PropType> = <
  * property.
  */
 export type ModelAttributes<Model extends LucidRow> = {
-  [Filtered in {
-    [P in keyof Model]: P extends keyof LucidRow | 'serializeExtras'
-      ? never
-      : Model[P] extends Function | ModelRelationTypes
+  [
+    Filtered in {
+      [P in keyof Model]: P extends keyof LucidRow | 'serializeExtras'
         ? never
-        : P
-  }[keyof Model]]: Model[Filtered]
+        : Model[P] extends Function | ModelRelationTypes
+          ? never
+          : P
+    }[keyof Model]
+  ]: Model[Filtered]
 }
 
 /**

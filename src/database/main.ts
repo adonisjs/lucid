@@ -227,8 +227,7 @@ export class Database extends Macroable {
   transaction(options?: { isolationLevel?: IsolationLevels }): Promise<TransactionClientContract>
   transaction<T>(
     callbackOrOptions?:
-      | ((trx: TransactionClientContract) => Promise<T>)
-      | { isolationLevel?: IsolationLevels },
+      ((trx: TransactionClientContract) => Promise<T>) | { isolationLevel?: IsolationLevels },
     options?: { isolationLevel?: IsolationLevels }
   ): Promise<TransactionClientContract | T> {
     const client = this.connection()

@@ -258,8 +258,7 @@ export class TransactionClient extends EventEmitter implements TransactionClient
    */
   async transaction(
     callback?:
-      | { isolationLevel?: IsolationLevels }
-      | ((trx: TransactionClientContract) => Promise<any>),
+      { isolationLevel?: IsolationLevels } | ((trx: TransactionClientContract) => Promise<any>),
     options?: { isolationLevel?: IsolationLevels }
   ): Promise<any> {
     const trx = await this.knexClient.transaction(options)

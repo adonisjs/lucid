@@ -29,11 +29,7 @@ import { type OrmSchemaGeneratorConfig } from './schema_generator.ts'
  * type
  */
 export type IsolationLevels =
-  | 'read uncommitted'
-  | 'read committed'
-  | 'snapshot'
-  | 'repeatable read'
-  | 'serializable'
+  'read uncommitted' | 'read committed' | 'snapshot' | 'repeatable read' | 'serializable'
 
 export type ColumnInfo = Knex.ColumnInfo
 
@@ -568,11 +564,7 @@ type MssqlConnectionNode = {
     instanceName?: string
     enableArithAbort?: boolean
     isolationLevel?:
-      | 'READ_UNCOMMITTED'
-      | 'READ_COMMITTED'
-      | 'REPEATABLE_READ'
-      | 'SERIALIZABLE'
-      | 'SNAPSHOT'
+      'READ_UNCOMMITTED' | 'READ_COMMITTED' | 'REPEATABLE_READ' | 'SERIALIZABLE' | 'SNAPSHOT'
     maxRetriesOnTransientErrors?: number
     multiSubnetFailover?: boolean
     packetSize?: number

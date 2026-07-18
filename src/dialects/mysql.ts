@@ -266,9 +266,7 @@ export class MysqlDialect implements DialectContract {
    * Releases the advisory lock
    */
   async releaseAdvisoryLock(key: string, connection?: any): Promise<boolean> {
-    const query = this.client
-      .getWriteClient()
-      .raw(`SELECT RELEASE_LOCK('${key}') as lock_status;`)
+    const query = this.client.getWriteClient().raw(`SELECT RELEASE_LOCK('${key}') as lock_status;`)
 
     if (connection) {
       query.connection(connection)
