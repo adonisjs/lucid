@@ -88,6 +88,7 @@ export class CamelCaseNamingStrategy implements NamingStrategyContract {
     total: string
     perPage: string
     currentPage: string
+    pageName: string
     lastPage: string
     firstPage: string
     firstPageUrl: string
@@ -99,6 +100,7 @@ export class CamelCaseNamingStrategy implements NamingStrategyContract {
       total: 'total',
       perPage: 'perPage',
       currentPage: 'currentPage',
+      pageName: 'pageName',
       lastPage: 'lastPage',
       firstPage: 'firstPage',
       firstPageUrl: 'firstPageUrl',

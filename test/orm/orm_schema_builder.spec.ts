@@ -1527,4 +1527,119 @@ test.group('OrmSchemaBuilder | Name Conversion', (group) => {
       }"
     `)
   })
+
+  test('custom type rule with decorators array replaces default decorators', async ({ assert }) => {
+    const db = getDb()
+    const connection = db.connection()
+    const generator = new OrmSchemaBuilder(connection)
+
+    generator.loadRules([
+      {
+        types: {
+          string: {
+            tsType: 'string',
+            decorators: [{ name: '@column', args: { serializeAs: null } }],
+            imports: [],
+          },
+        },
+      },
+    ])
+
+    const columns = {
+      id: { type: 'integer', nullable: false },
+      name: { type: 'varchar', nullable: false },
+    }
+
+    const schemas = generator.generateSchemas([{ name: 'test_type', columns, primaryKeys: ['id'] }])
+    const output = schemas.classes.join('\n')
+
+    assert.snapshot(output).matchInline(`
+      "export class TestTypeSchema extends BaseModel {
+        static $columns = ['id', 'name'] as const
+        $columns = TestTypeSchema.$columns
+        @column({ isPrimary: true })
+        declare id: number
+        @column({ serializeAs: null })
+        declare name: string
+      }"
+    `)
+  })
+
+  test('custom type rule with deprecated decorator string replaces default', async ({ assert }) => {
+    const db = getDb()
+    const connection = db.connection()
+    const generator = new OrmSchemaBuilder(connection)
+
+    generator.loadRules([
+      {
+        types: {
+          decimal: {
+            tsType: 'Decimal',
+            decorator: '@decimal()',
+            imports: [{ source: 'decimal.js', namedImports: ['Decimal'] }],
+          },
+        },
+      },
+    ])
+
+    const columns = {
+      id: { type: 'integer', nullable: false },
+      price: { type: 'decimal', nullable: false },
+    }
+
+    const schemas = generator.generateSchemas([
+      { name: 'test_decimal', columns, primaryKeys: ['id'] },
+    ])
+    const output = schemas.classes.join('\n')
+
+    assert.snapshot(output).matchInline(`
+      "export class TestDecimalSchema extends BaseModel {
+        static $columns = ['id', 'price'] as const
+        $columns = TestDecimalSchema.$columns
+        @column({ isPrimary: true })
+        declare id: number
+        @decimal()
+        declare price: Decimal
+      }"
+    `)
+  })
+
+  test('overriding default column rule replaces decorators entirely', async ({ assert }) => {
+    const db = getDb()
+    const connection = db.connection()
+    const generator = new OrmSchemaBuilder(connection)
+
+    generator.loadRules([
+      {
+        columns: {
+          created_at: {
+            tsType: 'string',
+            decorators: [{ name: '@column' }],
+            imports: [],
+          },
+        },
+      },
+    ])
+
+    const columns = {
+      id: { type: 'integer', nullable: false },
+      created_at: { type: 'timestamp', nullable: false },
+    }
+
+    const schemas = generator.generateSchemas([
+      { name: 'test_override', columns, primaryKeys: ['id'] },
+    ])
+    const output = schemas.classes.join('\n')
+
+    assert.snapshot(output).matchInline(`
+      "export class TestOverrideSchema extends BaseModel {
+        static $columns = ['createdAt', 'id'] as const
+        $columns = TestOverrideSchema.$columns
+        @column()
+        declare createdAt: string
+        @column({ isPrimary: true })
+        declare id: number
+      }"
+    `)
+  })
 })

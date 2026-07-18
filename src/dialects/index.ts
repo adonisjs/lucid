@@ -20,11 +20,18 @@ import {
   type SharedConfigNode,
   type QueryClientContract,
   type ConnectionContract,
+  type DialectAdministrationContract,
 } from '../types/database.js'
 
 export const clientsToDialectsMapping: {
   [K in ConnectionContract['clientName']]: {
     new (client: QueryClientContract, config: SharedConfigNode): DialectContract
+
+    /**
+     * Database level administration operations. Not defined when the
+     * dialect does not support creating or dropping databases
+     */
+    administration?: DialectAdministrationContract
   }
 } = {
   'mssql': MssqlDialect,

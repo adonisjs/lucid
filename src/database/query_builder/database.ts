@@ -304,7 +304,7 @@ export class DatabaseQueryBuilder extends Chainable implements DatabaseQueryBuil
   /**
    * Paginate through rows inside a given table
    */
-  async paginate(page: number, perPage: number = 20) {
+  async paginate(page: number, perPage: number = 20, pageName = 'page') {
     /**
      * Cast to number
      */
@@ -321,7 +321,7 @@ export class DatabaseQueryBuilder extends Chainable implements DatabaseQueryBuil
     const total = aggregates[0].total
     const results = total > 0 ? await this.forPage(page, perPage).exec() : []
 
-    return new SimplePaginator(total, perPage, page, ...results)
+    return new SimplePaginator(total, perPage, page, pageName, ...results)
   }
 
   /**

@@ -88,6 +88,39 @@ export interface DialectContract {
 }
 
 /**
+ * Dialect specific implementation of database level administration
+ * operations like creating or dropping a database.
+ *
+ * The methods are static (exposed on the dialect class) since the
+ * database in question may not exist yet and therefore no lucid
+ * connection can be established.
+ */
+export type DialectAdministrationContract =
+  | {
+      /**
+       * The dialect stores the database inside a file on
+       * disk (sqlite, libsql)
+       */
+      usesFileDatabase: true
+    }
+  | {
+      usesFileDatabase?: false
+
+      /**
+       * The database to connect to when running "CREATE DATABASE"
+       * and "DROP DATABASE" queries. Set to null when the dialect
+       * accepts connections without a selected database (MySQL)
+       */
+      maintenanceDatabase: string | null
+
+      /**
+       * Returns a boolean to know if the given database exists. The
+       * client is connected to the maintenance database
+       */
+      databaseExists(client: Knex, databaseName: string): Promise<boolean>
+    }
+
+/**
  * Shape of the transaction function to create a new transaction
  */
 export interface TransactionFn {

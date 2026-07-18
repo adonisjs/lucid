@@ -104,3 +104,21 @@ export const E_UNSUPPORTED_CLIENT = createError<[string]>(
   'E_UNSUPPORTED_CLIENT',
   500
 )
+
+/**
+ * The client does not support creating or dropping databases
+ */
+export const E_UNSUPPORTED_DB_ADMINISTRATION = createError<[string]>(
+  'Cannot create or drop a database when using "%s" client',
+  'E_UNSUPPORTED_DB_ADMINISTRATION',
+  500
+)
+
+/**
+ * The database name cannot be resolved from the connection config
+ */
+export const E_MISSING_DATABASE_NAME = createError<[string]>(
+  'Cannot resolve database name from the "%s" connection config',
+  'E_MISSING_DATABASE_NAME',
+  500
+)

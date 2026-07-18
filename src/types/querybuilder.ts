@@ -745,6 +745,7 @@ export type SimplePaginatorMetaKeys = {
   total: string
   perPage: string
   currentPage: string
+  pageName: string
   lastPage: string
   firstPage: string
   firstPageUrl: string

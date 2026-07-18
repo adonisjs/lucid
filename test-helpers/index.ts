@@ -157,6 +157,40 @@ export function getConfig(): ConnectionConfig {
 }
 
 /**
+ * Returns a connection config pointing to a database dedicated to the
+ * "db:create" and "db:drop" commands tests, so that the database used
+ * by the rest of the test suite is never touched.
+ *
+ * MySQL requires a user with global "CREATE" privileges to create
+ * databases, therefore we connect using the root user.
+ */
+export function getDbManagementConfig(): ConnectionConfig {
+  const config = getConfig()
+
+  if (typeof config.connection === 'object' && 'filename' in config.connection) {
+    return {
+      ...config,
+      connection: {
+        ...config.connection,
+        filename:
+          config.client === 'libsql'
+            ? `file:${join(SQLITE_BASE_PATH, 'db-management.sqlite')}`
+            : join(SQLITE_BASE_PATH, 'db-management.sqlite'),
+      },
+    } as ConnectionConfig
+  }
+
+  return {
+    ...config,
+    connection: {
+      ...(config.connection as object),
+      ...(['mysql', 'mysql2'].includes(config.client) ? { user: 'root' } : {}),
+      database: 'lucid_db_management',
+    },
+  } as ConnectionConfig
+}
+
+/**
  * Returns an instance of knex for testing
  */
 export function getKnex(config: Knex.Config): Knex {

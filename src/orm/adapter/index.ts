@@ -22,7 +22,7 @@ import {
  * model instances from it.
  */
 export class Adapter implements AdapterContract {
-  constructor(private db: Database) {}
+  constructor(protected db: Database) {}
 
   private getPrimaryKeyColumnName(Model: LucidModel) {
     return Model.$keys.attributesToColumns.get(Model.primaryKey, Model.primaryKey)

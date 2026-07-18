@@ -11,9 +11,21 @@ import {
   type DialectContract,
   type SharedConfigNode,
   type QueryClientContract,
+  type DialectAdministrationContract,
 } from '../types/database.js'
 
 export class PgDialect implements DialectContract {
+  /**
+   * Database level administration operations for the dialect
+   */
+  static administration: DialectAdministrationContract = {
+    maintenanceDatabase: 'postgres',
+    async databaseExists(client, databaseName) {
+      const rows = await client.from('pg_database').where('datname', databaseName)
+      return rows.length > 0
+    },
+  }
+
   readonly name = 'postgres'
   readonly supportsAdvisoryLocks = true
   readonly supportsViews = true

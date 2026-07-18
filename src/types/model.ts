@@ -93,13 +93,12 @@ export type OptionalTypedDecorator<PropType> = <
 /**
  * A complex type that filters out functions and relationships from the
  * model attributes and consider all other properties as database
- * columns. Alternatively, the user can self define a `$columns`
- * property.
+ * columns.
  */
 export type ModelAttributes<Model extends LucidRow> = {
   [
     Filtered in {
-      [P in keyof Model]: P extends keyof LucidRow | 'serializeExtras'
+      [P in keyof Model]: P extends keyof LucidRow | 'serializeExtras' | '$columns'
         ? never
         : Model[P] extends Function | ModelRelationTypes
           ? never
@@ -453,7 +452,8 @@ export interface ModelQueryBuilderContract<Model extends LucidModel, Result = In
    */
   paginate(
     page: number,
-    perPage?: number
+    perPage?: number,
+    pageName?: string
   ): Promise<
     Result extends LucidRow ? ModelPaginatorContract<Result> : SimplePaginatorContract<Result>
   >

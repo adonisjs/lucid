@@ -44,7 +44,20 @@ export class OrmSchemaBuilder {
    * Load user-defined schema rules
    */
   loadRules(rules: SchemaRules[]): void {
-    this.schema = merge.all<Required<SchemaRules>>([this.schema, ...rules])
+    this.schema = merge.all<Required<SchemaRules>>([this.schema, ...rules], {
+      arrayMerge: (_target, source) => source,
+      isMergeableObject: (value) => {
+        if (!value || typeof value !== 'object') return false
+        /**
+         * ColumnInfo objects (identified by having `tsType`) should be
+         * replaced entirely, not deep merged. This prevents default
+         * decorators/imports from leaking into user-defined rules.
+         */
+        if ('tsType' in value) return false
+        const tag = Object.prototype.toString.call(value)
+        return tag !== '[object RegExp]' && tag !== '[object Date]'
+      },
+    })
   }
 
   /**

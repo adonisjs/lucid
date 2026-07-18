@@ -11,9 +11,23 @@ import {
   type DialectContract,
   type SharedConfigNode,
   type QueryClientContract,
+  type DialectAdministrationContract,
 } from '../types/database.js'
 
 export class RedshiftDialect implements DialectContract {
+  /**
+   * Database level administration operations for the dialect.
+   * Redshift clusters ship with a default "dev" database
+   * acting as the maintenance database
+   */
+  static administration: DialectAdministrationContract = {
+    maintenanceDatabase: 'dev',
+    async databaseExists(client, databaseName) {
+      const rows = await client.from('pg_database').where('datname', databaseName)
+      return rows.length > 0
+    },
+  }
+
   readonly name = 'redshift'
   readonly supportsAdvisoryLocks = false
   readonly supportsViews = true
