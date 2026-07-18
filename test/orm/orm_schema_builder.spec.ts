@@ -1413,6 +1413,117 @@ test.group('OrmSchemaBuilder | Name Conversion', (group) => {
     `)
   })
 
+  test('set explicit columnName when snake_case round-trip is lossy', async ({ assert }) => {
+    const db = getDb()
+    const connection = db.connection()
+    const generator = new OrmSchemaBuilder(connection)
+
+    const columns = {
+      'id': { type: 'integer', nullable: false },
+      'player1_id': { type: 'varchar', nullable: false },
+    }
+
+    const schemas = generator.generateSchemas([{ name: 'games', columns, primaryKeys: ['id'] }])
+    const output = schemas.classes.join('\n')
+
+    assert.snapshot(output).matchInline(`
+      "export class GameSchema extends BaseModel {
+        static $columns = ['id', 'player1Id'] as const
+        $columns = GameSchema.$columns
+        @column({ isPrimary: true })
+        declare id: number
+        @column({ columnName: 'player1_id' })
+        declare player1Id: string
+      }"
+    `)
+  })
+
+  test('do not override a user-defined columnName on a lossy column', async ({ assert }) => {
+    const db = getDb()
+    const connection = db.connection()
+    const generator = new OrmSchemaBuilder(connection)
+
+    generator.loadRules([
+      {
+        columns: {
+          player1_id: {
+            tsType: 'string',
+            decorators: [{ name: '@column', args: { columnName: 'custom_column' } }],
+          },
+        },
+      },
+    ])
+
+    const columns = {
+      'id': { type: 'integer', nullable: false },
+      'player1_id': { type: 'varchar', nullable: false },
+    }
+
+    const schemas = generator.generateSchemas([{ name: 'games', columns, primaryKeys: ['id'] }])
+    const output = schemas.classes.join('\n')
+
+    /**
+     * The user's columnName must win and the auto-injected one must not
+     * leak in as a duplicate or override.
+     */
+    assert.snapshot(output).matchInline(`
+      "export class GameSchema extends BaseModel {
+        static $columns = ['id', 'player1Id'] as const
+        $columns = GameSchema.$columns
+        @column({ isPrimary: true })
+        declare id: number
+        @column({ columnName: 'custom_column' })
+        declare player1Id: string
+      }"
+    `)
+  })
+
+  test('only merge auto columnName into @column when extra decorators are present', async ({
+    assert,
+  }) => {
+    const db = getDb()
+    const connection = db.connection()
+    const generator = new OrmSchemaBuilder(connection)
+
+    generator.loadRules([
+      {
+        columns: {
+          player1_id: {
+            tsType: 'string',
+            decorators: [
+              { name: '@column' },
+              { name: '@ApiProperty', args: { description: 'First player id' } },
+            ],
+          },
+        },
+      },
+    ])
+
+    const columns = {
+      'id': { type: 'integer', nullable: false },
+      'player1_id': { type: 'varchar', nullable: false },
+    }
+
+    const schemas = generator.generateSchemas([{ name: 'games', columns, primaryKeys: ['id'] }])
+    const output = schemas.classes.join('\n')
+
+    /**
+     * The auto columnName merges into `@column` only. A co-located
+     * decorator like `@ApiProperty` is emitted untouched.
+     */
+    assert.snapshot(output).matchInline(`
+      "export class GameSchema extends BaseModel {
+        static $columns = ['id', 'player1Id'] as const
+        $columns = GameSchema.$columns
+        @column({ isPrimary: true })
+        declare id: number
+        @column({ columnName: 'player1_id' })
+        @ApiProperty({ description: 'First player id' })
+        declare player1Id: string
+      }"
+    `)
+  })
+
   test('skip columns listed in skipColumns for a table', async ({ assert }) => {
     const db = getDb()
     const connection = db.connection()
