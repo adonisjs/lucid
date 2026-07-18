@@ -12,9 +12,25 @@ import {
   type DialectContract,
   type SharedConfigNode,
   type QueryClientContract,
+  type DialectAdministrationContract,
 } from '../types/database.js'
 
 export class MysqlDialect implements DialectContract {
+  /**
+   * Database level administration operations for the dialect.
+   * MySQL accepts connections without a selected database,
+   * hence no maintenance database is needed
+   */
+  static administration: DialectAdministrationContract = {
+    maintenanceDatabase: null,
+    async databaseExists(client, databaseName) {
+      const rows = await client
+        .from('information_schema.schemata')
+        .where('schema_name', databaseName)
+      return rows.length > 0
+    },
+  }
+
   readonly name = 'mysql'
   readonly supportsAdvisoryLocks = true
   readonly supportsViews = true
