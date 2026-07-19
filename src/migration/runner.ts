@@ -307,11 +307,17 @@ export class MigrationRunner extends EventEmitter {
         throw new errors.E_UNABLE_ACQUIRE_LOCK()
       }
       this.lockAcquired = true
-      this.emit('acquire:lock')
     } catch (error) {
       this.releaseLockConnection()
       throw error
     }
+
+    /**
+     * Emitted outside the try/catch above. The lock is already acquired at
+     * this point, so a throwing listener must not trigger the catch (which
+     * would release the pinned connection while leaving the lock held on it).
+     */
+    this.emit('acquire:lock')
   }
 
   /**
