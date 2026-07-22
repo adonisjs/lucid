@@ -46,6 +46,7 @@ import {
   type ModelRelations,
   type RelationOptions,
   type RelationshipsContract,
+  type BaseRelationContract,
   type ThroughRelationOptions,
   type ManyToManyRelationOptions,
 } from '../../types/relations.js'
@@ -59,6 +60,7 @@ import { HasMany } from '../relations/has_many/index.js'
 import { BelongsTo } from '../relations/belongs_to/index.js'
 import { ManyToMany } from '../relations/many_to_many/index.js'
 import { HasManyThrough } from '../relations/has_many_through/index.js'
+import { RelationRegistry } from '../relations/relation_registry.js'
 import { CamelCaseNamingStrategy } from '../naming_strategies/camel_case.js'
 import { LazyLoadAggregates } from '../relations/aggregates_loader/lazy_load.js'
 import {
@@ -71,7 +73,16 @@ import {
   compareValues,
 } from '../../utils/index.js'
 
-const MANY_RELATIONS = ['hasMany', 'manyToMany', 'hasManyThrough']
+/**
+ * Returns all relation types that handle multiple related records.
+ * Includes both built-in relations and custom relations registered via RelationRegistry.
+ *
+ * Note: This is called dynamically (not cached) to ensure newly registered
+ * custom relations are included (important for testing scenarios).
+ */
+function getManyRelations(): string[] {
+  return ['hasMany', 'manyToMany', 'hasManyThrough', ...RelationRegistry.getManyRelationTypes()]
+}
 const DATE_TIME_TYPES = {
   date: 'date',
   datetime: 'datetime',
@@ -158,7 +169,7 @@ class BaseModelImpl implements LucidRow {
   /**
    * Registered relationships for the given model
    */
-  static $relationsDefinitions: Map<string, RelationshipsContract>
+  static $relationsDefinitions: Map<string, BaseRelationContract<LucidModel, LucidModel>>
 
   /**
    * The name of database table. It is auto generated from the model name, unless
@@ -543,24 +554,53 @@ class BaseModelImpl implements LucidRow {
     type: ModelRelations<LucidModel, LucidModel>['__opaque_type'],
     relatedModel: () => LucidModel,
     options: ModelRelationOptions
-  ) {
+  ): BaseRelationContract<LucidModel, LucidModel> {
+    // Try built-in relations first
+    const builtInRelation = this.$addBuiltInRelation(name, type, relatedModel, options)
+    if (builtInRelation) {
+      return builtInRelation
+    }
+
+    // Check for custom relations in the registry
+    const factory = RelationRegistry.get(type as string)
+    if (!factory) {
+      throw new Error(
+        `"${type}" is not a supported relation type. Did you forget to register it with RelationRegistry.register()?`
+      )
+    }
+
+    // Create the custom relation
+    const relation = factory.create(name, relatedModel, options, this)
+    this.$relationsDefinitions.set(name, relation)
+    return relation
+  }
+
+  /**
+   * Handles built-in relation types
+   */
+  private static $addBuiltInRelation(
+    name: string,
+    type: string,
+    relatedModel: () => LucidModel,
+    options: ModelRelationOptions
+  ): BaseRelationContract<LucidModel, LucidModel> | null {
     switch (type) {
       case 'hasOne':
         this.$addHasOne(name, relatedModel, options)
-        break
+        return this.$relationsDefinitions.get(name)!
       case 'hasMany':
         this.$addHasMany(name, relatedModel, options)
-        break
+        return this.$relationsDefinitions.get(name)!
       case 'belongsTo':
         this.$addBelongsTo(name, relatedModel, options)
-        break
+        return this.$relationsDefinitions.get(name)!
       case 'manyToMany':
         this.$addManyToMany(
           name,
           relatedModel,
           options as ManyToManyRelationOptions<ModelRelations<LucidModel, LucidModel>>
         )
-        break
+        return this.$relationsDefinitions.get(name)!
       case 'hasManyThrough':
         this.$addHasManyThrough(
           name,
@@ -571,9 +611,9 @@ class BaseModelImpl implements LucidRow {
             ModelRelations<LucidModel, LucidModel>
           >
         )
-        break
+        return this.$relationsDefinitions.get(name)!
       default:
-        throw new Error(`${type} is not a supported relation type`)
+        return null
     }
   }
 
@@ -695,7 +735,7 @@ class BaseModelImpl implements LucidRow {
      * Define relationships
      */
     this.$defineProperty('$relationsDefinitions', new Map(), (value) => {
-      const relations = new Map<string, RelationshipsContract>()
+      const relations = new Map<string, BaseRelationContract<LucidModel, LucidModel>>()
       value.forEach((relation, key) => {
         const relationClone = relation.clone(this)
         relations.set(key, relationClone)
@@ -1721,7 +1761,7 @@ class BaseModelImpl implements LucidRow {
     /**
      * Reset array before invoking $pushRelated
      */
-    if (MANY_RELATIONS.includes(relation.type)) {
+    if (getManyRelations().includes(relation.type)) {
       if (!Array.isArray(models)) {
         throw new Exception(
           `"${Model.name}.${key}" must be an array when setting "${relation.type}" relationship`
@@ -1750,7 +1790,7 @@ class BaseModelImpl implements LucidRow {
     /**
      * Create multiple for `hasMany` `manyToMany` and `hasManyThrough`
      */
-    if (MANY_RELATIONS.includes(relation.type)) {
+    if (getManyRelations().includes(relation.type)) {
       this.$preloaded[key] = ((this.$preloaded[key] || []) as LucidRow[]).concat(models)
       return
     }

@@ -53,6 +53,41 @@ export type GetRelationModelInstance<Relation extends ModelRelations<LucidModel,
     : Relation['instance'][]
 
 /**
+ * Configuration for registering a custom relation factory
+ */
+export interface RelationFactoryConfig<
+  T extends BaseRelationContract<LucidModel, LucidModel> = BaseRelationContract<
+    LucidModel,
+    LucidModel
+  >,
+> {
+  /**
+   * Creates a new instance of the relation
+   */
+  create(relationName: string, relatedModel: () => LucidModel, options: any, model: LucidModel): T
+
+  /**
+   * Indicates if this is a "many" relation (for the preloader)
+   */
+  isMany: boolean
+}
+
+/**
+ * Factory interface for creating custom relation instances
+ */
+export interface RelationFactory<
+  T extends BaseRelationContract<LucidModel, LucidModel> = BaseRelationContract<
+    LucidModel,
+    LucidModel
+  >,
+> extends RelationFactoryConfig<T> {
+  /**
+   * Type of relation (used for identification)
+   */
+  type: string
+}
+
+/**
  * ------------------------------------------------------
  * Options
  * ------------------------------------------------------
@@ -108,6 +143,18 @@ export type ThroughRelationOptions<
   throughModel: () => LucidModel
   meta?: any
 }
+
+/**
+ * Type alias for model relation options used internally
+ */
+export type ModelRelationOptions<
+  RelatedModel extends LucidModel,
+  ParentModel extends LucidModel,
+  Related extends ModelRelations<RelatedModel, ParentModel>,
+> =
+  | RelationOptions<RelatedModel, ParentModel, Related>
+  | ManyToManyRelationOptions<Related>
+  | ThroughRelationOptions<RelatedModel, ParentModel, Related>
 
 /**
  * ------------------------------------------------------
@@ -167,8 +214,39 @@ export type HasManyThroughDecorator = <RelatedModel extends LucidModel>(
  * between standard model properties and relationships
  *
  */
+
+/**
+ * Interface that can be augmented by third-party packages to register custom relation types.
+ *
+ * @example
+ * ```ts
+ * // In your package
+ * declare module '@adonisjs/lucid/types/relations' {
+ *   interface KnownCustomRelations {
+ *     myRelation: MyRelationContract<LucidModel, LucidModel>
+ *   }
+ *
+ *   interface KnownCustomOpaqueRelations {
+ *     myRelation: MyOpaqueRelationType<LucidModel>
+ *   }
+ * }
+ * ```
+ */
+export interface KnownCustomRelations {}
+
+/**
+ * Interface for custom opaque relation types (for type-safe relation properties on models)
+ */
+export interface KnownCustomOpaqueRelations {}
+
 export type ModelRelationTypes = {
-  readonly __opaque_type: 'hasOne' | 'hasMany' | 'belongsTo' | 'manyToMany' | 'hasManyThrough'
+  readonly __opaque_type:
+    | 'hasOne'
+    | 'hasMany'
+    | 'belongsTo'
+    | 'manyToMany'
+    | 'hasManyThrough'
+    | keyof KnownCustomRelations
 }
 
 /**
@@ -269,6 +347,7 @@ export type ModelRelations<
   | BelongsTo<RelatedModel, ParentModel>
   | ManyToMany<RelatedModel, ParentModel>
   | HasManyThrough<RelatedModel, ParentModel>
+  | KnownCustomOpaqueRelations[keyof KnownCustomOpaqueRelations]
 
 /**
  * ------------------------------------------------------
@@ -307,6 +386,31 @@ export interface BaseRelationContract<
   ): RelationQueryBuilderContract<RelatedModel, InstanceType<RelatedModel>>
 
   subQuery(client: QueryClientContract): RelationSubQueryBuilderContract<RelatedModel>
+
+  /**
+   * Set related model(s) as a relationship on the parent model
+   */
+  setRelated(
+    parent: InstanceType<ParentModel>,
+    related: InstanceType<RelatedModel> | InstanceType<RelatedModel>[] | null
+  ): void
+
+  /**
+   * Push related model(s) to the existing relationship on the parent model
+   */
+  pushRelated(
+    parent: InstanceType<ParentModel>,
+    related: InstanceType<RelatedModel> | InstanceType<RelatedModel>[] | null
+  ): void
+
+  /**
+   * Set multiple related instances on multiple parent models.
+   * This method is generally invoked during eager load.
+   */
+  setRelatedForMany(
+    parent: InstanceType<ParentModel>[],
+    related: InstanceType<RelatedModel>[]
+  ): void
 }
 
 /**
@@ -590,6 +694,7 @@ export type RelationshipsContract =
   | BelongsToRelationContract<LucidModel, LucidModel>
   | ManyToManyRelationContract<LucidModel, LucidModel>
   | HasManyThroughRelationContract<LucidModel, LucidModel>
+  | KnownCustomRelations[keyof KnownCustomRelations]
 
 /**
  * ------------------------------------------------------
