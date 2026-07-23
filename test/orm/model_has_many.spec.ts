@@ -1131,8 +1131,8 @@ test.group('Model | HasMany | preload', (group) => {
       .insert([{ username: 'virk' }, { username: 'nikk' }, { username: 'romain' }])
 
     /**
-     * - user 1 → posts 2, 1 (inserted out of order to assert order is preserved)
-     * - user 2 → post 3
+     * - user 1 → posts 1, 3
+     * - user 2 → post 2
      * - user 3 → no posts (must receive an empty array, not another user's rows)
      */
     await db
@@ -1144,7 +1144,13 @@ test.group('Model | HasMany | preload', (group) => {
         { user_id: 1, title: 'Adonis 102' },
       ])
 
-    const users = await User.query().orderBy('id', 'asc').preload('posts')
+    /**
+     * The related query is ordered explicitly so the grouped bucket order is
+     * deterministic (SQL result order is otherwise unspecified).
+     */
+    const users = await User.query()
+      .orderBy('id', 'asc')
+      .preload('posts', (query) => query.orderBy('id', 'asc'))
     assert.lengthOf(users, 3)
 
     assert.deepEqual(

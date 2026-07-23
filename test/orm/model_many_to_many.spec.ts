@@ -1457,7 +1457,7 @@ test.group('Model | ManyToMany | preload', (group) => {
       .insert([{ name: 'Programming' }, { name: 'Dancing' }, { name: 'Singing' }])
 
     /**
-     * - user 1 → skills 3, 1 (inserted out of order to assert order is preserved)
+     * - user 1 → skills 1, 3
      * - user 2 → skill 2
      * - user 3 → no skills (must receive an empty array, not another user's rows)
      */
@@ -1470,12 +1470,18 @@ test.group('Model | ManyToMany | preload', (group) => {
         { user_id: 1, skill_id: 1 },
       ])
 
-    const users = await User.query().orderBy('id', 'asc').preload('skills')
+    /**
+     * The related query is ordered explicitly so the grouped bucket order is
+     * deterministic (SQL result order is otherwise unspecified).
+     */
+    const users = await User.query()
+      .orderBy('id', 'asc')
+      .preload('skills', (query) => query.orderBy('skills.id', 'asc'))
     assert.lengthOf(users, 3)
 
     assert.deepEqual(
       users[0].skills.map((skill) => skill.id),
-      [3, 1]
+      [1, 3]
     )
     assert.deepEqual(
       users[1].skills.map((skill) => skill.id),

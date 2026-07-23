@@ -1004,7 +1004,7 @@ test.group('Model | HasOne | preload', (group) => {
       .insert([{ username: 'virk' }, { username: 'nikk' }, { username: 'romain' }])
 
     /**
-     * - user 1 → two profiles (the first inserted must win)
+     * - user 1 → two profiles (the lowest-id one must win)
      * - user 2 → one profile
      * - user 3 → no profile (must resolve to null)
      */
@@ -1017,7 +1017,13 @@ test.group('Model | HasOne | preload', (group) => {
         { user_id: 2, display_name: 'nikk' },
       ])
 
-    const users = await User.query().orderBy('id', 'asc').preload('profile')
+    /**
+     * The related query is ordered explicitly so which duplicate wins is
+     * deterministic (SQL result order is otherwise unspecified).
+     */
+    const users = await User.query()
+      .orderBy('id', 'asc')
+      .preload('profile', (query) => query.orderBy('id', 'asc'))
     assert.lengthOf(users, 3)
 
     assert.equal(users[0].profile.userId, 1)
