@@ -152,13 +152,27 @@ export class HasOne implements HasOneRelationContract<LucidModel, LucidModel> {
   setRelatedForMany(parent: LucidRow[], related: LucidRow[]): void {
     ensureRelationIsBooted(this)
 
-    parent.forEach((parentModel) => {
-      const match = related.find((relatedModel) => {
-        const value = (parentModel as any)[this.localKey]
-        return value !== undefined && value === (relatedModel as any)[this.foreignKey]
-      })
+    /**
+     * Index the related rows by their foreign key in a single pass, so matching
+     * each parent is an O(1) lookup instead of scanning the entire related array
+     * per parent (which is O(parents × related)). Rows without a foreign key are
+     * ignored, and the first row wins for a given key to mirror the original
+     * "find" behaviour.
+     */
+    const relatedByForeignKey = new Map<any, LucidRow>()
+    for (const relatedModel of related) {
+      const key = (relatedModel as any)[this.foreignKey]
+      if (key !== undefined && !relatedByForeignKey.has(key)) {
+        relatedByForeignKey.set(key, relatedModel)
+      }
+    }
 
-      this.setRelated(parentModel, match || null)
+    parent.forEach((parentModel) => {
+      const value = (parentModel as any)[this.localKey]
+      this.setRelated(
+        parentModel,
+        value !== undefined ? (relatedByForeignKey.get(value) ?? null) : null
+      )
     })
   }
 

@@ -1096,6 +1096,81 @@ test.group('Model | HasMany | preload', (group) => {
     assert.equal(users[1].posts[0].userId, users[1].id)
   })
 
+  test('preload for many groups related rows per parent without cross-contamination', async ({
+    fs,
+    assert,
+  }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter)
+
+    class Post extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+
+      @column()
+      declare userId: number
+
+      @column()
+      declare title: string
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+
+      @hasMany(() => Post)
+      declare posts: HasMany<typeof Post>
+    }
+
+    await db
+      .insertQuery()
+      .table('users')
+      .insert([{ username: 'virk' }, { username: 'nikk' }, { username: 'romain' }])
+
+    /**
+     * - user 1 → posts 1, 3
+     * - user 2 → post 2
+     * - user 3 → no posts (must receive an empty array, not another user's rows)
+     */
+    await db
+      .insertQuery()
+      .table('posts')
+      .insert([
+        { user_id: 1, title: 'Adonis 101' },
+        { user_id: 2, title: 'Lucid 101' },
+        { user_id: 1, title: 'Adonis 102' },
+      ])
+
+    /**
+     * The related query is ordered explicitly so the grouped bucket order is
+     * deterministic (SQL result order is otherwise unspecified).
+     */
+    const users = await User.query()
+      .orderBy('id', 'asc')
+      .preload('posts', (query) => query.orderBy('id', 'asc'))
+    assert.lengthOf(users, 3)
+
+    assert.deepEqual(
+      users[0].posts.map((post) => post.title),
+      ['Adonis 101', 'Adonis 102']
+    )
+    assert.deepEqual(
+      users[1].posts.map((post) => post.title),
+      ['Lucid 101']
+    )
+    assert.lengthOf(users[2].posts, 0)
+
+    /**
+     * Every related row is associated with exactly one parent (no duplication
+     * across parents).
+     */
+    const totalAssociated = users.reduce((sum, user) => sum + user.posts.length, 0)
+    assert.equal(totalAssociated, 3)
+  })
+
   test('add constraints during preload', async ({ fs, assert }) => {
     const app = new AppFactory().create(fs.baseUrl, () => {})
     await app.init()

@@ -1017,6 +1017,59 @@ test.group('Model | BelongsTo | preload', (group) => {
     assert.equal(profiles[1].user.id, profiles[1].userId)
   })
 
+  test('preload for many matches each parent to its related row and null otherwise', async ({
+    assert,
+    fs,
+  }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter)
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+    }
+
+    class Profile extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+
+      @column()
+      declare userId: number
+
+      @belongsTo(() => User)
+      declare user: BelongsTo<typeof User>
+    }
+
+    await db
+      .insertQuery()
+      .table('users')
+      .insert([{ username: 'virk' }, { username: 'nikk' }])
+
+    /**
+     * - profile 1 → user 2
+     * - profile 2 → user 1
+     * - profile 3 → user 999 (no such user, must resolve to null)
+     */
+    await db
+      .insertQuery()
+      .table('profiles')
+      .insert([
+        { user_id: 2, display_name: 'Hvirk' },
+        { user_id: 1, display_name: 'Nikk' },
+        { user_id: 999, display_name: 'Orphan' },
+      ])
+
+    const profiles = await Profile.query().orderBy('id', 'asc').preload('user')
+    assert.lengthOf(profiles, 3)
+
+    assert.equal(profiles[0].user.id, 2)
+    assert.equal(profiles[1].user.id, 1)
+    assert.isNull(profiles[2].user)
+  })
+
   test('add runtime constraints to related query', async ({ assert, fs }) => {
     const app = new AppFactory().create(fs.baseUrl, () => {})
     await app.init()

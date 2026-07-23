@@ -1419,8 +1419,8 @@ test.group('OrmSchemaBuilder | Name Conversion', (group) => {
     const generator = new OrmSchemaBuilder(connection)
 
     const columns = {
-      'id': { type: 'integer', nullable: false },
-      'player1_id': { type: 'varchar', nullable: false },
+      id: { type: 'integer', nullable: false },
+      player1_id: { type: 'varchar', nullable: false },
     }
 
     const schemas = generator.generateSchemas([{ name: 'games', columns, primaryKeys: ['id'] }])
@@ -1455,8 +1455,8 @@ test.group('OrmSchemaBuilder | Name Conversion', (group) => {
     ])
 
     const columns = {
-      'id': { type: 'integer', nullable: false },
-      'player1_id': { type: 'varchar', nullable: false },
+      id: { type: 'integer', nullable: false },
+      player1_id: { type: 'varchar', nullable: false },
     }
 
     const schemas = generator.generateSchemas([{ name: 'games', columns, primaryKeys: ['id'] }])
@@ -1500,8 +1500,8 @@ test.group('OrmSchemaBuilder | Name Conversion', (group) => {
     ])
 
     const columns = {
-      'id': { type: 'integer', nullable: false },
-      'player1_id': { type: 'varchar', nullable: false },
+      id: { type: 'integer', nullable: false },
+      player1_id: { type: 'varchar', nullable: false },
     }
 
     const schemas = generator.generateSchemas([{ name: 'games', columns, primaryKeys: ['id'] }])
