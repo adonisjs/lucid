@@ -1421,6 +1421,76 @@ test.group('Model | ManyToMany | preload', (group) => {
     assert.equal(users[1].skills[0].$extras.pivot_skill_id, 2)
   })
 
+  test('preload for many groups related rows per parent without cross-contamination', async ({
+    fs,
+    assert,
+  }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter)
+
+    class Skill extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+
+      @column()
+      declare name: string
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+
+      @manyToMany(() => Skill)
+      declare skills: ManyToMany<typeof Skill>
+    }
+
+    await db
+      .insertQuery()
+      .table('users')
+      .insert([{ username: 'virk' }, { username: 'nikk' }, { username: 'romain' }])
+    await db
+      .insertQuery()
+      .table('skills')
+      .insert([{ name: 'Programming' }, { name: 'Dancing' }, { name: 'Singing' }])
+
+    /**
+     * - user 1 → skills 3, 1 (inserted out of order to assert order is preserved)
+     * - user 2 → skill 2
+     * - user 3 → no skills (must receive an empty array, not another user's rows)
+     */
+    await db
+      .insertQuery()
+      .table('skill_user')
+      .insert([
+        { user_id: 1, skill_id: 3 },
+        { user_id: 2, skill_id: 2 },
+        { user_id: 1, skill_id: 1 },
+      ])
+
+    const users = await User.query().orderBy('id', 'asc').preload('skills')
+    assert.lengthOf(users, 3)
+
+    assert.deepEqual(
+      users[0].skills.map((skill) => skill.id),
+      [3, 1]
+    )
+    assert.deepEqual(
+      users[1].skills.map((skill) => skill.id),
+      [2]
+    )
+    assert.lengthOf(users[2].skills, 0)
+
+    /**
+     * Every related row is associated with exactly one parent (no duplication
+     * across parents).
+     */
+    const totalAssociated = users.reduce((sum, user) => sum + user.skills.length, 0)
+    assert.equal(totalAssociated, 3)
+  })
+
   test('preload relation using model instance', async ({ fs, assert }) => {
     const app = new AppFactory().create(fs.baseUrl, () => {})
     await app.init()
