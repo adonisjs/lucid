@@ -54,6 +54,21 @@ test.group('RelationRegistry', (group) => {
     const registeredFactory = RelationRegistry.get('customRelation')
     assert.equal(registeredFactory?.type, 'customRelation')
   })
+
+  test('throw error when registering built-in relation types', ({ assert }) => {
+    const builtInTypes = ['hasOne', 'hasMany', 'belongsTo', 'manyToMany', 'hasManyThrough']
+
+    builtInTypes.forEach((type) => {
+      assert.throws(
+        () =>
+          RelationRegistry.register(type, {
+            create() {
+              return {} as any
+            },
+          }),
+        `Cannot register "${type}": it is a built-in relation type`
+      )
+    })
   })
 
   test('throw error when registering duplicate relation type', ({ assert }) => {

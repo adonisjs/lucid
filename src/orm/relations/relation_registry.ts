@@ -29,6 +29,16 @@ export class RelationRegistry {
    * ```
    */
   static register(type: string, factoryConfig: RelationFactoryConfig): void {
+    const BUILT_IN_TYPES = ['hasOne', 'hasMany', 'belongsTo', 'manyToMany', 'hasManyThrough']
+
+    if (BUILT_IN_TYPES.includes(type)) {
+      throw new Error(
+        `Cannot register "${type}": it is a built-in relation type. ` +
+          `Built-in types (${BUILT_IN_TYPES.join(', ')}) cannot be overridden. ` +
+          `Please use a different name for your custom relation.`
+      )
+    }
+
     if (this.relations.has(type)) {
       throw new Error(`Relation type "${type}" is already registered`)
     }
