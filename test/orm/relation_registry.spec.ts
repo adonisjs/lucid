@@ -15,10 +15,13 @@ import type { QueryClientContract } from '../../src/types/database.js'
 import { RelationRegistry, createRelationDecorator, column } from '../../src/orm/main.js'
 import { getDb, setup, cleanup, getBaseModel, ormAdapter } from '../../test-helpers/index.js'
 
-// Augment KnownCustomRelations for test relations
+/**
+ * Augment KnownCustomRelations for test relations
+ */
 declare module '../../src/types/relations.js' {
   interface KnownCustomRelations {
     testRelation: BaseRelationContract<LucidModel, LucidModel>
+    testManyRelation: BaseRelationContract<LucidModel, LucidModel>
   }
 }
 
@@ -32,13 +35,14 @@ test.group('RelationRegistry', (group) => {
   })
 
   group.each.teardown(() => {
-    // Clean up any test relations
+    /**
+     * Clean up any test relations
+     */
     RelationRegistry.unregister('customRelation')
   })
 
   test('register a custom relation type', ({ assert }) => {
     const factory = {
-      isMany: false,
       create() {
         return {} as any
       },
@@ -49,12 +53,11 @@ test.group('RelationRegistry', (group) => {
     assert.isTrue(RelationRegistry.has('customRelation'))
     const registeredFactory = RelationRegistry.get('customRelation')
     assert.equal(registeredFactory?.type, 'customRelation')
-    assert.equal(registeredFactory?.isMany, false)
+  })
   })
 
   test('throw error when registering duplicate relation type', ({ assert }) => {
     const factory = {
-      isMany: false,
       create() {
         return {} as any
       },
@@ -72,34 +75,8 @@ test.group('RelationRegistry', (group) => {
     assert.isUndefined(RelationRegistry.get('unknownRelation'))
   })
 
-  test('getManyRelationTypes returns only many relations', ({ assert }) => {
-    RelationRegistry.register('customMany', {
-      isMany: true,
-      create() {
-        return {} as any
-      },
-    })
-
-    RelationRegistry.register('customOne', {
-      isMany: false,
-      create() {
-        return {} as any
-      },
-    })
-
-    const manyTypes = RelationRegistry.getManyRelationTypes()
-
-    // Should include custom custom many relation and not include custom one relation
-    assert.include(manyTypes, 'customMany')
-    assert.notInclude(manyTypes, 'customOne')
-
-    RelationRegistry.unregister('customMany')
-    RelationRegistry.unregister('customOne')
-  })
-
   test('unregister removes a relation type', ({ assert }) => {
     const factory = {
-      isMany: false,
       create() {
         return {} as any
       },
@@ -136,9 +113,9 @@ test.group('RelationRegistry | Integration with BaseModel', (group) => {
     const adapter = ormAdapter(db)
     const BaseModel = getBaseModel(adapter)
 
-    // Create a simple test relation
     class TestRelation implements BaseRelationContract<LucidModel, LucidModel> {
       type = 'testRelation' as const
+      isMany = false
       booted = false
       relationName: string
       serializeAs: any
@@ -179,18 +156,14 @@ test.group('RelationRegistry | Integration with BaseModel', (group) => {
       }
     }
 
-    // Register the relation
     RelationRegistry.register('testRelation', {
-      isMany: true,
       create(relationName, relatedModel, options, model) {
         return new TestRelation(relationName, relatedModel, options, model)
       },
     })
 
-    // Create decorator
     const testRelation = createRelationDecorator('testRelation')
 
-    // Use it on a model
     class User extends BaseModel {
       @column({ isPrimary: true })
       declare id: number
@@ -199,7 +172,9 @@ test.group('RelationRegistry | Integration with BaseModel', (group) => {
       declare related: any
     }
 
-    // Verify the relation was added
+    /**
+     * Verify the relation was added
+     */
     assert.isTrue(User.$hasRelation('related'))
     assert.equal(User.$getRelation('related')!.type, 'testRelation')
     assert.instanceOf(User.$getRelation('related'), TestRelation)
@@ -223,20 +198,23 @@ test.group('RelationRegistry | Integration with BaseModel', (group) => {
         declare related: any
       }
 
-      // Trigger boot
       User.boot()
     }, '"unknownRelationType" is not a supported relation type. Did you forget to register it with RelationRegistry.register()?')
   })
 
-  test('custom relation included in MANY_RELATIONS when isMany is true', async ({ fs, assert }) => {
+  test('custom many relation accepts arrays in $setRelated', async ({ fs, assert }) => {
     const app = new AppFactory().create(fs.baseUrl, () => {})
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
     const BaseModel = getBaseModel(adapter)
 
+    /**
+     * A custom "many" relation implementation
+     */
     class TestManyRelation implements BaseRelationContract<LucidModel, LucidModel> {
       type = 'testRelation' as const
+      isMany = true
       booted = false
       relationName: string
       serializeAs: any
@@ -273,7 +251,6 @@ test.group('RelationRegistry | Integration with BaseModel', (group) => {
     }
 
     RelationRegistry.register('testRelation', {
-      isMany: true,
       create(relationName, relatedModel, options, model) {
         return new TestManyRelation(relationName, relatedModel, options, model)
       },
@@ -291,12 +268,122 @@ test.group('RelationRegistry | Integration with BaseModel', (group) => {
 
     User.boot()
 
-    // Test that $setRelated accepts arrays for many relations
+    /**
+     * Verify that $setRelated accepts arrays for relations with isMany = true
+     */
     const user = new User()
     const related1 = new User()
     const related2 = new User()
 
     user.$setRelated('related', [related1, related2])
     assert.lengthOf(user.related, 2)
+  })
+
+  test('relation retains isMany multiplicity after unregister', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter)
+
+    /**
+     * Define a custom "many" relation
+     */
+    class TestManyRelation implements BaseRelationContract<LucidModel, LucidModel> {
+      type = 'testManyRelation' as any
+      isMany = true
+      booted = false
+      relationName: string
+      serializeAs: any
+      model: LucidModel
+
+      constructor(
+        relationName: string,
+        public relatedModel: () => LucidModel,
+        private options: any,
+        model: LucidModel
+      ) {
+        this.relationName = relationName
+        this.model = model
+      }
+
+      boot() {
+        this.booted = true
+      }
+
+      clone(): any {
+        return new TestManyRelation(this.relationName, this.relatedModel, this.options, this.model)
+      }
+
+      setRelated() {}
+      pushRelated() {}
+      setRelatedForMany() {}
+
+      client(_parent: LucidRow, _client: QueryClientContract): any {
+        return null
+      }
+
+      eagerQuery(): any {
+        return null
+      }
+
+      subQuery(): any {
+        return null
+      }
+    }
+
+    /**
+     * Register the relation
+     */
+    RelationRegistry.register('testManyRelation', {
+      create(relationName, relatedModel, options, model) {
+        return new TestManyRelation(relationName, relatedModel, options, model)
+      },
+    })
+
+    const testManyRelation = createRelationDecorator('testManyRelation')
+
+    /**
+     * Create a model with the relation
+     */
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+
+      @testManyRelation(() => User)
+      declare friends: any
+    }
+
+    /**
+     * Boot the model (this creates and stores the relation instance)
+     */
+    User.boot()
+
+    /**
+     * Verify the relation works with arrays before unregistering
+     */
+    const user1 = new User()
+    const friend1 = new User()
+    const friend2 = new User()
+
+    user1.$setRelated('friends', [friend1, friend2])
+    assert.lengthOf(user1.friends, 2)
+
+    /**
+     * Unregister the relation from the registry
+     * This simulates a package being unloaded or registry state changing
+     */
+    RelationRegistry.unregister('testManyRelation')
+
+    const user2 = new User()
+    const friend3 = new User()
+    const friend4 = new User()
+
+    /***
+     * This works because the relation class has isMany = true as a property.
+     * The relation instance retains its multiplicity independent of the registry
+     */
+    user2.$setRelated('friends', [friend3, friend4])
+    assert.lengthOf(user2.friends, 2)
   })
 })

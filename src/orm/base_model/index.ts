@@ -73,16 +73,6 @@ import {
   compareValues,
 } from '../../utils/index.js'
 
-/**
- * Returns all relation types that handle multiple related records.
- * Includes both built-in relations and custom relations registered via RelationRegistry.
- *
- * Note: This is called dynamically (not cached) to ensure newly registered
- * custom relations are included (important for testing scenarios).
- */
-function getManyRelations(): string[] {
-  return ['hasMany', 'manyToMany', 'hasManyThrough', ...RelationRegistry.getManyRelationTypes()]
-}
 const DATE_TIME_TYPES = {
   date: 'date',
   datetime: 'datetime',
@@ -1761,7 +1751,7 @@ class BaseModelImpl implements LucidRow {
     /**
      * Reset array before invoking $pushRelated
      */
-    if (getManyRelations().includes(relation.type)) {
+    if (relation.isMany) {
       if (!Array.isArray(models)) {
         throw new Exception(
           `"${Model.name}.${key}" must be an array when setting "${relation.type}" relationship`
@@ -1790,7 +1780,7 @@ class BaseModelImpl implements LucidRow {
     /**
      * Create multiple for `hasMany` `manyToMany` and `hasManyThrough`
      */
-    if (getManyRelations().includes(relation.type)) {
+    if (relation.isMany) {
       this.$preloaded[key] = ((this.$preloaded[key] || []) as LucidRow[]).concat(models)
       return
     }

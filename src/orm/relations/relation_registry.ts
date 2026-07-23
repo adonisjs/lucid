@@ -22,7 +22,6 @@ export class RelationRegistry {
    * @example
    * ```ts
    * RelationRegistry.register('myRelation', {
-   *   isMany: true,
    *   create(relationName, relatedModel, options, model) {
    *     return new MyRelation(relationName, relatedModel, options, model)
    *   }
@@ -55,15 +54,6 @@ export class RelationRegistry {
    */
   static has(type: string): boolean {
     return this.relations.has(type)
-  }
-
-  /**
-   * Returns all registered "many" relation types
-   */
-  static getManyRelationTypes(): string[] {
-    return Array.from(this.relations.entries())
-      .filter(([_, factory]) => factory.isMany)
-      .map(([type]) => type)
   }
 
   /**

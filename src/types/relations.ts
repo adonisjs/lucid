@@ -65,11 +65,6 @@ export interface RelationFactoryConfig<
    * Creates a new instance of the relation
    */
   create(relationName: string, relatedModel: () => LucidModel, options: any, model: LucidModel): T
-
-  /**
-   * Indicates if this is a "many" relation (for the preloader)
-   */
-  isMany: boolean
 }
 
 /**
@@ -363,6 +358,7 @@ export interface BaseRelationContract<
   RelatedModel extends LucidModel,
 > {
   readonly type: ModelRelationTypes['__opaque_type']
+  readonly isMany: boolean
   readonly relationName: string
   readonly serializeAs: string | null
   readonly booted: boolean
