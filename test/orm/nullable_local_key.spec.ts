@@ -56,6 +56,10 @@ test.group('Nullable local key', (group) => {
     await resetTables()
   })
 
+  /**
+   * Boots an app and returns the db alongside a fresh base model, so each
+   * test can declare its own models against the same connection.
+   */
   async function boot(fs: any) {
     const app = new AppFactory().create(fs.baseUrl, () => {})
     await app.init()
@@ -257,8 +261,24 @@ test.group('Nullable local key', (group) => {
     const { db, BaseModel } = await boot(fs)
 
     class Post extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+
       @column()
       declare tenantId: number | null
+    }
+
+    class Comment extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+
+      @column()
+      declare postId: number
+    }
+
+    class Skill extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
     }
 
     class User extends BaseModel {
@@ -270,13 +290,38 @@ test.group('Nullable local key', (group) => {
 
       @hasMany(() => Post, { foreignKey: 'tenantId', localKey: 'tenantId' })
       declare posts: HasMany<typeof Post>
+
+      @hasOne(() => Post, { foreignKey: 'tenantId', localKey: 'tenantId' })
+      declare post: HasOne<typeof Post>
+
+      @hasManyThrough([() => Comment, () => Post], {
+        localKey: 'tenantId',
+        foreignKey: 'tenantId',
+        throughLocalKey: 'id',
+        throughForeignKey: 'postId',
+      })
+      declare comments: HasManyThrough<typeof Comment>
+
+      @manyToMany(() => Skill, {
+        localKey: 'tenantId',
+        pivotForeignKey: 'user_id',
+        pivotTable: 'skill_user',
+      })
+      declare skills: ManyToMany<typeof Skill>
     }
 
     await seed(db)
 
-    await assert.rejects(
-      () => User.query().select('id').preload('posts'),
-      'Cannot preload "posts", value of "User.tenantId" is undefined'
-    )
+    /**
+     * Every relation type routes through its own query builder, so each
+     * call site is asserted rather than assuming the shared helper covers
+     * them all.
+     */
+    for (const relation of ['posts', 'post', 'comments', 'skills'] as const) {
+      await assert.rejects(
+        () => User.query().select('id').preload(relation),
+        `Cannot preload "${relation}", value of "User.tenantId" is undefined`
+      )
+    }
   })
 })
