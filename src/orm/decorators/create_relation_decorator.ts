@@ -7,40 +7,35 @@
  * file that was distributed with this source code.
  */
 
-import type { LucidModel } from '../../types/model.js'
+import type { DecoratorFn, LucidModel } from '../../types/model.js'
 import type { ModelRelationTypes } from '../../types/relations.js'
 
 /**
- * Utility to create a custom relation decorator.
- * Useful for third-party packages that want to add custom relation types.
+ * Utility to create a relation decorator. Useful for third-party packages that
+ * register custom relation types.
  *
  * @example
  * ```ts
  * // In your package
- * export const myRelation: MyRelationDecoratorType = createRelationDecorator(
- *   'myRelation'
- * )
+ * export const morphTo: MorphToDecorator = createRelationDecorator('morphTo')
  *
  * // Usage
- * class SomeModel extends BaseModel {
- *   @myRelation(() => SomeModel, { ...someOptions })
- *   declare someRelation: MyRelation<typeof SomeModel>
+ * class Comment extends BaseModel {
+ *   @morphTo(() => Post, { morphType: 'commentable_type' })
+ *   declare commentable: MorphTo<typeof Post>
  * }
  * ```
  */
 export function createRelationDecorator<
-  TRelationType extends ModelRelationTypes['__opaque_type'] = ModelRelationTypes['__opaque_type'],
-  TOptions = any,
->(
-  relationType: TRelationType
-): (relatedModel: () => LucidModel, options?: TOptions) => PropertyDecorator {
+  RelationType extends ModelRelationTypes['__opaque_type'] = ModelRelationTypes['__opaque_type'],
+  Options = any,
+>(relationType: RelationType): (relatedModel: () => LucidModel, options?: Options) => DecoratorFn {
   return function decorator(relatedModel, options?) {
-    return function decorateAsRelation(target, property: string | symbol) {
+    return function decorateAsRelation(target, property: string) {
       const Model = target.constructor as LucidModel
       Model.boot()
-      const propertyName = typeof property === 'symbol' ? property.toString() : property
       Model.$addRelation(
-        propertyName,
+        property,
         relationType,
         relatedModel,
         Object.assign({ relatedModel }, options) as any

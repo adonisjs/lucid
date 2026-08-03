@@ -60,9 +60,10 @@ export class Preloader implements PreloaderContract<LucidRow> {
     const result = await query.selectRelationKeys().exec()
 
     /**
-     * hasOne and belongsTo will always return an array of a single row (if done right)
+     * Singular relations (hasOne, belongsTo and any custom relation declaring
+     * "isMany = false") always return an array of a single row (if done right)
      */
-    if (relation.type === 'hasOne' || relation.type === 'belongsTo') {
+    if (!relation.isMany) {
       relation.setRelated(parent, result[0] || null)
       return
     }

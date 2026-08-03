@@ -170,16 +170,16 @@ export class FactoryModel<Model extends LucidModel> implements FactoryModelContr
 
     switch (modelRelation.type) {
       case 'belongsTo':
-        this.relations[relation as string] = new BelongsTo(modelRelation as any, callback as any)
+        this.relations[relation as string] = new BelongsTo(modelRelation, callback as any)
         break
       case 'hasOne':
-        this.relations[relation as string] = new HasOne(modelRelation as any, callback as any)
+        this.relations[relation as string] = new HasOne(modelRelation, callback as any)
         break
       case 'hasMany':
-        this.relations[relation as string] = new HasMany(modelRelation as any, callback as any)
+        this.relations[relation as string] = new HasMany(modelRelation, callback as any)
         break
       case 'manyToMany':
-        this.relations[relation as string] = new ManyToMany(modelRelation as any, callback as any)
+        this.relations[relation as string] = new ManyToMany(modelRelation, callback as any)
         break
       case 'hasManyThrough':
         throw new Error(
