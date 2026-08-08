@@ -1798,13 +1798,17 @@ class BaseModelImpl implements LucidRow {
          * Pull the attribute name from the column name, since adapter
          * results always holds the column names.
          *
-         * Try three lookups in order:
-         * 1. Table-qualified alias (e.g., "users_id")
-         * 2. Direct column name (e.g., "id") - for backward compatibility
-         * 3. Fallback to undefined
+         * Try two lookups in order:
+         * 1. Direct column name (e.g., "id")
+         * 2. Table-qualified alias (e.g., "users_id") - for aliased selections
+         *    made via "columnsForSelect"
+         *
+         * The real column name must win, otherwise a column literally named
+         * like another column's alias (e.g. "users_id" alongside "id") gets
+         * hydrated into the wrong attribute.
          */
         let attributeName =
-          Model.$keys.columnAliasesToAttributes.get(key) || Model.$keys.columnsToAttributes.get(key)
+          Model.$keys.columnsToAttributes.get(key) || Model.$keys.columnAliasesToAttributes.get(key)
 
         if (attributeName) {
           const attribute = Model.$getColumn(attributeName)!
