@@ -293,6 +293,7 @@ test.group('Schema', (group) => {
       .connection()
       .schema.createTable('posts', (table) => {
         table.foreignId('person_id').constrained().onDelete('CASCADE')
+        table.foreignId('user_id').constrained(undefined, 'uuid')
         table
           .foreignId('author_id')
           .nullable()
@@ -311,6 +312,7 @@ test.group('Schema', (group) => {
           .references('id')
           .inTable('people')
           .onDelete('CASCADE')
+        table.bigInteger('user_id').unsigned().notNullable().references('uuid').inTable('users')
         table.bigInteger('author_id').unsigned().nullable()
         table
           .foreign('author_id', 'posts_author_id_foreign')

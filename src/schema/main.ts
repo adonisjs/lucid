@@ -26,8 +26,13 @@ knex.TableBuilder.extend<Knex.TableBuilder, ForeignIdColumnBuilder>(
     const column = this.bigInteger(columnName).unsigned().notNullable() as ForeignIdColumnBuilder
 
     column.constrained = (tableName, referencedColumn = 'id', foreignKeyName) => {
-      const suffixIndex = columnName.lastIndexOf(`_${referencedColumn}`)
-      const relatedName = suffixIndex === -1 ? columnName : columnName.slice(0, suffixIndex)
+      const referencedColumnSuffix = `_${referencedColumn}`
+      const suffix = columnName.endsWith(referencedColumnSuffix)
+        ? referencedColumnSuffix
+        : columnName.endsWith('_id')
+          ? '_id'
+          : ''
+      const relatedName = suffix ? columnName.slice(0, -suffix.length) : columnName
 
       return this.foreign(columnName, foreignKeyName)
         .references(referencedColumn)
