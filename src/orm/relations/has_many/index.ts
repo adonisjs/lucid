@@ -30,6 +30,7 @@ export class HasMany implements HasManyRelationContract<LucidModel, LucidModel> 
    * The relationship name
    */
   readonly type = 'hasMany'
+  readonly isMany = true
 
   /**
    * Whether or not the relationship instance has been

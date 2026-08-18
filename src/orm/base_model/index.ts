@@ -46,6 +46,7 @@ import {
   type ModelRelations,
   type RelationOptions,
   type RelationshipsContract,
+  type RelationRegistryContract,
   type ThroughRelationOptions,
   type ManyToManyRelationOptions,
 } from '../../types/relations.js'
@@ -54,11 +55,7 @@ import * as errors from '../../errors.js'
 import { Preloader } from '../preloader/index.js'
 import { proxyHandler } from './proxy_handler.js'
 import { ModelKeys } from '../model_keys/index.js'
-import { HasOne } from '../relations/has_one/index.js'
-import { HasMany } from '../relations/has_many/index.js'
-import { BelongsTo } from '../relations/belongs_to/index.js'
-import { ManyToMany } from '../relations/many_to_many/index.js'
-import { HasManyThrough } from '../relations/has_many_through/index.js'
+import { RelationRegistry } from '../relations/relation_registry.js'
 import { CamelCaseNamingStrategy } from '../naming_strategies/camel_case.js'
 import { LazyLoadAggregates } from '../relations/aggregates_loader/lazy_load.js'
 import {
@@ -71,7 +68,6 @@ import {
   compareValues,
 } from '../../utils/index.js'
 
-const MANY_RELATIONS = ['hasMany', 'manyToMany', 'hasManyThrough']
 const DATE_TIME_TYPES = {
   date: 'date',
   datetime: 'datetime',
@@ -158,6 +154,13 @@ class BaseModelImpl implements LucidRow {
   /**
    * Registered relationships for the given model
    */
+  /**
+   * Registry of relation types available to every model. Replace it with a fresh
+   * "new RelationRegistry()" to get an isolated set (tests); there is no way to
+   * remove a single entry, by design.
+   */
+  static $relationRegistry: RelationRegistryContract = new RelationRegistry()
+
   static $relationsDefinitions: Map<string, RelationshipsContract>
 
   /**
@@ -488,7 +491,7 @@ class BaseModelImpl implements LucidRow {
     relatedModel: () => LucidModel,
     options: RelationOptions<LucidModel, LucidModel, ModelRelations<LucidModel, LucidModel>>
   ) {
-    this.$relationsDefinitions.set(name, new HasOne(name, relatedModel, options, this))
+    this.$addRelation(name, 'hasOne', relatedModel, options)
   }
 
   /**
@@ -499,7 +502,7 @@ class BaseModelImpl implements LucidRow {
     relatedModel: () => LucidModel,
     options: RelationOptions<LucidModel, LucidModel, ModelRelations<LucidModel, LucidModel>>
   ) {
-    this.$relationsDefinitions.set(name, new HasMany(name, relatedModel, options, this))
+    this.$addRelation(name, 'hasMany', relatedModel, options)
   }
 
   /**
@@ -510,7 +513,7 @@ class BaseModelImpl implements LucidRow {
     relatedModel: () => LucidModel,
     options: RelationOptions<LucidModel, LucidModel, ModelRelations<LucidModel, LucidModel>>
   ) {
-    this.$relationsDefinitions.set(name, new BelongsTo(name, relatedModel, options, this))
+    this.$addRelation(name, 'belongsTo', relatedModel, options)
   }
 
   /**
@@ -521,7 +524,7 @@ class BaseModelImpl implements LucidRow {
     relatedModel: () => LucidModel,
     options: ManyToManyRelationOptions<ModelRelations<LucidModel, LucidModel>>
   ) {
-    this.$relationsDefinitions.set(name, new ManyToMany(name, relatedModel, options, this))
+    this.$addRelation(name, 'manyToMany', relatedModel, options)
   }
 
   /**
@@ -532,7 +535,7 @@ class BaseModelImpl implements LucidRow {
     relatedModel: () => LucidModel,
     options: ThroughRelationOptions<LucidModel, LucidModel, ModelRelations<LucidModel, LucidModel>>
   ) {
-    this.$relationsDefinitions.set(name, new HasManyThrough(name, relatedModel, options, this))
+    this.$addRelation(name, 'hasManyThrough', relatedModel, options)
   }
 
   /**
@@ -543,38 +546,21 @@ class BaseModelImpl implements LucidRow {
     type: ModelRelations<LucidModel, LucidModel>['__opaque_type'],
     relatedModel: () => LucidModel,
     options: ModelRelationOptions
-  ) {
-    switch (type) {
-      case 'hasOne':
-        this.$addHasOne(name, relatedModel, options)
-        break
-      case 'hasMany':
-        this.$addHasMany(name, relatedModel, options)
-        break
-      case 'belongsTo':
-        this.$addBelongsTo(name, relatedModel, options)
-        break
-      case 'manyToMany':
-        this.$addManyToMany(
-          name,
-          relatedModel,
-          options as ManyToManyRelationOptions<ModelRelations<LucidModel, LucidModel>>
-        )
-        break
-      case 'hasManyThrough':
-        this.$addHasManyThrough(
-          name,
-          relatedModel,
-          options as ThroughRelationOptions<
-            LucidModel,
-            LucidModel,
-            ModelRelations<LucidModel, LucidModel>
-          >
-        )
-        break
-      default:
-        throw new Error(`${type} is not a supported relation type`)
+  ): RelationshipsContract {
+    const factory = this.$relationRegistry.get(type)
+    if (!factory) {
+      throw new errors.E_UNSUPPORTED_RELATION_TYPE([type])
     }
+
+    /**
+     * The cast is the single, deliberate boundary between the string-keyed registry
+     * and the typed relation map: a runtime lookup cannot prove which member of
+     * "RelationshipsContract" it produced. Packages close the gap on their side by
+     * augmenting "KnownCustomRelations".
+     */
+    const relation = factory.create(name, relatedModel, options, this) as RelationshipsContract
+    this.$relationsDefinitions.set(name, relation)
+    return relation
   }
 
   /**
@@ -1721,7 +1707,7 @@ class BaseModelImpl implements LucidRow {
     /**
      * Reset array before invoking $pushRelated
      */
-    if (MANY_RELATIONS.includes(relation.type)) {
+    if (relation.isMany) {
       if (!Array.isArray(models)) {
         throw new Exception(
           `"${Model.name}.${key}" must be an array when setting "${relation.type}" relationship`
@@ -1750,7 +1736,7 @@ class BaseModelImpl implements LucidRow {
     /**
      * Create multiple for `hasMany` `manyToMany` and `hasManyThrough`
      */
-    if (MANY_RELATIONS.includes(relation.type)) {
+    if (relation.isMany) {
       this.$preloaded[key] = ((this.$preloaded[key] || []) as LucidRow[]).concat(models)
       return
     }

@@ -53,6 +53,49 @@ export type GetRelationModelInstance<Relation extends ModelRelations<LucidModel,
     : Relation['instance'][]
 
 /**
+ * Configuration for registering a custom relation factory
+ */
+export interface RelationFactoryConfig<
+  T extends BaseRelationContract<LucidModel, LucidModel> = BaseRelationContract<
+    LucidModel,
+    LucidModel
+  >,
+> {
+  /**
+   * Creates a new instance of the relation
+   */
+  create(relationName: string, relatedModel: () => LucidModel, options: any, model: LucidModel): T
+}
+
+/**
+ * Factory interface for creating custom relation instances
+ */
+export interface RelationFactory<
+  T extends BaseRelationContract<LucidModel, LucidModel> = BaseRelationContract<
+    LucidModel,
+    LucidModel
+  >,
+> extends RelationFactoryConfig<T> {
+  /**
+   * Type of relation (used for identification)
+   */
+  type: string
+}
+
+/**
+ * Registry of relation types. Registration is monotonic -- there is deliberately no
+ * "unregister" or "clear": relation instances outlive their factory, so removing an
+ * entry cannot un-define anything. Construct a fresh registry when isolation is
+ * needed (tests), rather than mutating a shared one.
+ */
+export interface RelationRegistryContract {
+  readonly types: string[]
+  register(type: string, factoryConfig: RelationFactoryConfig): void
+  get(type: string): RelationFactory | undefined
+  has(type: string): boolean
+}
+
+/**
  * ------------------------------------------------------
  * Options
  * ------------------------------------------------------
@@ -167,8 +210,48 @@ export type HasManyThroughDecorator = <RelatedModel extends LucidModel>(
  * between standard model properties and relationships
  *
  */
+
+/**
+ * Names of the relations shipped with Lucid. The single source of truth
+ * for the built-in list.
+ */
+export type BuiltInRelationTypes =
+  'hasOne' | 'hasMany' | 'belongsTo' | 'manyToMany' | 'hasManyThrough'
+
+/**
+ * Interface that can be augmented by third-party packages to register custom relation types.
+ *
+ * The key MUST match the `type` property of the registered contract, otherwise the
+ * entry is discarded from the "RelationshipsContract" union. See
+ * "CustomRelationContract" for the shape a custom relation has to satisfy.
+ *
+ * @example
+ * ```ts
+ * declare module '@adonisjs/lucid/types/relations' {
+ *   interface KnownCustomRelations {
+ *     morphTo: MorphToRelationContract<LucidModel, LucidModel>
+ *   }
+ *
+ *   interface KnownCustomOpaqueRelations {
+ *     morphTo: MorphTo<LucidModel>
+ *   }
+ * }
+ * ```
+ */
+export interface KnownCustomRelations {}
+
+/**
+ * Interface for custom opaque relation types (for type-safe relation properties on models)
+ */
+export interface KnownCustomOpaqueRelations {}
+
+/**
+ * Names of the custom relations registered via module augmentation
+ */
+export type CustomRelationTypes = keyof KnownCustomRelations & string
+
 export type ModelRelationTypes = {
-  readonly __opaque_type: 'hasOne' | 'hasMany' | 'belongsTo' | 'manyToMany' | 'hasManyThrough'
+  readonly __opaque_type: BuiltInRelationTypes | CustomRelationTypes
 }
 
 /**
@@ -260,6 +343,20 @@ export type HasManyThrough<
  * is to distinguish relationship properties from other model
  * properties.
  */
+/**
+ * Custom opaque relations that are declared correctly. An entry is kept only when
+ * its "__opaque_type" matches the key it was registered under, which is what keeps
+ * "ModelRelations" a discriminated union. A malformed entry collapses to "never"
+ * instead of widening the union for everyone.
+ */
+export type ValidatedCustomOpaqueRelations = {
+  [Name in keyof KnownCustomOpaqueRelations]: KnownCustomOpaqueRelations[Name] extends {
+    readonly __opaque_type: Name & string
+  }
+    ? KnownCustomOpaqueRelations[Name]
+    : never
+}[keyof KnownCustomOpaqueRelations]
+
 export type ModelRelations<
   RelatedModel extends LucidModel,
   ParentModel extends LucidModel = LucidModel,
@@ -269,6 +366,7 @@ export type ModelRelations<
   | BelongsTo<RelatedModel, ParentModel>
   | ManyToMany<RelatedModel, ParentModel>
   | HasManyThrough<RelatedModel, ParentModel>
+  | ValidatedCustomOpaqueRelations
 
 /**
  * ------------------------------------------------------
@@ -282,8 +380,11 @@ export type ModelRelations<
 export interface BaseRelationContract<
   ParentModel extends LucidModel,
   RelatedModel extends LucidModel,
+  Type extends string = ModelRelationTypes['__opaque_type'],
+  IsMany extends boolean = boolean,
 > {
-  readonly type: ModelRelationTypes['__opaque_type']
+  readonly type: Type
+  readonly isMany: IsMany
   readonly relationName: string
   readonly serializeAs: string | null
   readonly booted: boolean
@@ -307,6 +408,35 @@ export interface BaseRelationContract<
   ): RelationQueryBuilderContract<RelatedModel, InstanceType<RelatedModel>>
 
   subQuery(client: QueryClientContract): RelationSubQueryBuilderContract<RelatedModel>
+
+  /**
+   * Set related model(s) as a relationship on the parent model. The accepted
+   * shape follows from "IsMany", so a singular relation never type-checks
+   * against an array.
+   */
+  setRelated(
+    parent: InstanceType<ParentModel>,
+    related: IsMany extends true ? InstanceType<RelatedModel>[] : InstanceType<RelatedModel> | null
+  ): void
+
+  /**
+   * Push related model(s) to the existing relationship on the parent model
+   */
+  pushRelated(
+    parent: InstanceType<ParentModel>,
+    related: IsMany extends true
+      ? OneOrMany<InstanceType<RelatedModel>>
+      : InstanceType<RelatedModel> | null
+  ): void
+
+  /**
+   * Set multiple related instances on multiple parent models.
+   * This method is generally invoked during eager load.
+   */
+  setRelatedForMany(
+    parent: InstanceType<ParentModel>[],
+    related: InstanceType<RelatedModel>[]
+  ): void
 }
 
 /**
@@ -315,34 +445,11 @@ export interface BaseRelationContract<
 export interface HasOneRelationContract<
   ParentModel extends LucidModel,
   RelatedModel extends LucidModel,
-> extends BaseRelationContract<ParentModel, RelatedModel> {
-  readonly type: 'hasOne'
+> extends BaseRelationContract<ParentModel, RelatedModel, 'hasOne', false> {
   readonly localKey: string
   readonly foreignKey: string
   foreignKeyColumnName: string
   localKeyColumnName: string
-
-  /**
-   * Set related model as a relationship on the parent model.
-   */
-  setRelated(parent: InstanceType<ParentModel>, related: InstanceType<RelatedModel> | null): void
-
-  /**
-   * Push related model as a relationship on the parent model
-   */
-  pushRelated(parent: InstanceType<ParentModel>, related: InstanceType<RelatedModel> | null): void
-
-  /**
-   * Set multiple related instances on the multiple parent models.
-   * This method is generally invoked during eager load.
-   *
-   * Fetch 10 users and then all profiles for all 10 users and then
-   * call this method to set related instances
-   */
-  setRelatedForMany(
-    parent: InstanceType<ParentModel>[],
-    related: InstanceType<RelatedModel>[]
-  ): void
 
   /**
    * Returns the query client for one or many model instances. The query
@@ -365,37 +472,11 @@ export interface HasOneRelationContract<
 export interface HasManyRelationContract<
   ParentModel extends LucidModel,
   RelatedModel extends LucidModel,
-> extends BaseRelationContract<ParentModel, RelatedModel> {
-  readonly type: 'hasMany'
+> extends BaseRelationContract<ParentModel, RelatedModel, 'hasMany', true> {
   readonly localKey: string
   readonly foreignKey: string
   foreignKeyColumnName: string
   localKeyColumnName: string
-
-  /**
-   * Set related models as a relationship on the parent model
-   */
-  setRelated(parent: InstanceType<ParentModel>, related: InstanceType<RelatedModel>[]): void
-
-  /**
-   * Push related model(s) as a relationship on the parent model
-   */
-  pushRelated(
-    parent: InstanceType<ParentModel>,
-    related: OneOrMany<InstanceType<RelatedModel>>
-  ): void
-
-  /**
-   * Set multiple related instances on the multiple parent models.
-   * This method is generally invoked during eager load.
-   *
-   * Fetch 10 users and then all posts for all 10 users and then
-   * call this method to set related instances
-   */
-  setRelatedForMany(
-    parent: InstanceType<ParentModel>[],
-    related: InstanceType<RelatedModel>[]
-  ): void
 
   /**
    * Returns the query client for one or many model instances. The query
@@ -418,34 +499,11 @@ export interface HasManyRelationContract<
 export interface BelongsToRelationContract<
   ParentModel extends LucidModel,
   RelatedModel extends LucidModel,
-> extends BaseRelationContract<ParentModel, RelatedModel> {
-  readonly type: 'belongsTo'
+> extends BaseRelationContract<ParentModel, RelatedModel, 'belongsTo', false> {
   readonly localKey: string
   readonly foreignKey: string
   foreignKeyColumnName: string
   localKeyColumnName: string
-
-  /**
-   * Set related model as a relationship on the parent model
-   */
-  setRelated(parent: InstanceType<ParentModel>, related: InstanceType<RelatedModel> | null): void
-
-  /**
-   * Push related model as a relationship on the parent model
-   */
-  pushRelated(parent: InstanceType<ParentModel>, related: InstanceType<RelatedModel> | null): void
-
-  /**
-   * Set multiple related instances on the multiple parent models.
-   * This method is generally invoked during eager load.
-   *
-   * Fetch 10 profiles and then users for all 10 profiles and then
-   * call this method to set related instances
-   */
-  setRelatedForMany(
-    parent: InstanceType<ParentModel>[],
-    related: InstanceType<RelatedModel>[]
-  ): void
 
   /**
    * Returns the query client for a model instance
@@ -467,9 +525,7 @@ export interface BelongsToRelationContract<
 export interface ManyToManyRelationContract<
   ParentModel extends LucidModel,
   RelatedModel extends LucidModel,
-> extends BaseRelationContract<ParentModel, RelatedModel> {
-  type: 'manyToMany'
-
+> extends BaseRelationContract<ParentModel, RelatedModel, 'manyToMany', true> {
   readonly localKey: string
   readonly relatedKey: string
   readonly pivotForeignKey: string
@@ -478,28 +534,6 @@ export interface ManyToManyRelationContract<
   pivotColumns: string[]
   relatedKeyColumnName: string
   localKeyColumnName: string
-
-  /**
-   * Set related models as a relationship on the parent model
-   */
-  setRelated(parent: InstanceType<ParentModel>, related: InstanceType<RelatedModel>[]): void
-
-  /**
-   * Push related model(s) as a relationship on the parent model
-   */
-  pushRelated(
-    parent: InstanceType<ParentModel>,
-    related: OneOrMany<InstanceType<RelatedModel>>
-  ): void
-
-  /**
-   * Set multiple related instances on the multiple parent models.
-   * This method is generally invoked during eager load.
-   */
-  setRelatedForMany(
-    parent: InstanceType<ParentModel>[],
-    related: InstanceType<RelatedModel>[]
-  ): void
 
   /**
    * Returns the query client for one model instance
@@ -539,8 +573,7 @@ export interface ManyToManyRelationContract<
 export interface HasManyThroughRelationContract<
   ParentModel extends LucidModel,
   RelatedModel extends LucidModel,
-> extends BaseRelationContract<ParentModel, RelatedModel> {
-  type: 'hasManyThrough'
+> extends BaseRelationContract<ParentModel, RelatedModel, 'hasManyThrough', true> {
   readonly localKey: string
   readonly foreignKey: string
   readonly throughLocalKey: string
@@ -549,28 +582,6 @@ export interface HasManyThroughRelationContract<
   throughForeignKeyColumnName: string
   foreignKeyColumnName: string
   localKeyColumnName: string
-
-  /**
-   * Set related models as a relationship on the parent model
-   */
-  setRelated(parent: InstanceType<ParentModel>, related: InstanceType<RelatedModel>[]): void
-
-  /**
-   * Push related model(s) as a relationship on the parent model
-   */
-  pushRelated(
-    parent: InstanceType<ParentModel>,
-    related: InstanceType<RelatedModel> | InstanceType<RelatedModel>[]
-  ): void
-
-  /**
-   * Set multiple related instances on the multiple parent models.
-   * This method is generally invoked during eager load.
-   */
-  setRelatedForMany(
-    parent: InstanceType<ParentModel>[],
-    related: InstanceType<RelatedModel>[]
-  ): void
 
   /**
    * Returns the query client for a model instance
@@ -584,12 +595,34 @@ export interface HasManyThroughRelationContract<
 /**
  * A union of relationships
  */
+/**
+ * Custom relation contracts that are declared correctly. An entry is kept only when
+ * it satisfies "CustomRelationContract" under the very key it was registered with,
+ * which guarantees every member of "RelationshipsContract" carries a literal "type"
+ * and a literal "isMany".
+ *
+ * A malformed entry (a non-relation, or one that extends "BaseRelationContract"
+ * directly and so inherits the full "type" union) collapses to "never" rather than
+ * silently disabling `switch (relation.type)` narrowing across the whole ecosystem.
+ */
+export type ValidatedCustomRelations = {
+  [Name in keyof KnownCustomRelations]: KnownCustomRelations[Name] extends BaseRelationContract<
+    LucidModel,
+    LucidModel,
+    Name & string,
+    boolean
+  >
+    ? KnownCustomRelations[Name]
+    : never
+}[keyof KnownCustomRelations]
+
 export type RelationshipsContract =
   | HasOneRelationContract<LucidModel, LucidModel>
   | HasManyRelationContract<LucidModel, LucidModel>
   | BelongsToRelationContract<LucidModel, LucidModel>
   | ManyToManyRelationContract<LucidModel, LucidModel>
   | HasManyThroughRelationContract<LucidModel, LucidModel>
+  | ValidatedCustomRelations
 
 /**
  * ------------------------------------------------------
