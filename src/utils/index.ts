@@ -108,7 +108,8 @@ export function ensureRelationIsBooted(relation: RelationshipsContract) {
 
 /**
  * Returns the value for a key from the model instance and raises descriptive
- * exception when the value is missing
+ * exception when the value is missing. The message names the actual state
+ * of the value, since a null key and an unselected key are fixed differently.
  */
 export function getValue(
   model: LucidRow | ModelObject,
@@ -117,8 +118,9 @@ export function getValue(
   action = 'preload'
 ) {
   return ensureValue(model, key, () => {
+    const state = (model as ModelObject)[key] === null ? 'null' : 'undefined'
     throw new Exception(
-      `Cannot ${action} "${relation.relationName}", value of "${relation.model.name}.${key}" is undefined`,
+      `Cannot ${action} "${relation.relationName}", value of "${relation.model.name}.${key}" is ${state}`,
       { status: 500 }
     )
   })
