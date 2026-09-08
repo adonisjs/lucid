@@ -12,7 +12,7 @@ import { type LucidRow } from '../../../types/model.js'
 import { type QueryClientContract } from '../../../types/database.js'
 
 import { type HasOne } from './index.js'
-import { getValue, unique } from '../../../utils/index.js'
+import { getNullableValue, unique } from '../../../utils/index.js'
 import { BaseQueryBuilder } from '../base/query_builder.js'
 
 /**
@@ -96,9 +96,11 @@ export class HasOneQueryBuilder extends BaseQueryBuilder {
       this.wrapExisting().whereIn(
         this.relation.foreignKey,
         unique(
-          this.parent.map((model) => {
-            return getValue(model, this.relation.localKey, this.relation, queryAction)
-          })
+          this.parent
+            .map((model) => {
+              return getNullableValue(model, this.relation.localKey, this.relation, queryAction)
+            })
+            .filter((value) => value !== null)
         )
       )
       return
@@ -107,8 +109,12 @@ export class HasOneQueryBuilder extends BaseQueryBuilder {
     /**
      * Query constraints
      */
-    const value = getValue(this.parent, this.relation.localKey, this.relation, queryAction)
-    this.wrapExisting().where(this.relation.foreignKey, value)
+    const value = getNullableValue(this.parent, this.relation.localKey, this.relation, queryAction)
+    if (value === null) {
+      this.wrapExisting().whereIn(this.relation.foreignKey, [])
+    } else {
+      this.wrapExisting().where(this.relation.foreignKey, value)
+    }
 
     /**
      * Do not add limit when updating or deleting

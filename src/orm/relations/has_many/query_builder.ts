@@ -13,7 +13,7 @@ import { type LucidRow, type LucidModel } from '../../../types/model.js'
 import { type HasManyQueryBuilderContract } from '../../../types/relations.js'
 
 import { type HasMany } from './index.js'
-import { getValue, unique } from '../../../utils/index.js'
+import { getNullableValue, unique } from '../../../utils/index.js'
 import { BaseQueryBuilder } from '../base/query_builder.js'
 
 /**
@@ -101,9 +101,11 @@ export class HasManyQueryBuilder
       this.wrapExisting().whereIn(
         this.relation.foreignKey,
         unique(
-          this.parent.map((model) => {
-            return getValue(model, this.relation.localKey, this.relation, queryAction)
-          })
+          this.parent
+            .map((model) => {
+              return getNullableValue(model, this.relation.localKey, this.relation, queryAction)
+            })
+            .filter((value) => value !== null)
         )
       )
       return
@@ -112,7 +114,12 @@ export class HasManyQueryBuilder
     /**
      * Query constraints
      */
-    const value = getValue(this.parent, this.relation.localKey, this.relation, queryAction)
+    const value = getNullableValue(this.parent, this.relation.localKey, this.relation, queryAction)
+    if (value === null) {
+      this.wrapExisting().whereIn(this.relation.foreignKey, [])
+      return
+    }
+
     this.wrapExisting().where(this.relation.foreignKey, value)
   }
 
