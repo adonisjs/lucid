@@ -1842,6 +1842,56 @@ test.group('Base Model | create from adapter results', (group) => {
     assert.isTrue(user!.$isDirty)
     assert.deepEqual(user!.$dirty, { user: { username: 'nikk' } })
   })
+
+  test('hydrate table qualified column aliases', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const adapter = new FakeAdapter()
+
+    const BaseModel = getBaseModel(adapter)
+
+    class User extends BaseModel {
+      static table = 'users'
+
+      @column()
+      declare id: number
+
+      @column({ columnName: 'full_name' })
+      declare fullName: string
+    }
+
+    const user = User.$createFromAdapterResult({ users_id: 1, users_full_name: 'virk' })
+
+    assert.deepEqual(user!.$attributes, { id: 1, fullName: 'virk' })
+  })
+
+  test('give real column names precedence over column aliases', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const adapter = new FakeAdapter()
+
+    const BaseModel = getBaseModel(adapter)
+
+    class Semafor extends BaseModel {
+      static table = 'semafor'
+
+      @column()
+      declare url: string
+
+      @column({ columnName: 'semafor_url' })
+      declare semaforUrl: string
+    }
+
+    const semafor = Semafor.$createFromAdapterResult({
+      url: 'https://foo.com',
+      semafor_url: 'https://bar.com',
+    })
+
+    assert.deepEqual(semafor!.$attributes, {
+      url: 'https://foo.com',
+      semaforUrl: 'https://bar.com',
+    })
+  })
 })
 
 test.group('Base Model | delete', (group) => {
