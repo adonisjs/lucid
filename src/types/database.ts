@@ -83,8 +83,8 @@ export interface DialectContract {
 
   getPrimaryKeys(tableName: string): Promise<string[]>
 
-  getAdvisoryLock(key: string | number, timeout?: number): Promise<boolean>
-  releaseAdvisoryLock(key: string | number): Promise<boolean>
+  getAdvisoryLock(key: string | number, timeout?: number, connection?: any): Promise<boolean>
+  releaseAdvisoryLock(key: string | number, connection?: any): Promise<boolean>
 }
 
 /**
