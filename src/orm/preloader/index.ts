@@ -174,8 +174,18 @@ export class Preloader implements PreloaderContract<LucidRow> {
    * Process of all the preloaded relationships for a single parent
    */
   async processAllForOne(parent: LucidRow, client: QueryClientContract) {
+    const relationNames = Object.keys(this.preloads)
+
+    // Transactions share one connection, so relation queries must run sequentially.
+    if (client.isTransaction) {
+      for (const relationName of relationNames) {
+        await this.processRelation(relationName, parent, client)
+      }
+      return
+    }
+
     await Promise.all(
-      Object.keys(this.preloads).map((relationName) => {
+      relationNames.map((relationName) => {
         return this.processRelation(relationName, parent, client)
       })
     )
@@ -189,8 +199,18 @@ export class Preloader implements PreloaderContract<LucidRow> {
       return
     }
 
+    const relationNames = Object.keys(this.preloads)
+
+    // Transactions share one connection, so relation queries must run sequentially.
+    if (client.isTransaction) {
+      for (const relationName of relationNames) {
+        await this.processRelationForMany(relationName, parent, client)
+      }
+      return
+    }
+
     await Promise.all(
-      Object.keys(this.preloads).map((relationName) => {
+      relationNames.map((relationName) => {
         return this.processRelationForMany(relationName, parent, client)
       })
     )

@@ -367,17 +367,24 @@ export class MigrationRunner extends EventEmitter {
     const client = await this.getClient(false)
 
     try {
-      await Promise.all(
-        migrations.map((migration) => {
-          return client
-            .query()
-            .from(this.schemaTableName)
-            .where('id', migration.id)
-            .update({
-              name: slash(migration.name),
-            })
-        })
-      )
+      const queries = migrations.map((migration) => {
+        return client
+          .query()
+          .from(this.schemaTableName)
+          .where('id', migration.id)
+          .update({
+            name: slash(migration.name),
+          })
+      })
+
+      // Transactions share one connection, so updates must run sequentially.
+      if (client.isTransaction) {
+        for (const query of queries) {
+          await query
+        }
+      } else {
+        await Promise.all(queries)
+      }
 
       await client.query().from(this.schemaVersionsTableName).where('version', 1).update({
         version: 2,
