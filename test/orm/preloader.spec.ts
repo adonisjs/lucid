@@ -73,9 +73,17 @@ test.group('Preloader | query concurrency', (group) => {
         declare morePosts: HasMany<typeof Post>
       }
 
-      await db.table('users').insert({ id: 1, username: 'virk' })
-      await db.table('posts').insert({ id: 1, user_id: 1, title: 'Hello' })
-      await db.table('comments').insert({ post_id: 1, body: 'Hello' })
+      const [userRow] = await db
+        .table<{ id: number } | number>('users')
+        .insert({ username: 'virk' })
+        .returning('id')
+      const userId = typeof userRow === 'number' ? userRow : userRow.id
+      const [postRow] = await db
+        .table<{ id: number } | number>('posts')
+        .insert({ user_id: userId, title: 'Hello' })
+        .returning('id')
+      const postId = typeof postRow === 'number' ? postRow : postRow.id
+      await db.table('comments').insert({ post_id: postId, body: 'Hello' })
 
       const trx = transaction ? await db.transaction() : undefined
       const client = trx || db.connection()
