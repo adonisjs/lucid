@@ -10,13 +10,23 @@
 import { test } from '@japa/runner'
 import { AppFactory } from '@adonisjs/core/factories/app'
 
-import type { LucidModel, LucidRow } from '../../src/types/model.js'
+import type { LucidModel, LucidRow, OptionalTypedDecorator } from '../../src/types/model.js'
 import type { QueryClientContract } from '../../src/types/database.js'
 import type {
   BaseRelationContract,
+  BelongsTo,
+  ExtractModelRelations,
+  GetRelationModelInstance,
+  HasMany,
+  HasManyThrough,
+  HasOne,
+  ManyToMany,
+  RelationOptions,
+  RelationQueryClientContract,
   RelationshipsContract,
   RelationQueryBuilderContract,
   RelationSubQueryBuilderContract,
+  ValidatedCustomOpaqueRelations,
 } from '../../src/types/relations.js'
 import {
   BaseModel as BaseModelRef,
@@ -44,12 +54,57 @@ interface MorphToRelationContract<
   readonly morphType: string
 }
 
+type ModelMorphTo<
+  RelatedModel extends LucidModel,
+  ParentModel extends LucidModel = LucidModel,
+> = InstanceType<RelatedModel> & {
+  readonly __opaque_type: 'morphTo'
+  model: RelatedModel
+  instance: InstanceType<RelatedModel>
+  client: RelationQueryClientContract<
+    MorphToRelationContract<ParentModel, RelatedModel>,
+    RelatedModel
+  >
+  builder: RelationQueryBuilderContract<RelatedModel, any>
+  subQuery: RelationSubQueryBuilderContract<RelatedModel>
+}
+
+type Ancestors<
+  RelatedModel extends LucidModel,
+  ParentModel extends LucidModel = LucidModel,
+> = InstanceType<RelatedModel>[] & {
+  readonly __opaque_type: 'ancestors'
+  model: RelatedModel
+  instance: InstanceType<RelatedModel>
+  client: RelationQueryClientContract<
+    BaseRelationContract<ParentModel, RelatedModel, 'ancestors', true>,
+    RelatedModel
+  >
+  builder: RelationQueryBuilderContract<RelatedModel, any>
+  subQuery: RelationSubQueryBuilderContract<RelatedModel>
+}
+
+type MorphToDecorator = <RelatedModel extends LucidModel>(
+  model: () => RelatedModel,
+  options?: RelationOptions<RelatedModel, LucidModel, ModelMorphTo<RelatedModel>>
+) => OptionalTypedDecorator<ModelMorphTo<RelatedModel> | null>
+
 /**
  * The key MUST match the contract's "type", otherwise the entry is discarded
  */
 declare module '../../src/types/relations.js' {
   interface KnownCustomRelations {
     morphTo: MorphToRelationContract<LucidModel, LucidModel>
+    ancestors: BaseRelationContract<LucidModel, LucidModel, 'ancestors', true>
+  }
+
+  interface KnownCustomOpaqueRelations<
+    RelatedModel extends LucidModel,
+    ParentModel extends LucidModel,
+  > {
+    morphTo: ModelMorphTo<RelatedModel, ParentModel>
+    ancestors: Ancestors<RelatedModel, ParentModel>
+    mismatched: { readonly __opaque_type: 'wrongKey' }
   }
 }
 
@@ -102,8 +157,14 @@ class MorphTo implements MorphToRelationContract<LucidModel, LucidModel> {
     parents.forEach((parent, index) => this.setRelated(parent, related[index] ?? null))
   }
 
-  client(_parent: LucidRow, _client: QueryClientContract): unknown {
-    return null
+  client(
+    parent: LucidRow,
+    client: QueryClientContract
+  ): RelationQueryClientContract<this, LucidModel> {
+    return {
+      relation: this,
+      query: () => this.eagerQuery(parent, client),
+    }
   }
 
   eagerQuery(
@@ -145,7 +206,11 @@ test.group('Custom relations', (group) => {
     await resetTables()
   })
 
-  test('preload a custom SINGULAR relation on a single parent', async ({ fs, assert }) => {
+  test('preload a custom singular relation on a single parent', async ({
+    fs,
+    assert,
+    expectTypeOf,
+  }) => {
     const app = new AppFactory().create(fs.baseUrl, () => {})
     await app.init()
     const db = getDb()
@@ -156,7 +221,7 @@ test.group('Custom relations', (group) => {
         new MorphTo(name, relatedModel, options, model),
     })
 
-    const morphTo = createRelationDecorator('morphTo')
+    const morphTo: MorphToDecorator = createRelationDecorator('morphTo')
 
     class User extends BaseModel {
       static table = 'users'
@@ -167,15 +232,28 @@ test.group('Custom relations', (group) => {
       @column()
       declare username: string
 
-      @morphTo(() => User)
-      declare owner: any
+      @morphTo(() => User, {
+        onQuery(query) {
+          expectTypeOf(query).toEqualTypeOf<
+            | RelationQueryBuilderContract<typeof User, any>
+            | RelationSubQueryBuilderContract<typeof User>
+          >()
+        },
+      })
+      declare owner: ModelMorphTo<typeof User> | null
     }
     User.boot()
 
     await db.table('users').multiInsert([{ username: 'virk' }, { username: 'romain' }])
 
     const user = await User.query().orderBy('id', 'asc').firstOrFail()
-    await user.load('owner' as any)
+    await user.load('owner', (query) => {
+      expectTypeOf(query).toEqualTypeOf<RelationQueryBuilderContract<typeof User, any>>()
+    })
+    expectTypeOf<ExtractModelRelations<User>>().toEqualTypeOf<'owner' | undefined>()
+    expectTypeOf(user.related('owner').query()).toEqualTypeOf<
+      RelationQueryBuilderContract<typeof User, User>
+    >()
 
     /**
      * Regression guard: this used to throw
@@ -196,7 +274,7 @@ test.group('Custom relations', (group) => {
         new MorphTo(name, relatedModel, options, model),
     })
 
-    const morphTo = createRelationDecorator('morphTo')
+    const morphTo: MorphToDecorator = createRelationDecorator('morphTo')
 
     class User extends BaseModel {
       static table = 'users'
@@ -208,18 +286,53 @@ test.group('Custom relations', (group) => {
       declare username: string
 
       @morphTo(() => User)
-      declare owner: any
+      declare owner: ModelMorphTo<typeof User> | null
     }
     User.boot()
 
     await db.table('users').multiInsert([{ username: 'virk' }, { username: 'romain' }])
 
-    const users = await User.query()
-      .orderBy('id', 'asc')
-      .preload('owner' as any)
+    const users = await User.query().orderBy('id', 'asc').preload('owner')
 
     assert.lengthOf(users, 2)
     users.forEach((one) => assert.isFalse(Array.isArray(one.owner)))
+  })
+
+  test('infer instances for singular and many relations', ({ expectTypeOf }) => {
+    class User extends BaseModelRef {
+      declare username: string
+    }
+
+    expectTypeOf<GetRelationModelInstance<ModelMorphTo<typeof User>>>().toEqualTypeOf<User>()
+    expectTypeOf<GetRelationModelInstance<Ancestors<typeof User>>>().toEqualTypeOf<User[]>()
+    expectTypeOf<GetRelationModelInstance<HasOne<typeof User>>>().toEqualTypeOf<User>()
+    expectTypeOf<GetRelationModelInstance<BelongsTo<typeof User>>>().toEqualTypeOf<User>()
+    expectTypeOf<GetRelationModelInstance<HasMany<typeof User>>>().toEqualTypeOf<User[]>()
+    expectTypeOf<GetRelationModelInstance<ManyToMany<typeof User>>>().toEqualTypeOf<User[]>()
+    expectTypeOf<GetRelationModelInstance<HasManyThrough<typeof User>>>().toEqualTypeOf<User[]>()
+    expectTypeOf<
+      GetRelationModelInstance<ModelMorphTo<typeof User> | Ancestors<typeof User>>
+    >().toEqualTypeOf<User | User[]>()
+  })
+
+  test('preserve both model parameters and discard mismatched opaque entries', ({
+    expectTypeOf,
+  }) => {
+    class User extends BaseModelRef {
+      declare username: string
+    }
+    class Post extends BaseModelRef {
+      declare title: string
+    }
+
+    type CustomRelations = ValidatedCustomOpaqueRelations<typeof User, typeof Post>
+    expectTypeOf<CustomRelations>().toEqualTypeOf<
+      ModelMorphTo<typeof User, typeof Post> | Ancestors<typeof User, typeof Post>
+    >()
+    expectTypeOf<CustomRelations['__opaque_type']>().toEqualTypeOf<'morphTo' | 'ancestors'>()
+    expectTypeOf<
+      Extract<CustomRelations, { __opaque_type: 'morphTo' }>['client']['relation']['model']
+    >().toEqualTypeOf<typeof Post>()
   })
 
   test('a registered custom relation does not break discriminant narrowing', async ({ assert }) => {

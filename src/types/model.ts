@@ -801,13 +801,13 @@ export interface LucidModel {
   $columnsDefinitions: Map<string, ModelColumnOptions>
 
   /**
-   * A map of defined relationships
-   */
-  /**
    * Registry of relation types available to every model
    */
   $relationRegistry: RelationRegistryContract
 
+  /**
+   * A map of defined relationships
+   */
   $relationsDefinitions: Map<string, RelationshipsContract>
 
   /**

@@ -152,15 +152,15 @@ class BaseModelImpl implements LucidRow {
   static $columnsDefinitions: Map<string, ModelColumnOptions>
 
   /**
-   * Registered relationships for the given model
-   */
-  /**
    * Registry of relation types available to every model. Replace it with a fresh
    * "new RelationRegistry()" to get an isolated set (tests); there is no way to
    * remove a single entry, by design.
    */
   static $relationRegistry: RelationRegistryContract = new RelationRegistry()
 
+  /**
+   * Registered relationships for the given model
+   */
   static $relationsDefinitions: Map<string, RelationshipsContract>
 
   /**

@@ -48,7 +48,7 @@ export type ExtractModelRelations<Model extends LucidRow> = {
  * upon the relationship type
  */
 export type GetRelationModelInstance<Relation extends ModelRelations<LucidModel, LucidModel>> =
-  Relation['__opaque_type'] extends 'hasOne' | 'belongsTo'
+  Relation extends { __opaque_type: Extract<RelationshipsContract, { isMany: false }>['type'] }
     ? Relation['instance']
     : Relation['instance'][]
 
@@ -222,8 +222,8 @@ export type BuiltInRelationTypes =
  * Interface that can be augmented by third-party packages to register custom relation types.
  *
  * The key MUST match the `type` property of the registered contract, otherwise the
- * entry is discarded from the "RelationshipsContract" union. See
- * "CustomRelationContract" for the shape a custom relation has to satisfy.
+ * entry is discarded from the "RelationshipsContract" union. Custom relations
+ * implement "BaseRelationContract" with literal "type" and "isMany" parameters.
  *
  * @example
  * ```ts
@@ -232,8 +232,11 @@ export type BuiltInRelationTypes =
  *     morphTo: MorphToRelationContract<LucidModel, LucidModel>
  *   }
  *
- *   interface KnownCustomOpaqueRelations {
- *     morphTo: MorphTo<LucidModel>
+ *   interface KnownCustomOpaqueRelations<
+ *     RelatedModel extends LucidModel,
+ *     ParentModel extends LucidModel,
+ *   > {
+ *     morphTo: MorphTo<RelatedModel, ParentModel>
  *   }
  * }
  * ```
@@ -241,9 +244,14 @@ export type BuiltInRelationTypes =
 export interface KnownCustomRelations {}
 
 /**
- * Interface for custom opaque relation types (for type-safe relation properties on models)
+ * Interface for custom opaque relation types (for type-safe relation properties on models).
+ * Carry both model parameters through each entry so decorators and query callbacks
+ * retain the concrete model types, just like built-in relations.
  */
-export interface KnownCustomOpaqueRelations {}
+export interface KnownCustomOpaqueRelations<
+  RelatedModel extends LucidModel,
+  ParentModel extends LucidModel,
+> {}
 
 /**
  * Names of the custom relations registered via module augmentation
@@ -349,13 +357,19 @@ export type HasManyThrough<
  * "ModelRelations" a discriminated union. A malformed entry collapses to "never"
  * instead of widening the union for everyone.
  */
-export type ValidatedCustomOpaqueRelations = {
-  [Name in keyof KnownCustomOpaqueRelations]: KnownCustomOpaqueRelations[Name] extends {
+export type ValidatedCustomOpaqueRelations<
+  RelatedModel extends LucidModel,
+  ParentModel extends LucidModel,
+> = {
+  [Name in keyof KnownCustomOpaqueRelations<RelatedModel, ParentModel>]: KnownCustomOpaqueRelations<
+    RelatedModel,
+    ParentModel
+  >[Name] extends {
     readonly __opaque_type: Name & string
   }
-    ? KnownCustomOpaqueRelations[Name]
+    ? KnownCustomOpaqueRelations<RelatedModel, ParentModel>[Name]
     : never
-}[keyof KnownCustomOpaqueRelations]
+}[keyof KnownCustomOpaqueRelations<RelatedModel, ParentModel>]
 
 export type ModelRelations<
   RelatedModel extends LucidModel,
@@ -366,7 +380,7 @@ export type ModelRelations<
   | BelongsTo<RelatedModel, ParentModel>
   | ManyToMany<RelatedModel, ParentModel>
   | HasManyThrough<RelatedModel, ParentModel>
-  | ValidatedCustomOpaqueRelations
+  | ValidatedCustomOpaqueRelations<RelatedModel, ParentModel>
 
 /**
  * ------------------------------------------------------
@@ -597,7 +611,7 @@ export interface HasManyThroughRelationContract<
  */
 /**
  * Custom relation contracts that are declared correctly. An entry is kept only when
- * it satisfies "CustomRelationContract" under the very key it was registered with,
+ * it satisfies "BaseRelationContract" under the very key it was registered with,
  * which guarantees every member of "RelationshipsContract" carries a literal "type"
  * and a literal "isMany".
  *
