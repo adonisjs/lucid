@@ -24,6 +24,7 @@ import { ensureRelationIsBooted, getValue } from '../../../utils/index.js'
  */
 export class ManyToMany implements ManyToManyRelationContract<LucidModel, LucidModel> {
   type = 'manyToMany' as const
+  readonly isMany = true
 
   booted: boolean = false
   serializeAs

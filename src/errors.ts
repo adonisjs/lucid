@@ -94,6 +94,18 @@ export const E_UNDEFINED_RELATIONSHIP = createError(
   500
 )
 
+export const E_UNSUPPORTED_RELATION_TYPE = createError<[string]>(
+  '"%s" is not a supported relation type. Did you forget to register it with BaseModel.$relationRegistry.register()?',
+  'E_UNSUPPORTED_RELATION_TYPE',
+  500
+)
+
+export const E_DUPLICATE_RELATION_TYPE = createError<[string]>(
+  'Cannot register relation type "%s": it is already registered. Relation types cannot be replaced, please pick a different name.',
+  'E_DUPLICATE_RELATION_TYPE',
+  500
+)
+
 export const E_RUNTIME_EXCEPTION = createError('%s', 'E_RUNTIME_EXCEPTION', 500)
 
 /**

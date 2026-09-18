@@ -25,6 +25,7 @@ import { ensureRelationIsBooted } from '../../../utils/index.js'
  */
 export class HasManyThrough implements HasManyThroughRelationContract<LucidModel, LucidModel> {
   type = 'hasManyThrough' as const
+  readonly isMany = true
 
   booted: boolean = false
   serializeAs

@@ -29,6 +29,7 @@ export class BelongsTo implements BelongsToRelationContract<LucidModel, LucidMod
    * Relationship name
    */
   readonly type = 'belongsTo'
+  readonly isMany = false
 
   /**
    * Whether or not the relationship instance has been booted
