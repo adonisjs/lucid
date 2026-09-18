@@ -8413,18 +8413,18 @@ test.group('Base Model | lockForUpdate', (group) => {
     const trx = await db.transaction()
     user.useTransaction(trx)
 
-    await Promise.all([
-      user.lockForUpdate(async (freshUser) => {
-        freshUser.points = freshUser.points + 1
-        await freshUser.save()
-      }),
-      user.lockForUpdate(async (freshUser) => {
-        freshUser.points = freshUser.points + 1
-        await freshUser.save()
-      }),
-    ])
+    await user.lockForUpdate(async (freshUser) => {
+      freshUser.points = freshUser.points + 1
+      await freshUser.save()
+    })
+    await user.lockForUpdate(async (freshUser) => {
+      freshUser.points = freshUser.points + 1
+      await freshUser.save()
+    })
 
     assert.isFalse(trx.isCompleted)
+    const updatedUser = await User.findOrFail(user.id, { client: trx })
+    assert.equal(updatedUser.points, 2)
     await trx.rollback()
 
     await user.refresh()

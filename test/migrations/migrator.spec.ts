@@ -1406,6 +1406,21 @@ test.group('Migrator', (group) => {
     const db = getDb()
     cleanup(() => db.manager.closeAll())
 
+    let activeUpdates = 0
+    let maxActiveUpdates = 0
+    const knex = db.connection().getWriteClient()
+    knex.on('query', (query) => {
+      if (query.method === 'update') {
+        activeUpdates++
+        maxActiveUpdates = Math.max(maxActiveUpdates, activeUpdates)
+      }
+    })
+    knex.on('query-response', (_response, query) => {
+      if (query.method === 'update') {
+        activeUpdates--
+      }
+    })
+
     await fs.create(
       'database/migrations/users_v15.ts',
       `
@@ -1434,16 +1449,20 @@ test.group('Migrator', (group) => {
       })
     }
 
-    await db.connection().table('adonis_schema').insert({
-      name: 'database\\migrations\\users_v15',
-      batch: 1,
-    })
+    await db
+      .connection()
+      .table('adonis_schema')
+      .multiInsert([
+        { name: 'database\\migrations\\users_v15', batch: 1 },
+        { name: 'database\\migrations\\posts_v15', batch: 1 },
+        { name: 'database\\migrations\\comments_v15', batch: 1 },
+      ])
 
     assert.isFalse(await db.connection().schema.hasTable('adonis_schema_versions'))
 
     await migrator.run()
 
-    const migrated = await db.connection().from('adonis_schema').select('*')
+    const migrated = await db.connection().from('adonis_schema').select('*').orderBy('id')
     const latestVersion = await db.connection().from('adonis_schema_versions').select('*')
     const hasUsersTable = await db.connection().schema.hasTable('schema_users')
     const migratedFiles = Object.keys(migrator.migratedFiles).map((file) => {
@@ -1454,9 +1473,18 @@ test.group('Migrator', (group) => {
       }
     })
 
-    assert.lengthOf(migrated, 1)
+    assert.lengthOf(migrated, 3)
+    assert.equal(maxActiveUpdates, 1)
+    assert.equal(activeUpdates, 0)
     assert.deepEqual(latestVersion, [{ version: 2 }])
-    assert.equal(migrated[0].name, 'database/migrations/users_v15')
+    assert.deepEqual(
+      migrated.map((row) => row.name),
+      [
+        'database/migrations/users_v15',
+        'database/migrations/posts_v15',
+        'database/migrations/comments_v15',
+      ]
+    )
     assert.equal(migrated[0].batch, 1)
     assert.isFalse(hasUsersTable)
     assert.deepEqual(migratedFiles, [])
