@@ -375,6 +375,22 @@ async up() {
 
 ## Foreign Keys
 
+### Foreign ID
+
+Use `foreignId` to create a non-nullable unsigned big integer and its foreign key in one
+chain. Calling `constrained()` without arguments removes the `_id` suffix, pluralizes the
+remaining name, and references `id`. For example, `user_id` references `users.id`.
+
+```typescript
+table.foreignId('user_id').constrained().onDelete('CASCADE')
+
+// Override the inferred table, referenced column, and foreign key name
+table
+  .foreignId('author_id')
+  .nullable()
+  .constrained('members', 'member_id', 'posts_author_id_foreign')
+```
+
 ### Basic Foreign Key
 
 ```typescript
