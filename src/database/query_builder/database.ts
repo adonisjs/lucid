@@ -139,11 +139,7 @@ export class DatabaseQueryBuilder extends Chainable implements DatabaseQueryBuil
    */
   returning(columns: any): this {
     if (this.client.dialect.supportsReturningStatement) {
-      columns = Array.isArray(columns)
-        ? columns.map((column) => this.resolveKey(column))
-        : this.resolveKey(columns)
-
-      this.knexQuery.returning(columns)
+      this.knexQuery.returning(this.resolveReturning(columns))
     }
 
     return this
@@ -170,26 +166,43 @@ export class DatabaseQueryBuilder extends Chainable implements DatabaseQueryBuil
   }
 
   /**
+   * Resolves the keys of the returning columns
+   */
+  private resolveReturning(returning: string | string[]) {
+    return Array.isArray(returning)
+      ? returning.map((column) => this.resolveKey(column))
+      : this.resolveKey(returning)
+  }
+
+  /**
    * Perform update
    */
   update(column: any, value?: any, returning?: string | string[]): this {
     this.ensureCanPerformWrites()
 
-    if (value === undefined && returning === undefined) {
-      // Transform values in the object before passing to knex
-      if (column && typeof column === 'object') {
-        const columns = Object.keys(column).reduce((result: any, key) => {
-          result[this.resolveKey(key)] = this.transformRaw(column[key])
-          return result
-        }, {})
+    if (column && typeof column === 'object') {
+      // Transform values in the object before passing to knex. The second
+      // argument is the list of returning columns in this form
+      const columns = Object.keys(column).reduce((result: any, key) => {
+        result[this.resolveKey(key)] = this.transformRaw(column[key])
+        return result
+      }, {})
+
+      if (value === undefined) {
         this.knexQuery.update(columns)
       } else {
-        this.knexQuery.update(column)
+        this.knexQuery.update(columns, this.resolveReturning(value))
       }
+    } else if (value === undefined && returning === undefined) {
+      this.knexQuery.update(column)
     } else if (returning === undefined) {
       this.knexQuery.update(this.resolveKey(column), this.transformRaw(value))
     } else {
-      this.knexQuery.update(this.resolveKey(column), this.transformRaw(value), returning)
+      this.knexQuery.update(
+        this.resolveKey(column),
+        this.transformRaw(value),
+        this.resolveReturning(returning)
+      )
     }
 
     return this
