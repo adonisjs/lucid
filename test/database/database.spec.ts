@@ -118,6 +118,31 @@ test.group('Database', (group) => {
     await db.manager.closeAll()
   })
 
+  test('apply isolation level to a manual transaction', async ({
+    assert,
+    cleanup: testCleanup,
+  }) => {
+    const config = {
+      connection: 'primary',
+      connections: { primary: getConfig() },
+    }
+
+    const db = new Database(config, logger, createEmitter())
+    testCleanup(() => db.manager.closeAll())
+
+    const { rows } = await db.rawQuery('SHOW transaction_isolation')
+    assert.equal(rows[0].transaction_isolation, 'read committed')
+
+    const trx = await db.transaction({ isolationLevel: 'serializable' })
+    testCleanup(async () => {
+      if (!trx.isCompleted) await trx.rollback()
+    })
+
+    const result = await trx.rawQuery('SHOW transaction_isolation')
+    assert.equal(result.rows[0].transaction_isolation, 'serializable')
+    await trx.rollback()
+  }).skip(process.env.DB !== 'pg', 'Only for PostgreSQL')
+
   test('get raw query builder instance', async ({ assert }) => {
     const config = {
       connection: 'primary',

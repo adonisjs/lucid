@@ -13,6 +13,11 @@ import { Connection } from '../../src/connection/index.js'
 import { QueryClient } from '../../src/query_client/index.js'
 import { TransactionClient } from '../../src/transaction_client/index.js'
 import {
+  type IsolationLevels,
+  type ConnectionConfig,
+  type QueryClientContract,
+} from '../../src/types/database.js'
+import {
   setup,
   cleanup,
   getConfig,
@@ -263,3 +268,174 @@ test.group('Transaction | query', (group) => {
     await connection.disconnect()
   })
 })
+
+if (process.env.DB === 'pg') {
+  /**
+   * Returns the connection config with the default isolation level of
+   * every session set explicitly, so that assertions do not depend
+   * upon the server default
+   */
+  function getConfigWithDefaultIsolation(isolationLevel: IsolationLevels): ConnectionConfig {
+    return Object.assign({}, getConfig(), {
+      pool: {
+        afterCreate: (conn: any, done: any) => {
+          conn.query(
+            `SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL ${isolationLevel}`,
+            (error: Error | null) => done(error, conn)
+          )
+        },
+      },
+    })
+  }
+
+  /**
+   * Returns the isolation level reported by PostgreSQL for the client
+   */
+  async function getIsolationLevel(client: QueryClientContract) {
+    const { rows } = await client.rawQuery('SHOW transaction_isolation')
+    return rows[0].transaction_isolation
+  }
+
+  test.group('Transaction | isolation level', (group) => {
+    group.setup(async () => {
+      await setup()
+    })
+
+    group.teardown(async () => {
+      await cleanup()
+    })
+
+    group.each.teardown(async () => {
+      await resetTables()
+    })
+
+    test('apply "{isolationLevel}" isolation level to a manual transaction')
+      .with([
+        { isolationLevel: 'serializable', sessionDefault: 'read committed' },
+        { isolationLevel: 'repeatable read', sessionDefault: 'read committed' },
+        { isolationLevel: 'read committed', sessionDefault: 'serializable' },
+      ] as const)
+      .run(async ({ assert, cleanup: testCleanup }, { isolationLevel, sessionDefault }) => {
+        const connection = new Connection(
+          'primary',
+          getConfigWithDefaultIsolation(sessionDefault),
+          logger
+        )
+        connection.connect()
+        testCleanup(() => connection.disconnect())
+
+        const client = new QueryClient('dual', connection, createEmitter())
+        assert.equal(await getIsolationLevel(client), sessionDefault)
+
+        const trx = await client.transaction({ isolationLevel })
+        testCleanup(async () => {
+          if (!trx.isCompleted) await trx.rollback()
+        })
+
+        assert.equal(await getIsolationLevel(trx), isolationLevel)
+        await trx.rollback()
+      })
+
+    test('apply isolation level to a managed transaction', async ({
+      assert,
+      cleanup: testCleanup,
+    }) => {
+      const connection = new Connection(
+        'primary',
+        getConfigWithDefaultIsolation('read committed'),
+        logger
+      )
+      connection.connect()
+      testCleanup(() => connection.disconnect())
+
+      const client = new QueryClient('dual', connection, createEmitter())
+      assert.equal(await getIsolationLevel(client), 'read committed')
+
+      const isolationLevel = await client.transaction((trx) => getIsolationLevel(trx), {
+        isolationLevel: 'serializable',
+      })
+      assert.equal(isolationLevel, 'serializable')
+    })
+
+    test('use the session default when isolation level is not defined', async ({
+      assert,
+      cleanup: testCleanup,
+    }) => {
+      const connection = new Connection(
+        'primary',
+        getConfigWithDefaultIsolation('repeatable read'),
+        logger
+      )
+      connection.connect()
+      testCleanup(() => connection.disconnect())
+
+      const client = new QueryClient('dual', connection, createEmitter())
+
+      const trx = await client.transaction()
+      testCleanup(async () => {
+        if (!trx.isCompleted) await trx.rollback()
+      })
+      assert.equal(await getIsolationLevel(trx), 'repeatable read')
+      await trx.rollback()
+
+      const isolationLevel = await client.transaction((managedTrx) => getIsolationLevel(managedTrx))
+      assert.equal(isolationLevel, 'repeatable read')
+    })
+
+    test('savepoints inherit the isolation level of the outer transaction', async ({
+      assert,
+      cleanup: testCleanup,
+    }) => {
+      const connection = new Connection(
+        'primary',
+        getConfigWithDefaultIsolation('read committed'),
+        logger
+      )
+      connection.connect()
+      testCleanup(() => connection.disconnect())
+
+      const client = new QueryClient('dual', connection, createEmitter())
+      await client.transaction(
+        async (trx) => {
+          /**
+           * PostgreSQL cannot change the isolation level of a savepoint
+           */
+          const savepoint = await trx.transaction({ isolationLevel: 'read committed' })
+          assert.equal(await getIsolationLevel(savepoint), 'serializable')
+          await savepoint.rollback()
+
+          assert.equal(await getIsolationLevel(trx), 'serializable')
+        },
+        { isolationLevel: 'serializable' }
+      )
+    })
+
+    test('release connection after rolling back a transaction with isolation level', async ({
+      assert,
+      cleanup: testCleanup,
+    }) => {
+      const connection = new Connection(
+        'primary',
+        getConfigWithDefaultIsolation('read committed'),
+        logger
+      )
+      connection.connect()
+      testCleanup(() => connection.disconnect())
+
+      const client = new QueryClient('dual', connection, createEmitter())
+      const trx = await client.transaction({ isolationLevel: 'serializable' })
+      testCleanup(async () => {
+        if (!trx.isCompleted) await trx.rollback()
+      })
+
+      await trx.insertQuery().table('users').insert({ username: 'virk' })
+      assert.equal(await getIsolationLevel(trx), 'serializable')
+      await trx.rollback()
+
+      assert.isTrue(trx.isCompleted)
+      assert.equal(connection.pool!.numUsed(), 0)
+      assert.lengthOf(await client.query().from('users'), 0)
+      assert.equal(await getIsolationLevel(client), 'read committed')
+    })
+  })
+}

@@ -8530,6 +8530,38 @@ test.group('Base Model | transaction', (group) => {
     assert.equal(user!.username, 'virk')
   })
 
+  test('apply isolation level to a manual transaction', async ({ fs, assert, cleanup }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+
+    const BaseModel = getBaseModel(adapter)
+
+    class User extends BaseModel {
+      static connection = 'secondary'
+
+      @column({ isPrimary: true })
+      declare id: number
+
+      @column()
+      declare username: string
+    }
+
+    const { rows } = await db.connection('secondary').rawQuery('SHOW transaction_isolation')
+    assert.equal(rows[0].transaction_isolation, 'read committed')
+
+    const trx = await User.transaction({ isolationLevel: 'serializable' })
+    cleanup(async () => {
+      if (!trx.isCompleted) await trx.rollback()
+    })
+
+    const result = await trx.rawQuery('SHOW transaction_isolation')
+    assert.equal(trx.connectionName, 'secondary')
+    assert.equal(result.rows[0].transaction_isolation, 'serializable')
+    await trx.rollback()
+  }).skip(process.env.DB !== 'pg', 'Only for PostgreSQL')
+
   test('ignore internal properties during merge', async ({ fs, assert }) => {
     const app = new AppFactory().create(fs.baseUrl, () => {})
     await app.init()

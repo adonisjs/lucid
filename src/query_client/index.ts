@@ -238,7 +238,15 @@ export class QueryClient implements QueryClientContract {
       { isolationLevel?: IsolationLevels } | ((trx: TransactionClientContract) => Promise<any>),
     options?: { isolationLevel?: IsolationLevels }
   ): Promise<TransactionClientContract | T> {
-    const trx = await this.getWriteClient().transaction(options)
+    /**
+     * Options are the first argument when no callback is defined. Only the
+     * isolation level is forwarded, since knex assigns its own meaning to
+     * keys like "connection"
+     */
+    const trxOptions = typeof callback === 'function' ? options : (callback ?? options)
+    const trx = await this.getWriteClient().transaction({
+      isolationLevel: trxOptions?.isolationLevel,
+    })
     const transaction = new TransactionClient(
       trx,
       this.dialect,
