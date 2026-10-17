@@ -49,7 +49,7 @@ import {
   sleep,
   cleanup as cleanupTables,
 } from '../../test-helpers/index.js'
-import { type LucidRow } from '../../src/types/model.js'
+import { type LucidRow, type ModelAdapterOptions } from '../../src/types/model.js'
 import { ModelPaginator } from '../../src/orm/paginator/index.js'
 import { SimplePaginator } from '../../src/database/paginator/simple_paginator.js'
 import { SnakeCaseNamingStrategy } from '../../src/orm/naming_strategies/snake_case.js'
@@ -8552,6 +8552,47 @@ test.group('Base Model | transaction', (group) => {
     assert.equal(rows[0].transaction_isolation, 'read committed')
 
     const trx = await User.transaction({ isolationLevel: 'serializable' })
+    cleanup(async () => {
+      if (!trx.isCompleted) await trx.rollback()
+    })
+
+    const result = await trx.rawQuery('SHOW transaction_isolation')
+    assert.equal(trx.connectionName, 'secondary')
+    assert.equal(result.rows[0].transaction_isolation, 'serializable')
+    await trx.rollback()
+  }).skip(process.env.DB !== 'pg', 'Only for PostgreSQL')
+
+  test('apply isolation level when connection is included in the transaction options', async ({
+    fs,
+    assert,
+    cleanup,
+  }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+
+    const BaseModel = getBaseModel(adapter)
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+
+      @column()
+      declare username: string
+    }
+
+    const { rows } = await db.connection('secondary').rawQuery('SHOW transaction_isolation')
+    assert.equal(rows[0].transaction_isolation, 'read committed')
+
+    // `connection` selects the Lucid connection. The public TransactionFn type
+    // does not declare it, but BaseModel.transaction accepts adapter options
+    // and must not forward that key to knex.
+    const options: ModelAdapterOptions & { isolationLevel: 'serializable' } = {
+      connection: 'secondary',
+      isolationLevel: 'serializable',
+    }
+    const trx = await User.transaction(options)
     cleanup(async () => {
       if (!trx.isCompleted) await trx.rollback()
     })
