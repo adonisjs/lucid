@@ -439,3 +439,83 @@ if (process.env.DB === 'pg') {
     })
   })
 }
+
+if (['mysql', 'mysql_legacy'].includes(process.env.DB!)) {
+  /**
+   * Returns the connection config with the default isolation level of
+   * every session set explicitly, so that assertions do not depend
+   * upon the server default
+   */
+  function getConfigWithDefaultIsolation(isolationLevel: IsolationLevels): ConnectionConfig {
+    return Object.assign({}, getConfig(), {
+      pool: {
+        afterCreate: (conn: any, done: any) => {
+          conn.query(
+            `SET SESSION TRANSACTION ISOLATION LEVEL ${isolationLevel}`,
+            (error: Error | null) => done(error, conn)
+          )
+        },
+      },
+    })
+  }
+
+  test.group('Transaction | isolation level', (group) => {
+    group.setup(async () => {
+      await setup()
+    })
+
+    group.teardown(async () => {
+      await cleanup()
+    })
+
+    group.each.teardown(async () => {
+      await resetTables()
+    })
+
+    /**
+     * MySQL reports the isolation level of the session, not the one of the
+     * running transaction. So the test checks the effect of the level instead:
+     * whether the transaction sees a change committed by another connection
+     * after its first read
+     */
+    test('apply "{isolationLevel}" isolation level to a manual transaction')
+      .with([
+        { isolationLevel: 'read committed', sessionDefault: 'repeatable read', seesChange: true },
+        { isolationLevel: 'repeatable read', sessionDefault: 'read committed', seesChange: false },
+      ] as const)
+      .run(
+        async (
+          { assert, cleanup: testCleanup },
+          { isolationLevel, sessionDefault, seesChange }
+        ) => {
+          const connection = new Connection(
+            'primary',
+            getConfigWithDefaultIsolation(sessionDefault),
+            logger
+          )
+          connection.connect()
+          testCleanup(() => connection.disconnect())
+
+          const client = new QueryClient('dual', connection, createEmitter())
+          const [rows] = await client.rawQuery('SELECT @@session.transaction_isolation AS level')
+          assert.equal(rows[0].level, sessionDefault.toUpperCase().replace(' ', '-'))
+
+          await client.insertQuery().table('users').insert({ username: 'virk', points: 0 })
+
+          const trx = await client.transaction({ isolationLevel })
+          testCleanup(async () => {
+            if (!trx.isCompleted) await trx.rollback()
+          })
+
+          const user = await trx.query().from('users').where('username', 'virk').first()
+          assert.equal(user.points, 0)
+
+          await client.query().from('users').where('username', 'virk').update({ points: 1 })
+
+          const userAfterChange = await trx.query().from('users').where('username', 'virk').first()
+          assert.equal(userAfterChange.points, seesChange ? 1 : 0)
+          await trx.rollback()
+        }
+      )
+  })
+}
