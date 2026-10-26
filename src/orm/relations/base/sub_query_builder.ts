@@ -123,6 +123,14 @@ export abstract class BaseSubQueryBuilder
   }
 
   /**
+   * Return knex query
+   */
+  toKnex() {
+    this.prepare()
+    return super.toKnex()
+  }
+
+  /**
    * prepare
    */
   prepare() {

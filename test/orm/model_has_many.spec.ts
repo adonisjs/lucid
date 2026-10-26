@@ -682,6 +682,88 @@ test.group('Model | HasMany | sub queries', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
+  test('apply constraints when calling toKnex on relationship subQuery', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter)
+
+    class Post extends BaseModel {
+      @column()
+      declare userId: number
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+
+      @hasMany(() => Post)
+      declare posts: HasMany<typeof Post>
+    }
+
+    User.$getRelation('posts')!.boot()
+
+    const subQuery = User.$getRelation('posts')!.subQuery(db.connection())
+    const { sql, bindings } = (subQuery as any).toKnex().toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = db
+      .connection()
+      .knexQuery()
+      .from('posts')
+      .where('users.id', '=', db.connection().getReadClient().ref('posts.user_id'))
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
+  test('apply relationship constraints when passing subQuery to whereExists', async ({
+    fs,
+    assert,
+  }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter)
+
+    class Post extends BaseModel {
+      @column()
+      declare userId: number
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+
+      @hasMany(() => Post)
+      declare posts: HasMany<typeof Post>
+    }
+
+    User.$getRelation('posts')!.boot()
+
+    const subQuery = User.$getRelation('posts')!.subQuery(db.connection())
+
+    const { sql, bindings } = db.query().from('users').whereExists(subQuery).toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = db
+      .connection()
+      .knexQuery()
+      .from('users')
+      .whereExists(
+        db
+          .connection()
+          .knexQuery()
+          .from('posts')
+          .where('users.id', '=', db.connection().getReadClient().ref('posts.user_id'))
+      )
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
   test('create aggregate query', async ({ fs, assert }) => {
     const app = new AppFactory().create(fs.baseUrl, () => {})
     await app.init()
