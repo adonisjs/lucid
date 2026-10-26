@@ -705,7 +705,7 @@ test.group('Model | HasMany | sub queries', (group) => {
     User.$getRelation('posts')!.boot()
 
     const subQuery = User.$getRelation('posts')!.subQuery(db.connection())
-    const { sql, bindings } = (subQuery as any).toKnex().toSQL()
+    const { sql, bindings } = subQuery.toKnex().toSQL()
 
     const { sql: knexSql, bindings: knexBindings } = db
       .connection()
@@ -750,8 +750,8 @@ test.group('Model | HasMany | sub queries', (group) => {
       .subQuery(db.connection())
       .where('isPublished', true)
 
-    const first = (subQuery as any).toKnex().toSQL()
-    const second = (subQuery as any).toKnex().toSQL()
+    const first = subQuery.toKnex().toSQL()
+    const second = subQuery.toKnex().toSQL()
 
     assert.equal(first.sql, second.sql)
     assert.deepEqual(first.bindings, second.bindings)

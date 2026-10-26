@@ -494,6 +494,7 @@ export interface MultiInsert<Builder extends InsertQueryBuilderContract> {
  */
 export interface ChainableContract {
   knexQuery: Knex.QueryBuilder
+  toKnex(): Knex.QueryBuilder
   columns: (string | Knex.QueryBuilder | Knex.RawQueryBuilder)[]
   subQueryAlias?: string
   hasAggregates: boolean
