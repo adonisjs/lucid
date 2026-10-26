@@ -718,6 +718,58 @@ test.group('Model | HasMany | sub queries', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
+  test('preserve predicates across repeated toKnex calls on filtered relationship subQuery', async ({
+    fs,
+    assert,
+  }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter)
+
+    class Post extends BaseModel {
+      @column()
+      declare userId: number
+
+      @column()
+      declare isPublished: boolean
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+
+      @hasMany(() => Post)
+      declare posts: HasMany<typeof Post>
+    }
+
+    User.$getRelation('posts')!.boot()
+
+    const subQuery = User.$getRelation('posts')!
+      .subQuery(db.connection())
+      .where('isPublished', true)
+
+    const first = (subQuery as any).toKnex().toSQL()
+    const second = (subQuery as any).toKnex().toSQL()
+
+    assert.equal(first.sql, second.sql)
+    assert.deepEqual(first.bindings, second.bindings)
+
+    const { sql: knexSql, bindings: knexBindings } = db
+      .connection()
+      .knexQuery()
+      .from('posts')
+      .where((builder) => builder.where('is_published', true))
+      .where((builder) =>
+        builder.where('users.id', '=', db.connection().getReadClient().ref('posts.user_id'))
+      )
+      .toSQL()
+
+    assert.equal(second.sql, knexSql)
+    assert.deepEqual(second.bindings, knexBindings)
+  })
+
   test('apply relationship constraints when passing subQuery to whereExists', async ({
     fs,
     assert,
