@@ -230,6 +230,34 @@ test.group('Transaction | query', (group) => {
     await connection.disconnect()
   })
 
+  test('ignore transaction options when creating a managed savepoint', async ({
+    assert,
+    cleanup: testCleanup,
+  }) => {
+    const connection = new Connection('primary', getConfig(), logger)
+    connection.connect()
+    testCleanup(() => connection.disconnect())
+
+    await new QueryClient('dual', connection, createEmitter()).transaction(async (db) => {
+      await db.insertQuery().table('users').insert({ username: 'virk' })
+      await db.transaction(
+        async (db1) => {
+          await db1.insertQuery().table('users').insert({ username: 'nikk' })
+        },
+        { isolationLevel: 'serializable', readOnly: true }
+      )
+    })
+
+    const results = await new QueryClient('dual', connection, createEmitter())
+      .query()
+      .from('users')
+      .orderBy('id')
+    assert.deepEqual(
+      results.map((row) => row.username),
+      ['virk', 'nikk']
+    )
+  })
+
   test('execute after commit hook', async ({ assert }) => {
     const stack: string[] = []
     const connection = new Connection('primary', getConfig(), logger)
@@ -437,6 +465,50 @@ if (process.env.DB === 'pg') {
       assert.lengthOf(await client.query().from('users'), 0)
       assert.equal(await getIsolationLevel(client), 'read committed')
     })
+
+    test('reject writes inside a read only manual transaction', async ({
+      assert,
+      cleanup: testCleanup,
+    }) => {
+      const connection = new Connection('primary', getConfig(), logger)
+      connection.connect()
+      testCleanup(() => connection.disconnect())
+
+      const client = new QueryClient('dual', connection, createEmitter())
+      const trx = await client.transaction({ isolationLevel: 'serializable', readOnly: true })
+      testCleanup(async () => {
+        if (!trx.isCompleted) await trx.rollback()
+      })
+
+      assert.equal(await getIsolationLevel(trx), 'serializable')
+      const error = await trx
+        .insertQuery()
+        .table('users')
+        .insert({ username: 'virk' })
+        .catch((e) => e)
+
+      assert.equal(error.code, '25006')
+      await trx.rollback()
+    })
+
+    test('reject writes inside a read only managed transaction', async ({
+      assert,
+      cleanup: testCleanup,
+    }) => {
+      const connection = new Connection('primary', getConfig(), logger)
+      connection.connect()
+      testCleanup(() => connection.disconnect())
+
+      const client = new QueryClient('dual', connection, createEmitter())
+      const error = await client
+        .transaction((trx) => trx.insertQuery().table('users').insert({ username: 'virk' }), {
+          readOnly: true,
+        })
+        .catch((e) => e)
+
+      assert.equal(error.code, '25006')
+      assert.lengthOf(await client.query().from('users'), 0)
+    })
   })
 }
 
@@ -517,5 +589,95 @@ if (['mysql', 'mysql_legacy'].includes(process.env.DB!)) {
           await trx.rollback()
         }
       )
+
+    test('reject writes inside a read only {form} transaction')
+      .with([{ form: 'manual' }, { form: 'managed' }] as const)
+      .run(async ({ assert, cleanup: testCleanup }, { form }) => {
+        const connection = new Connection('primary', getConfig(), logger)
+        connection.connect()
+        testCleanup(() => connection.disconnect())
+
+        const client = new QueryClient('dual', connection, createEmitter())
+        let error: any
+
+        if (form === 'manual') {
+          const trx = await client.transaction({ readOnly: true })
+          testCleanup(async () => {
+            if (!trx.isCompleted) await trx.rollback()
+          })
+          error = await trx
+            .insertQuery()
+            .table('users')
+            .insert({ username: 'virk' })
+            .catch((e) => e)
+          await trx.rollback()
+        } else {
+          error = await client
+            .transaction((trx) => trx.insertQuery().table('users').insert({ username: 'virk' }), {
+              readOnly: true,
+            })
+            .catch((e) => e)
+        }
+
+        assert.equal(error.code, 'ER_CANT_EXECUTE_IN_READ_ONLY_TRANSACTION')
+        assert.lengthOf(await client.query().from('users'), 0)
+      })
+  })
+}
+
+if (['sqlite', 'better_sqlite', 'libsql'].includes(process.env.DB!)) {
+  /**
+   * Returns the value of the foreign keys pragma for the client
+   */
+  async function getForeignKeysPragma(client: QueryClientContract) {
+    const rows = await client.rawQuery('PRAGMA foreign_keys')
+    return rows[0].foreign_keys
+  }
+
+  test.group('Transaction | foreign keys check', (group) => {
+    group.setup(async () => {
+      await setup()
+    })
+
+    group.teardown(async () => {
+      await cleanup()
+    })
+
+    test('set foreign keys pragma to "{enforceForeignCheck}" inside a manual transaction')
+      .with([{ enforceForeignCheck: true }, { enforceForeignCheck: false }] as const)
+      .run(async ({ assert, cleanup: testCleanup }, { enforceForeignCheck }) => {
+        const connection = new Connection('primary', getConfig(), logger)
+        connection.connect()
+        testCleanup(() => connection.disconnect())
+
+        const client = new QueryClient('dual', connection, createEmitter())
+        const pragmaBefore = await getForeignKeysPragma(client)
+
+        const trx = await client.transaction({ enforceForeignCheck })
+        testCleanup(async () => {
+          if (!trx.isCompleted) await trx.rollback()
+        })
+
+        assert.equal(await getForeignKeysPragma(trx), enforceForeignCheck ? 1 : 0)
+        await trx.rollback()
+
+        assert.equal(await getForeignKeysPragma(client), pragmaBefore)
+      })
+
+    test('set foreign keys pragma inside a managed transaction', async ({
+      assert,
+      cleanup: testCleanup,
+    }) => {
+      const connection = new Connection('primary', getConfig(), logger)
+      connection.connect()
+      testCleanup(() => connection.disconnect())
+
+      const client = new QueryClient('dual', connection, createEmitter())
+      const pragma = await client.transaction((trx) => getForeignKeysPragma(trx), {
+        enforceForeignCheck: false,
+      })
+
+      assert.equal(pragma, 0)
+    })
   })
 }

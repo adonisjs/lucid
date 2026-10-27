@@ -12,7 +12,7 @@ import { Exception } from '@poppinss/utils/exception'
 import type { Emitter } from '@adonisjs/core/events'
 
 import {
-  type IsolationLevels,
+  type TransactionOptions,
   type DialectContract,
   type ConnectionContract,
   type QueryClientContract,
@@ -230,22 +230,23 @@ export class QueryClient implements QueryClientContract {
    */
   transaction<T>(
     callback: (trx: TransactionClientContract) => Promise<T>,
-    options?: { isolationLevel?: IsolationLevels }
+    options?: TransactionOptions
   ): Promise<T>
-  transaction(options?: { isolationLevel?: IsolationLevels }): Promise<TransactionClientContract>
+  transaction(options?: TransactionOptions): Promise<TransactionClientContract>
   async transaction<T>(
-    callback?:
-      { isolationLevel?: IsolationLevels } | ((trx: TransactionClientContract) => Promise<any>),
-    options?: { isolationLevel?: IsolationLevels }
+    callback?: TransactionOptions | ((trx: TransactionClientContract) => Promise<any>),
+    options?: TransactionOptions
   ): Promise<TransactionClientContract | T> {
     /**
      * Options are the first argument when no callback is defined. Only the
-     * isolation level is forwarded, since knex assigns its own meaning to
+     * known options are forwarded, since knex assigns its own meaning to
      * keys like "connection"
      */
     const trxOptions = typeof callback === 'function' ? options : (callback ?? options)
     const trx = await this.getWriteClient().transaction({
       isolationLevel: trxOptions?.isolationLevel,
+      readOnly: trxOptions?.readOnly,
+      enforceForeignCheck: trxOptions?.enforceForeignCheck,
     })
     const transaction = new TransactionClient(
       trx,

@@ -12,7 +12,7 @@ import Hooks from '@poppinss/hooks'
 import { EventEmitter } from 'node:events'
 import type { Emitter } from '@adonisjs/core/events'
 import {
-  type IsolationLevels,
+  type TransactionOptions,
   type DialectContract,
   type TransactionClientContract,
 } from '../types/database.js'
@@ -257,11 +257,15 @@ export class TransactionClient extends EventEmitter implements TransactionClient
    * Returns another instance of transaction with save point
    */
   async transaction(
-    callback?:
-      { isolationLevel?: IsolationLevels } | ((trx: TransactionClientContract) => Promise<any>),
-    options?: { isolationLevel?: IsolationLevels }
+    callback?: TransactionOptions | ((trx: TransactionClientContract) => Promise<any>),
+    _options?: TransactionOptions
   ): Promise<any> {
-    const trx = await this.knexClient.transaction(options)
+    /**
+     * Options are not forwarded, since savepoints cannot change the
+     * isolation level, the access mode or the foreign keys pragma
+     * of the outer transaction
+     */
+    const trx = await this.knexClient.transaction()
     const transaction = new TransactionClient(
       trx,
       this.dialect,
