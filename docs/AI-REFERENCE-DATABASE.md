@@ -73,11 +73,11 @@ knexRawQuery(sql: string, bindings?: any[]): Knex.Raw
 // Managed transaction (auto commit/rollback)
 transaction<T>(
   callback: (trx: TransactionClientContract) => Promise<T>,
-  options?: { isolationLevel?: IsolationLevels }
+  options?: TransactionOptions
 ): Promise<T>
 
 // Manual transaction
-transaction(options?: { isolationLevel?: IsolationLevels }): Promise<TransactionClientContract>
+transaction(options?: TransactionOptions): Promise<TransactionClientContract>
 
 // Global transactions (for testing)
 beginGlobalTransaction(connection?: string): Promise<TransactionClientContract>
@@ -466,6 +466,12 @@ type IsolationLevels =
   | 'snapshot'
   | 'repeatable read'
   | 'serializable'
+
+type TransactionOptions = {
+  isolationLevel?: IsolationLevels
+  // Ignored by SQLite, MSSQL and Oracle
+  readOnly?: boolean
+}
 ```
 
 ---

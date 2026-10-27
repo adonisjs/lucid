@@ -13,7 +13,7 @@ import lodash from '@poppinss/utils/lodash'
 import { Exception } from '@poppinss/utils/exception'
 import { defineStaticProperty } from '@poppinss/utils'
 import {
-  type IsolationLevels,
+  type TransactionOptions,
   type QueryClientContract,
   type TransactionClientContract,
 } from '../../types/database.js'
@@ -271,18 +271,15 @@ class BaseModelImpl implements LucidRow {
    */
   static transaction<T>(
     callback: (trx: TransactionClientContract) => Promise<T>,
-    options?: ModelAdapterOptions & { isolationLevel?: IsolationLevels }
+    options?: ModelAdapterOptions & TransactionOptions
   ): Promise<T>
   static transaction(
-    options?: ModelAdapterOptions & {
-      isolationLevel?: IsolationLevels
-    }
+    options?: ModelAdapterOptions & TransactionOptions
   ): Promise<TransactionClientContract>
   static async transaction<T>(
     callbackOrOptions?:
-      | ((trx: TransactionClientContract) => Promise<T>)
-      | (ModelAdapterOptions & { isolationLevel?: IsolationLevels }),
-    options?: ModelAdapterOptions & { isolationLevel?: IsolationLevels }
+      ((trx: TransactionClientContract) => Promise<T>) | (ModelAdapterOptions & TransactionOptions),
+    options?: ModelAdapterOptions & TransactionOptions
   ): Promise<TransactionClientContract | T> {
     this.boot()
     if (typeof callbackOrOptions === 'function') {
