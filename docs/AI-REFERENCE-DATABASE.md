@@ -471,8 +471,6 @@ type TransactionOptions = {
   isolationLevel?: IsolationLevels
   // Ignored by SQLite, MSSQL and Oracle
   readOnly?: boolean
-  // SQLite only. Toggles the foreign keys check for the transaction
-  enforceForeignCheck?: boolean | null
 }
 ```
 

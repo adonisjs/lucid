@@ -262,8 +262,7 @@ export class TransactionClient extends EventEmitter implements TransactionClient
   ): Promise<any> {
     /**
      * Options are not forwarded, since savepoints cannot change the
-     * isolation level, the access mode or the foreign keys pragma
-     * of the outer transaction
+     * isolation level or the access mode of the outer transaction
      */
     const trx = await this.knexClient.transaction()
     const transaction = new TransactionClient(

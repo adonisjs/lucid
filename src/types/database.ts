@@ -43,13 +43,6 @@ export type TransactionOptions = {
    * and Oracle
    */
   readOnly?: boolean
-
-  /**
-   * SQLite only. Enables (true) or disables (false) the foreign keys
-   * check for the duration of the transaction. Leaves the existing
-   * pragma untouched when set to null
-   */
-  enforceForeignCheck?: boolean | null
 }
 
 export type ColumnInfo = Knex.ColumnInfo

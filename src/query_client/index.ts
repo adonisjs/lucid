@@ -246,7 +246,6 @@ export class QueryClient implements QueryClientContract {
     const trx = await this.getWriteClient().transaction({
       isolationLevel: trxOptions?.isolationLevel,
       readOnly: trxOptions?.readOnly,
-      enforceForeignCheck: trxOptions?.enforceForeignCheck,
     })
     const transaction = new TransactionClient(
       trx,
