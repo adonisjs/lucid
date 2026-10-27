@@ -184,6 +184,44 @@ test.group('Model query builder', (group) => {
     assert.equal(user!.username, 'hvirk')
   })
 
+  test('resolve column names when performing update with returning columns', async ({
+    fs,
+    assert,
+  }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter)
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+
+      @column()
+      declare username: string
+
+      @column()
+      declare countryId: number
+    }
+
+    const { sql, bindings } = User.query()
+      .where('username', 'virk')
+      .update({ countryId: 2 }, ['id'])
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = db
+      .connection()
+      .getWriteClient()
+      .from('users')
+      .where('username', 'virk')
+      .update({ country_id: 2 }, ['id'])
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
   test('perform increment using model query builder', async ({ fs, assert }) => {
     const app = new AppFactory().create(fs.baseUrl, () => {})
     await app.init()
