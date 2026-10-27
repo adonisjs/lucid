@@ -7,13 +7,41 @@
  * file that was distributed with this source code.
  */
 
-import type { Knex } from 'knex'
+import knex, { type Knex } from 'knex'
+import string from '@poppinss/utils/string'
 import { Exception } from '@poppinss/utils/exception'
 import { getDDLMethod } from '../utils/index.js'
-import type { DeferCallback } from '../types/schema.js'
+import type { DeferCallback, ForeignIdColumnBuilder } from '../types/schema.js'
 import { QueryReporter } from '../query_reporter/index.js'
 import type { QueryClientContract } from '../types/database.js'
 import type { RawQueryBindings } from '../types/querybuilder.js'
+
+/**
+ * Add a non-nullable unsigned big integer column that may be constrained
+ * using the conventional table name inferred from the column name.
+ */
+knex.TableBuilder.extend<Knex.TableBuilder, ForeignIdColumnBuilder>(
+  'foreignId',
+  function (columnName: string) {
+    const column = this.bigInteger(columnName).unsigned().notNullable() as ForeignIdColumnBuilder
+
+    column.constrained = (tableName, referencedColumn = 'id', foreignKeyName) => {
+      const referencedColumnSuffix = `_${referencedColumn}`
+      const suffix = columnName.endsWith(referencedColumnSuffix)
+        ? referencedColumnSuffix
+        : columnName.endsWith('_id')
+          ? '_id'
+          : ''
+      const relatedName = suffix ? columnName.slice(0, -suffix.length) : columnName
+
+      return this.foreign(columnName, foreignKeyName)
+        .references(referencedColumn)
+        .inTable(tableName ?? string.pluralize(relatedName))
+    }
+
+    return column
+  }
+)
 
 /**
  * Exposes the API to define table schema using deferred database

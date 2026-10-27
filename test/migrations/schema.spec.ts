@@ -283,6 +283,48 @@ test.group('Schema', (group) => {
     assert.deepEqual(queries, [knexSchema])
   })
 
+  test('define conventional and explicit foreign IDs', async ({ assert, fs, cleanup }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    cleanup(() => db.manager.closeAll())
+
+    const foreignIdSchema = db
+      .connection()
+      .schema.createTable('posts', (table) => {
+        table.foreignId('person_id').constrained().onDelete('CASCADE')
+        table.foreignId('user_id').constrained(undefined, 'uuid')
+        table
+          .foreignId('author_id')
+          .nullable()
+          .constrained('members', 'member_id', 'posts_author_id_foreign')
+          .onUpdate('CASCADE')
+      })
+      .toSQL()
+
+    const knexSchema = db
+      .connection()
+      .schema.createTable('posts', (table) => {
+        table
+          .bigInteger('person_id')
+          .unsigned()
+          .notNullable()
+          .references('id')
+          .inTable('people')
+          .onDelete('CASCADE')
+        table.bigInteger('user_id').unsigned().notNullable().references('uuid').inTable('users')
+        table.bigInteger('author_id').unsigned().nullable()
+        table
+          .foreign('author_id', 'posts_author_id_foreign')
+          .references('member_id')
+          .inTable('members')
+          .onUpdate('CASCADE')
+      })
+      .toSQL()
+
+    assert.deepEqual(foreignIdSchema, knexSchema)
+  })
+
   test('emit db:query event when schema instructions are executed', async ({
     assert,
     fs,
