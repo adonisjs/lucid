@@ -470,6 +470,58 @@ test.group('OrmSchemaGenerator | Custom Schema Rules', (group) => {
 
     await connection.schema.dropTable('test_tickets')
   })
+
+  test('resolve rules paths with and without relative prefix', async ({
+    fs,
+    assert,
+    cleanup: testCleanup,
+  }) => {
+    const app = new AppFactory().create(fs.baseUrl, (filePath) => import(filePath))
+    await app.init()
+    const db = getDb()
+    testCleanup(() => db.manager.closeAll())
+
+    const connection = db.connection()
+
+    await fs.create(
+      'database/schema_rules.js',
+      `
+      export default {
+        columns: {
+          role: {
+            tsType: 'UserRole',
+            decorator: '@column()',
+            imports: [{ source: '#types', namedImports: ['UserRole'] }]
+          }
+        }
+      }
+    `
+    )
+
+    await connection.schema.dropTableIfExists('test_members')
+    await connection.schema.createTable('test_members', (table) => {
+      table.increments('id')
+      table.string('role').notNullable()
+    })
+
+    const outputPath = join(fs.basePath, 'member_schema.ts')
+    const generator = new OrmSchemaGenerator(db, app, {
+      outputPath,
+      rulesPaths: [
+        'database/schema_rules.js',
+        './database/schema_rules.js',
+        join(fs.basePath, 'database/schema_rules.js'),
+      ],
+      schemas: ['public'],
+    })
+
+    await generator.generate()
+
+    const output = await readFile(outputPath, 'utf-8')
+    assert.include(output, 'declare role: UserRole')
+
+    await connection.schema.dropTable('test_members')
+  })
 })
 
 test.group('OrmSchemaGenerator | Connection Handling', (group) => {

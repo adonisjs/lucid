@@ -95,4 +95,54 @@ test.group('schema:generate', (group) => {
     assert.equal(generate.exitCode, 0)
     generate.assertLogMatches(/Schema generation is disabled/)
   })
+
+  test('generate schema classes using custom rulesPaths from config', async ({ fs, assert }) => {
+    await fs.create(
+      'database/schema_rules.js',
+      `
+      export default {
+        columns: {
+          role: {
+            tsType: 'UserRole',
+            decorator: '@column()',
+            imports: [{ source: '#types', namedImports: ['UserRole'] }]
+          }
+        }
+      }
+    `
+    )
+
+    const baseConfig = getConfig()
+    const db = getDb(undefined, {
+      connection: 'primary',
+      connections: {
+        primary: {
+          ...baseConfig,
+          schemaGeneration: {
+            enabled: true,
+            rulesPaths: ['database/schema_rules.js'],
+          },
+        },
+      },
+    })
+
+    const ace = await new AceFactory().make(fs.baseUrl, {
+      importer: (filePath) => import(filePath),
+    })
+    await ace.app.init()
+    ace.app.container.singleton('lucid.db', () => db)
+    ace.ui.switchMode('raw')
+
+    await db.connection().schema.createTable('schema_users', (table) => {
+      table.increments('id')
+      table.string('role')
+    })
+
+    const generate = await ace.create(SchemaGenerate, [])
+    await generate.exec()
+
+    assert.equal(generate.exitCode, 0)
+    const schemaContent = await fs.contents('database/schema.ts')
+    assert.include(schemaContent, 'declare role: UserRole')
+  })
 })
