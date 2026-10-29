@@ -70,7 +70,7 @@ export class OrmSchemaGenerator extends EventEmitter<{
     try {
       const rules = await Promise.all(
         this.config.rulesPaths.map((rulesPath) => {
-          return this.application.importDefault(rulesPath)
+          return this.application.importDefault(this.application.makePath(rulesPath))
         })
       )
       this.builder.loadRules(rules)
