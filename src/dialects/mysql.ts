@@ -265,18 +265,30 @@ export class MysqlDialect implements DialectContract {
    * Attempts to add advisory lock to the database and
    * returns it's status.
    */
-  async getAdvisoryLock(key: string, timeout: number = 0): Promise<boolean> {
-    const response = await this.client.rawQuery(
-      `SELECT GET_LOCK('${key}', ${timeout}) as lock_status;`
-    )
+  async getAdvisoryLock(key: string, timeout: number = 0, connection?: any): Promise<boolean> {
+    const query = this.client
+      .getWriteClient()
+      .raw(`SELECT GET_LOCK('${key}', ${timeout}) as lock_status;`)
+
+    if (connection) {
+      query.connection(connection)
+    }
+
+    const response = await query
     return response[0] && response[0][0] && response[0][0].lock_status === 1
   }
 
   /**
    * Releases the advisory lock
    */
-  async releaseAdvisoryLock(key: string): Promise<boolean> {
-    const response = await this.client.rawQuery(`SELECT RELEASE_LOCK('${key}') as lock_status;`)
+  async releaseAdvisoryLock(key: string, connection?: any): Promise<boolean> {
+    const query = this.client.getWriteClient().raw(`SELECT RELEASE_LOCK('${key}') as lock_status;`)
+
+    if (connection) {
+      query.connection(connection)
+    }
+
+    const response = await query
     return response[0] && response[0][0] && response[0][0].lock_status === 1
   }
 }

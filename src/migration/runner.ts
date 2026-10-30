@@ -91,6 +91,22 @@ export class MigrationRunner extends EventEmitter {
   disableLocks: boolean
 
   /**
+   * A dedicated connection pinned for the advisory lock lifecycle.
+   * When the pool has more than one connection, we hold this connection
+   * between acquire and release to ensure both operations run on the
+   * same database session.
+   */
+  private lockConnection: any = null
+
+  /**
+   * Tracks whether we have actually acquired the advisory lock. We only
+   * attempt to release the lock when this is true, otherwise a failed
+   * acquisition would trigger a bogus release (releasing a lock we never
+   * held), masking the original "unable to acquire lock" error.
+   */
+  private lockAcquired: boolean = false
+
+  /**
    * An array of files we have successfully migrated. The files are
    * collected regardless of `up` or `down` methods
    */
@@ -269,21 +285,38 @@ export class MigrationRunner extends EventEmitter {
    * Acquires a lock to disallow concurrent transactions. Only works with
    * `Mysql`, `PostgresSQL` and `MariaDb` for now.
    *
-   * Make sure we are acquiring lock outside the transactions, since we want
-   * to block other processes from acquiring the same lock.
-   *
-   * Locks are always acquired in dry run too, since we want to stay close
-   * to the real execution cycle
+   * Advisory locks are session-scoped, meaning both acquire and release
+   * must happen on the same database connection. When the pool has more
+   * than one connection, we pin a dedicated connection to guarantee this.
+   * With a single-connection pool, pinning is unnecessary (and would
+   * starve other queries).
    */
   private async acquireLock() {
     if (!this.client.dialect.supportsAdvisoryLocks || this.disableLocks) {
       return
     }
 
-    const acquired = await this.client.dialect.getAdvisoryLock(1)
-    if (!acquired) {
-      throw new errors.E_UNABLE_ACQUIRE_LOCK()
+    const knexClient = this.client.getWriteClient()
+    if (knexClient.client.pool.max > 1) {
+      this.lockConnection = await knexClient.client.acquireConnection()
     }
+
+    try {
+      const acquired = await this.client.dialect.getAdvisoryLock(1, undefined, this.lockConnection)
+      if (!acquired) {
+        throw new errors.E_UNABLE_ACQUIRE_LOCK()
+      }
+      this.lockAcquired = true
+    } catch (error) {
+      this.releaseLockConnection()
+      throw error
+    }
+
+    /**
+     * Emitted outside the try/catch above. The lock is already acquired at
+     * this point, so a throwing listener must not trigger the catch (which
+     * would release the pinned connection while leaving the lock held on it).
+     */
     this.emit('acquire:lock')
   }
 
@@ -296,11 +329,35 @@ export class MigrationRunner extends EventEmitter {
       return
     }
 
-    const released = await this.client.dialect.releaseAdvisoryLock(1)
-    if (!released) {
-      throw new errors.E_UNABLE_RELEASE_LOCK()
+    /**
+     * Never attempt to release a lock we did not acquire. Doing so would
+     * throw "E_UNABLE_RELEASE_LOCK" and mask the real error (for example
+     * "E_UNABLE_ACQUIRE_LOCK" raised when another process holds the lock).
+     */
+    if (!this.lockAcquired) {
+      return
     }
-    this.emit('release:lock')
+
+    try {
+      const released = await this.client.dialect.releaseAdvisoryLock(1, this.lockConnection)
+      if (!released) {
+        throw new errors.E_UNABLE_RELEASE_LOCK()
+      }
+      this.emit('release:lock')
+    } finally {
+      this.lockAcquired = false
+      this.releaseLockConnection()
+    }
+  }
+
+  /**
+   * Release the pinned lock connection back to the pool
+   */
+  private releaseLockConnection() {
+    if (this.lockConnection) {
+      this.client.getWriteClient().client.releaseConnection(this.lockConnection)
+      this.lockConnection = null
+    }
   }
 
   /**
