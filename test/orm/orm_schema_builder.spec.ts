@@ -9,6 +9,7 @@
 
 import { test } from '@japa/runner'
 import { OrmSchemaBuilder } from '../../src/orm/schema_generator/builder.ts'
+import type { QueryClientContract } from '../../src/types/database.ts'
 import { setup, cleanup, getDb, resetTables } from '../../test-helpers/index.ts'
 
 test.group('OrmSchemaBuilder | Basic Type Mapping', (group) => {
@@ -46,6 +47,7 @@ test.group('OrmSchemaBuilder | Basic Type Mapping', (group) => {
 
     assert.snapshot(output).matchInline(`
       "export class TestBasicTypeSchema extends BaseModel {
+        static table = 'test_basic_types'
         static $columns = ['age', 'bio', 'id', 'isActive', 'name'] as const
         $columns = TestBasicTypeSchema.$columns
         @column()
@@ -88,6 +90,7 @@ test.group('OrmSchemaBuilder | Basic Type Mapping', (group) => {
 
     assert.snapshot(output).matchInline(`
       "export class TestNumberSchema extends BaseModel {
+        static table = 'test_numbers'
         static $columns = ['bigNum', 'decimalNum', 'id', 'smallNum'] as const
         $columns = TestNumberSchema.$columns
         @column()
@@ -124,6 +127,7 @@ test.group('OrmSchemaBuilder | Basic Type Mapping', (group) => {
 
     assert.snapshot(output).matchInline(`
       "export class TestDateSchema extends BaseModel {
+        static table = 'test_dates'
         static $columns = ['birthDate', 'createdAt', 'id'] as const
         $columns = TestDateSchema.$columns
         @column.date()
@@ -162,6 +166,7 @@ test.group('OrmSchemaBuilder | Basic Type Mapping', (group) => {
 
     assert.snapshot(output).matchInline(`
       "export class TestJsonSchema extends BaseModel {
+        static table = 'test_json'
         static $columns = ['id', 'metadata'] as const
         $columns = TestJsonSchema.$columns
         @column({ isPrimary: true })
@@ -199,6 +204,7 @@ test.group('OrmSchemaBuilder | Basic Type Mapping', (group) => {
 
     assert.snapshot(output).matchInline(`
       "export class TestJsonbSchema extends BaseModel {
+        static table = 'test_jsonb'
         static $columns = ['id', 'preferences', 'settings'] as const
         $columns = TestJsonbSchema.$columns
         @column({ isPrimary: true })
@@ -246,6 +252,7 @@ test.group('OrmSchemaBuilder | Column-Specific Rules', (group) => {
 
     assert.snapshot(output).matchInline(`
       "export class TestPkSchema extends BaseModel {
+        static table = 'test_pk'
         static $columns = ['id', 'name'] as const
         $columns = TestPkSchema.$columns
         @column({ isPrimary: true })
@@ -275,6 +282,7 @@ test.group('OrmSchemaBuilder | Column-Specific Rules', (group) => {
 
     assert.snapshot(output).matchInline(`
       "export class TestUuidPkSchema extends BaseModel {
+        static table = 'test_uuid_pk'
         static $columns = ['id', 'name'] as const
         $columns = TestUuidPkSchema.$columns
         @column({ isPrimary: true })
@@ -304,6 +312,7 @@ test.group('OrmSchemaBuilder | Column-Specific Rules', (group) => {
 
     assert.snapshot(output).matchInline(`
       "export class TestCustomPkSchema extends BaseModel {
+        static table = 'test_custom_pk'
         static $columns = ['key', 'value'] as const
         $columns = TestCustomPkSchema.$columns
         @column({ isPrimary: true })
@@ -345,6 +354,7 @@ test.group('OrmSchemaBuilder | Column-Specific Rules', (group) => {
 
     assert.snapshot(output).matchInline(`
       "export class TestPrecedenceSchema extends BaseModel {
+        static table = 'test_precedence'
         static $columns = ['key', 'value'] as const
         $columns = TestPrecedenceSchema.$columns
         @column({ columnName: 'key' })
@@ -393,6 +403,7 @@ test.group('OrmSchemaBuilder | Column-Specific Rules', (group) => {
 
     assert.snapshot(output).matchInline(`
       "export class TestTablePkSchema extends BaseModel {
+        static table = 'test_table_pk'
         static $columns = ['key', 'value'] as const
         $columns = TestTablePkSchema.$columns
         @column({ isPrimary: true, serializeAs: null })
@@ -418,6 +429,7 @@ test.group('OrmSchemaBuilder | Column-Specific Rules', (group) => {
 
     assert.snapshot(output).matchInline(`
       "export class TestNoPkSchema extends BaseModel {
+        static table = 'test_no_pk'
         static $columns = ['name', 'value'] as const
         $columns = TestNoPkSchema.$columns
         @column()
@@ -447,6 +459,7 @@ test.group('OrmSchemaBuilder | Column-Specific Rules', (group) => {
 
     assert.snapshot(output).matchInline(`
       "export class TestPasswordSchema extends BaseModel {
+        static table = 'test_password'
         static $columns = ['id', 'password'] as const
         $columns = TestPasswordSchema.$columns
         @column({ isPrimary: true })
@@ -478,6 +491,7 @@ test.group('OrmSchemaBuilder | Column-Specific Rules', (group) => {
 
     assert.snapshot(output).matchInline(`
       "export class TestCreatedAtSchema extends BaseModel {
+        static table = 'test_created_at'
         static $columns = ['createdAt', 'id'] as const
         $columns = TestCreatedAtSchema.$columns
         @column.dateTime({ autoCreate: true })
@@ -509,6 +523,7 @@ test.group('OrmSchemaBuilder | Column-Specific Rules', (group) => {
 
     assert.snapshot(output).matchInline(`
       "export class TestUpdatedAtSchema extends BaseModel {
+        static table = 'test_updated_at'
         static $columns = ['id', 'updatedAt'] as const
         $columns = TestUpdatedAtSchema.$columns
         @column({ isPrimary: true })
@@ -555,6 +570,7 @@ test.group('OrmSchemaBuilder | Nullable Columns', (group) => {
 
     assert.snapshot(output).matchInline(`
       "export class TestNullableSchema extends BaseModel {
+        static table = 'test_nullable'
         static $columns = ['age', 'id', 'middleName'] as const
         $columns = TestNullableSchema.$columns
         @column()
@@ -588,6 +604,7 @@ test.group('OrmSchemaBuilder | Nullable Columns', (group) => {
 
     assert.snapshot(output).matchInline(`
       "export class TestNullableTSchema extends BaseModel {
+        static table = 'test_nullable_ts'
         static $columns = ['deletedAt', 'id'] as const
         $columns = TestNullableTSchema.$columns
         @column.dateTime()
@@ -645,6 +662,7 @@ test.group('OrmSchemaBuilder | Custom Rules', (group) => {
 
     assert.snapshot(output).matchInline(`
       "export class TestCustomSchema extends BaseModel {
+        static table = 'test_custom'
         static $columns = ['id', 'specialField'] as const
         $columns = TestCustomSchema.$columns
         @column({ isPrimary: true })
@@ -692,6 +710,7 @@ test.group('OrmSchemaBuilder | Custom Rules', (group) => {
 
     assert.snapshot(output).matchInline(`
       "export class TestUserSchema extends BaseModel {
+        static table = 'test_users'
         static $columns = ['id', 'status'] as const
         $columns = TestUserSchema.$columns
         @column({ isPrimary: true })
@@ -763,6 +782,7 @@ test.group('OrmSchemaBuilder | Custom Rules', (group) => {
 
     assert.snapshot(userSchemas.classes.join('\n')).matchInline(`
       "export class TestUserSchema extends BaseModel {
+        static table = 'test_users'
         static $columns = ['id', 'status'] as const
         $columns = TestUserSchema.$columns
         @column({ isPrimary: true })
@@ -773,6 +793,7 @@ test.group('OrmSchemaBuilder | Custom Rules', (group) => {
     `)
     assert.snapshot(postSchemas.classes.join('\n')).matchInline(`
       "export class TestPostSchema extends BaseModel {
+        static table = 'test_posts'
         static $columns = ['id', 'status'] as const
         $columns = TestPostSchema.$columns
         @column({ isPrimary: true })
@@ -932,6 +953,7 @@ test.group('OrmSchemaBuilder | Output Generation', (group) => {
       import { DateTime } from 'luxon'
 
       export class TestUserSchema extends BaseModel {
+        static table = 'test_users'
         static $columns = ['createdAt', 'id', 'name'] as const
         $columns = TestUserSchema.$columns
         @column.dateTime({ autoCreate: true })
@@ -979,6 +1001,7 @@ test.group('OrmSchemaBuilder | Unknown Types', (group) => {
     // Unknown types should default to 'any'
     assert.snapshot(output).matchInline(`
       "export class TestSchema extends BaseModel {
+        static table = 'test'
         static $columns = ['exoticNullable', 'id', 'weirdField'] as const
         $columns = TestSchema.$columns
         @column()
@@ -1049,6 +1072,7 @@ test.group('OrmSchemaBuilder | Enum Handling', (group) => {
 
     assert.snapshot(output).matchInline(`
       "export class TestEnumUserSchema extends BaseModel {
+        static table = 'test_enum_users'
         static $columns = ['id', 'status'] as const
         $columns = TestEnumUserSchema.$columns
         @column({ isPrimary: true })
@@ -1108,6 +1132,7 @@ test.group('OrmSchemaBuilder | Enum Handling', (group) => {
 
     assert.snapshot(output).matchInline(`
       "export class TestEnumProfileSchema extends BaseModel {
+        static table = 'test_enum_profiles'
         static $columns = ['id', 'mood'] as const
         $columns = TestEnumProfileSchema.$columns
         @column({ isPrimary: true })
@@ -1149,6 +1174,7 @@ test.group('OrmSchemaBuilder | Enum Handling', (group) => {
       // USER-DEFINED types without schema rules should default to 'any'
       assert.snapshot(output).matchInline(`
         "export class TestEnumNoRuleSchema extends BaseModel {
+          static table = 'test_enum_no_rule'
           static $columns = ['id', 'mood', 'status'] as const
           $columns = TestEnumNoRuleSchema.$columns
           @column({ isPrimary: true })
@@ -1184,6 +1210,7 @@ test.group('OrmSchemaBuilder | Enum Handling', (group) => {
     // Without custom schema rules, enum should default to string type
     assert.snapshot(output).matchInline(`
       "export class TestEnumDefaultSchema extends BaseModel {
+        static table = 'test_enum_default'
         static $columns = ['id', 'priority', 'status'] as const
         $columns = TestEnumDefaultSchema.$columns
         @column({ isPrimary: true })
@@ -1233,6 +1260,7 @@ test.group('OrmSchemaBuilder | Name Conversion', (group) => {
 
     assert.snapshot(output).matchInline(`
       "export class TestProfileSchema extends BaseModel {
+        static table = 'test_profiles'
         static $columns = ['firstName', 'id', 'lastNameSuffix', 'userProfileId'] as const
         $columns = TestProfileSchema.$columns
         @column()
@@ -1293,6 +1321,7 @@ test.group('OrmSchemaBuilder | Name Conversion', (group) => {
 
     assert.snapshot(usersSchemas.classes.join('\n')).matchInline(`
       "export class TestUsersPluralSchema extends BaseModel {
+        static table = 'test_users_plural'
         static $columns = ['id'] as const
         $columns = TestUsersPluralSchema.$columns
         @column({ isPrimary: true })
@@ -1301,6 +1330,7 @@ test.group('OrmSchemaBuilder | Name Conversion', (group) => {
     `)
     assert.snapshot(postsSchemas.classes.join('\n')).matchInline(`
       "export class TestPostsPluralSchema extends BaseModel {
+        static table = 'test_posts_plural'
         static $columns = ['id'] as const
         $columns = TestPostsPluralSchema.$columns
         @column({ isPrimary: true })
@@ -1309,6 +1339,7 @@ test.group('OrmSchemaBuilder | Name Conversion', (group) => {
     `)
     assert.snapshot(categoriesSchemas.classes.join('\n')).matchInline(`
       "export class TestCategorySchema extends BaseModel {
+        static table = 'test_categories'
         static $columns = ['id'] as const
         $columns = TestCategorySchema.$columns
         @column({ isPrimary: true })
@@ -1338,6 +1369,7 @@ test.group('OrmSchemaBuilder | Name Conversion', (group) => {
 
     assert.snapshot(schemas.classes.join('\n')).matchInline(`
       "export class UserProfileSchema extends BaseModel {
+        static table = 'user_profiles'
         static $columns = ['id'] as const
         $columns = UserProfileSchema.$columns
         @column({ isPrimary: true })
@@ -1363,6 +1395,7 @@ test.group('OrmSchemaBuilder | Name Conversion', (group) => {
 
     assert.snapshot(output).matchInline(`
       "export class ExampleSchema extends BaseModel {
+        static table = 'examples'
         static $columns = ['_5G', 'id'] as const
         $columns = ExampleSchema.$columns
         @column({ columnName: '5G' })
@@ -1403,6 +1436,7 @@ test.group('OrmSchemaBuilder | Name Conversion', (group) => {
 
     assert.snapshot(output).matchInline(`
       "export class IntegrationSchema extends BaseModel {
+        static table = 'integrations'
         static $columns = ['_3RdPartyId', 'id'] as const
         $columns = IntegrationSchema.$columns
         @column({ columnName: '3rd_party_id', serializeAs: null })
@@ -1428,6 +1462,7 @@ test.group('OrmSchemaBuilder | Name Conversion', (group) => {
 
     assert.snapshot(output).matchInline(`
       "export class GameSchema extends BaseModel {
+        static table = 'games'
         static $columns = ['id', 'player1Id'] as const
         $columns = GameSchema.$columns
         @column({ isPrimary: true })
@@ -1468,6 +1503,7 @@ test.group('OrmSchemaBuilder | Name Conversion', (group) => {
      */
     assert.snapshot(output).matchInline(`
       "export class GameSchema extends BaseModel {
+        static table = 'games'
         static $columns = ['id', 'player1Id'] as const
         $columns = GameSchema.$columns
         @column({ isPrimary: true })
@@ -1513,6 +1549,7 @@ test.group('OrmSchemaBuilder | Name Conversion', (group) => {
      */
     assert.snapshot(output).matchInline(`
       "export class GameSchema extends BaseModel {
+        static table = 'games'
         static $columns = ['id', 'player1Id'] as const
         $columns = GameSchema.$columns
         @column({ isPrimary: true })
@@ -1551,6 +1588,7 @@ test.group('OrmSchemaBuilder | Name Conversion', (group) => {
 
     assert.snapshot(output).matchInline(`
       "export class ExampleSchema extends BaseModel {
+        static table = 'examples'
         static $columns = ['id', 'name'] as const
         $columns = ExampleSchema.$columns
         @column({ isPrimary: true })
@@ -1589,6 +1627,7 @@ test.group('OrmSchemaBuilder | Name Conversion', (group) => {
 
     assert.snapshot(output).matchInline(`
       "export class LegacyTableSchema extends BaseModel {
+        static table = 'legacy_table'
         static $columns = ['id', 'legacy'] as const
         $columns = LegacyTableSchema.$columns
         @column({ isPrimary: true })
@@ -1628,6 +1667,7 @@ test.group('OrmSchemaBuilder | Name Conversion', (group) => {
 
     assert.snapshot(output).matchInline(`
       "export class UserSchema extends BaseModel {
+        static table = 'users'
         static $columns = ['email', 'id'] as const
         $columns = UserSchema.$columns
         @column({ serializeAs: null })
@@ -1666,6 +1706,7 @@ test.group('OrmSchemaBuilder | Name Conversion', (group) => {
 
     assert.snapshot(output).matchInline(`
       "export class TestTypeSchema extends BaseModel {
+        static table = 'test_type'
         static $columns = ['id', 'name'] as const
         $columns = TestTypeSchema.$columns
         @column({ isPrimary: true })
@@ -1705,6 +1746,7 @@ test.group('OrmSchemaBuilder | Name Conversion', (group) => {
 
     assert.snapshot(output).matchInline(`
       "export class TestDecimalSchema extends BaseModel {
+        static table = 'test_decimal'
         static $columns = ['id', 'price'] as const
         $columns = TestDecimalSchema.$columns
         @column({ isPrimary: true })
@@ -1744,12 +1786,136 @@ test.group('OrmSchemaBuilder | Name Conversion', (group) => {
 
     assert.snapshot(output).matchInline(`
       "export class TestOverrideSchema extends BaseModel {
+        static table = 'test_override'
         static $columns = ['createdAt', 'id'] as const
         $columns = TestOverrideSchema.$columns
         @column()
         declare createdAt: string
         @column({ isPrimary: true })
         declare id: number
+      }"
+    `)
+  })
+})
+
+test.group('OrmSchemaBuilder | Table schemas', () => {
+  /**
+   * The builder reads only the dialect name of the client
+   */
+  const builderFor = (dialectName: string) => {
+    return new OrmSchemaBuilder({ dialect: { name: dialectName } } as QueryClientContract)
+  }
+  const table = (name: string, schema?: string) => ({
+    name,
+    schema,
+    columns: { id: { type: 'integer', nullable: false } },
+    primaryKeys: ['id'],
+  })
+  const classHeads = (classes: string[]) => {
+    return classes.map((definition) => definition.split('\n').slice(0, 2).join('\n'))
+  }
+
+  test('declare static table on each class for {dialect}')
+    .with([
+      { dialect: 'postgres', defaultSchema: 'public' },
+      { dialect: 'redshift', defaultSchema: 'public' },
+      { dialect: 'mssql', defaultSchema: 'dbo' },
+    ])
+    .run(({ assert }, { dialect, defaultSchema }) => {
+      const schemas = builderFor(dialect).generateSchemas([
+        table('orders', defaultSchema),
+        table('orders', 'app'),
+        table('invoices', 'app'),
+        table('users', defaultSchema),
+      ])
+
+      assert.deepEqual(classHeads(schemas.classes), [
+        "export class OrderSchema extends BaseModel {\n  static table = 'orders'",
+        "export class AppOrderSchema extends BaseModel {\n  static table = 'app.orders'",
+        "export class InvoiceSchema extends BaseModel {\n  static table = 'app.invoices'",
+        "export class UserSchema extends BaseModel {\n  static table = 'users'",
+      ])
+    })
+
+  test('prefix each class with its schema when no table is in the default schema', ({ assert }) => {
+    const schemas = builderFor('postgres').generateSchemas([
+      table('orders', 'app'),
+      table('orders', 'billing_v2'),
+    ])
+
+    assert.deepEqual(classHeads(schemas.classes), [
+      "export class AppOrderSchema extends BaseModel {\n  static table = 'app.orders'",
+      "export class BillingV2OrderSchema extends BaseModel {\n  static table = 'billing_v2.orders'",
+    ])
+  })
+
+  test('raise an exception that names the tables when a class name still collides', ({
+    assert,
+  }) => {
+    const builder = builderFor('postgres')
+
+    assert.throws(
+      () =>
+        builder.generateSchemas([
+          table('orders', 'public'),
+          table('orders', 'app'),
+          table('order', 'app'),
+        ]),
+      'Cannot generate schema classes, because two or more tables give the same class name:\n  - "app.orders", "app.order" give "AppOrderSchema"\nExclude one of the tables with "excludeTables", or rename it'
+    )
+  })
+
+  test('raise an exception for tables with no schema that give the same class name', ({
+    assert,
+  }) => {
+    const builder = builderFor('mysql')
+
+    assert.throws(
+      () => builder.generateSchemas([table('orders'), table('order')]),
+      /"orders", "order" give "OrderSchema"/
+    )
+  })
+
+  test('apply the rules of "<schema>.<table>" before the rules of the table name', ({ assert }) => {
+    const builder = builderFor('postgres')
+    builder.loadRules([
+      {
+        tables: {
+          'orders': {
+            columns: { id: { tsType: 'OrderId', decorators: [{ name: '@column' }] } },
+            types: { number: { tsType: 'OrderNumber', decorators: [{ name: '@column' }] } },
+            skipColumns: ['secret'],
+          },
+          'app.orders': {
+            types: { number: { tsType: 'AppOrderNumber', decorators: [{ name: '@column' }] } },
+          },
+        },
+      },
+    ])
+
+    const columns = {
+      id: { type: 'integer', nullable: false },
+      secret: { type: 'varchar', nullable: false },
+    }
+    const schemas = builder.generateSchemas([
+      { name: 'orders', schema: 'public', columns, primaryKeys: ['id'] },
+      { name: 'orders', schema: 'app', columns, primaryKeys: ['id'] },
+    ])
+
+    assert.snapshot(schemas.classes.join('\n')).matchInline(`
+      "export class OrderSchema extends BaseModel {
+        static table = 'orders'
+        static $columns = ['id'] as const
+        $columns = OrderSchema.$columns
+        @column()
+        declare id: OrderId
+      }
+      export class AppOrderSchema extends BaseModel {
+        static table = 'app.orders'
+        static $columns = ['id'] as const
+        $columns = AppOrderSchema.$columns
+        @column()
+        declare id: AppOrderNumber
       }"
     `)
   })

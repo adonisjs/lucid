@@ -10,6 +10,7 @@
 import merge from 'deepmerge'
 import { ImportsBag } from '@poppinss/utils'
 import stringHelpers from '@adonisjs/core/helpers/string'
+import { RuntimeException } from '@adonisjs/core/exceptions'
 
 import { DEFAULT_SCHEMA_RULES } from './rules.ts'
 import { DATA_TYPES_MAPPING, INTERNAL_TYPES } from './mappings.ts'
@@ -17,11 +18,27 @@ import type {
   ColumnInfo,
   DecoratorInfo,
   SchemaRules,
+  DatabaseTable,
   DatabaseColumn,
   GeneratedColumn,
   GeneratedSchemas,
 } from '../../types/schema_generator.ts'
 import { type QueryClientContract } from '../../types/database.ts'
+
+/**
+ * Rules of one entry of the "tables" schema rules
+ */
+type TableRules = NonNullable<SchemaRules['tables']>[string]
+
+/**
+ * The schema of a table that a query uses when the table name has no
+ * schema, for each dialect with schemas
+ */
+const DEFAULT_SCHEMAS: Record<string, string> = {
+  postgres: 'public',
+  redshift: 'public',
+  mssql: 'dbo',
+}
 
 /**
  * OrmSchemaBuilder handles the core logic of generating TypeScript
@@ -58,6 +75,90 @@ export class OrmSchemaBuilder {
         return tag !== '[object RegExp]' && tag !== '[object Date]'
       },
     })
+  }
+
+  /**
+   * Returns true when the table is in the default schema of the
+   * dialect, or when the dialect has no schemas
+   */
+  private isInDefaultSchema(table: DatabaseTable): boolean {
+    return !table.schema || table.schema === DEFAULT_SCHEMAS[this.client.dialect.name]
+  }
+
+  /**
+   * Returns the table name with its schema, when the table has one
+   */
+  private getQualifiedName(table: DatabaseTable): string {
+    return table.schema ? `${table.schema}.${table.name}` : table.name
+  }
+
+  /**
+   * Returns the value of "static table" for the class of the table. A
+   * table outside the default schema gives "<schema>.<table>".
+   */
+  private getTableReference(table: DatabaseTable): string {
+    return this.isInDefaultSchema(table) ? table.name : this.getQualifiedName(table)
+  }
+
+  /**
+   * Returns the "tables" rules of the table. The rules of
+   * "<schema>.<table>" come first, so that they win over the
+   * rules of the table name.
+   */
+  private getTableRules(table: DatabaseTable): TableRules[] {
+    const rules: TableRules[] = []
+    if (table.schema && this.schema.tables[this.getQualifiedName(table)]) {
+      rules.push(this.schema.tables[this.getQualifiedName(table)])
+    }
+    if (this.schema.tables[table.name]) {
+      rules.push(this.schema.tables[table.name])
+    }
+    return rules
+  }
+
+  /**
+   * Returns the class name of each table, in the order of the tables.
+   *
+   * When two tables give the same class name, the class of each table
+   * outside the default schema starts with its schema name. A class
+   * name that still collides raises an exception, because the output
+   * file would declare the same class twice.
+   */
+  private getClassNames(tables: DatabaseTable[]): string[] {
+    const baseNames = tables.map(
+      (table) => `${stringHelpers.pascalCase(stringHelpers.singular(table.name))}Schema`
+    )
+    const baseNameCounts = new Map<string, number>()
+    baseNames.forEach((name) => baseNameCounts.set(name, (baseNameCounts.get(name) ?? 0) + 1))
+
+    const classNames = tables.map((table, index) => {
+      const baseName = baseNames[index]
+      if (baseNameCounts.get(baseName)! > 1 && !this.isInDefaultSchema(table)) {
+        return `${stringHelpers.pascalCase(table.schema!)}${baseName}`
+      }
+      return baseName
+    })
+
+    const tablesByClassName = new Map<string, string[]>()
+    classNames.forEach((className, index) => {
+      const tableNames = tablesByClassName.get(className) ?? []
+      tableNames.push(this.getQualifiedName(tables[index]))
+      tablesByClassName.set(className, tableNames)
+    })
+
+    const collisions = [...tablesByClassName].filter(([, tableNames]) => tableNames.length > 1)
+    if (collisions.length) {
+      const details = collisions
+        .map(([className, tableNames]) => {
+          return `  - ${tableNames.map((name) => `"${name}"`).join(', ')} give "${className}"`
+        })
+        .join('\n')
+      throw new RuntimeException(
+        `Cannot generate schema classes, because two or more tables give the same class name:\n${details}\nExclude one of the tables with "excludeTables", or rename it`
+      )
+    }
+
+    return classNames
   }
 
   /**
@@ -125,7 +226,7 @@ export class OrmSchemaBuilder {
   private generateColumnSchema(
     columnName: string,
     column: DatabaseColumn,
-    tableName: string,
+    tableRules: TableRules[],
     primaryKeys: string[],
     primaryKeyColumnInfo: ColumnInfo | undefined
   ): GeneratedColumn {
@@ -144,9 +245,19 @@ export class OrmSchemaBuilder {
     // 3. Global column name
     // 4. Primary key rule (when this column is the primary key)
     // 5. Global type
+    //
+    // Steps 1 and 2 run for the "<schema>.<table>" rules first, and
+    // then for the rules of the table name.
+    let tableRuleDef: ColumnInfo | ((dataType: string) => ColumnInfo) | undefined
+    for (const rules of tableRules) {
+      tableRuleDef = rules.columns?.[columnName] ?? rules.types?.[typeLookupKey]
+      if (tableRuleDef) {
+        break
+      }
+    }
+
     const ruleDef =
-      this.schema.tables[tableName]?.columns?.[columnName] ??
-      this.schema.tables[tableName]?.types?.[typeLookupKey] ??
+      tableRuleDef ??
       this.schema.columns[columnName] ??
       primaryKeyColumnInfo ??
       this.schema.types[typeLookupKey]
@@ -202,18 +313,21 @@ export class OrmSchemaBuilder {
    * Generate schema for a single table (internal method)
    */
   private generateTableSchema(
-    tableName: string,
-    columns: Record<string, DatabaseColumn>,
-    primaryKeys: string[],
+    table: DatabaseTable,
+    className: string,
     importsBag: ImportsBag
   ): string {
+    const { columns, primaryKeys } = table
+    const tableRules = this.getTableRules(table)
+
     /**
      * Resolve the primary key using table-specific or global primaryKey rule
      */
-    const primaryKeyRule = this.schema.tables[tableName]?.primaryKey ?? this.schema.primaryKey
-    const primaryKeyResult = primaryKeyRule?.(tableName, primaryKeys, columns)
+    const primaryKeyRule =
+      tableRules.find((rules) => rules.primaryKey)?.primaryKey ?? this.schema.primaryKey
+    const primaryKeyResult = primaryKeyRule?.(table.name, primaryKeys, columns)
 
-    const skipColumns = this.schema.tables[tableName]?.skipColumns ?? []
+    const skipColumns = tableRules.find((rules) => rules.skipColumns)?.skipColumns ?? []
     const columnNames = Object.keys(columns)
       .filter((columnName) => !skipColumns.includes(columnName))
       .sort((a, b) => a.localeCompare(b))
@@ -223,7 +337,7 @@ export class OrmSchemaBuilder {
         primaryKeyResult && columnName === primaryKeyResult.columnName
           ? primaryKeyResult.columnInfo
           : undefined
-      return this.generateColumnSchema(columnName, column, tableName, primaryKeys, pkInfo)
+      return this.generateColumnSchema(columnName, column, tableRules, primaryKeys, pkInfo)
     })
 
     // Add column-specific imports
@@ -231,13 +345,12 @@ export class OrmSchemaBuilder {
       col.imports.forEach((imp) => importsBag.add(imp))
     })
 
-    const className = stringHelpers.pascalCase(stringHelpers.singular(tableName))
-
     // Return complete class definition as a single string (compact format)
     return [
-      `export class ${className}Schema extends BaseModel {`,
+      `export class ${className} extends BaseModel {`,
+      `  static table = '${this.getTableReference(table)}'`,
       `  static $columns = [${schema.map((k) => `'${k.propertyName}'`).join(', ')}] as const`,
-      `  $columns = ${className}Schema.$columns`,
+      `  $columns = ${className}.$columns`,
       schema.map((k) => k.column).join('\n'),
       '}',
     ].join('\n')
@@ -246,27 +359,16 @@ export class OrmSchemaBuilder {
   /**
    * Generate schemas for multiple tables
    */
-  generateSchemas(
-    tables: Array<{
-      name: string
-      columns: Record<string, DatabaseColumn>
-      primaryKeys: string[]
-    }>
-  ): GeneratedSchemas {
+  generateSchemas(tables: DatabaseTable[]): GeneratedSchemas {
     const importsBag = new ImportsBag()
     const classesToCreate: string[] = []
+    const classNames = this.getClassNames(tables)
 
     // Add base import
     importsBag.add({ source: '@adonisjs/lucid/orm', namedImports: ['BaseModel', 'column'] })
 
-    tables.forEach((table) => {
-      const classDefinition = this.generateTableSchema(
-        table.name,
-        table.columns,
-        table.primaryKeys,
-        importsBag
-      )
-      classesToCreate.push(classDefinition)
+    tables.forEach((table, index) => {
+      classesToCreate.push(this.generateTableSchema(table, classNames[index], importsBag))
     })
 
     return {

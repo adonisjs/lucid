@@ -639,3 +639,231 @@ test.group('OrmSchemaGenerator | Table Filtering', (group) => {
     await connection.schema.dropTable('test_articles')
   })
 })
+
+test.group('OrmSchemaGenerator | Multiple Schemas', (group) => {
+  const defaultSchema = process.env.DB === 'mssql' ? 'dbo' : 'public'
+
+  /**
+   * Creates each schema, and a table with an id column for
+   * each "<schema>.<table>" name
+   */
+  async function createTables(db: Database, schemas: string[], tables: string[]) {
+    const connection = db.connection()
+    for (const schema of schemas) {
+      if (process.env.DB === 'mssql') {
+        await connection.rawQuery(
+          `IF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = '${schema}') EXEC('CREATE SCHEMA ${schema}')`
+        )
+      } else {
+        await connection.rawQuery(`CREATE SCHEMA IF NOT EXISTS ${schema}`)
+      }
+    }
+    for (const qualifiedName of tables) {
+      const [schema, name] = qualifiedName.split('.')
+      await connection.schema.withSchema(schema).dropTableIfExists(name)
+      await connection.schema.withSchema(schema).createTable(name, (table) => {
+        table.increments('id')
+        table.string('note').nullable()
+      })
+    }
+  }
+
+  /**
+   * Drops each "<schema>.<table>" table, and then each schema
+   */
+  async function dropTables(db: Database, schemas: string[], tables: string[]) {
+    const connection = db.connection()
+    for (const qualifiedName of tables) {
+      const [schema, name] = qualifiedName.split('.')
+      await connection.schema.withSchema(schema).dropTableIfExists(name)
+    }
+    for (const schema of schemas) {
+      await connection.rawQuery(
+        process.env.DB === 'mssql'
+          ? `IF EXISTS (SELECT * FROM sys.schemas WHERE name = '${schema}') EXEC('DROP SCHEMA ${schema}')`
+          : `DROP SCHEMA IF EXISTS ${schema} CASCADE`
+      )
+    }
+  }
+
+  group.setup(async () => {
+    await setup()
+  })
+
+  group.teardown(async () => {
+    await cleanup()
+  })
+
+  test('declare static table and prefix the class name of a colliding table with its schema', async ({
+    fs,
+    assert,
+    cleanup: testCleanup,
+  }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const tables = [`${defaultSchema}.test_orders`, 'app.test_orders', 'app.test_invoices']
+    testCleanup(async () => {
+      await dropTables(db, ['app'], tables)
+      await db.manager.closeAll()
+    })
+    await createTables(db, ['app'], tables)
+
+    const outputPath = join(fs.basePath, 'schemas.ts')
+    const generator = new OrmSchemaGenerator(db, app, {
+      outputPath,
+      schemas: [defaultSchema, 'app'],
+    })
+    await generator.generate()
+
+    const output = await readFile(outputPath, 'utf-8')
+    assert.include(
+      output,
+      ['export class TestOrderSchema extends BaseModel {', "  static table = 'test_orders'"].join(
+        '\n'
+      )
+    )
+    assert.include(
+      output,
+      [
+        'export class AppTestOrderSchema extends BaseModel {',
+        "  static table = 'app.test_orders'",
+      ].join('\n')
+    )
+    assert.include(
+      output,
+      [
+        'export class TestInvoiceSchema extends BaseModel {',
+        "  static table = 'app.test_invoices'",
+      ].join('\n')
+    )
+    assert.lengthOf(output.match(/export class TestOrderSchema /g)!, 1)
+  }).skip(!['pg', 'mssql'].includes(process.env.DB!), 'Only for PostgreSQL and MSSQL')
+
+  test('prefix both class names when both tables are outside the default schema', async ({
+    fs,
+    assert,
+    cleanup: testCleanup,
+  }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const tables = ['app.test_orders', 'billing.test_orders']
+    testCleanup(async () => {
+      await dropTables(db, ['app', 'billing'], tables)
+      await db.manager.closeAll()
+    })
+    await createTables(db, ['app', 'billing'], tables)
+
+    const outputPath = join(fs.basePath, 'schemas.ts')
+    const generator = new OrmSchemaGenerator(db, app, {
+      outputPath,
+      schemas: [defaultSchema, 'app', 'billing'],
+    })
+    await generator.generate()
+
+    const output = await readFile(outputPath, 'utf-8')
+    assert.include(
+      output,
+      [
+        'export class AppTestOrderSchema extends BaseModel {',
+        "  static table = 'app.test_orders'",
+      ].join('\n')
+    )
+    assert.include(
+      output,
+      [
+        'export class BillingTestOrderSchema extends BaseModel {',
+        "  static table = 'billing.test_orders'",
+      ].join('\n')
+    )
+    assert.notInclude(output, 'export class TestOrderSchema ')
+  }).skip(!['pg', 'mssql'].includes(process.env.DB!), 'Only for PostgreSQL and MSSQL')
+
+  test('fail and write no file when a class name still collides', async ({
+    fs,
+    assert,
+    cleanup: testCleanup,
+  }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const tables = [`${defaultSchema}.test_line_items`, 'app.test_line_items', 'app.test_line_item']
+    testCleanup(async () => {
+      await dropTables(db, ['app'], tables)
+      await db.manager.closeAll()
+    })
+    await createTables(db, ['app'], tables)
+
+    const outputPath = join(fs.basePath, 'schemas.ts')
+    const generator = new OrmSchemaGenerator(db, app, {
+      outputPath,
+      schemas: [defaultSchema, 'app'],
+    })
+
+    await assert.rejects(
+      () => generator.generate(),
+      /"app\.test_line_item", "app\.test_line_items" give "AppTestLineItemSchema"/
+    )
+    await assert.fileNotExists('schemas.ts')
+  }).skip(!['pg', 'mssql'].includes(process.env.DB!), 'Only for PostgreSQL and MSSQL')
+
+  test('apply a "<schema>.<table>" rule before the rule of the table name', async ({
+    fs,
+    assert,
+    cleanup: testCleanup,
+  }) => {
+    const app = new AppFactory().create(fs.baseUrl, (identifier) => {
+      return import(new URL(identifier, fs.baseUrl).href)
+    })
+    await app.init()
+    const db = getDb()
+    const tables = [`${defaultSchema}.test_orders`, 'app.test_orders']
+    testCleanup(async () => {
+      await dropTables(db, ['app'], tables)
+      await db.manager.closeAll()
+    })
+    await createTables(db, ['app'], tables)
+
+    const rulesPath = 'schema_rules.js'
+    await fs.create(
+      rulesPath,
+      `
+      export default {
+        tables: {
+          test_orders: {
+            columns: {
+              id: { tsType: 'OrderId', decorators: [{ name: '@column', args: { isPrimary: true } }] },
+              note: { tsType: 'OrderNote', decorators: [{ name: '@column' }] },
+            },
+          },
+          'app.test_orders': {
+            columns: {
+              note: { tsType: 'AppOrderNote', decorators: [{ name: '@column' }] },
+            },
+          },
+        },
+      }
+    `
+    )
+
+    const outputPath = join(fs.basePath, 'schemas.ts')
+    const generator = new OrmSchemaGenerator(db, app, {
+      outputPath,
+      schemas: [defaultSchema, 'app'],
+      rulesPaths: [rulesPath],
+    })
+    await generator.generate()
+
+    const output = await readFile(outputPath, 'utf-8')
+    const getClass = (className: string) => {
+      const start = output.indexOf(`export class ${className} `)
+      return output.slice(start, output.indexOf('\n}', start))
+    }
+
+    assert.include(getClass('TestOrderSchema'), 'declare note: OrderNote')
+    assert.include(getClass('TestOrderSchema'), 'declare id: OrderId')
+    assert.include(getClass('AppTestOrderSchema'), 'declare note: AppOrderNote')
+    assert.include(getClass('AppTestOrderSchema'), 'declare id: OrderId')
+  }).skip(!['pg', 'mssql'].includes(process.env.DB!), 'Only for PostgreSQL and MSSQL')
+})

@@ -68,6 +68,11 @@ export type SchemaRules = {
   columns?: {
     [column: string]: ColumnInfo | ((dataType: string) => ColumnInfo)
   }
+  /**
+   * Rules keyed by the table name, or by "<schema>.<table>". A
+   * "<schema>.<table>" rule applies only to the table of that schema,
+   * and wins over the rule of the table name.
+   */
   tables?: {
     [table: string]: {
       types?: {
@@ -91,6 +96,17 @@ export type DatabaseColumn = {
   nullable: boolean
   defaultValue?: any
   maxLength?: number | null
+}
+
+/**
+ * A database table with its columns and primary keys. The schema is
+ * undefined for dialects without schemas, for example MySQL and SQLite.
+ */
+export type DatabaseTable = {
+  name: string
+  schema?: string
+  columns: Record<string, DatabaseColumn>
+  primaryKeys: string[]
 }
 
 /**
