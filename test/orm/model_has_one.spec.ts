@@ -969,6 +969,69 @@ test.group('Model | HasOne | preload', (group) => {
     assert.isNull(users[1].profile)
   })
 
+  test('preload for many matches each parent, picks first on duplicates and null otherwise', async ({
+    fs,
+    assert,
+  }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter)
+
+    class Profile extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+
+      @column()
+      declare userId: number
+
+      @column()
+      declare displayName: string
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+
+      @hasOne(() => Profile)
+      declare profile: HasOne<typeof Profile>
+    }
+
+    await db
+      .insertQuery()
+      .table('users')
+      .insert([{ username: 'virk' }, { username: 'nikk' }, { username: 'romain' }])
+
+    /**
+     * - user 1 → two profiles (the lowest-id one must win)
+     * - user 2 → one profile
+     * - user 3 → no profile (must resolve to null)
+     */
+    await db
+      .insertQuery()
+      .table('profiles')
+      .insert([
+        { user_id: 1, display_name: 'virk-primary' },
+        { user_id: 1, display_name: 'virk-secondary' },
+        { user_id: 2, display_name: 'nikk' },
+      ])
+
+    /**
+     * The related query is ordered explicitly so which duplicate wins is
+     * deterministic (SQL result order is otherwise unspecified).
+     */
+    const users = await User.query()
+      .orderBy('id', 'asc')
+      .preload('profile', (query) => query.orderBy('id', 'asc'))
+    assert.lengthOf(users, 3)
+
+    assert.equal(users[0].profile.userId, 1)
+    assert.equal(users[0].profile.displayName, 'virk-primary')
+    assert.equal(users[1].profile.userId, 2)
+    assert.isNull(users[2].profile)
+  })
+
   test('preload nested relations', async ({ fs, assert }) => {
     const app = new AppFactory().create(fs.baseUrl, () => {})
     await app.init()

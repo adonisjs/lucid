@@ -49,7 +49,7 @@ import {
   sleep,
   cleanup as cleanupTables,
 } from '../../test-helpers/index.js'
-import { type LucidRow } from '../../src/types/model.js'
+import { type LucidRow, type ModelAdapterOptions } from '../../src/types/model.js'
 import { ModelPaginator } from '../../src/orm/paginator/index.js'
 import { SimplePaginator } from '../../src/database/paginator/simple_paginator.js'
 import { SnakeCaseNamingStrategy } from '../../src/orm/naming_strategies/snake_case.js'
@@ -8413,18 +8413,18 @@ test.group('Base Model | lockForUpdate', (group) => {
     const trx = await db.transaction()
     user.useTransaction(trx)
 
-    await Promise.all([
-      user.lockForUpdate(async (freshUser) => {
-        freshUser.points = freshUser.points + 1
-        await freshUser.save()
-      }),
-      user.lockForUpdate(async (freshUser) => {
-        freshUser.points = freshUser.points + 1
-        await freshUser.save()
-      }),
-    ])
+    await user.lockForUpdate(async (freshUser) => {
+      freshUser.points = freshUser.points + 1
+      await freshUser.save()
+    })
+    await user.lockForUpdate(async (freshUser) => {
+      freshUser.points = freshUser.points + 1
+      await freshUser.save()
+    })
 
     assert.isFalse(trx.isCompleted)
+    const updatedUser = await User.findOrFail(user.id, { client: trx })
+    assert.equal(updatedUser.points, 2)
     await trx.rollback()
 
     await user.refresh()
@@ -8529,6 +8529,79 @@ test.group('Base Model | transaction', (group) => {
     const user = await User.find(1)
     assert.equal(user!.username, 'virk')
   })
+
+  test('apply isolation level to a manual transaction', async ({ fs, assert, cleanup }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+
+    const BaseModel = getBaseModel(adapter)
+
+    class User extends BaseModel {
+      static connection = 'secondary'
+
+      @column({ isPrimary: true })
+      declare id: number
+
+      @column()
+      declare username: string
+    }
+
+    const { rows } = await db.connection('secondary').rawQuery('SHOW transaction_isolation')
+    assert.equal(rows[0].transaction_isolation, 'read committed')
+
+    const trx = await User.transaction({ isolationLevel: 'serializable' })
+    cleanup(async () => {
+      if (!trx.isCompleted) await trx.rollback()
+    })
+
+    const result = await trx.rawQuery('SHOW transaction_isolation')
+    assert.equal(trx.connectionName, 'secondary')
+    assert.equal(result.rows[0].transaction_isolation, 'serializable')
+    await trx.rollback()
+  }).skip(process.env.DB !== 'pg', 'Only for PostgreSQL')
+
+  test('apply isolation level when connection is included in the transaction options', async ({
+    fs,
+    assert,
+    cleanup,
+  }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+
+    const BaseModel = getBaseModel(adapter)
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+
+      @column()
+      declare username: string
+    }
+
+    const { rows } = await db.connection('secondary').rawQuery('SHOW transaction_isolation')
+    assert.equal(rows[0].transaction_isolation, 'read committed')
+
+    // `connection` selects the Lucid connection. The public TransactionFn type
+    // does not declare it, but BaseModel.transaction accepts adapter options
+    // and must not forward that key to knex.
+    const options: ModelAdapterOptions & { isolationLevel: 'serializable' } = {
+      connection: 'secondary',
+      isolationLevel: 'serializable',
+    }
+    const trx = await User.transaction(options)
+    cleanup(async () => {
+      if (!trx.isCompleted) await trx.rollback()
+    })
+
+    const result = await trx.rawQuery('SHOW transaction_isolation')
+    assert.equal(trx.connectionName, 'secondary')
+    assert.equal(result.rows[0].transaction_isolation, 'serializable')
+    await trx.rollback()
+  }).skip(process.env.DB !== 'pg', 'Only for PostgreSQL')
 
   test('ignore internal properties during merge', async ({ fs, assert }) => {
     const app = new AppFactory().create(fs.baseUrl, () => {})
@@ -8773,5 +8846,202 @@ test.group('Base Model | toAttributes', () => {
       id: 1,
       username: null,
     })
+  })
+})
+
+test.group('Base Model | column aliases', (group) => {
+  group.setup(async () => {
+    await setup()
+  })
+
+  group.teardown(async () => {
+    await cleanupTables()
+  })
+
+  group.each.teardown(async () => {
+    await resetTables()
+  })
+
+  test('use the table name as the prefix of column aliases', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const adapter = new FakeAdapter()
+    const BaseModel = getBaseModel(adapter)
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+
+      @column()
+      declare username: string
+    }
+
+    assert.equal(User.$getColumnAlias('username'), 'users_username')
+    assert.deepEqual(User.columnsForSelect(), {
+      users_id: 'users.id',
+      users_username: 'users.username',
+    })
+    assert.equal(User.$keys.columnAliasesToAttributes.get('users_username'), 'username')
+  })
+
+  test('use the columnAliasPrefix as the prefix of column aliases', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const adapter = new FakeAdapter()
+    const BaseModel = getBaseModel(adapter)
+
+    class User extends BaseModel {
+      static columnAliasPrefix = 'u'
+
+      @column({ isPrimary: true })
+      declare id: number
+
+      @column()
+      declare username: string
+    }
+
+    assert.equal(User.$getColumnAlias('username'), 'u_username')
+    assert.deepEqual(User.columnsForSelect(), {
+      u_id: 'users.id',
+      u_username: 'users.username',
+    })
+    assert.equal(User.$keys.columnAliasesToAttributes.get('u_username'), 'username')
+    assert.isUndefined(User.$keys.columnAliasesToAttributes.get('users_username'))
+  })
+
+  test('do not inherit columnAliasPrefix from the parent model', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const adapter = new FakeAdapter()
+    const BaseModel = getBaseModel(adapter)
+
+    class User extends BaseModel {
+      static columnAliasPrefix = 'u'
+
+      @column({ isPrimary: true })
+      declare id: number
+    }
+
+    class Admin extends User {
+      @column()
+      declare role: string
+    }
+
+    Admin.boot()
+    assert.isUndefined(Admin.columnAliasPrefix)
+    assert.equal(Admin.$getColumnAlias('role'), 'admins_role')
+  })
+
+  test('hydrate model from the aliases of columnsForSelect', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter)
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+
+      @column()
+      declare username: string
+    }
+
+    class PrefixedUser extends BaseModel {
+      static table = 'users'
+      static columnAliasPrefix = 'u'
+
+      @column({ isPrimary: true })
+      declare id: number
+
+      @column()
+      declare username: string
+    }
+
+    await db.insertQuery().table('users').insert({ username: 'virk' })
+
+    const user = await User.query().select(User.columnsForSelect()).firstOrFail()
+    assert.isNumber(user.id)
+    assert.equal(user.username, 'virk')
+    assert.deepEqual(user.$extras, {})
+
+    const prefixedUser = await PrefixedUser.query()
+      .select(PrefixedUser.columnsForSelect())
+      .firstOrFail()
+    assert.equal(prefixedUser.id, user.id)
+    assert.equal(prefixedUser.username, 'virk')
+    assert.deepEqual(prefixedUser.$extras, {})
+  })
+
+  test('hydrate a column named like the alias of another column', async ({
+    fs,
+    assert,
+    cleanup: testCleanup,
+  }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter)
+
+    class Semafor extends BaseModel {
+      static table = 'semafor'
+      static columnAliasPrefix = 'sm'
+
+      @column({ isPrimary: true })
+      declare id: number
+
+      @column()
+      declare userId: number
+
+      @column()
+      declare url: string
+
+      @column()
+      declare semaforUrl: string
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      declare id: number
+
+      @hasMany(() => Semafor)
+      declare semafors: HasMany<typeof Semafor>
+    }
+
+    const dropTables = async () => {
+      await db.connection().schema.dropTableIfExists('semafor')
+    }
+
+    await dropTables()
+    await db.connection().schema.createTable('semafor', (table) => {
+      table.increments('id')
+      table.integer('user_id')
+      table.string('url')
+      table.string('semafor_url')
+    })
+    testCleanup(dropTables)
+
+    await db.insertQuery().table('users').insert({ username: 'virk' })
+    const [userRow] = await db.query().from('users')
+    await db.insertQuery().table('semafor').insert({
+      user_id: userRow.id,
+      url: 'https://url.com',
+      semafor_url: 'https://semafor-url.com',
+    })
+
+    const semafor = await Semafor.query().firstOrFail()
+    assert.equal(semafor.url, 'https://url.com')
+    assert.equal(semafor.semaforUrl, 'https://semafor-url.com')
+
+    const user = await User.findOrFail(userRow.id)
+    const related = await user.related('semafors').query().firstOrFail()
+    assert.equal(related.url, 'https://url.com')
+    assert.equal(related.semaforUrl, 'https://semafor-url.com')
+
+    const preloaded = await User.query().where('id', userRow.id).preload('semafors').firstOrFail()
+    assert.lengthOf(preloaded.semafors, 1)
+    assert.equal(preloaded.semafors[0].url, 'https://url.com')
+    assert.equal(preloaded.semafors[0].semaforUrl, 'https://semafor-url.com')
   })
 })

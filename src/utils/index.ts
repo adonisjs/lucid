@@ -108,7 +108,8 @@ export function ensureRelationIsBooted(relation: RelationshipsContract) {
 
 /**
  * Returns the value for a key from the model instance and raises descriptive
- * exception when the value is missing
+ * exception when the value is missing. The message names the actual state
+ * of the value, since a null key and an unselected key are fixed differently.
  */
 export function getValue(
   model: LucidRow | ModelObject,
@@ -117,11 +118,35 @@ export function getValue(
   action = 'preload'
 ) {
   return ensureValue(model, key, () => {
+    const state = (model as ModelObject)[key] === null ? 'null' : 'undefined'
     throw new Exception(
-      `Cannot ${action} "${relation.relationName}", value of "${relation.model.name}.${key}" is undefined`,
+      `Cannot ${action} "${relation.relationName}", value of "${relation.model.name}.${key}" is ${state}`,
       { status: 500 }
     )
   })
+}
+
+/**
+ * Same as "getValue", but returns null instead of raising when the key
+ * value is null.
+ *
+ * A null key is a legitimate value: the row simply has no related rows.
+ * Only undefined is a programmer error, where the column was never
+ * selected. This mirrors how belongsTo already treats a nullable foreign
+ * key.
+ */
+export function getNullableValue(
+  model: LucidRow | ModelObject,
+  key: string,
+  relation: RelationshipsContract,
+  action = 'preload'
+) {
+  const value = (model as ModelObject)[key]
+  if (value === undefined) {
+    return getValue(model, key, relation, action)
+  }
+
+  return value
 }
 
 /**

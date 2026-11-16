@@ -10,9 +10,72 @@
 import { join } from 'node:path'
 import { test } from '@japa/runner'
 import { readFile } from 'node:fs/promises'
+import { setImmediate } from 'node:timers/promises'
 import { AppFactory } from '@adonisjs/core/factories/app'
 import { OrmSchemaGenerator } from '../../src/orm/schema_generator/generator.ts'
+import type { Database } from '../../src/database/main.js'
 import { setup, cleanup, getDb } from '../../test-helpers/index.js'
+
+test.group('OrmSchemaGenerator | query concurrency', () => {
+  test('inspect tables with transaction={isTransaction}')
+    .with([{ isTransaction: true }, { isTransaction: false }])
+    .run(async ({ fs, assert }, { isTransaction }) => {
+      const app = new AppFactory().create(fs.baseUrl, () => {})
+      await app.init()
+      let activeQueries = 0
+      let maxActiveQueries = 0
+      const lookups: string[] = []
+      const lookup = async (name: string) => {
+        lookups.push(name)
+        activeQueries++
+        maxActiveQueries = Math.max(maxActiveQueries, activeQueries)
+        await setImmediate()
+        activeQueries--
+      }
+
+      // Model the client returned by db.connection() when a global transaction is active.
+      const connection = {
+        isTransaction,
+        dialect: { name: 'postgres' },
+        async getAllTablesWithSchema() {
+          return ['users', 'posts', 'comments'].map((name) => ({ name, schema: 'public' }))
+        },
+        async columnsInfo(name: string, _column: undefined, schema: string) {
+          await lookup(`columns:${schema}.${name}`)
+          return { id: { type: 'integer', nullable: false } }
+        },
+        async getPrimaryKeys(name: string) {
+          await lookup(`keys:${name}`)
+          return ['id']
+        },
+      }
+      const db = { connection: () => connection } as unknown as Database
+      const outputPath = join(fs.basePath, 'schemas.ts')
+      const generator = new OrmSchemaGenerator(db, app, {
+        connectionName: 'primary',
+        schemas: ['public'],
+        outputPath,
+      })
+
+      await generator.generate()
+
+      assert.equal(maxActiveQueries, isTransaction ? 1 : 6)
+      assert.equal(activeQueries, 0)
+      assert.deepEqual(lookups, [
+        'columns:public.users',
+        'keys:public.users',
+        'columns:public.posts',
+        'keys:public.posts',
+        'columns:public.comments',
+        'keys:public.comments',
+      ])
+      const output = await readFile(outputPath, 'utf-8')
+      assert.include(output, 'export class UserSchema')
+      assert.include(output, 'export class PostSchema')
+      assert.include(output, 'export class CommentSchema')
+      assert.include(output, '@column({ isPrimary: true })')
+    })
+})
 
 test.group('OrmSchemaGenerator | Basic Generation', (group) => {
   group.setup(async () => {

@@ -13,7 +13,7 @@ import { type LucidRow, type LucidModel } from '../../../types/model.js'
 import { type HasManyThroughQueryBuilderContract } from '../../../types/relations.js'
 
 import { type HasManyThrough } from './index.js'
-import { getValue, unique } from '../../../utils/index.js'
+import { getNullableValue, unique } from '../../../utils/index.js'
 import { BaseQueryBuilder } from '../base/query_builder.js'
 
 /**
@@ -81,9 +81,11 @@ export class HasManyThroughQueryBuilder
       builder.whereIn(
         this.prefixThroughTable(this.relation.foreignKeyColumnName),
         unique(
-          this.parent.map((model) => {
-            return getValue(model, this.relation.localKey, this.relation, queryAction)
-          })
+          this.parent
+            .map((model) => {
+              return getNullableValue(model, this.relation.localKey, this.relation, queryAction)
+            })
+            .filter((value) => value !== null)
         )
       )
       return
@@ -92,7 +94,12 @@ export class HasManyThroughQueryBuilder
     /**
      * Query constraints
      */
-    const value = getValue(this.parent, this.relation.localKey, this.relation, queryAction)
+    const value = getNullableValue(this.parent, this.relation.localKey, this.relation, queryAction)
+    if (value === null) {
+      builder.whereIn(this.prefixThroughTable(this.relation.foreignKeyColumnName), [])
+      return
+    }
+
     builder.where(this.prefixThroughTable(this.relation.foreignKeyColumnName), value)
   }
 

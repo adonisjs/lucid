@@ -257,13 +257,27 @@ export class ManyToMany implements ManyToManyRelationContract<LucidModel, LucidM
     ensureRelationIsBooted(this)
     const pivotForeignKeyAlias = this.pivotAlias(this.pivotForeignKey)
 
+    /**
+     * Group the related rows by their pivot foreign key in a single pass, so
+     * matching each parent is an O(1) lookup instead of re-filtering the entire
+     * related array per parent (which is O(parents × related)).
+     */
+    const relatedByForeignKey = new Map<any, LucidRow[]>()
+    for (const relatedModel of related) {
+      const key = relatedModel.$extras[pivotForeignKeyAlias]
+      const bucket = relatedByForeignKey.get(key)
+      if (bucket) {
+        bucket.push(relatedModel)
+      } else {
+        relatedByForeignKey.set(key, [relatedModel])
+      }
+    }
+
     parent.forEach((parentModel) => {
+      const value = (parentModel as any)[this.localKey]
       this.setRelated(
         parentModel,
-        related.filter((relatedModel) => {
-          const value = (parentModel as any)[this.localKey]
-          return value !== undefined && relatedModel.$extras[pivotForeignKeyAlias] === value
-        })
+        value !== undefined ? (relatedByForeignKey.get(value) ?? []) : []
       )
     })
   }

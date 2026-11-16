@@ -74,11 +74,11 @@ export abstract class Chainable extends Macroable implements ChainableContract {
 
     this.whereStack.forEach((collection) => {
       if (collection.length) {
-        const firstItem = collection.shift()
+        const [firstItem, ...rest] = collection
         const wrapper = this.getWrappingMethod(firstItem.method)
         ;(this.knexQuery as any)[wrapper.wrappingMethod]((subquery: any) => {
           subquery[wrapper.method](...firstItem.args)
-          collection.forEach(({ method, args }) => subquery[method](...args))
+          rest.forEach(({ method, args }) => subquery[method](...args))
         })
       }
     })

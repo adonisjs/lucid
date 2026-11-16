@@ -15,7 +15,7 @@ import { type ManyToManyQueryBuilderContract } from '../../../types/relations.js
 
 import { type ManyToMany } from './index.js'
 import { PivotHelpers } from './pivot_helpers.js'
-import { getValue, unique } from '../../../utils/index.js'
+import { getNullableValue, unique } from '../../../utils/index.js'
 import { BaseQueryBuilder } from '../base/query_builder.js'
 
 /**
@@ -115,9 +115,11 @@ export class ManyToManyQueryBuilder
       this.wrapExisting().whereInPivot(
         this.relation.pivotForeignKey,
         unique(
-          this.parent.map((model) => {
-            return getValue(model, this.relation.localKey, this.relation, queryAction)
-          })
+          this.parent
+            .map((model) => {
+              return getNullableValue(model, this.relation.localKey, this.relation, queryAction)
+            })
+            .filter((value) => value !== null)
         )
       )
       return
@@ -126,7 +128,12 @@ export class ManyToManyQueryBuilder
     /**
      * Query constraints
      */
-    const value = getValue(this.parent, this.relation.localKey, this.relation, queryAction)
+    const value = getNullableValue(this.parent, this.relation.localKey, this.relation, queryAction)
+    if (value === null) {
+      this.wrapExisting().whereInPivot(this.relation.pivotForeignKey, [])
+      return
+    }
+
     this.wrapExisting().wherePivot(this.relation.pivotForeignKey, value)
   }
 

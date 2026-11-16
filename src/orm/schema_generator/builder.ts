@@ -173,6 +173,16 @@ export class OrmSchemaBuilder {
     if (/^[^a-zA-Z_$]/.test(propertyName) && finalRule.decorators) {
       propertyName = `_${propertyName}`
       extraColumnArgs = { columnName }
+    } else if (finalRule.decorators && stringHelpers.snakeCase(propertyName) !== columnName) {
+      /**
+       * When converting the property name back to snake_case does not
+       * reproduce the original database column name (e.g. the column
+       * "player1_id" becomes the property "player1Id", which the naming
+       * strategy would map back to "player_1_id"), set an explicit
+       * columnName so Lucid always targets the correct database column
+       * regardless of how snake_case handles digits.
+       */
+      extraColumnArgs = { columnName }
     }
 
     if (column.nullable && !primaryKeys.includes(columnName)) {

@@ -31,6 +31,20 @@ import { type OrmSchemaGeneratorConfig } from './schema_generator.ts'
 export type IsolationLevels =
   'read uncommitted' | 'read committed' | 'snapshot' | 'repeatable read' | 'serializable'
 
+/**
+ * Options accepted when creating a transaction. These options are
+ * ignored by savepoints (nested transactions)
+ */
+export type TransactionOptions = {
+  isolationLevel?: IsolationLevels
+
+  /**
+   * Start the transaction in read only mode. Ignored by SQLite, MSSQL
+   * and Oracle
+   */
+  readOnly?: boolean
+}
+
 export type ColumnInfo = Knex.ColumnInfo
 
 /**
@@ -126,9 +140,9 @@ export type DialectAdministrationContract =
 export interface TransactionFn {
   <T>(
     callback: (trx: TransactionClientContract) => Promise<T>,
-    options?: { isolationLevel?: IsolationLevels }
+    options?: TransactionOptions
   ): Promise<T>
-  (options?: { isolationLevel?: IsolationLevels }): Promise<TransactionClientContract>
+  (options?: TransactionOptions): Promise<TransactionClientContract>
 }
 
 /**

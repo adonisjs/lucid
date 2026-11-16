@@ -81,17 +81,6 @@ export class BelongsTo implements BelongsToRelationContract<LucidModel, LucidMod
   }
 
   /**
-   * Returns a boolean telling if the related row belongs to the parent
-   * row or not.
-   */
-  private isRelatedRow(parent: LucidRow, related: LucidRow) {
-    return (
-      (related as any)[this.localKey] !== undefined &&
-      (parent as any)[this.foreignKey] === (related as any)[this.localKey]
-    )
-  }
-
-  /**
    * Boot the relationship and ensure that all keys are in
    * place for queries to do their job.
    */
@@ -174,9 +163,27 @@ export class BelongsTo implements BelongsToRelationContract<LucidModel, LucidMod
   setRelatedForMany(parent: LucidRow[], related: LucidRow[]): void {
     ensureRelationIsBooted(this)
 
+    /**
+     * Index the related rows by their local key in a single pass, so matching
+     * each parent is an O(1) lookup instead of scanning the entire related
+     * array per parent (which is O(parents × related)). Rows without a local
+     * key are ignored, and the first row wins for a given key to mirror the
+     * original "find" behaviour.
+     */
+    const relatedByLocalKey = new Map<any, LucidRow>()
+    for (const relatedRow of related) {
+      const key = (relatedRow as any)[this.localKey]
+      if (key !== undefined && !relatedByLocalKey.has(key)) {
+        relatedByLocalKey.set(key, relatedRow)
+      }
+    }
+
     parent.forEach((parentRow) => {
-      const match = related.find((relatedRow) => this.isRelatedRow(parentRow, relatedRow))
-      this.setRelated(parentRow, match || null)
+      const value = (parentRow as any)[this.foreignKey]
+      this.setRelated(
+        parentRow,
+        value !== undefined ? (relatedByLocalKey.get(value) ?? null) : null
+      )
     })
   }
 

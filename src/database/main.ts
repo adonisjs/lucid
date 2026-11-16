@@ -14,7 +14,7 @@ import type { Logger } from '@adonisjs/core/logger'
 
 import {
   type DatabaseConfig,
-  type IsolationLevels,
+  type TransactionOptions,
   type QueryClientContract,
   type DatabaseClientOptions,
   type TransactionClientContract,
@@ -222,13 +222,12 @@ export class Database extends Macroable {
    */
   transaction<T>(
     callback: (trx: TransactionClientContract) => Promise<T>,
-    options?: { isolationLevel?: IsolationLevels }
+    options?: TransactionOptions
   ): Promise<T>
-  transaction(options?: { isolationLevel?: IsolationLevels }): Promise<TransactionClientContract>
+  transaction(options?: TransactionOptions): Promise<TransactionClientContract>
   transaction<T>(
-    callbackOrOptions?:
-      ((trx: TransactionClientContract) => Promise<T>) | { isolationLevel?: IsolationLevels },
-    options?: { isolationLevel?: IsolationLevels }
+    callbackOrOptions?: ((trx: TransactionClientContract) => Promise<T>) | TransactionOptions,
+    options?: TransactionOptions
   ): Promise<TransactionClientContract | T> {
     const client = this.connection()
 

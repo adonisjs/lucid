@@ -10953,6 +10953,49 @@ test.group('Query Builder | update', (group) => {
     await connection.disconnect()
   })
 
+  test('update columns by defining object with returning columns', async ({ assert }) => {
+    const connection = new Connection('primary', getConfig(), logger)
+    connection.connect()
+
+    const db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql, bindings } = db.from('users').update({ account_status: 'active' }, ['id']).toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection
+      .client!.from('users')
+      .update({ my_account_status: 'active' }, ['my_id'])
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+
+    await connection.disconnect()
+  })
+
+  test('transform raw values when updating object with returning columns', async ({ assert }) => {
+    const connection = new Connection('primary', getConfig(), logger)
+    connection.connect()
+
+    const db = getQueryBuilder(getQueryClient(connection))
+    const { sql, bindings } = db
+      .from('users')
+      .update({ username: getRawQueryBuilder(getQueryClient(connection), 'upper(username)') }, [
+        'id',
+      ])
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection
+      .client!.from('users')
+      .update({ username: connection.client!.raw('upper(username)') }, ['id'])
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+
+    await connection.disconnect()
+  })
+
   test('handle use case where update value is false or 0', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), logger)
     connection.connect()

@@ -107,20 +107,32 @@ export class OrmSchemaGenerator extends EventEmitter<{
     /**
      * Fetch columns and primary keys for each table
      */
-    const tablesWithColumns = await Promise.all(
-      tables.map(async ({ name, schema }) => {
-        const tableLookup = schema ? `${schema}.${name}` : name
-        const [columns, primaryKeys] = await Promise.all([
-          this.connection.columnsInfo(name, undefined, schema),
-          this.connection.getPrimaryKeys(tableLookup),
-        ])
+    const fetchTable = async ({ name, schema }: (typeof tables)[number]) => {
+      const tableLookup = schema ? `${schema}.${name}` : name
+      const [columns, primaryKeys] = this.connection.isTransaction
+        ? [
+            await this.connection.columnsInfo(name, undefined, schema),
+            await this.connection.getPrimaryKeys(tableLookup),
+          ]
+        : await Promise.all([
+            this.connection.columnsInfo(name, undefined, schema),
+            this.connection.getPrimaryKeys(tableLookup),
+          ])
 
-        this.emit('table:info', { tableName: name, columns })
-        return { name, columns, primaryKeys }
-      })
-    )
+      this.emit('table:info', { tableName: name, columns })
+      return { name, columns, primaryKeys }
+    }
 
-    return tablesWithColumns
+    // A global transaction shares one connection across all table lookups.
+    if (this.connection.isTransaction) {
+      const tablesWithColumns = []
+      for (const table of tables) {
+        tablesWithColumns.push(await fetchTable(table))
+      }
+      return tablesWithColumns
+    }
+
+    return Promise.all(tables.map(fetchTable))
   }
 
   /**

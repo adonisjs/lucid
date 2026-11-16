@@ -76,17 +76,6 @@ export class HasMany implements HasManyRelationContract<LucidModel, LucidModel> 
   }
 
   /**
-   * Returns a boolean saving related row belongs to the parent
-   * row or not.
-   */
-  private isRelatedRow(parent: LucidRow, related: LucidRow) {
-    return (
-      (parent as any)[this.localKey] !== undefined &&
-      (related as any)[this.foreignKey] === (parent as any)[this.localKey]
-    )
-  }
-
-  /**
    * Clone relationship instance
    */
   clone(parent: LucidModel): any {
@@ -176,11 +165,28 @@ export class HasMany implements HasManyRelationContract<LucidModel, LucidModel> 
   setRelatedForMany(parent: LucidRow[], related: LucidRow[]): void {
     ensureRelationIsBooted(this)
 
+    /**
+     * Group the related rows by their foreign key in a single pass, so matching
+     * each parent is an O(1) lookup instead of re-filtering the entire related
+     * array per parent (which is O(parents × related)).
+     */
+    const relatedByForeignKey = new Map<any, LucidRow[]>()
+    for (const relatedModel of related) {
+      const key = (relatedModel as any)[this.foreignKey]
+      const bucket = relatedByForeignKey.get(key)
+      if (bucket) {
+        bucket.push(relatedModel)
+      } else {
+        relatedByForeignKey.set(key, [relatedModel])
+      }
+    }
+
     parent.forEach((parentModel) => {
-      const relatedRows = related.filter((relatedModel) =>
-        this.isRelatedRow(parentModel, relatedModel)
+      const value = (parentModel as any)[this.localKey]
+      this.setRelated(
+        parentModel,
+        value !== undefined ? (relatedByForeignKey.get(value) ?? []) : []
       )
-      this.setRelated(parentModel, relatedRows)
     })
   }
 
