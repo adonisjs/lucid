@@ -11,6 +11,7 @@ import { test } from '@japa/runner'
 
 import { Connection } from '../../src/connection/index.js'
 import { QueryClient } from '../../src/query_client/index.js'
+import { LockSession } from '../../src/migration/lock_session.js'
 import {
   logger,
   setup,
@@ -598,7 +599,7 @@ if (!['sqlite', 'mssql', 'better_sqlite', 'libsql'].includes(process.env.DB!)) {
       assert.isFalse(released)
     })
 
-    test('release advisory lock succeeds with pool of 2 with pinned connection', async ({
+    test('release advisory lock succeeds with pool of 2 using a lock session', async ({
       assert,
       cleanup,
     }) => {
@@ -607,25 +608,23 @@ if (!['sqlite', 'mssql', 'better_sqlite', 'libsql'].includes(process.env.DB!)) {
 
       const connection = new Connection('primary', config, logger)
       connection.connect()
+      cleanup(() => connection.disconnect())
 
       const client = new QueryClient('dual', connection, createEmitter())
-      const knexClient = client.getWriteClient()
 
       /**
-       * Pin a connection and pass it to both acquire and release.
-       * This ensures both operations run on the same database session.
+       * The lock session pins one connection, so that the acquire and the
+       * release run on the same database session.
        */
-      const pinnedConnection = await knexClient.client.acquireConnection()
-      cleanup(async () => {
-        knexClient.client.releaseConnection(pinnedConnection)
-        await connection.disconnect()
-      })
+      const lockSession = await LockSession.open(connection, client)
+      cleanup(() => lockSession.release())
 
-      const acquired = await client.dialect.getAdvisoryLock(1, undefined, pinnedConnection)
+      const acquired = await lockSession.client.dialect.getAdvisoryLock(1)
       assert.isTrue(acquired)
 
-      const released = await client.dialect.releaseAdvisoryLock(1, pinnedConnection)
+      const released = await lockSession.client.dialect.releaseAdvisoryLock(1)
       assert.isTrue(released)
+      assert.isFalse(lockSession.isLost())
     })
   })
 }

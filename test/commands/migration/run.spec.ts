@@ -21,7 +21,10 @@ import {
   cleanupSchemaArtifacts,
   createMigrationFile,
   getDb,
+  sleepSql,
   supportsSchemaDump,
+  supportsAdvisoryLocks,
+  endLockSessionDuringSleep,
 } from '../../../test-helpers/index.js'
 
 test.group('migration:run', (group) => {
@@ -567,4 +570,38 @@ test.group('migration:run', (group) => {
       migrate.logger.getLogs().some((log) => log.message.includes('Restoring schema dump from'))
     )
   }).skip(!supportsSchemaDump, 'Schema dumps are not supported for the current database dialect')
+  test('report the error of the migration when the session of the lock ends', async ({
+    fs,
+    assert,
+  }) => {
+    await createMigrationFile({
+      filePath: 'database/migrations/run_cmd_lost_session.ts',
+      className: 'User',
+      up: `
+        this.schema.createTable('schema_users', (table) => {
+          table.increments()
+        })
+        this.schema.raw('${sleepSql(2)}')
+      `,
+    })
+
+    const db = getDb()
+    const ace = await new AceFactory().make(fs.baseUrl, { importer: () => {} })
+    await ace.app.init()
+    ace.app.container.singleton('lucid.db', () => db)
+    ace.ui.switchMode('raw')
+
+    const migrate = await ace.create(Migrate, ['--no-schema-generate'])
+    await Promise.all([migrate.exec(), endLockSessionDuringSleep()])
+
+    assert.equal(migrate.exitCode, 1)
+    migrate.assertLogMatches(/red\(error\) database\/migrations\/run_cmd_lost_session/)
+    migrate.assertLogMatches(/terminating connection|Connection lost/)
+    assert.isFalse(
+      migrate.logger.getLogs().some((log) => log.message.includes('E_UNABLE_RELEASE_LOCK'))
+    )
+    assert.lengthOf(await db.connection().from('adonis_schema').select('*'), 0)
+  })
+    .skip(!supportsAdvisoryLocks, 'Advisory locks are only supported on PostgreSQL and MySQL')
+    .timeout(20000)
 })
