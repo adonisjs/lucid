@@ -831,6 +831,11 @@ export interface LucidModel {
   table: string
 
   /**
+   * The prefix of the column aliases. Defaults to the table name
+   */
+  columnAliasPrefix?: string
+
+  /**
    * Self assign the primary instead of relying on the database to
    * return it back
    */
