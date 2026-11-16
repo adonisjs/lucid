@@ -167,6 +167,13 @@ class BaseModelImpl implements LucidRow {
   static table: string
 
   /**
+   * The prefix of the column aliases of the model. The aliases use the
+   * table name, unless specified. It is never inherited from the
+   * parent model
+   */
+  static columnAliasPrefix?: string
+
+  /**
    * Self assign the primary instead of relying on the database to
    * return it back
    */
@@ -346,12 +353,16 @@ class BaseModelImpl implements LucidRow {
    * Computes the table-qualified alias for a given column name.
    * This is used to generate consistent aliases across the ORM.
    *
+   * The alias uses the `columnAliasPrefix` of the model in place of
+   * the table name, when it is defined.
+   *
    * Example: For a User model with table 'users' and column 'email':
    * - Returns: 'users_email'
+   * - Returns: 'u_email', when `columnAliasPrefix` is 'u'
    */
   static $getColumnAlias(columnName: string): string {
     this.boot()
-    return `${this.table}_${columnName}`
+    return `${this.columnAliasPrefix ?? this.table}_${columnName}`
   }
 
   /**
@@ -633,6 +644,12 @@ class BaseModelImpl implements LucidRow {
      * Table name is never inherited from the base model
      */
     this.$defineProperty('table', this.namingStrategy.tableName(this), 'define')
+
+    /**
+     * Column alias prefix is never inherited from the base model, since
+     * it is used in place of the table name
+     */
+    this.$defineProperty('columnAliasPrefix', undefined, 'define')
 
     /**
      * Inherit primary key or default to "id"
