@@ -26,6 +26,7 @@ import {
 } from '../types/database.js'
 
 import { MigrationSource } from './source.js'
+import { LockSession } from './lock_session.js'
 import { type Database } from '../database/main.js'
 import { type Application } from '@adonisjs/core/app'
 import { type BaseSchema } from '../schema/main.js'
@@ -38,7 +39,17 @@ import { createSchemaState } from './schema_dump/schema_state.js'
  * for a given connection at a time.
  */
 export class MigrationRunner extends EventEmitter {
+  /**
+   * The query client for the queries of the runner. It is the client
+   * of the lock session while the runner holds the lock.
+   */
   private client: QueryClientContract
+
+  /**
+   * The query client of the connection, which takes a connection
+   * from the pool for each query
+   */
+  private connectionClient: QueryClientContract
   private config: ConnectionConfig
 
   /**
@@ -91,6 +102,21 @@ export class MigrationRunner extends EventEmitter {
   disableLocks: boolean
 
   /**
+   * The database session that holds the advisory lock. Between the acquire
+   * and the release of the lock, "this.client" is the query client of this
+   * session.
+   */
+  private lockSession: LockSession | null = null
+
+  /**
+   * Tracks whether we have actually acquired the advisory lock. We only
+   * attempt to release the lock when this is true, otherwise a failed
+   * acquisition would trigger a bogus release (releasing a lock we never
+   * held), masking the original "unable to acquire lock" error.
+   */
+  private lockAcquired: boolean = false
+
+  /**
    * An array of files we have successfully migrated. The files are
    * collected regardless of `up` or `down` methods
    */
@@ -127,7 +153,10 @@ export class MigrationRunner extends EventEmitter {
     private options: MigratorOptions
   ) {
     super()
-    this.client = this.db.connection(this.options.connectionName || this.db.primaryConnectionName)
+    this.connectionClient = this.db.connection(
+      this.options.connectionName || this.db.primaryConnectionName
+    )
+    this.client = this.connectionClient
     this.config = this.db.getRawConnection(this.client.connectionName)!.config
     this.migrationsConfig = Object.assign(
       {
@@ -272,6 +301,13 @@ export class MigrationRunner extends EventEmitter {
    * Make sure we are acquiring lock outside the transactions, since we want
    * to block other processes from acquiring the same lock.
    *
+   * Advisory locks belong to a database session. We pin a connection
+   * from the pool and run each query of the runner on it, the migrations
+   * too. Therefore, the lock cannot end while a migration runs on another
+   * session. We pin the connection with each pool size, also with a pool
+   * of one connection. Otherwise, the pool can replace a connection that
+   * ends between two migrations, and the next migrations run with no lock.
+   *
    * Locks are always acquired in dry run too, since we want to stay close
    * to the real execution cycle
    */
@@ -280,27 +316,87 @@ export class MigrationRunner extends EventEmitter {
       return
     }
 
-    const acquired = await this.client.dialect.getAdvisoryLock(1)
-    if (!acquired) {
-      throw new errors.E_UNABLE_ACQUIRE_LOCK()
+    const connection = this.db.getRawConnection(this.connectionClient.connectionName)!
+    this.lockSession = await LockSession.open(connection.connection!, this.connectionClient.emitter)
+    this.client = this.lockSession.client
+
+    try {
+      const acquired = await this.client.dialect.getAdvisoryLock(1)
+      if (!acquired) {
+        throw new errors.E_UNABLE_ACQUIRE_LOCK()
+      }
+      this.lockAcquired = true
+    } catch (error) {
+      this.closeLockSession()
+      throw error
     }
+
+    /**
+     * Emitted outside the try/catch above. The lock is already acquired at
+     * this point, so a throwing listener must not trigger the catch (which
+     * would release the pinned connection while leaving the lock held on it).
+     */
     this.emit('acquire:lock')
   }
 
   /**
    * Release a lock once complete the migration process. Only works with
    * `Mysql`, `PostgresSQL` and `MariaDb` for now.
+   *
+   * When the session that holds the lock has ended, the database has
+   * released the lock with the session. Therefore, we do not run the
+   * unlock query, and the error of the migration stays the error of
+   * the run.
    */
   private async releaseLock() {
-    if (!this.client.dialect.supportsAdvisoryLocks || this.disableLocks) {
+    /**
+     * Never attempt to release a lock we did not acquire. Doing so would
+     * throw "E_UNABLE_RELEASE_LOCK" and mask the real error (for example
+     * "E_UNABLE_ACQUIRE_LOCK" raised when another process holds the lock).
+     */
+    if (!this.lockAcquired) {
       return
     }
 
-    const released = await this.client.dialect.releaseAdvisoryLock(1)
-    if (!released) {
-      throw new errors.E_UNABLE_RELEASE_LOCK()
+    this.lockAcquired = false
+
+    try {
+      if (this.lockSession?.isLost()) {
+        return
+      }
+
+      let released: boolean
+      try {
+        released = await this.client.dialect.releaseAdvisoryLock(1)
+      } catch (error) {
+        if (this.lockSession?.isLost()) {
+          return
+        }
+        throw error
+      }
+
+      if (!released) {
+        throw new errors.E_UNABLE_RELEASE_LOCK()
+      }
+      this.emit('release:lock')
+    } finally {
+      this.closeLockSession()
     }
-    this.emit('release:lock')
+  }
+
+  /**
+   * Gives the connection of the lock session back to the pool. Then the
+   * queries use the query client of the connection again.
+   */
+  private closeLockSession() {
+    const lockSession = this.lockSession
+    if (!lockSession) {
+      return
+    }
+
+    this.lockSession = null
+    this.client = this.connectionClient
+    lockSession.release()
   }
 
   /**

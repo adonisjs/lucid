@@ -844,3 +844,69 @@ export async function dropSchemaTables(db: Database, schemas: string[], tables: 
     )
   }
 }
+
+/**
+ * The databases of the tests that support advisory locks
+ */
+export const supportsAdvisoryLocks = ['pg', 'mysql', 'mysql_legacy'].includes(process.env.DB!)
+
+/**
+ * Returns the SQL that keeps the session busy for the given seconds
+ */
+export function sleepSql(seconds: number) {
+  return process.env.DB === 'pg' ? `select pg_sleep(${seconds})` : `select sleep(${seconds})`
+}
+
+/**
+ * Returns the source of a migration statement that fails, unless it runs
+ * on the database session that holds the migration lock
+ */
+export function assertOnLockSessionSource() {
+  const sql =
+    process.env.DB === 'pg'
+      ? `select count(*)::int as holds from pg_locks where locktype = 'advisory' and objid = 1 and granted and pid = pg_backend_pid()`
+      : `select IS_USED_LOCK('1') = CONNECTION_ID() as holds`
+
+  return `this.defer(async (db) => {
+    const result = await db.rawQuery(\`${sql}\`)
+    const row = result.rows ? result.rows[0] : result[0][0]
+    if (Number(row.holds) !== 1) {
+      throw new Error('The migration did not run on the session of the lock')
+    }
+  })`
+}
+
+/**
+ * Waits until the database session that holds the migration lock runs the
+ * sleep query of "sleepSql", and ends that session. It uses a connection of
+ * its own, outside of the pools of the tests.
+ */
+export async function endLockSessionDuringSleep() {
+  const db = getKnex(Object.assign({}, getConfig(), { debug: false, pool: { min: 0, max: 1 } }))
+  const isPg = process.env.DB === 'pg'
+
+  try {
+    for (let attempt = 0; attempt < 200; attempt++) {
+      const result = isPg
+        ? await db.raw(
+            `select l.pid as id from pg_locks l join pg_stat_activity a on a.pid = l.pid where l.locktype = 'advisory' and l.objid = 1 and l.granted and a.state = 'active' and a.query like '%pg_sleep%'`
+          )
+        : await db.raw(
+            `select ID as id from information_schema.PROCESSLIST where ID = IS_USED_LOCK('1') and INFO like '%sleep(%'`
+          )
+
+      const rows = isPg ? result.rows : result[0]
+      if (rows.length) {
+        const id = Number(rows[0].id)
+        await db.raw(isPg ? `select pg_terminate_backend(${id})` : `kill ${id}`)
+        return
+      }
+
+      await sleep(50)
+    }
+
+    throw new Error('The session of the migration lock did not run the sleep query')
+  } finally {
+    await db.destroy()
+  }
+}
