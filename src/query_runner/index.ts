@@ -10,6 +10,7 @@
 import { type Knex } from 'knex'
 import { Exception } from '@poppinss/utils/exception'
 import { QueryReporter } from '../query_reporter/index.js'
+import { type QueryClient } from '../query_client/index.js'
 import { type QueryClientContract, type TransactionClientContract } from '../types/database.js'
 
 /**
@@ -154,6 +155,16 @@ export class QueryRunner {
      */
     if (this.isWriteQuery(query) && this.client.mode === 'read') {
       throw new Exception('Updates and deletes cannot be performed in read mode')
+    }
+
+    /**
+     * A client with a pinned connection runs each query on it. The owner
+     * of the connection acquires and releases it.
+     */
+    const pinnedConnection = (this.client as QueryClient).pinnedConnection
+    if (pinnedConnection) {
+      query.connection(pinnedConnection)
+      return this.executeDirectly(query)
     }
 
     return this.executeUsingManagedConnection(query)

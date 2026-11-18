@@ -318,7 +318,10 @@ export class MigrationRunner extends EventEmitter {
 
     if (this.connectionClient.getWriteClient().client.pool.max > 1) {
       const connection = this.db.getRawConnection(this.connectionClient.connectionName)!
-      this.lockSession = await LockSession.open(connection.connection!, this.connectionClient)
+      this.lockSession = await LockSession.open(
+        connection.connection!,
+        this.connectionClient.emitter
+      )
       this.client = this.lockSession.client
     }
 
@@ -329,7 +332,7 @@ export class MigrationRunner extends EventEmitter {
       }
       this.lockAcquired = true
     } catch (error) {
-      await this.closeLockSession()
+      this.closeLockSession()
       throw error
     }
 
@@ -382,16 +385,15 @@ export class MigrationRunner extends EventEmitter {
       }
       this.emit('release:lock')
     } finally {
-      await this.closeLockSession()
+      this.closeLockSession()
     }
   }
 
   /**
-   * Gives the connection of the lock session back to the pool, or
-   * destroys it when its session has ended. Then the queries use the
-   * query client of the connection again.
+   * Gives the connection of the lock session back to the pool. Then the
+   * queries use the query client of the connection again.
    */
-  private async closeLockSession() {
+  private closeLockSession() {
     const lockSession = this.lockSession
     if (!lockSession) {
       return
@@ -399,12 +401,7 @@ export class MigrationRunner extends EventEmitter {
 
     this.lockSession = null
     this.client = this.connectionClient
-
-    if (lockSession.isLost()) {
-      await lockSession.destroy()
-    } else {
-      lockSession.release()
-    }
+    lockSession.release()
   }
 
   /**

@@ -66,11 +66,20 @@ export class QueryClient implements QueryClientContract {
    */
   debug: boolean
 
+  /**
+   * A raw connection of the pool that the client uses for each query,
+   * its schema queries and its transactions. The client never acquires
+   * or releases it. The owner of the connection releases it.
+   */
+  readonly pinnedConnection?: unknown
+
   constructor(
     public mode: 'dual' | 'write' | 'read',
     private connection: ConnectionContract,
-    public emitter: Emitter<any>
+    public emitter: Emitter<any>,
+    pinnedConnection?: unknown
   ) {
+    this.pinnedConnection = pinnedConnection
     this.debug = !!this.connection.config.debug
     this.connectionName = this.connection.name
     this.dialect = new clientsToDialectsMapping[this.connection.clientName](
@@ -83,7 +92,8 @@ export class QueryClient implements QueryClientContract {
    * Returns schema instance for the write client
    */
   get schema(): Knex.SchemaBuilder {
-    return this.getWriteClient().schema
+    const schema = this.getWriteClient().schema
+    return this.pinnedConnection ? schema.connection(this.pinnedConnection) : schema
   }
 
   /**
@@ -240,12 +250,16 @@ export class QueryClient implements QueryClientContract {
     /**
      * Options are the first argument when no callback is defined. Only the
      * known options are forwarded, since knex assigns its own meaning to
-     * keys like "connection"
+     * keys like "connection".
+     *
+     * With a pinned connection, knex runs the transaction on it and does
+     * not release it at the end
      */
     const trxOptions = typeof callback === 'function' ? options : (callback ?? options)
     const trx = await this.getWriteClient().transaction({
       isolationLevel: trxOptions?.isolationLevel,
       readOnly: trxOptions?.readOnly,
+      ...(this.pinnedConnection ? { connection: this.pinnedConnection } : {}),
     })
     const transaction = new TransactionClient(
       trx,

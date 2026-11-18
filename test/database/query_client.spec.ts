@@ -616,7 +616,7 @@ if (!['sqlite', 'mssql', 'better_sqlite', 'libsql'].includes(process.env.DB!)) {
        * The lock session pins one connection, so that the acquire and the
        * release run on the same database session.
        */
-      const lockSession = await LockSession.open(connection, client)
+      const lockSession = await LockSession.open(connection, client.emitter)
       cleanup(() => lockSession.release())
 
       const acquired = await lockSession.client.dialect.getAdvisoryLock(1)
@@ -625,6 +625,52 @@ if (!['sqlite', 'mssql', 'better_sqlite', 'libsql'].includes(process.env.DB!)) {
       const released = await lockSession.client.dialect.releaseAdvisoryLock(1)
       assert.isTrue(released)
       assert.isFalse(lockSession.isLost())
+    })
+
+    test('run queries, schema queries and transactions on the pinned connection', async ({
+      assert,
+      cleanup,
+    }) => {
+      const config = getConfig()
+      config.pool = { min: 0, max: 2, acquireTimeoutMillis: 1000 }
+
+      const connection = new Connection('primary', config, logger)
+      connection.connect()
+      cleanup(() => connection.disconnect())
+
+      const lockSession = await LockSession.open(connection, createEmitter())
+      cleanup(() => lockSession.release())
+
+      /**
+       * Hold the other connection of the pool. A query that does not use
+       * the pinned connection waits for a connection, and times out.
+       */
+      const knexClient = connection.client!.client
+      const heldConnection = await knexClient.acquireConnection()
+      cleanup(() => knexClient.releaseConnection(heldConnection))
+
+      const sessionIdSql =
+        process.env.DB === 'pg' ? 'select pg_backend_pid() as id' : 'select CONNECTION_ID() as id'
+      const readId = (result: any) => Number(result.rows ? result.rows[0].id : result[0][0].id)
+
+      const pinnedId = readId(
+        await connection.client!.raw(sessionIdSql).connection(lockSession.client.pinnedConnection)
+      )
+      const heldId = readId(await connection.client!.raw(sessionIdSql).connection(heldConnection))
+      assert.notEqual(pinnedId, heldId)
+
+      const client = lockSession.client
+      assert.equal(readId(await client.rawQuery(sessionIdSql)), pinnedId)
+      assert.equal(readId(await client.schema.raw(sessionIdSql)), pinnedId)
+
+      await client.transaction(async (trx) => {
+        assert.equal(readId(await trx.rawQuery(sessionIdSql)), pinnedId)
+      })
+
+      /**
+       * The transaction does not give the pinned connection back to the pool
+       */
+      assert.equal(readId(await client.rawQuery(sessionIdSql)), pinnedId)
     })
   })
 }
