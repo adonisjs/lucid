@@ -14,7 +14,13 @@ import { setImmediate } from 'node:timers/promises'
 import { AppFactory } from '@adonisjs/core/factories/app'
 import { OrmSchemaGenerator } from '../../src/orm/schema_generator/generator.ts'
 import type { Database } from '../../src/database/main.js'
-import { setup, cleanup, getDb } from '../../test-helpers/index.js'
+import {
+  setup,
+  cleanup,
+  getDb,
+  createSchemaTables,
+  dropSchemaTables,
+} from '../../test-helpers/index.js'
 
 test.group('OrmSchemaGenerator | query concurrency', () => {
   test('inspect tables with transaction={isTransaction}')
@@ -643,49 +649,6 @@ test.group('OrmSchemaGenerator | Table Filtering', (group) => {
 test.group('OrmSchemaGenerator | Multiple Schemas', (group) => {
   const defaultSchema = process.env.DB === 'mssql' ? 'dbo' : 'public'
 
-  /**
-   * Creates each schema, and a table with an id column for
-   * each "<schema>.<table>" name
-   */
-  async function createTables(db: Database, schemas: string[], tables: string[]) {
-    const connection = db.connection()
-    for (const schema of schemas) {
-      if (process.env.DB === 'mssql') {
-        await connection.rawQuery(
-          `IF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = '${schema}') EXEC('CREATE SCHEMA ${schema}')`
-        )
-      } else {
-        await connection.rawQuery(`CREATE SCHEMA IF NOT EXISTS ${schema}`)
-      }
-    }
-    for (const qualifiedName of tables) {
-      const [schema, name] = qualifiedName.split('.')
-      await connection.schema.withSchema(schema).dropTableIfExists(name)
-      await connection.schema.withSchema(schema).createTable(name, (table) => {
-        table.increments('id')
-        table.string('note').nullable()
-      })
-    }
-  }
-
-  /**
-   * Drops each "<schema>.<table>" table, and then each schema
-   */
-  async function dropTables(db: Database, schemas: string[], tables: string[]) {
-    const connection = db.connection()
-    for (const qualifiedName of tables) {
-      const [schema, name] = qualifiedName.split('.')
-      await connection.schema.withSchema(schema).dropTableIfExists(name)
-    }
-    for (const schema of schemas) {
-      await connection.rawQuery(
-        process.env.DB === 'mssql'
-          ? `IF EXISTS (SELECT * FROM sys.schemas WHERE name = '${schema}') EXEC('DROP SCHEMA ${schema}')`
-          : `DROP SCHEMA IF EXISTS ${schema} CASCADE`
-      )
-    }
-  }
-
   group.setup(async () => {
     await setup()
   })
@@ -704,10 +667,10 @@ test.group('OrmSchemaGenerator | Multiple Schemas', (group) => {
     const db = getDb()
     const tables = [`${defaultSchema}.test_orders`, 'app.test_orders', 'app.test_invoices']
     testCleanup(async () => {
-      await dropTables(db, ['app'], tables)
+      await dropSchemaTables(db, ['app'], tables)
       await db.manager.closeAll()
     })
-    await createTables(db, ['app'], tables)
+    await createSchemaTables(db, ['app'], tables)
 
     const outputPath = join(fs.basePath, 'schemas.ts')
     const generator = new OrmSchemaGenerator(db, app, {
@@ -750,10 +713,10 @@ test.group('OrmSchemaGenerator | Multiple Schemas', (group) => {
     const db = getDb()
     const tables = ['app.test_orders', 'billing.test_orders']
     testCleanup(async () => {
-      await dropTables(db, ['app', 'billing'], tables)
+      await dropSchemaTables(db, ['app', 'billing'], tables)
       await db.manager.closeAll()
     })
-    await createTables(db, ['app', 'billing'], tables)
+    await createSchemaTables(db, ['app', 'billing'], tables)
 
     const outputPath = join(fs.basePath, 'schemas.ts')
     const generator = new OrmSchemaGenerator(db, app, {
@@ -790,10 +753,10 @@ test.group('OrmSchemaGenerator | Multiple Schemas', (group) => {
     const db = getDb()
     const tables = [`${defaultSchema}.test_line_items`, 'app.test_line_items', 'app.test_line_item']
     testCleanup(async () => {
-      await dropTables(db, ['app'], tables)
+      await dropSchemaTables(db, ['app'], tables)
       await db.manager.closeAll()
     })
-    await createTables(db, ['app'], tables)
+    await createSchemaTables(db, ['app'], tables)
 
     const outputPath = join(fs.basePath, 'schemas.ts')
     const generator = new OrmSchemaGenerator(db, app, {
@@ -820,10 +783,10 @@ test.group('OrmSchemaGenerator | Multiple Schemas', (group) => {
     const db = getDb()
     const tables = [`${defaultSchema}.test_orders`, 'app.test_orders']
     testCleanup(async () => {
-      await dropTables(db, ['app'], tables)
+      await dropSchemaTables(db, ['app'], tables)
       await db.manager.closeAll()
     })
-    await createTables(db, ['app'], tables)
+    await createSchemaTables(db, ['app'], tables)
 
     const rulesPath = 'schema_rules.js'
     await fs.create(

@@ -9,8 +9,15 @@
 
 import { test } from '@japa/runner'
 import { OrmSchemaBuilder } from '../../src/orm/schema_generator/builder.ts'
-import type { QueryClientContract } from '../../src/types/database.ts'
-import { setup, cleanup, getDb, resetTables } from '../../test-helpers/index.ts'
+import {
+  setup,
+  cleanup,
+  getDb,
+  resetTables,
+  getClassHeads,
+  getSchemaBuilder,
+  getDatabaseTable,
+} from '../../test-helpers/index.ts'
 
 test.group('OrmSchemaBuilder | Basic Type Mapping', (group) => {
   group.setup(async () => {
@@ -1799,22 +1806,6 @@ test.group('OrmSchemaBuilder | Name Conversion', (group) => {
 })
 
 test.group('OrmSchemaBuilder | Table schemas', () => {
-  /**
-   * The builder reads only the dialect name of the client
-   */
-  const builderFor = (dialectName: string) => {
-    return new OrmSchemaBuilder({ dialect: { name: dialectName } } as QueryClientContract)
-  }
-  const table = (name: string, schema?: string) => ({
-    name,
-    schema,
-    columns: { id: { type: 'integer', nullable: false } },
-    primaryKeys: ['id'],
-  })
-  const classHeads = (classes: string[]) => {
-    return classes.map((definition) => definition.split('\n').slice(0, 2).join('\n'))
-  }
-
   test('declare static table on each class for {dialect}')
     .with([
       { dialect: 'postgres', defaultSchema: 'public' },
@@ -1822,14 +1813,14 @@ test.group('OrmSchemaBuilder | Table schemas', () => {
       { dialect: 'mssql', defaultSchema: 'dbo' },
     ])
     .run(({ assert }, { dialect, defaultSchema }) => {
-      const schemas = builderFor(dialect).generateSchemas([
-        table('orders', defaultSchema),
-        table('orders', 'app'),
-        table('invoices', 'app'),
-        table('users', defaultSchema),
+      const schemas = getSchemaBuilder(dialect).generateSchemas([
+        getDatabaseTable('orders', defaultSchema),
+        getDatabaseTable('orders', 'app'),
+        getDatabaseTable('invoices', 'app'),
+        getDatabaseTable('users', defaultSchema),
       ])
 
-      assert.deepEqual(classHeads(schemas.classes), [
+      assert.deepEqual(getClassHeads(schemas.classes), [
         "export class OrderSchema extends BaseModel {\n  static table = 'orders'",
         "export class AppOrderSchema extends BaseModel {\n  static table = 'app.orders'",
         "export class InvoiceSchema extends BaseModel {\n  static table = 'app.invoices'",
@@ -1838,12 +1829,12 @@ test.group('OrmSchemaBuilder | Table schemas', () => {
     })
 
   test('prefix each class with its schema when no table is in the default schema', ({ assert }) => {
-    const schemas = builderFor('postgres').generateSchemas([
-      table('orders', 'app'),
-      table('orders', 'billing_v2'),
+    const schemas = getSchemaBuilder('postgres').generateSchemas([
+      getDatabaseTable('orders', 'app'),
+      getDatabaseTable('orders', 'billing_v2'),
     ])
 
-    assert.deepEqual(classHeads(schemas.classes), [
+    assert.deepEqual(getClassHeads(schemas.classes), [
       "export class AppOrderSchema extends BaseModel {\n  static table = 'app.orders'",
       "export class BillingV2OrderSchema extends BaseModel {\n  static table = 'billing_v2.orders'",
     ])
@@ -1852,14 +1843,14 @@ test.group('OrmSchemaBuilder | Table schemas', () => {
   test('raise an exception that names the tables when a class name still collides', ({
     assert,
   }) => {
-    const builder = builderFor('postgres')
+    const builder = getSchemaBuilder('postgres')
 
     assert.throws(
       () =>
         builder.generateSchemas([
-          table('orders', 'public'),
-          table('orders', 'app'),
-          table('order', 'app'),
+          getDatabaseTable('orders', 'public'),
+          getDatabaseTable('orders', 'app'),
+          getDatabaseTable('order', 'app'),
         ]),
       'Cannot generate schema classes, because the tables "app.orders" and "app.order" give the same class name "AppOrderSchema". Exclude one of the tables with "excludeTables", or rename it'
     )
@@ -1868,14 +1859,14 @@ test.group('OrmSchemaBuilder | Table schemas', () => {
   test('raise an exception when the class name with the schema prefix is already taken', ({
     assert,
   }) => {
-    const builder = builderFor('postgres')
+    const builder = getSchemaBuilder('postgres')
 
     assert.throws(
       () =>
         builder.generateSchemas([
-          table('orders', 'public'),
-          table('app_orders', 'public'),
-          table('orders', 'app'),
+          getDatabaseTable('orders', 'public'),
+          getDatabaseTable('app_orders', 'public'),
+          getDatabaseTable('orders', 'app'),
         ]),
       'Cannot generate schema classes, because the tables "public.app_orders" and "app.orders" give the same class name "AppOrderSchema". Exclude one of the tables with "excludeTables", or rename it'
     )
@@ -1885,19 +1876,19 @@ test.group('OrmSchemaBuilder | Table schemas', () => {
     const message = /give the same class name "AppOrderSchema"/
     assert.throws(
       () =>
-        builderFor('postgres').generateSchemas([
-          table('orders', 'app'),
-          table('orders', 'sales'),
-          table('app_orders', 'reports'),
+        getSchemaBuilder('postgres').generateSchemas([
+          getDatabaseTable('orders', 'app'),
+          getDatabaseTable('orders', 'sales'),
+          getDatabaseTable('app_orders', 'reports'),
         ]),
       message
     )
     assert.throws(
       () =>
-        builderFor('postgres').generateSchemas([
-          table('app_orders', 'reports'),
-          table('orders', 'app'),
-          table('orders', 'sales'),
+        getSchemaBuilder('postgres').generateSchemas([
+          getDatabaseTable('app_orders', 'reports'),
+          getDatabaseTable('orders', 'app'),
+          getDatabaseTable('orders', 'sales'),
         ]),
       message
     )
@@ -1906,16 +1897,16 @@ test.group('OrmSchemaBuilder | Table schemas', () => {
   test('raise an exception for tables with no schema that give the same class name', ({
     assert,
   }) => {
-    const builder = builderFor('mysql')
+    const builder = getSchemaBuilder('mysql')
 
     assert.throws(
-      () => builder.generateSchemas([table('orders'), table('order')]),
+      () => builder.generateSchemas([getDatabaseTable('orders'), getDatabaseTable('order')]),
       /the tables "orders" and "order" give the same class name "OrderSchema"/
     )
   })
 
   test('apply the rules of "<schema>.<table>" before the rules of the table name', ({ assert }) => {
-    const builder = builderFor('postgres')
+    const builder = getSchemaBuilder('postgres')
     builder.loadRules([
       {
         tables: {
