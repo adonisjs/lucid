@@ -1681,42 +1681,61 @@ test.group('Migrator', (group) => {
           this.schema.createTable('schema_users', (table) => {
             table.increments()
           })
+          ${supportsAdvisoryLocks ? assertOnLockSessionSource() : ''}
         }
 
         public async down () {
           this.schema.dropTable('schema_users')
+          ${supportsAdvisoryLocks ? assertOnLockSessionSource() : ''}
         }
       }
     `
     )
 
+    /**
+     * The runner pins the only connection of the pool for the lock session.
+     * Therefore, the pool has one connection in use while the runner holds
+     * the lock, and none after the release.
+     */
+    const pool = db.connection().getWriteClient().client.pool
+    const usedConnections: Record<string, number> = {}
+    const trackLockSession = (migrator: ReturnType<typeof getMigrator>, prefix: string) => {
+      migrator.on('acquire:lock', () => (usedConnections[`${prefix}:acquire`] = pool.numUsed()))
+      migrator.on('release:lock', () => (usedConnections[`${prefix}:release`] = pool.numUsed()))
+    }
+
     const migrator = getMigrator(db, app, {
       direction: 'up',
       connectionName: 'primary',
     })
-
-    const events: string[] = []
-    migrator.on('acquire:lock', () => events.push('acquire:lock'))
-    migrator.on('release:lock', () => events.push('release:lock'))
+    trackLockSession(migrator, 'up')
 
     await migrator.run()
 
     assert.isNull(migrator.error)
     assert.equal(migrator.status, 'completed')
     assert.isTrue(await db.connection().schema.hasTable('schema_users'))
-    if (supportsAdvisoryLocks) {
-      assert.deepEqual(events, ['acquire:lock', 'release:lock'])
-    }
 
     const rollbackMigrator = getMigrator(db, app, {
       direction: 'down',
       connectionName: 'primary',
     })
+    trackLockSession(rollbackMigrator, 'down')
     await rollbackMigrator.run()
 
     assert.isNull(rollbackMigrator.error)
     assert.equal(rollbackMigrator.status, 'completed')
     assert.isFalse(await db.connection().schema.hasTable('schema_users'))
+
+    if (supportsAdvisoryLocks) {
+      assert.deepEqual(usedConnections, {
+        'up:acquire': 1,
+        'up:release': 1,
+        'down:acquire': 1,
+        'down:release': 1,
+      })
+      assert.equal(pool.numUsed(), 0)
+    }
   })
 
   test('rollback with a multi connection pool acquires and releases advisory lock correctly', async ({

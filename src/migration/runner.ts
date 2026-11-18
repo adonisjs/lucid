@@ -102,9 +102,9 @@ export class MigrationRunner extends EventEmitter {
   disableLocks: boolean
 
   /**
-   * The database session that holds the advisory lock, when the pool
-   * has more than one connection. Between the acquire and the release
-   * of the lock, "this.client" is the query client of this session.
+   * The database session that holds the advisory lock. Between the acquire
+   * and the release of the lock, "this.client" is the query client of this
+   * session.
    */
   private lockSession: LockSession | null = null
 
@@ -301,12 +301,12 @@ export class MigrationRunner extends EventEmitter {
    * Make sure we are acquiring lock outside the transactions, since we want
    * to block other processes from acquiring the same lock.
    *
-   * Advisory locks belong to a database session. When the pool has more
-   * than one connection, we pin a connection from the pool and run each
-   * query of the runner on it, the migrations too. Therefore, the lock
-   * cannot end while a migration runs on another session. With a pool
-   * of one connection, each query already uses the same connection, and
-   * pinning it would starve the queries of the runner.
+   * Advisory locks belong to a database session. We pin a connection
+   * from the pool and run each query of the runner on it, the migrations
+   * too. Therefore, the lock cannot end while a migration runs on another
+   * session. We pin the connection with each pool size, also with a pool
+   * of one connection. Otherwise, the pool can replace a connection that
+   * ends between two migrations, and the next migrations run with no lock.
    *
    * Locks are always acquired in dry run too, since we want to stay close
    * to the real execution cycle
@@ -316,14 +316,9 @@ export class MigrationRunner extends EventEmitter {
       return
     }
 
-    if (this.connectionClient.getWriteClient().client.pool.max > 1) {
-      const connection = this.db.getRawConnection(this.connectionClient.connectionName)!
-      this.lockSession = await LockSession.open(
-        connection.connection!,
-        this.connectionClient.emitter
-      )
-      this.client = this.lockSession.client
-    }
+    const connection = this.db.getRawConnection(this.connectionClient.connectionName)!
+    this.lockSession = await LockSession.open(connection.connection!, this.connectionClient.emitter)
+    this.client = this.lockSession.client
 
     try {
       const acquired = await this.client.dialect.getAdvisoryLock(1)
