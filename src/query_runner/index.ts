@@ -156,6 +156,16 @@ export class QueryRunner {
       throw new Exception('Updates and deletes cannot be performed in read mode')
     }
 
+    /**
+     * A client with a pinned connection runs each query on it. The owner
+     * of the connection acquires and releases it.
+     */
+    const pinnedConnection = this.client.pinnedConnection
+    if (pinnedConnection) {
+      query.connection(pinnedConnection)
+      return this.executeDirectly(query)
+    }
+
     return this.executeUsingManagedConnection(query)
   }
 }

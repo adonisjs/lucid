@@ -180,6 +180,13 @@ export interface QueryClientContract {
   debug: boolean
 
   /**
+   * A raw connection of the pool that the client uses for each query,
+   * its schema queries and its transactions. The client never acquires
+   * or releases it. The owner of the connection releases it.
+   */
+  readonly pinnedConnection?: unknown
+
+  /**
    * Returns schema instance for the write client
    */
   schema: Knex.SchemaBuilder

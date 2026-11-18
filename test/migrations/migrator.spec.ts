@@ -14,8 +14,13 @@ import { AppFactory } from '@adonisjs/core/factories/app'
 import {
   setup,
   getDb,
+  getConfig,
   resetTables,
   getMigrator,
+  sleepSql,
+  supportsAdvisoryLocks,
+  assertOnLockSessionSource,
+  endLockSessionDuringSleep,
   cleanup as cleanupTables,
 } from '../../test-helpers/index.js'
 import * as errors from '../../src/errors.js'
@@ -1554,4 +1559,562 @@ test.group('Migrator', (group) => {
     assert.deepEqual(migratedFiles, [])
     assert.equal(migrator.status, 'skipped')
   })
+
+  test('migrate with pool of 4 acquires and releases advisory lock correctly', async ({
+    fs,
+    assert,
+    cleanup,
+  }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+
+    const config = getConfig()
+    config.pool = { min: 4, max: 4 }
+    const db = getDb(undefined, {
+      connection: 'primary',
+      connections: { primary: config, secondary: config },
+    })
+    cleanup(() => db.manager.closeAll())
+
+    await fs.create(
+      'database/migrations/users_pool4.ts',
+      `
+      import { BaseSchema as Schema } from '../../../../src/schema/main.js'
+      export default class User extends Schema {
+        public async up () {
+          this.schema.createTable('schema_users', (table) => {
+            table.increments()
+          })
+        }
+      }
+    `
+    )
+
+    const migrator = getMigrator(db, app, {
+      direction: 'up',
+      connectionName: 'primary',
+    })
+
+    const events: string[] = []
+    migrator.on('acquire:lock', () => events.push('acquire:lock'))
+    migrator.on('release:lock', () => events.push('release:lock'))
+
+    await migrator.run()
+
+    assert.isNull(migrator.error)
+    assert.equal(migrator.status, 'completed')
+    assert.isTrue(await db.connection().schema.hasTable('schema_users'))
+    if (supportsAdvisoryLocks) {
+      assert.deepEqual(events, ['acquire:lock', 'release:lock'])
+    }
+  })
+
+  test('migrate with pool of 2 acquires and releases advisory lock correctly', async ({
+    fs,
+    assert,
+    cleanup,
+  }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+
+    /**
+     * Pool of 2 is the tightest case for connection pinning: one
+     * connection is held for the advisory lock lifecycle and the
+     * other is left for the other queries of the app.
+     */
+    const config = getConfig()
+    config.pool = { min: 2, max: 2 }
+    const db = getDb(undefined, {
+      connection: 'primary',
+      connections: { primary: config, secondary: config },
+    })
+    cleanup(() => db.manager.closeAll())
+
+    await fs.create(
+      'database/migrations/users_pool2.ts',
+      `
+      import { BaseSchema as Schema } from '../../../../src/schema/main.js'
+      export default class User extends Schema {
+        public async up () {
+          this.schema.createTable('schema_users', (table) => {
+            table.increments()
+          })
+        }
+      }
+    `
+    )
+
+    const migrator = getMigrator(db, app, {
+      direction: 'up',
+      connectionName: 'primary',
+    })
+
+    await migrator.run()
+
+    assert.isNull(migrator.error)
+    assert.equal(migrator.status, 'completed')
+    assert.isTrue(await db.connection().schema.hasTable('schema_users'))
+  })
+
+  test('migrate with pool of 1 acquires and releases advisory lock correctly', async ({
+    fs,
+    assert,
+    cleanup,
+  }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+
+    const config = getConfig()
+    config.pool = { min: 1, max: 1 }
+    const db = getDb(undefined, {
+      connection: 'primary',
+      connections: { primary: config, secondary: config },
+    })
+    cleanup(() => db.manager.closeAll())
+
+    await fs.create(
+      'database/migrations/users_pool1.ts',
+      `
+      import { BaseSchema as Schema } from '../../../../src/schema/main.js'
+      export default class User extends Schema {
+        public async up () {
+          this.schema.createTable('schema_users', (table) => {
+            table.increments()
+          })
+          ${supportsAdvisoryLocks ? assertOnLockSessionSource() : ''}
+        }
+
+        public async down () {
+          this.schema.dropTable('schema_users')
+          ${supportsAdvisoryLocks ? assertOnLockSessionSource() : ''}
+        }
+      }
+    `
+    )
+
+    /**
+     * The runner pins the only connection of the pool for the lock session.
+     * Therefore, the pool has one connection in use while the runner holds
+     * the lock, and none after the release.
+     */
+    const pool = db.connection().getWriteClient().client.pool
+    const usedConnections: Record<string, number> = {}
+    const trackLockSession = (migrator: ReturnType<typeof getMigrator>, prefix: string) => {
+      migrator.on('acquire:lock', () => (usedConnections[`${prefix}:acquire`] = pool.numUsed()))
+      migrator.on('release:lock', () => (usedConnections[`${prefix}:release`] = pool.numUsed()))
+    }
+
+    const migrator = getMigrator(db, app, {
+      direction: 'up',
+      connectionName: 'primary',
+    })
+    trackLockSession(migrator, 'up')
+
+    await migrator.run()
+
+    assert.isNull(migrator.error)
+    assert.equal(migrator.status, 'completed')
+    assert.isTrue(await db.connection().schema.hasTable('schema_users'))
+
+    const rollbackMigrator = getMigrator(db, app, {
+      direction: 'down',
+      connectionName: 'primary',
+    })
+    trackLockSession(rollbackMigrator, 'down')
+    await rollbackMigrator.run()
+
+    assert.isNull(rollbackMigrator.error)
+    assert.equal(rollbackMigrator.status, 'completed')
+    assert.isFalse(await db.connection().schema.hasTable('schema_users'))
+
+    if (supportsAdvisoryLocks) {
+      assert.deepEqual(usedConnections, {
+        'up:acquire': 1,
+        'up:release': 1,
+        'down:acquire': 1,
+        'down:release': 1,
+      })
+      assert.equal(pool.numUsed(), 0)
+    }
+  })
+
+  test('rollback with a multi connection pool acquires and releases advisory lock correctly', async ({
+    fs,
+    assert,
+    cleanup,
+  }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+
+    const config = getConfig()
+    config.pool = { min: 2, max: 2 }
+    const db = getDb(undefined, {
+      connection: 'primary',
+      connections: { primary: config, secondary: config },
+    })
+    cleanup(() => db.manager.closeAll())
+
+    await fs.create(
+      'database/migrations/users_pool_rollback.ts',
+      `
+      import { BaseSchema as Schema } from '../../../../src/schema/main.js'
+      export default class User extends Schema {
+        public async up () {
+          this.schema.createTable('schema_users', (table) => {
+            table.increments()
+          })
+        }
+
+        public async down () {
+          this.schema.dropTable('schema_users')
+        }
+      }
+    `
+    )
+
+    const migrator = getMigrator(db, app, {
+      direction: 'up',
+      connectionName: 'primary',
+    })
+    await migrator.run()
+
+    assert.isNull(migrator.error)
+    assert.equal(migrator.status, 'completed')
+    assert.isTrue(await db.connection().schema.hasTable('schema_users'))
+
+    const rollbackMigrator = getMigrator(db, app, {
+      direction: 'down',
+      connectionName: 'primary',
+    })
+
+    const events: string[] = []
+    rollbackMigrator.on('acquire:lock', () => events.push('acquire:lock'))
+    rollbackMigrator.on('release:lock', () => events.push('release:lock'))
+
+    await rollbackMigrator.run()
+
+    assert.isNull(rollbackMigrator.error)
+    assert.equal(rollbackMigrator.status, 'completed')
+    assert.isFalse(await db.connection().schema.hasTable('schema_users'))
+    if (supportsAdvisoryLocks) {
+      assert.deepEqual(events, ['acquire:lock', 'release:lock'])
+    }
+  })
+
+  test('run each migration and each query of the schema table on the session of the lock', async ({
+    fs,
+    assert,
+    cleanup,
+  }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+
+    /**
+     * The test holds the second connection of the pool. Therefore, a query
+     * of the runner that does not use the session of the lock waits for a
+     * connection, and fails after "acquireTimeoutMillis".
+     */
+    const config = getConfig()
+    config.pool = { min: 0, max: 2, acquireTimeoutMillis: 1000 }
+    const db = getDb(undefined, {
+      connection: 'primary',
+      connections: { primary: config, secondary: config },
+    })
+    cleanup(() => db.manager.closeAll())
+
+    await fs.create(
+      'database/migrations/users_lock_session.ts',
+      `
+      import { BaseSchema as Schema } from '../../../../src/schema/main.js'
+      export default class User extends Schema {
+        public async up () {
+          this.schema.createTable('schema_users', (table) => {
+            table.increments()
+          })
+          ${assertOnLockSessionSource()}
+        }
+
+        public async down () {
+          this.schema.dropTable('schema_users')
+          ${assertOnLockSessionSource()}
+        }
+      }
+    `
+    )
+
+    await fs.create(
+      'database/migrations/users_lock_session_no_transaction.ts',
+      `
+      import { BaseSchema as Schema } from '../../../../src/schema/main.js'
+      export default class Account extends Schema {
+        static disableTransactions = true
+
+        public async up () {
+          this.schema.createTable('schema_accounts', (table) => {
+            table.increments()
+          })
+          ${assertOnLockSessionSource()}
+        }
+
+        public async down () {
+          this.schema.dropTable('schema_accounts')
+          ${assertOnLockSessionSource()}
+        }
+      }
+    `
+    )
+
+    const knexClient = db.connection().getWriteClient().client
+    const heldConnection = await knexClient.acquireConnection()
+    const release = () => knexClient.releaseConnection(heldConnection)
+
+    try {
+      const migrator = getMigrator(db, app, { direction: 'up', connectionName: 'primary' })
+      await migrator.run()
+
+      assert.isNull(migrator.error)
+      assert.equal(migrator.status, 'completed')
+      assert.deepEqual(Object.keys(migrator.migratedFiles), [
+        'database/migrations/users_lock_session',
+        'database/migrations/users_lock_session_no_transaction',
+      ])
+
+      const rollbackMigrator = getMigrator(db, app, {
+        direction: 'down',
+        connectionName: 'primary',
+      })
+      await rollbackMigrator.run()
+
+      assert.isNull(rollbackMigrator.error)
+      assert.equal(rollbackMigrator.status, 'completed')
+    } finally {
+      release()
+    }
+
+    assert.isFalse(await db.connection().schema.hasTable('schema_users'))
+    assert.isFalse(await db.connection().schema.hasTable('schema_accounts'))
+    assert.lengthOf(await db.connection().from('adonis_schema').select('*'), 0)
+  }).skip(!supportsAdvisoryLocks, 'Advisory locks are only supported on PostgreSQL and MySQL')
+
+  test('commit nothing when the session of the lock ends during a migration', async ({
+    fs,
+    assert,
+    cleanup,
+  }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    cleanup(() => db.manager.closeAll())
+
+    await fs.create(
+      'database/migrations/users_lost_session.ts',
+      `
+      import { BaseSchema as Schema } from '../../../../src/schema/main.js'
+      export default class User extends Schema {
+        public async up () {
+          this.schema.createTable('schema_users', (table) => {
+            table.increments()
+          })
+          this.schema.raw('${sleepSql(2)}')
+        }
+      }
+    `
+    )
+
+    const migrator = getMigrator(db, app, { direction: 'up', connectionName: 'primary' })
+    const events: string[] = []
+    migrator.on('release:lock', () => events.push('release:lock'))
+
+    await Promise.all([migrator.run(), endLockSessionDuringSleep()])
+
+    assert.equal(migrator.status, 'error')
+    assert.notInstanceOf(migrator.error, errors.E_UNABLE_RELEASE_LOCK)
+    assert.equal((migrator.error as any).code, '57P01')
+    assert.equal(migrator.migratedFiles['database/migrations/users_lost_session'].status, 'error')
+    assert.deepEqual(events, [])
+
+    assert.isFalse(await db.connection().schema.hasTable('schema_users'))
+    assert.lengthOf(await db.connection().from('adonis_schema').select('*'), 0)
+
+    /**
+     * A second runner takes the lock and applies the migration one time
+     */
+    const secondMigrator = getMigrator(db, app, { direction: 'up', connectionName: 'primary' })
+    await secondMigrator.run()
+
+    assert.isNull(secondMigrator.error)
+    assert.equal(secondMigrator.status, 'completed')
+    assert.isTrue(await db.connection().schema.hasTable('schema_users'))
+
+    const migrated = await db.connection().from('adonis_schema').select('name')
+    assert.deepEqual(migrated, [{ name: 'database/migrations/users_lost_session' }])
+  })
+    .skip(process.env.DB !== 'pg', 'Only PostgreSQL rolls back the DDL of a lost session')
+    .timeout(20000)
+
+  test('do not revert a migration when the session of the lock ends during a rollback', async ({
+    fs,
+    assert,
+    cleanup,
+  }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    cleanup(() => db.manager.closeAll())
+
+    await fs.create(
+      'database/migrations/users_lost_session_down.ts',
+      `
+      import { BaseSchema as Schema } from '../../../../src/schema/main.js'
+      export default class User extends Schema {
+        public async up () {
+          this.schema.createTable('schema_users', (table) => {
+            table.increments()
+          })
+        }
+
+        public async down () {
+          this.schema.dropTable('schema_users')
+          this.schema.raw('${sleepSql(2)}')
+        }
+      }
+    `
+    )
+
+    const migrator = getMigrator(db, app, { direction: 'up', connectionName: 'primary' })
+    await migrator.run()
+    assert.equal(migrator.status, 'completed')
+
+    const rollbackMigrator = getMigrator(db, app, { direction: 'down', connectionName: 'primary' })
+    await Promise.all([rollbackMigrator.run(), endLockSessionDuringSleep()])
+
+    assert.equal(rollbackMigrator.status, 'error')
+    assert.notInstanceOf(rollbackMigrator.error, errors.E_UNABLE_RELEASE_LOCK)
+    assert.equal((rollbackMigrator.error as any).code, '57P01')
+    assert.equal(
+      rollbackMigrator.migratedFiles['database/migrations/users_lost_session_down'].status,
+      'error'
+    )
+
+    assert.isTrue(await db.connection().schema.hasTable('schema_users'))
+    const migrated = await db.connection().from('adonis_schema').select('name')
+    assert.deepEqual(migrated, [{ name: 'database/migrations/users_lost_session_down' }])
+  })
+    .skip(process.env.DB !== 'pg', 'Only PostgreSQL rolls back the DDL of a lost session')
+    .timeout(20000)
+
+  test('stop at the next query when the session of the lock ends during a migration', async ({
+    fs,
+    assert,
+    cleanup,
+  }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    cleanup(() => db.manager.closeAll())
+
+    await fs.create(
+      'database/migrations/users_lost_session_mysql.ts',
+      `
+      import { BaseSchema as Schema } from '../../../../src/schema/main.js'
+      export default class User extends Schema {
+        public async up () {
+          this.schema.createTable('schema_users', (table) => {
+            table.increments()
+          })
+          this.schema.raw('${sleepSql(2)}')
+          this.schema.createTable('schema_accounts', (table) => {
+            table.increments()
+          })
+        }
+      }
+    `
+    )
+
+    const migrator = getMigrator(db, app, { direction: 'up', connectionName: 'primary' })
+    const events: string[] = []
+    migrator.on('release:lock', () => events.push('release:lock'))
+
+    await Promise.all([migrator.run(), endLockSessionDuringSleep()])
+
+    assert.equal(migrator.status, 'error')
+    assert.notInstanceOf(migrator.error, errors.E_UNABLE_RELEASE_LOCK)
+    assert.equal((migrator.error as any).code, 'PROTOCOL_CONNECTION_LOST')
+    assert.equal(
+      migrator.migratedFiles['database/migrations/users_lost_session_mysql'].status,
+      'error'
+    )
+    assert.deepEqual(events, [])
+
+    assert.isFalse(await db.connection().schema.hasTable('schema_accounts'))
+    assert.lengthOf(await db.connection().from('adonis_schema').select('*'), 0)
+  })
+    .skip(!['mysql', 'mysql_legacy'].includes(process.env.DB!), 'Only for MySQL')
+    .timeout(20000)
+
+  test('surface the acquire lock error without masking it as a release error', async ({
+    fs,
+    assert,
+    cleanup,
+  }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+
+    const config = getConfig()
+    config.pool = { min: 2, max: 4 }
+    const db = getDb(undefined, {
+      connection: 'primary',
+      connections: { primary: config, secondary: config },
+    })
+    cleanup(() => db.manager.closeAll())
+
+    /**
+     * Another process holds the advisory lock on its own database session.
+     * Its pool has one connection, so the lock and its release use the
+     * same session.
+     */
+    const otherProcessConfig = getConfig()
+    otherProcessConfig.pool = { min: 1, max: 1 }
+    const otherProcessDb = getDb(undefined, {
+      connection: 'primary',
+      connections: { primary: otherProcessConfig },
+    })
+    cleanup(() => otherProcessDb.manager.closeAll())
+
+    const otherProcessClient = otherProcessDb.connection()
+    assert.isTrue(await otherProcessClient.getAdvisoryLock(1))
+    cleanup(async () => {
+      await otherProcessClient.releaseAdvisoryLock(1)
+    })
+
+    await fs.create(
+      'database/migrations/users_contended.ts',
+      `
+      import { BaseSchema as Schema } from '../../../../src/schema/main.js'
+      export default class User extends Schema {
+        public async up () {
+          this.schema.createTable('schema_users', (table) => {
+            table.increments()
+          })
+        }
+      }
+    `
+    )
+
+    const migrator = getMigrator(db, app, {
+      direction: 'up',
+      connectionName: 'primary',
+    })
+
+    /**
+     * run() must resolve (not throw). Previously the failed acquisition
+     * triggered a bogus release that threw E_UNABLE_RELEASE_LOCK and
+     * masked the real "unable to acquire lock" error.
+     */
+    await migrator.run()
+
+    assert.equal(migrator.status, 'error')
+    assert.instanceOf(migrator.error, errors.E_UNABLE_ACQUIRE_LOCK)
+    assert.isFalse(await db.connection().schema.hasTable('schema_users'))
+  }).skip(!supportsAdvisoryLocks, 'Advisory locks are only supported on PostgreSQL and MySQL')
 })

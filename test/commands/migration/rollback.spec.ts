@@ -22,7 +22,10 @@ import {
   cleanupSchemaArtifacts,
   createMigrationFile,
   getDb,
+  sleepSql,
   supportsSchemaDump,
+  supportsAdvisoryLocks,
+  endLockSessionDuringSleep,
 } from '../../../test-helpers/index.js'
 
 test.group('migration:rollback', (group) => {
@@ -182,4 +185,47 @@ test.group('migration:rollback', (group) => {
       ['database/migrations/rollback_cmd_users_dump']
     )
   }).skip(!supportsSchemaDump, 'Schema dumps are not supported for the current database dialect')
+  test('report the error of the migration when the session of the lock ends', async ({
+    fs,
+    assert,
+  }) => {
+    await createMigrationFile({
+      filePath: 'database/migrations/rollback_cmd_lost_session.ts',
+      className: 'User',
+      up: `
+        this.schema.createTable('schema_users', (table) => {
+          table.increments()
+        })
+      `,
+      down: `
+        this.schema.dropTable('schema_users')
+        this.schema.raw('${sleepSql(2)}')
+      `,
+    })
+
+    const db = getDb()
+    const ace = await new AceFactory().make(fs.baseUrl, {
+      importer: (filePath) => import(filePath),
+    })
+    await ace.app.init()
+    ace.app.container.singleton('lucid.db', () => db)
+    ace.ui.switchMode('raw')
+
+    const migrate = await ace.create(Migrate, ['--no-schema-generate'])
+    await migrate.exec()
+    assert.equal(migrate.exitCode, 0)
+
+    const rollback = await ace.create(Rollback, ['--no-schema-generate'])
+    await Promise.all([rollback.exec(), endLockSessionDuringSleep()])
+
+    assert.equal(rollback.exitCode, 1)
+    rollback.assertLogMatches(/red\(error\) database\/migrations\/rollback_cmd_lost_session/)
+    rollback.assertLogMatches(/terminating connection|Connection lost/)
+    assert.isFalse(
+      rollback.logger.getLogs().some((log) => log.message.includes('E_UNABLE_RELEASE_LOCK'))
+    )
+    assert.lengthOf(await db.connection().from('adonis_schema').select('*'), 1)
+  })
+    .skip(!supportsAdvisoryLocks, 'Advisory locks are only supported on PostgreSQL and MySQL')
+    .timeout(20000)
 })
