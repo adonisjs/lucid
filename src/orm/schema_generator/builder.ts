@@ -17,6 +17,7 @@ import { DATA_TYPES_MAPPING, INTERNAL_TYPES } from './mappings.ts'
 import type {
   ColumnInfo,
   DecoratorInfo,
+  TableRules,
   SchemaRules,
   DatabaseTable,
   DatabaseColumn,
@@ -24,11 +25,6 @@ import type {
   GeneratedSchemas,
 } from '../../types/schema_generator.ts'
 import { type QueryClientContract } from '../../types/database.ts'
-
-/**
- * Rules of one entry of the "tables" schema rules
- */
-type TableRules = NonNullable<SchemaRules['tables']>[string]
 
 /**
  * The schema of a table that a query uses when the table name has no
@@ -119,44 +115,58 @@ export class OrmSchemaBuilder {
   /**
    * Returns the class name of each table, in the order of the tables.
    *
-   * When two tables give the same class name, the class of each table
-   * outside the default schema starts with its schema name. A class
-   * name that still collides raises an exception, because the output
-   * file would declare the same class twice.
+   * The first pass collects the class names of the tables in the default
+   * schema. The second pass prefixes the class of a table of another
+   * schema with its schema name, when a table of the default schema or
+   * another table outside the default schema gives the same class name.
+   * A class name that is already taken raises an exception, because the
+   * output file would declare the same class twice.
    */
   private getClassNames(tables: DatabaseTable[]): string[] {
-    const baseNames = tables.map(
-      (table) => `${stringHelpers.pascalCase(stringHelpers.singular(table.name))}Schema`
-    )
-    const baseNameCounts = new Map<string, number>()
-    baseNames.forEach((name) => baseNameCounts.set(name, (baseNameCounts.get(name) ?? 0) + 1))
+    const classNames: string[] = []
+    const tableByClassName = new Map<string, string>()
 
-    const classNames = tables.map((table, index) => {
-      const baseName = baseNames[index]
-      if (baseNameCounts.get(baseName)! > 1 && !this.isInDefaultSchema(table)) {
-        return `${stringHelpers.pascalCase(table.schema!)}${baseName}`
-      }
-      return baseName
-    })
-
-    const tablesByClassName = new Map<string, string[]>()
-    classNames.forEach((className, index) => {
-      const tableNames = tablesByClassName.get(className) ?? []
-      tableNames.push(this.getQualifiedName(tables[index]))
-      tablesByClassName.set(className, tableNames)
-    })
-
-    const collisions = [...tablesByClassName].filter(([, tableNames]) => tableNames.length > 1)
-    if (collisions.length) {
-      const details = collisions
-        .map(([className, tableNames]) => {
-          return `  - ${tableNames.map((name) => `"${name}"`).join(', ')} give "${className}"`
-        })
-        .join('\n')
-      throw new RuntimeException(
-        `Cannot generate schema classes, because two or more tables give the same class name:\n${details}\nExclude one of the tables with "excludeTables", or rename it`
-      )
+    const getBaseName = (table: DatabaseTable) => {
+      return `${stringHelpers.pascalCase(stringHelpers.singular(table.name))}Schema`
     }
+    const addClassName = (index: number, className: string) => {
+      const tableName = this.getQualifiedName(tables[index])
+      const otherTableName = tableByClassName.get(className)
+      if (otherTableName) {
+        throw new RuntimeException(
+          `Cannot generate schema classes, because the tables "${otherTableName}" and "${tableName}" give the same class name "${className}". Exclude one of the tables with "excludeTables", or rename it`
+        )
+      }
+      tableByClassName.set(className, tableName)
+      classNames[index] = className
+    }
+
+    tables.forEach((table, index) => {
+      if (this.isInDefaultSchema(table)) {
+        addClassName(index, getBaseName(table))
+      }
+    })
+
+    const defaultSchemaClassNames = new Set(tableByClassName.keys())
+    const otherSchemaCounts = new Map<string, number>()
+    tables.forEach((table) => {
+      if (!this.isInDefaultSchema(table)) {
+        const baseName = getBaseName(table)
+        otherSchemaCounts.set(baseName, (otherSchemaCounts.get(baseName) ?? 0) + 1)
+      }
+    })
+
+    tables.forEach((table, index) => {
+      if (this.isInDefaultSchema(table)) {
+        return
+      }
+      const baseName = getBaseName(table)
+      const collides = defaultSchemaClassNames.has(baseName) || otherSchemaCounts.get(baseName)! > 1
+      addClassName(
+        index,
+        collides ? `${stringHelpers.pascalCase(table.schema!)}${baseName}` : baseName
+      )
+    })
 
     return classNames
   }

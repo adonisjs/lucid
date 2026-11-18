@@ -74,17 +74,22 @@ export type SchemaRules = {
    * and wins over the rule of the table name.
    */
   tables?: {
-    [table: string]: {
-      types?: {
-        [type: string]: ColumnInfo | ((dataType: string) => ColumnInfo)
-      }
-      columns?: {
-        [column: string]: ColumnInfo | ((dataType: string) => ColumnInfo)
-      }
-      skipColumns?: string[]
-      primaryKey?: PrimaryKeyRule
-    }
+    [table: string]: TableRules
   }
+  primaryKey?: PrimaryKeyRule
+}
+
+/**
+ * Rules of one entry of the "tables" schema rules
+ */
+export type TableRules = {
+  types?: {
+    [type: string]: ColumnInfo | ((dataType: string) => ColumnInfo)
+  }
+  columns?: {
+    [column: string]: ColumnInfo | ((dataType: string) => ColumnInfo)
+  }
+  skipColumns?: string[]
   primaryKey?: PrimaryKeyRule
 }
 

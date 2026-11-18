@@ -803,7 +803,7 @@ test.group('OrmSchemaGenerator | Multiple Schemas', (group) => {
 
     await assert.rejects(
       () => generator.generate(),
-      /"app\.test_line_item", "app\.test_line_items" give "AppTestLineItemSchema"/
+      /the tables "app\.test_line_items?" and "app\.test_line_items?" give the same class name "AppTestLineItemSchema"/
     )
     await assert.fileNotExists('schemas.ts')
   }).skip(!['pg', 'mssql'].includes(process.env.DB!), 'Only for PostgreSQL and MSSQL')

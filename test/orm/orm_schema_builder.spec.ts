@@ -1861,7 +1861,45 @@ test.group('OrmSchemaBuilder | Table schemas', () => {
           table('orders', 'app'),
           table('order', 'app'),
         ]),
-      'Cannot generate schema classes, because two or more tables give the same class name:\n  - "app.orders", "app.order" give "AppOrderSchema"\nExclude one of the tables with "excludeTables", or rename it'
+      'Cannot generate schema classes, because the tables "app.orders" and "app.order" give the same class name "AppOrderSchema". Exclude one of the tables with "excludeTables", or rename it'
+    )
+  })
+
+  test('raise an exception when the class name with the schema prefix is already taken', ({
+    assert,
+  }) => {
+    const builder = builderFor('postgres')
+
+    assert.throws(
+      () =>
+        builder.generateSchemas([
+          table('orders', 'public'),
+          table('app_orders', 'public'),
+          table('orders', 'app'),
+        ]),
+      'Cannot generate schema classes, because the tables "public.app_orders" and "app.orders" give the same class name "AppOrderSchema". Exclude one of the tables with "excludeTables", or rename it'
+    )
+  })
+
+  test('raise the same exception for any order of the tables of other schemas', ({ assert }) => {
+    const message = /give the same class name "AppOrderSchema"/
+    assert.throws(
+      () =>
+        builderFor('postgres').generateSchemas([
+          table('orders', 'app'),
+          table('orders', 'sales'),
+          table('app_orders', 'reports'),
+        ]),
+      message
+    )
+    assert.throws(
+      () =>
+        builderFor('postgres').generateSchemas([
+          table('app_orders', 'reports'),
+          table('orders', 'app'),
+          table('orders', 'sales'),
+        ]),
+      message
     )
   })
 
@@ -1872,7 +1910,7 @@ test.group('OrmSchemaBuilder | Table schemas', () => {
 
     assert.throws(
       () => builder.generateSchemas([table('orders'), table('order')]),
-      /"orders", "order" give "OrderSchema"/
+      /the tables "orders" and "order" give the same class name "OrderSchema"/
     )
   })
 
