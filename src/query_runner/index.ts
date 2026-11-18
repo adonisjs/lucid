@@ -10,7 +10,6 @@
 import { type Knex } from 'knex'
 import { Exception } from '@poppinss/utils/exception'
 import { QueryReporter } from '../query_reporter/index.js'
-import { type QueryClient } from '../query_client/index.js'
 import { type QueryClientContract, type TransactionClientContract } from '../types/database.js'
 
 /**
@@ -161,7 +160,7 @@ export class QueryRunner {
      * A client with a pinned connection runs each query on it. The owner
      * of the connection acquires and releases it.
      */
-    const pinnedConnection = (this.client as QueryClient).pinnedConnection
+    const pinnedConnection = this.client.pinnedConnection
     if (pinnedConnection) {
       query.connection(pinnedConnection)
       return this.executeDirectly(query)
