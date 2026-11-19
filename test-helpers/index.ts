@@ -795,11 +795,10 @@ export function getDatabaseTable(name: string, schema?: string): DatabaseTable {
 }
 
 /**
- * Returns the first two lines of each generated class: the class
- * declaration and its first property
+ * Returns the first line of each generated class: the class declaration
  */
-export function getClassHeads(classes: string[]) {
-  return classes.map((definition) => definition.split('\n').slice(0, 2).join('\n'))
+export function getClassDeclarations(classes: string[]) {
+  return classes.map((definition) => definition.split('\n')[0])
 }
 
 /**

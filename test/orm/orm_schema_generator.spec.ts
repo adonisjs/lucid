@@ -657,7 +657,7 @@ test.group('OrmSchemaGenerator | Multiple Schemas', (group) => {
     await cleanup()
   })
 
-  test('declare static table and prefix the class name of a colliding table with its schema', async ({
+  test('prefix the class name of a colliding table with its schema', async ({
     fs,
     assert,
     cleanup: testCleanup,
@@ -680,27 +680,11 @@ test.group('OrmSchemaGenerator | Multiple Schemas', (group) => {
     await generator.generate()
 
     const output = await readFile(outputPath, 'utf-8')
-    assert.include(
-      output,
-      ['export class TestOrderSchema extends BaseModel {', "  static table = 'test_orders'"].join(
-        '\n'
-      )
-    )
-    assert.include(
-      output,
-      [
-        'export class AppTestOrderSchema extends BaseModel {',
-        "  static table = 'app.test_orders'",
-      ].join('\n')
-    )
-    assert.include(
-      output,
-      [
-        'export class TestInvoiceSchema extends BaseModel {',
-        "  static table = 'app.test_invoices'",
-      ].join('\n')
-    )
+    assert.include(output, 'export class TestOrderSchema extends BaseModel {')
+    assert.include(output, 'export class AppTestOrderSchema extends BaseModel {')
+    assert.include(output, 'export class TestInvoiceSchema extends BaseModel {')
     assert.lengthOf(output.match(/export class TestOrderSchema /g)!, 1)
+    assert.notInclude(output, 'static table')
   }).skip(!['pg', 'mssql'].includes(process.env.DB!), 'Only for PostgreSQL and MSSQL')
 
   test('prefix both class names when both tables are outside the default schema', async ({
@@ -726,20 +710,8 @@ test.group('OrmSchemaGenerator | Multiple Schemas', (group) => {
     await generator.generate()
 
     const output = await readFile(outputPath, 'utf-8')
-    assert.include(
-      output,
-      [
-        'export class AppTestOrderSchema extends BaseModel {',
-        "  static table = 'app.test_orders'",
-      ].join('\n')
-    )
-    assert.include(
-      output,
-      [
-        'export class BillingTestOrderSchema extends BaseModel {',
-        "  static table = 'billing.test_orders'",
-      ].join('\n')
-    )
+    assert.include(output, 'export class AppTestOrderSchema extends BaseModel {')
+    assert.include(output, 'export class BillingTestOrderSchema extends BaseModel {')
     assert.notInclude(output, 'export class TestOrderSchema ')
   }).skip(!['pg', 'mssql'].includes(process.env.DB!), 'Only for PostgreSQL and MSSQL')
 

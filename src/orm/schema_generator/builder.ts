@@ -89,14 +89,6 @@ export class OrmSchemaBuilder {
   }
 
   /**
-   * Returns the value of "static table" for the class of the table. A
-   * table outside the default schema gives "<schema>.<table>".
-   */
-  private getTableReference(table: DatabaseTable): string {
-    return this.isInDefaultSchema(table) ? table.name : this.getQualifiedName(table)
-  }
-
-  /**
    * Returns the "tables" rules of the table. The rules of
    * "<schema>.<table>" come first, so that they win over the
    * rules of the table name.
@@ -358,7 +350,6 @@ export class OrmSchemaBuilder {
     // Return complete class definition as a single string (compact format)
     return [
       `export class ${className} extends BaseModel {`,
-      `  static table = '${this.getTableReference(table)}'`,
       `  static $columns = [${schema.map((k) => `'${k.propertyName}'`).join(', ')}] as const`,
       `  $columns = ${className}.$columns`,
       schema.map((k) => k.column).join('\n'),
