@@ -37,6 +37,7 @@ import {
   type PreloaderContract,
   type RelationOptions,
   type RelationshipsContract,
+  type RelationRegistryContract,
   type ThroughRelationOptions,
   type WhereHas,
   type WithAggregate,
@@ -798,6 +799,11 @@ export interface LucidModel {
    * A map of defined columns
    */
   $columnsDefinitions: Map<string, ModelColumnOptions>
+
+  /**
+   * Registry of relation types available to every model
+   */
+  $relationRegistry: RelationRegistryContract
 
   /**
    * A map of defined relationships

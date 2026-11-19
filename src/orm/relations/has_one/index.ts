@@ -25,6 +25,7 @@ import { ensureRelationIsBooted, getValue } from '../../../utils/index.js'
  */
 export class HasOne implements HasOneRelationContract<LucidModel, LucidModel> {
   readonly type = 'hasOne'
+  readonly isMany = false
 
   booted: boolean = false
   serializeAs
