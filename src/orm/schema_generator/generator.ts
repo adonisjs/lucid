@@ -16,7 +16,11 @@ import { RuntimeException } from '@adonisjs/core/exceptions'
 import { OrmSchemaBuilder } from './builder.ts'
 import type { Database } from '../../database/main.ts'
 import { type QueryClientContract } from '../../types/database.ts'
-import type { OrmSchemaGeneratorConfig, DatabaseColumn } from '../../types/schema_generator.ts'
+import type {
+  DatabaseTable,
+  DatabaseColumn,
+  OrmSchemaGeneratorConfig,
+} from '../../types/schema_generator.ts'
 
 /**
  * OrmSchemaGenerator orchestrates the process of generating TypeScript
@@ -84,9 +88,7 @@ export class OrmSchemaGenerator extends EventEmitter<{
   /**
    * Fetch all tables and their columns from the database
    */
-  private async fetchTablesAndColumns(): Promise<
-    Array<{ name: string; columns: Record<string, any>; primaryKeys: string[] }>
-  > {
+  private async fetchTablesAndColumns(): Promise<DatabaseTable[]> {
     /**
      * Get list of all tables from the database
      */
@@ -107,7 +109,10 @@ export class OrmSchemaGenerator extends EventEmitter<{
     /**
      * Fetch columns and primary keys for each table
      */
-    const fetchTable = async ({ name, schema }: (typeof tables)[number]) => {
+    const fetchTable = async ({
+      name,
+      schema,
+    }: (typeof tables)[number]): Promise<DatabaseTable> => {
       const tableLookup = schema ? `${schema}.${name}` : name
       const [columns, primaryKeys] = this.connection.isTransaction
         ? [
@@ -120,7 +125,7 @@ export class OrmSchemaGenerator extends EventEmitter<{
           ])
 
       this.emit('table:info', { tableName: name, columns })
-      return { name, columns, primaryKeys }
+      return { name, schema, columns, primaryKeys }
     }
 
     // A global transaction shares one connection across all table lookups.

@@ -9,7 +9,15 @@
 
 import { test } from '@japa/runner'
 import { OrmSchemaBuilder } from '../../src/orm/schema_generator/builder.ts'
-import { setup, cleanup, getDb, resetTables } from '../../test-helpers/index.ts'
+import {
+  setup,
+  cleanup,
+  getDb,
+  resetTables,
+  getClassDeclarations,
+  getSchemaBuilder,
+  getDatabaseTable,
+} from '../../test-helpers/index.ts'
 
 test.group('OrmSchemaBuilder | Basic Type Mapping', (group) => {
   group.setup(async () => {
@@ -1750,6 +1758,160 @@ test.group('OrmSchemaBuilder | Name Conversion', (group) => {
         declare createdAt: string
         @column({ isPrimary: true })
         declare id: number
+      }"
+    `)
+  })
+})
+
+test.group('OrmSchemaBuilder | Table schemas', () => {
+  test('prefix the class of a colliding table outside the default schema for {dialect}')
+    .with([
+      { dialect: 'postgres', defaultSchema: 'public' },
+      { dialect: 'redshift', defaultSchema: 'public' },
+      { dialect: 'mssql', defaultSchema: 'dbo' },
+    ])
+    .run(({ assert }, { dialect, defaultSchema }) => {
+      const schemas = getSchemaBuilder(dialect).generateSchemas([
+        getDatabaseTable('orders', defaultSchema),
+        getDatabaseTable('orders', 'app'),
+        getDatabaseTable('invoices', 'app'),
+        getDatabaseTable('users', defaultSchema),
+      ])
+
+      assert.deepEqual(getClassDeclarations(schemas.classes), [
+        'export class OrderSchema extends BaseModel {',
+        'export class AppOrderSchema extends BaseModel {',
+        'export class InvoiceSchema extends BaseModel {',
+        'export class UserSchema extends BaseModel {',
+      ])
+    })
+
+  test('declare no static table on a generated class', ({ assert }) => {
+    const schemas = getSchemaBuilder('postgres').generateSchemas([
+      getDatabaseTable('orders', 'public'),
+      getDatabaseTable('orders', 'app'),
+      getDatabaseTable('invoices', 'app'),
+    ])
+
+    assert.lengthOf(schemas.classes, 3)
+    schemas.classes.forEach((definition) => assert.notInclude(definition, 'static table'))
+  })
+
+  test('prefix each class with its schema when no table is in the default schema', ({ assert }) => {
+    const schemas = getSchemaBuilder('postgres').generateSchemas([
+      getDatabaseTable('orders', 'app'),
+      getDatabaseTable('orders', 'billing_v2'),
+    ])
+
+    assert.deepEqual(getClassDeclarations(schemas.classes), [
+      'export class AppOrderSchema extends BaseModel {',
+      'export class BillingV2OrderSchema extends BaseModel {',
+    ])
+  })
+
+  test('raise an exception that names the tables when a class name still collides', ({
+    assert,
+  }) => {
+    const builder = getSchemaBuilder('postgres')
+
+    assert.throws(
+      () =>
+        builder.generateSchemas([
+          getDatabaseTable('orders', 'public'),
+          getDatabaseTable('orders', 'app'),
+          getDatabaseTable('order', 'app'),
+        ]),
+      'Cannot generate schema classes, because the tables "app.orders" and "app.order" give the same class name "AppOrderSchema". Exclude one of the tables with "excludeTables", or rename it'
+    )
+  })
+
+  test('raise an exception when the class name with the schema prefix is already taken', ({
+    assert,
+  }) => {
+    const builder = getSchemaBuilder('postgres')
+
+    assert.throws(
+      () =>
+        builder.generateSchemas([
+          getDatabaseTable('orders', 'public'),
+          getDatabaseTable('app_orders', 'public'),
+          getDatabaseTable('orders', 'app'),
+        ]),
+      'Cannot generate schema classes, because the tables "public.app_orders" and "app.orders" give the same class name "AppOrderSchema". Exclude one of the tables with "excludeTables", or rename it'
+    )
+  })
+
+  test('raise the same exception for any order of the tables of other schemas', ({ assert }) => {
+    const message = /give the same class name "AppOrderSchema"/
+    assert.throws(
+      () =>
+        getSchemaBuilder('postgres').generateSchemas([
+          getDatabaseTable('orders', 'app'),
+          getDatabaseTable('orders', 'sales'),
+          getDatabaseTable('app_orders', 'reports'),
+        ]),
+      message
+    )
+    assert.throws(
+      () =>
+        getSchemaBuilder('postgres').generateSchemas([
+          getDatabaseTable('app_orders', 'reports'),
+          getDatabaseTable('orders', 'app'),
+          getDatabaseTable('orders', 'sales'),
+        ]),
+      message
+    )
+  })
+
+  test('raise an exception for tables with no schema that give the same class name', ({
+    assert,
+  }) => {
+    const builder = getSchemaBuilder('mysql')
+
+    assert.throws(
+      () => builder.generateSchemas([getDatabaseTable('orders'), getDatabaseTable('order')]),
+      /the tables "orders" and "order" give the same class name "OrderSchema"/
+    )
+  })
+
+  test('apply the rules of "<schema>.<table>" before the rules of the table name', ({ assert }) => {
+    const builder = getSchemaBuilder('postgres')
+    builder.loadRules([
+      {
+        tables: {
+          'orders': {
+            columns: { id: { tsType: 'OrderId', decorators: [{ name: '@column' }] } },
+            types: { number: { tsType: 'OrderNumber', decorators: [{ name: '@column' }] } },
+            skipColumns: ['secret'],
+          },
+          'app.orders': {
+            types: { number: { tsType: 'AppOrderNumber', decorators: [{ name: '@column' }] } },
+          },
+        },
+      },
+    ])
+
+    const columns = {
+      id: { type: 'integer', nullable: false },
+      secret: { type: 'varchar', nullable: false },
+    }
+    const schemas = builder.generateSchemas([
+      { name: 'orders', schema: 'public', columns, primaryKeys: ['id'] },
+      { name: 'orders', schema: 'app', columns, primaryKeys: ['id'] },
+    ])
+
+    assert.snapshot(schemas.classes.join('\n')).matchInline(`
+      "export class OrderSchema extends BaseModel {
+        static $columns = ['id'] as const
+        $columns = OrderSchema.$columns
+        @column()
+        declare id: OrderId
+      }
+      export class AppOrderSchema extends BaseModel {
+        static $columns = ['id'] as const
+        $columns = AppOrderSchema.$columns
+        @column()
+        declare id: AppOrderNumber
       }"
     `)
   })

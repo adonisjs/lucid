@@ -43,6 +43,8 @@ import { RawQueryBuilder } from '../src/database/query_builder/raw.js'
 import { InsertQueryBuilder } from '../src/database/query_builder/insert.js'
 import { type LucidRow, type LucidModel, type AdapterContract } from '../src/types/model.js'
 import { DatabaseQueryBuilder } from '../src/database/query_builder/database.js'
+import { OrmSchemaBuilder } from '../src/orm/schema_generator/builder.js'
+import { type DatabaseTable } from '../src/types/schema_generator.js'
 import { type FileSystem } from '@japa/file-system'
 
 dotenv.config()
@@ -770,6 +772,76 @@ export function replaceFactoryBindings(source: string, model: string, importPath
       .replace('{{{ modelImportPath }}}', importPath)
       .replace(/{{#toModelName}}{{{ model }}}{{\/toModelName}}/gi, model)
   )
+}
+
+/**
+ * Returns a schema builder for a dialect. The builder reads only
+ * the dialect name of the client
+ */
+export function getSchemaBuilder(dialectName: string) {
+  return new OrmSchemaBuilder({ dialect: { name: dialectName } } as QueryClientContract)
+}
+
+/**
+ * Returns a database table with an id column, for the schema builder
+ */
+export function getDatabaseTable(name: string, schema?: string): DatabaseTable {
+  return {
+    name,
+    schema,
+    columns: { id: { type: 'integer', nullable: false } },
+    primaryKeys: ['id'],
+  }
+}
+
+/**
+ * Returns the first line of each generated class: the class declaration
+ */
+export function getClassDeclarations(classes: string[]) {
+  return classes.map((definition) => definition.split('\n')[0])
+}
+
+/**
+ * Creates each schema, and a table with an id column for
+ * each "<schema>.<table>" name
+ */
+export async function createSchemaTables(db: Database, schemas: string[], tables: string[]) {
+  const connection = db.connection()
+  for (const schema of schemas) {
+    if (process.env.DB === 'mssql') {
+      await connection.rawQuery(
+        `IF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = '${schema}') EXEC('CREATE SCHEMA ${schema}')`
+      )
+    } else {
+      await connection.rawQuery(`CREATE SCHEMA IF NOT EXISTS ${schema}`)
+    }
+  }
+  for (const qualifiedName of tables) {
+    const [schema, name] = qualifiedName.split('.')
+    await connection.schema.withSchema(schema).dropTableIfExists(name)
+    await connection.schema.withSchema(schema).createTable(name, (table) => {
+      table.increments('id')
+      table.string('note').nullable()
+    })
+  }
+}
+
+/**
+ * Drops each "<schema>.<table>" table, and then each schema
+ */
+export async function dropSchemaTables(db: Database, schemas: string[], tables: string[]) {
+  const connection = db.connection()
+  for (const qualifiedName of tables) {
+    const [schema, name] = qualifiedName.split('.')
+    await connection.schema.withSchema(schema).dropTableIfExists(name)
+  }
+  for (const schema of schemas) {
+    await connection.rawQuery(
+      process.env.DB === 'mssql'
+        ? `IF EXISTS (SELECT * FROM sys.schemas WHERE name = '${schema}') EXEC('DROP SCHEMA ${schema}')`
+        : `DROP SCHEMA IF EXISTS ${schema} CASCADE`
+    )
+  }
 }
 
 /**
