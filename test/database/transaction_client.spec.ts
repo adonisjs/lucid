@@ -8,9 +8,11 @@
  */
 
 import { test } from '@japa/runner'
+import { AppFactory } from '@adonisjs/core/factories/app'
 
 import { Connection } from '../../src/connection/index.js'
 import { Database } from '../../src/database/main.js'
+import { column } from '../../src/orm/decorators/index.js'
 import { QueryClient } from '../../src/query_client/index.js'
 import { TransactionClient } from '../../src/transaction_client/index.js'
 import {
@@ -20,9 +22,12 @@ import {
 } from '../../src/types/database.js'
 import {
   setup,
+  getDb,
   cleanup,
   getConfig,
+  ormAdapter,
   resetTables,
+  getBaseModel,
   logger,
   createEmitter,
 } from '../../test-helpers/index.js'
@@ -605,6 +610,38 @@ if (process.env.DB === 'pg') {
       assert.equal(error.code, '23505')
       assert.equal(db.connectionGlobalTransactions.size, 0)
       assert.lengthOf(await db.from('deferred_users'), 0)
+    })
+
+    test('detach models from the transaction when the database rejects the COMMIT', async ({
+      fs,
+      assert,
+      cleanup: testCleanup,
+    }) => {
+      const app = new AppFactory().create(fs.baseUrl, () => {})
+      await app.init()
+      const db = getDb()
+      testCleanup(() => db.manager.closeAll())
+
+      const BaseModel = getBaseModel(ormAdapter(db))
+      class User extends BaseModel {
+        static table = 'deferred_users'
+
+        @column({ isPrimary: true })
+        declare username: string
+      }
+
+      const trx = await db.transaction()
+      const users = [new User(), new User()]
+      for (const user of users) {
+        user.username = 'virk'
+        user.useTransaction(trx)
+        await user.save()
+      }
+      const error = await trx.commit().catch((e) => e)
+
+      assert.equal(error.code, '23505')
+      assert.isUndefined(users[0].$trx)
+      assert.isUndefined(users[1].$trx)
     })
 
     test('reject managed savepoint when the database rejects the RELEASE SAVEPOINT', async ({
