@@ -321,9 +321,14 @@ export class TransactionClient extends EventEmitter implements TransactionClient
 
       /**
        * Knex resolves "commit" even when the COMMIT or RELEASE SAVEPOINT
-       * query fails, and rejects the execution promise instead
+       * query fails, and rejects the execution promise instead. The
+       * transaction is over without a commit, so the rollback listeners
+       * are notified to drop their reference to it
        */
-      await this.knexClient.executionPromise
+      await this.knexClient.executionPromise.catch((error) => {
+        this.emit('rollback', this)
+        throw error
+      })
       this.emit('commit', this)
       this.removeAllListeners()
     } catch (error) {

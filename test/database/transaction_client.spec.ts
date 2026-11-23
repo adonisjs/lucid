@@ -10,6 +10,7 @@
 import { test } from '@japa/runner'
 
 import { Connection } from '../../src/connection/index.js'
+import { Database } from '../../src/database/main.js'
 import { QueryClient } from '../../src/query_client/index.js'
 import { TransactionClient } from '../../src/transaction_client/index.js'
 import {
@@ -537,6 +538,7 @@ if (process.env.DB === 'pg') {
       const client = new QueryClient('dual', connection, createEmitter())
       const trx = await client.transaction()
       trx.on('commit', () => stack.push('commit event'))
+      trx.on('rollback', () => stack.push('rollback event'))
       trx.after('commit', async () => {
         stack.push('commit hook')
       })
@@ -549,8 +551,9 @@ if (process.env.DB === 'pg') {
 
       assert.equal(error.code, '23505')
       assert.isTrue(trx.isCompleted)
-      assert.deepEqual(stack, [])
+      assert.deepEqual(stack, ['rollback event'])
       assert.equal(trx.listenerCount('commit'), 0)
+      assert.equal(trx.listenerCount('rollback'), 0)
       assert.lengthOf(await client.query().from('deferred_users'), 0)
     })
 
@@ -582,6 +585,24 @@ if (process.env.DB === 'pg') {
       assert.equal(error.code, '23505')
       assert.deepEqual(stack, ['rollback hook'])
       assert.lengthOf(await client.query().from('deferred_users'), 0)
+    })
+
+    test('drop the global transaction when the database rejects the COMMIT', async ({ assert }) => {
+      const config = {
+        connection: 'primary',
+        connections: { primary: getConfig() },
+      }
+
+      const db = new Database(config, logger, createEmitter())
+      await db.beginGlobalTransaction()
+      await db.table('deferred_users').multiInsert([{ username: 'virk' }, { username: 'virk' }])
+      const error = await db.commitGlobalTransaction().catch((e) => e)
+
+      assert.equal(error.code, '23505')
+      assert.equal(db.connectionGlobalTransactions.size, 0)
+      assert.lengthOf(await db.from('deferred_users'), 0)
+
+      await db.manager.closeAll()
     })
 
     test('reject managed savepoint when the database rejects the RELEASE SAVEPOINT', async ({
