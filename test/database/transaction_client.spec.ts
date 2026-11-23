@@ -510,6 +510,107 @@ if (process.env.DB === 'pg') {
       assert.lengthOf(await client.query().from('users'), 0)
     })
   })
+
+  test.group('Transaction | commit failure', (group) => {
+    group.setup(async () => {
+      const connection = new Connection('primary', getConfig(), logger)
+      connection.connect()
+      await new QueryClient('dual', connection, createEmitter()).rawQuery(
+        'CREATE TABLE deferred_users (username varchar(255) UNIQUE DEFERRABLE INITIALLY DEFERRED)'
+      )
+      await connection.disconnect()
+    })
+
+    group.teardown(async () => {
+      await cleanup(['deferred_users'])
+    })
+
+    test('reject commit when the database rejects the COMMIT', async ({
+      assert,
+      cleanup: testCleanup,
+    }) => {
+      const stack: string[] = []
+      const connection = new Connection('primary', getConfig(), logger)
+      connection.connect()
+      testCleanup(() => connection.disconnect())
+
+      const client = new QueryClient('dual', connection, createEmitter())
+      const trx = await client.transaction()
+      trx.on('commit', () => stack.push('commit event'))
+      trx.after('commit', async () => {
+        stack.push('commit hook')
+      })
+
+      await trx
+        .insertQuery()
+        .table('deferred_users')
+        .multiInsert([{ username: 'virk' }, { username: 'virk' }])
+      const error = await trx.commit().catch((e) => e)
+
+      assert.equal(error.code, '23505')
+      assert.isTrue(trx.isCompleted)
+      assert.deepEqual(stack, [])
+      assert.equal(trx.listenerCount('commit'), 0)
+      assert.lengthOf(await client.query().from('deferred_users'), 0)
+    })
+
+    test('reject managed transaction when the database rejects the COMMIT', async ({
+      assert,
+      cleanup: testCleanup,
+    }) => {
+      const stack: string[] = []
+      const connection = new Connection('primary', getConfig(), logger)
+      connection.connect()
+      testCleanup(() => connection.disconnect())
+
+      const client = new QueryClient('dual', connection, createEmitter())
+      const error = await client
+        .transaction(async (trx) => {
+          trx.after('commit', async () => {
+            stack.push('commit hook')
+          })
+          trx.after('rollback', async () => {
+            stack.push('rollback hook')
+          })
+          await trx
+            .insertQuery()
+            .table('deferred_users')
+            .multiInsert([{ username: 'virk' }, { username: 'virk' }])
+        })
+        .catch((e) => e)
+
+      assert.equal(error.code, '23505')
+      assert.deepEqual(stack, ['rollback hook'])
+      assert.lengthOf(await client.query().from('deferred_users'), 0)
+    })
+
+    test('reject managed savepoint when the database rejects the RELEASE SAVEPOINT', async ({
+      assert,
+      cleanup: testCleanup,
+    }) => {
+      const stack: string[] = []
+      const connection = new Connection('primary', getConfig(), logger)
+      connection.connect()
+      testCleanup(() => connection.disconnect())
+
+      const client = new QueryClient('dual', connection, createEmitter())
+      const error = await client
+        .transaction(async (trx) => {
+          await trx.insertQuery().table('deferred_users').insert({ username: 'virk' })
+          await trx.transaction(async (savepoint) => {
+            savepoint.after('commit', async () => {
+              stack.push('savepoint commit hook')
+            })
+            await savepoint.rawQuery('SELECT 1 / 0').catch(() => {})
+          })
+        })
+        .catch((e) => e)
+
+      assert.equal(error.code, '25P02')
+      assert.deepEqual(stack, [])
+      assert.lengthOf(await client.query().from('deferred_users'), 0)
+    })
+  })
 }
 
 if (['mysql', 'mysql_legacy'].includes(process.env.DB!)) {

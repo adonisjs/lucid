@@ -318,6 +318,12 @@ export class TransactionClient extends EventEmitter implements TransactionClient
   async commit() {
     try {
       await this.knexClient.commit()
+
+      /**
+       * Knex resolves "commit" even when the COMMIT or RELEASE SAVEPOINT
+       * query fails, and rejects the execution promise instead
+       */
+      await this.knexClient.executionPromise
       this.emit('commit', this)
       this.removeAllListeners()
     } catch (error) {
