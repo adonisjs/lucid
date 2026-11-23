@@ -587,13 +587,17 @@ if (process.env.DB === 'pg') {
       assert.lengthOf(await client.query().from('deferred_users'), 0)
     })
 
-    test('drop the global transaction when the database rejects the COMMIT', async ({ assert }) => {
+    test('drop the global transaction when the database rejects the COMMIT', async ({
+      assert,
+      cleanup: testCleanup,
+    }) => {
       const config = {
         connection: 'primary',
         connections: { primary: getConfig() },
       }
 
       const db = new Database(config, logger, createEmitter())
+      testCleanup(() => db.manager.closeAll())
       await db.beginGlobalTransaction()
       await db.table('deferred_users').multiInsert([{ username: 'virk' }, { username: 'virk' }])
       const error = await db.commitGlobalTransaction().catch((e) => e)
@@ -601,8 +605,6 @@ if (process.env.DB === 'pg') {
       assert.equal(error.code, '23505')
       assert.equal(db.connectionGlobalTransactions.size, 0)
       assert.lengthOf(await db.from('deferred_users'), 0)
-
-      await db.manager.closeAll()
     })
 
     test('reject managed savepoint when the database rejects the RELEASE SAVEPOINT', async ({
