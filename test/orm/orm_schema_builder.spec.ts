@@ -1916,3 +1916,133 @@ test.group('OrmSchemaBuilder | Table schemas', () => {
     `)
   })
 })
+
+test.group('OrmSchemaBuilder | Base Model', () => {
+  test('extend BaseModel from "@adonisjs/lucid/orm" by default', ({ assert }) => {
+    const builder = getSchemaBuilder('sqlite')
+    const output = builder.getOutput(builder.generateSchemas([getDatabaseTable('users')]))
+
+    assert.snapshot(output).matchInline(`
+      "import { BaseModel, column } from '@adonisjs/lucid/orm'
+
+      export class UserSchema extends BaseModel {
+        static $columns = ['id'] as const
+        $columns = UserSchema.$columns
+        @column({ isPrimary: true })
+        declare id: number
+      }
+      "
+    `)
+  })
+
+  test('extend the base model of the schema rules', ({ assert }) => {
+    const builder = getSchemaBuilder('sqlite')
+    builder.loadRules([{ baseModel: { name: 'AppModel', source: '#models/app_model' } }])
+    const output = builder.getOutput(builder.generateSchemas([getDatabaseTable('users')]))
+
+    assert.snapshot(output).matchInline(`
+      "import { AppModel } from '#models/app_model'
+      import { column } from '@adonisjs/lucid/orm'
+
+      export class UserSchema extends AppModel {
+        static $columns = ['id'] as const
+        $columns = UserSchema.$columns
+        @column({ isPrimary: true })
+        declare id: number
+      }
+      "
+    `)
+  })
+
+  test('extend the base model of the table rules', ({ assert }) => {
+    const builder = getSchemaBuilder('postgres')
+    builder.loadRules([
+      {
+        baseModel: { name: 'AppModel', source: '#models/app_model' },
+        tables: {
+          'posts': { baseModel: { name: 'BaseModel', source: '@adonisjs/lucid/orm' } },
+          'audit.logs': { baseModel: { name: 'AuditModel', source: '#models/audit_model' } },
+        },
+      },
+    ])
+    const output = builder.getOutput(
+      builder.generateSchemas([
+        getDatabaseTable('users', 'public'),
+        getDatabaseTable('posts', 'public'),
+        getDatabaseTable('logs', 'audit'),
+      ])
+    )
+
+    assert.snapshot(output).matchInline(`
+      "import { AppModel } from '#models/app_model'
+      import { BaseModel, column } from '@adonisjs/lucid/orm'
+      import { AuditModel } from '#models/audit_model'
+
+      export class UserSchema extends AppModel {
+        static $columns = ['id'] as const
+        $columns = UserSchema.$columns
+        @column({ isPrimary: true })
+        declare id: number
+      }
+
+      export class PostSchema extends BaseModel {
+        static $columns = ['id'] as const
+        $columns = PostSchema.$columns
+        @column({ isPrimary: true })
+        declare id: number
+      }
+
+      export class LogSchema extends AuditModel {
+        static $columns = ['id'] as const
+        $columns = LogSchema.$columns
+        @column({ isPrimary: true })
+        declare id: number
+      }
+      "
+    `)
+  })
+
+  test('use a column decorator of the base model package with an aliased import', ({ assert }) => {
+    const builder = getSchemaBuilder('sqlite')
+    builder.loadRules([
+      {
+        baseModel: { name: 'Model', source: '@acme/orm' },
+        types: {
+          json: {
+            tsType: 'Record<string, any>',
+            imports: [{ source: '@acme/orm', namedImports: ['column as acmeColumn'] }],
+            decorators: [{ name: '@acmeColumn.json' }],
+          },
+        },
+      },
+    ])
+
+    const output = builder.getOutput(
+      builder.generateSchemas([
+        {
+          name: 'users',
+          columns: {
+            id: { type: 'integer', nullable: false },
+            settings: { type: 'json', nullable: false },
+          },
+          primaryKeys: ['id'],
+        },
+      ])
+    )
+
+    assert.snapshot(output).matchInline(`
+      "import { Model, column as acmeColumn } from '@acme/orm'
+      import { column } from '@adonisjs/lucid/orm'
+
+      export class UserSchema extends Model {
+        static $columns = ['id', 'settings'] as const
+        $columns = UserSchema.$columns
+        @column({ isPrimary: true })
+        declare id: number
+        @acmeColumn.json()
+        declare settings: Record<string, any>
+      }
+      "
+    `)
+  })
+})

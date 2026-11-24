@@ -15,6 +15,7 @@ import { RuntimeException } from '@adonisjs/core/exceptions'
 import { DEFAULT_SCHEMA_RULES } from './rules.ts'
 import { DATA_TYPES_MAPPING, INTERNAL_TYPES } from './mappings.ts'
 import type {
+  BaseModelInfo,
   ColumnInfo,
   DecoratorInfo,
   TableRules,
@@ -312,11 +313,21 @@ export class OrmSchemaBuilder {
   }
 
   /**
+   * Returns the base model of the table, from the table rules
+   * or the global rules
+   */
+  private getBaseModel(table: DatabaseTable): BaseModelInfo {
+    const tableRules = this.getTableRules(table)
+    return tableRules.find((rules) => rules.baseModel)?.baseModel ?? this.schema.baseModel
+  }
+
+  /**
    * Generate schema for a single table (internal method)
    */
   private generateTableSchema(
     table: DatabaseTable,
     className: string,
+    baseModel: BaseModelInfo,
     importsBag: ImportsBag
   ): string {
     const { columns, primaryKeys } = table
@@ -349,7 +360,7 @@ export class OrmSchemaBuilder {
 
     // Return complete class definition as a single string (compact format)
     return [
-      `export class ${className} extends BaseModel {`,
+      `export class ${className} extends ${baseModel.name} {`,
       `  static $columns = [${schema.map((k) => `'${k.propertyName}'`).join(', ')}] as const`,
       `  $columns = ${className}.$columns`,
       schema.map((k) => k.column).join('\n'),
@@ -365,11 +376,16 @@ export class OrmSchemaBuilder {
     const classesToCreate: string[] = []
     const classNames = this.getClassNames(tables)
 
-    // Add base import
-    importsBag.add({ source: '@adonisjs/lucid/orm', namedImports: ['BaseModel', 'column'] })
+    const baseModels = tables.map((table) => this.getBaseModel(table))
+
+    // Add the imports of the base models and the column decorator
+    baseModels.forEach(({ name, source }) => importsBag.add({ source, namedImports: [name] }))
+    importsBag.add({ source: '@adonisjs/lucid/orm', namedImports: ['column'] })
 
     tables.forEach((table, index) => {
-      classesToCreate.push(this.generateTableSchema(table, classNames[index], importsBag))
+      classesToCreate.push(
+        this.generateTableSchema(table, classNames[index], baseModels[index], importsBag)
+      )
     })
 
     return {

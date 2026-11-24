@@ -38,6 +38,15 @@ export type ColumnInfo = {
 }
 
 /**
+ * The class that generated schema classes extend, and the
+ * module it is imported from
+ */
+export type BaseModelInfo = {
+  name: string
+  source: string
+}
+
+/**
  * Return value of the primaryKey rule. Identifies which column
  * is the primary key and how it should be represented.
  */
@@ -77,6 +86,12 @@ export type SchemaRules = {
     [table: string]: TableRules
   }
   primaryKey?: PrimaryKeyRule
+
+  /**
+   * The class that the schema classes extend
+   * @default { name: 'BaseModel', source: '@adonisjs/lucid/orm' }
+   */
+  baseModel?: BaseModelInfo
 }
 
 /**
@@ -91,6 +106,7 @@ export type TableRules = {
   }
   skipColumns?: string[]
   primaryKey?: PrimaryKeyRule
+  baseModel?: BaseModelInfo
 }
 
 /**

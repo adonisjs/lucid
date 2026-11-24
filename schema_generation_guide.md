@@ -191,6 +191,53 @@ type OrmSchemaGeneratorConfig = {
 }
 ```
 
+## Custom Base Model
+
+By default, the schema classes extend `BaseModel` from `@adonisjs/lucid/orm`. Use the `baseModel` rule to build them on your own base model, or on one from a package. Set it for all tables, or per table in `tables`:
+
+```typescript
+// config/schema_rules.ts
+export default {
+  baseModel: { name: 'AppModel', source: '#models/app_model' },
+
+  tables: {
+    audit_logs: {
+      baseModel: { name: 'AuditModel', source: '#models/audit_model' },
+    },
+  },
+}
+```
+
+This generates:
+
+```typescript
+import { AppModel } from '#models/app_model'
+import { AuditModel } from '#models/audit_model'
+import { column } from '@adonisjs/lucid/orm'
+
+export class UserSchema extends AppModel {
+  // ...
+}
+
+export class AuditLogSchema extends AuditModel {
+  // ...
+}
+```
+
+The `column` decorator is always imported from `@adonisjs/lucid/orm`. If a package exports its own `column` decorator, import it under another name in your rules:
+
+```typescript
+export default {
+  types: {
+    json: {
+      tsType: 'Record<string, any>',
+      imports: [{ source: '@acme/orm', namedImports: ['column as acmeColumn'] }],
+      decorators: [{ name: '@acmeColumn.json' }],
+    },
+  },
+}
+```
+
 ## Disabling Schema Generation
 
 To disable schema generation entirely, set `enabled: false` in your database configuration:
