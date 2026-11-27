@@ -109,6 +109,7 @@ export const DEFAULT_SCHEMA_RULES: Required<SchemaRules> = {
     },
   },
   tables: {},
+  baseModel: { name: 'BaseModel', source: '@adonisjs/lucid/orm' },
   primaryKey: (
     _tableName: string,
     primaryKeys: string[],
